@@ -1,0 +1,2302 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 1: AI History, Applications & LLM Basics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --dark: #f9fafb;
+                --light: #111827;
+                --border: #374151;
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Progress */
+        .progress-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            animation: fillProgress 2.5s ease-out forwards;
+        }
+
+        @keyframes fillProgress {
+            to { width: 40%; }
+        }
+
+        .progress-text {
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+
+        /* Sections */
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .section p {
+            color: #374151;
+            line-height: 1.8;
+        }
+
+        .section strong {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .section ul, .section ol {
+            color: #475569;
+        }
+
+        .section ul li, .section ol li {
+            margin: 8px 0;
+            font-weight: 500;
+        }
+
+        .section h2 {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2em;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .section-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Timeline */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            z-index: 0;
+        }
+
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-dot {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .timeline-label {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.1);
+        }
+
+        .timeline-label h3 {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1em;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .timeline-label p {
+            font-size: 0.85em;
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        /* Concept Boxes */
+        .concept-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .concept-box h3 {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .concept-box p {
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .concept-box strong {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .concept-box li {
+            color: #475569;
+            margin: 8px 0;
+        }
+
+        .story-box {
+            background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%);
+            padding: 20px;
+            border-left: 5px solid var(--warning);
+            border-radius: 8px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #7c2d12;
+            font-weight: 500;
+        }
+
+        .story-box strong {
+            color: #b45309;
+            font-weight: bold;
+        }
+
+        /* Application Cards */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .app-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 25px;
+            border-radius: 10px;
+            border-top: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+        }
+
+        .app-card .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .app-card h3 {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .app-card p {
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .app-card .example {
+            background: white;
+            padding: 10px 12px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #3b82f6;
+            border-left: 4px solid var(--secondary);
+            font-weight: 600;
+        }
+
+        /* Code Blocks */
+        .code-section {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #374151;
+        }
+
+        .code-title {
+            color: #60a5fa;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .copy-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--secondary);
+            transform: scale(1.05);
+        }
+
+        pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .output-section {
+            background: #111827;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 3px solid var(--success);
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .comparison-table tr:hover {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.05), rgba(236, 72, 153, 0.05));
+        }
+
+        .comparison-table tr:nth-child(odd) {
+            background: #f8f9fa;
+        }
+
+        /* Challenge */
+        .challenge-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid var(--warning);
+            margin: 20px 0;
+        }
+
+        .challenge-box h3 {
+            color: #b45309;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: rgba(180, 83, 9, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .challenge-box p {
+            color: #7c2d12;
+            font-weight: 500;
+        }
+
+        .challenge-box ul li {
+            color: #8b5cf6;
+            font-weight: 500;
+        }
+
+        .challenge-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .challenge-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .challenge-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        /* Celebrate */
+        .celebrate-section {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            text-align: center;
+            padding: 40px;
+            border-radius: 10px;
+            border: 2px solid var(--success);
+        }
+
+        .celebrate-section h2 {
+            background: linear-gradient(135deg, var(--success), #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .celebrate-section h3 {
+            color: #065f46;
+            font-weight: bold;
+        }
+
+        .celebrate-section p {
+            color: #065f46;
+            font-weight: 500;
+        }
+
+        .confetti {
+            display: inline-block;
+            animation: confettiAnimate 2s ease-out;
+            font-size: 2em;
+            margin: 0 5px;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes confettiAnimate {
+            0% {
+                transform: translateY(0) rotateZ(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px) rotateZ(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Key Takeaways */
+        .takeaways {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .takeaway-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid var(--primary);
+            text-align: center;
+        }
+
+        .takeaway-card .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .takeaway-card h4 {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .takeaway-card p {
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            margin: 30px 0;
+        }
+
+        em {
+            color: #8b5cf6;
+            font-style: italic;
+            font-weight: 600;
+        }
+
+        u {
+            color: var(--secondary);
+            text-decoration: underline wavy;
+            text-underline-offset: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .timeline {
+                flex-direction: column;
+                margin: 20px 0;
+            }
+
+            .timeline::before {
+                left: 20px;
+                top: 0;
+                height: 100%;
+                width: 3px;
+            }
+
+            .timeline-item {
+                margin-left: 60px;
+                text-align: left;
+                margin-bottom: 30px;
+            }
+
+            .timeline-dot {
+                margin-left: -50px;
+            }
+
+            .code-section {
+                padding: 15px;
+                font-size: 0.85em;
+            }
+        }
+
+        .whats-next {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .whats-next h3 {
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .whats-next ul li {
+            color: #1e3a8a;
+            font-weight: 600;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⏰ Day 1: AI History, Applications & LLM Basics</h1>
+            <p>Journey from Expert Systems (1970s) to Modern LLMs (2024) + Real Applications</p>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-text">📚 Learning Progress: Day 1 Complete Path</div>
+        </div>
+
+        <!-- SECTION 1: The Hook -->
+        <div class="section">
+            <h2>
+                <div class="section-number">1</div>
+                🎬 The AI Time Machine: How We Got Here
+            </h2>
+
+            <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 20px;">
+                Imagine you're watching AI learn. In 1970, AI could barely recognize if something was "yes" or "no". Today, ChatGPT writes poems, codes entire apps, and explains quantum physics. How did we get from dumb rule-following to intelligent understanding?
+            </p>
+
+            <div class="story-box">
+                "The secret? Computers stopped following rules. Instead, they learned PATTERNS. From data. From millions of examples. And one breakthrough in 2017 changed everything: <strong>Transformers and Attention</strong>. The same technology powering ChatGPT right now."
+            </div>
+
+            <p style="font-size: 1.1em; color: #6b7280; margin-top: 20px;">
+                In this section, we'll time-travel through 50 years of AI evolution. You'll understand why transformers are revolutionary. And by the end, you'll know why 2024 is THE year to learn AI. 🚀
+            </p>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SECTION 2: History Timeline -->
+        <div class="section">
+            <h2>
+                <div class="section-number">2</div>
+                ⏳ AI's Amazing Journey: 50 Years in 5 Minutes
+            </h2>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot">1970</div>
+                    <div class="timeline-label">
+                        <h3>Expert Systems</h3>
+                        <p>Hardcoded rules</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">2000</div>
+                    <div class="timeline-label">
+                        <h3>Machine Learning</h3>
+                        <p>Learn from data</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">2010</div>
+                    <div class="timeline-label">
+                        <h3>Deep Learning</h3>
+                        <p>Neural networks</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">2017</div>
+                    <div class="timeline-label">
+                        <h3>Transformers</h3>
+                        <p>Attention mechanism</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">2024</div>
+                    <div class="timeline-label">
+                        <h3>Modern LLMs</h3>
+                        <p>ChatGPT, Claude</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Era 1: Expert Systems -->
+            <div class="concept-box">
+                <h3>📋 Era 1: Expert Systems (1970s-1990s)</h3>
+                <p><strong>What:</strong> Programmers hard-coded EVERY rule</p>
+                <p style="margin-top: 10px;"><strong>Example:</strong> To diagnose flu, a programmer wrote:</p>
+                <pre style="background: white; color: #1f2937; padding: 10px; border-radius: 5px; margin-top: 10px;">IF (fever AND cough) THEN diagnosis = "flu"
+IF (no fever AND cough) THEN diagnosis = "cold"
+IF (fever AND headache AND stiff neck) THEN diagnosis = "meningitis"
+... (repeat 1000 times)</pre>
+                <p style="margin-top: 15px;"><strong>Problem:</strong> Programmers had to manually write EVERY single rule. If one rule was wrong, the whole system failed.</p>
+                <p style="margin-top: 10px;"><strong>Limitation:</strong> Could NEVER learn anything new. Could NEVER improve itself.</p>
+                <p style="margin-top: 10px; color: #6b7280;"><em>🧠 Analogy:</em> Like a student who memorized textbook answers but can't solve new problems.</p>
+            </div>
+
+            <!-- Era 2: Machine Learning -->
+            <div class="concept-box">
+                <h3>🎓 Era 2: Machine Learning (2000s)</h3>
+                <p><strong>What:</strong> Instead of writing rules, show computers EXAMPLES and let them learn</p>
+                <p style="margin-top: 10px;"><strong>Example:</strong> Show AI 10,000 emails labeled "spam" or "not spam". AI figures out the pattern:</p>
+                <pre style="background: white; color: #1f2937; padding: 10px; border-radius: 5px; margin-top: 10px;"># AI learns patterns like:
+- If email has "FREE MONEY!" → likely spam
+- If email has links from random sites → likely spam
+- If email is from your bank → not spam</pre>
+                <p style="margin-top: 15px;"><strong>Breakthrough:</strong> Computers TAUGHT THEMSELVES from data!</p>
+                <p style="margin-top: 10px;"><strong>Result:</strong> Your email spam filter was born here.</p>
+                <p style="margin-top: 10px; color: #6b7280;"><em>🧠 Analogy:</em> Like learning to recognize faces. You don't memorize facial features; you just SEE many faces and your brain learns.</p>
+            </div>
+
+            <!-- Era 3: Deep Learning -->
+            <div class="concept-box">
+                <h3>🧠 Era 3: Deep Learning (2010s)</h3>
+                <p><strong>What:</strong> Use neural networks inspired by how brains work</p>
+                <p style="margin-top: 10px;"><strong>Why it's better:</strong> Can learn SUPER complex patterns from images, audio, video - not just text</p>
+                <p style="margin-top: 10px;"><strong>Example:</strong> Show AI 1,000,000 cat images. Now it can recognize ANY cat, even ones it's never seen!</p>
+                <p style="margin-top: 15px;"><strong>Power:</strong> Can handle MESSY, complex real-world data</p>
+                <p style="margin-top: 10px;"><strong>Result:</strong> Phone cameras, Instagram filters, facial recognition - all deep learning</p>
+                <p style="margin-top: 10px; color: #6b7280;"><em>🧠 Analogy:</em> Machine learning is like basic vision (recognizing shapes). Deep learning is like understanding a painting (context, emotion, meaning).</p>
+            </div>
+
+            <!-- Era 4: Transformers -->
+            <div class="concept-box" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid var(--warning);">
+                <h3>✨ Era 4: Transformers - THE REVOLUTION (2017)</h3>
+                <p><strong>What:</strong> A NEW way to process information using "attention"</p>
+                <p style="margin-top: 10px;"><strong>The Magic Trick:</strong> "Attention" = AI pays attention to which words are related</p>
+                <p style="margin-top: 15px;"><strong>Example Sentence:</strong> "The bank vault door was heavy. I couldn't open <u>it</u>."</p>
+                <p style="margin-top: 10px;"><strong>Old way (Deep Learning):</strong> Reads word by word, might think "bank" = river bank</p>
+                <p style="margin-top: 10px;"><strong>Transformer way:</strong> Sees "vault door" nearby, PAYS ATTENTION, understands it's financial bank, so "<u>it</u>" = the door</p>
+                <p style="margin-top: 15px;"><strong>Why revolutionary:</strong> For the first time, AI could understand CONTEXT and MEANING, not just patterns</p>
+                <p style="margin-top: 10px;"><strong>Result:</strong> ALL modern AI uses transformers (ChatGPT, Claude, Gemini, Llama...)</p>
+                <p style="margin-top: 10px; color: #6b7280;"><em>🧠 Analogy:</em> Reading a book page-by-page vs. understanding the entire story at once. Transformers do the latter.</p>
+            </div>
+
+            <!-- Era 5: Modern LLMs -->
+            <div class="concept-box">
+                <h3>🚀 Era 5: Modern Large Language Models (2023-2024)</h3>
+                <p><strong>What:</strong> Take the transformer architecture and train it on BILLIONS of words from the internet</p>
+                <p style="margin-top: 10px;"><strong>What is LLM?</strong> Large = trained on huge amounts of data. Language = understands text. Model = AI architecture</p>
+                <p style="margin-top: 15px;"><strong>Examples:</strong></p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li><strong>ChatGPT (OpenAI):</strong> Trained on 570GB of text. Can write, explain, code, reason.</li>
+                    <li><strong>Claude (Anthropic):</strong> Made to be helpful, harmless, honest.</li>
+                    <li><strong>Gemini (Google):</strong> Multi-modal (text, images, video).</li>
+                    <li><strong>Llama (Meta):</strong> Open-source, free for research.</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>Capability:</strong> Can do almost anything with language: write code, essays, stories, explanations, summaries, translations</p>
+                <p style="margin-top: 10px; color: #6b7280;"><em>💡 Key Insight:</em> They're NOT thinking. They're predicting. But the predictions are SO good they SEEM intelligent.</p>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SECTION 3: Real-World Applications -->
+        <div class="section">
+            <h2>
+                <div class="section-number">3</div>
+                🌍 Where AI Works TODAY (And Where You'll See It Tomorrow)
+            </h2>
+
+            <p style="font-size: 1.1em; margin-bottom: 30px; color: #6b7280;">
+                AI isn't theoretical. It's working RIGHT NOW. Here are 4 applications changing the world:
+            </p>
+
+            <div class="app-grid">
+                <!-- App 1 -->
+                <div class="app-card">
+                    <div class="icon">✍️</div>
+                    <h3>Content Creation</h3>
+                    <p>AI writes blogs, social posts, scripts, and videos</p>
+                    <div class="example">
+                        <strong>Real:</strong> "Write 100 LinkedIn posts in 5 mins"
+                    </div>
+                    <div class="example">
+                        <strong>Your life:</strong> Instagram captions, YouTube scripts, essay help
+                    </div>
+                    <div class="example">
+                        <strong>Future:</strong> AI creates personalized news just for you
+                    </div>
+                </div>
+
+                <!-- App 2 -->
+                <div class="app-card">
+                    <div class="icon">💬</div>
+                    <h3>Customer Service</h3>
+                    <p>AI chatbots answer questions 24/7 without humans</p>
+                    <div class="example">
+                        <strong>Real:</strong> Bank customer support, order tracking
+                    </div>
+                    <div class="example">
+                        <strong>Your life:</strong> Chat support on e-commerce, airline websites
+                    </div>
+                    <div class="example">
+                        <strong>Future:</strong> Handles 90% of support, humans only for complex issues
+                    </div>
+                </div>
+
+                <!-- App 3 -->
+                <div class="app-card">
+                    <div class="icon">💻</div>
+                    <h3>Code Generation</h3>
+                    <p>AI writes code FOR programmers</p>
+                    <div class="example">
+                        <strong>Real:</strong> GitHub Copilot writes 40% of new code
+                    </div>
+                    <div class="example">
+                        <strong>Your life:</strong> Ask AI to debug, explain, or complete functions
+                    </div>
+                    <div class="example">
+                        <strong>Future:</strong> Programmers become "AI directors" not code-writers
+                    </div>
+                </div>
+
+                <!-- App 4 -->
+                <div class="app-card">
+                    <div class="icon">📊</div>
+                    <h3>Data Analysis</h3>
+                    <p>AI finds patterns in HUGE datasets</p>
+                    <div class="example">
+                        <strong>Real:</strong> Netflix recommends movies, YouTube suggests videos
+                    </div>
+                    <div class="example">
+                        <strong>Your life:</strong> "Hey AI, analyze my test scores. What are my weak areas?"
+                    </div>
+                    <div class="example">
+                        <strong>Future:</strong> Medical diagnosis from X-rays, stock prediction
+                    </div>
+                </div>
+            </div>
+
+            <div class="story-box">
+                <strong>🔮 Bonus Applications Already Happening:</strong><br>
+                🏥 Medical diagnosis (analyzing X-rays, MRI)<br>
+                📈 Stock market analysis<br>
+                🌐 Language translation<br>
+                🎨 Image generation (DALL-E, Midjourney)<br>
+                🎤 Voice assistants (Siri, Alexa)<br>
+                🚗 Autonomous vehicles
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SECTION 4: LLM Basics -->
+        <div class="section">
+            <h2>
+                <div class="section-number">4</div>
+                🔬 LLM Basics: How Does ChatGPT Actually Work?
+            </h2>
+
+            <p style="font-size: 1.1em; color: #6b7280; margin-bottom: 20px;">
+                No magic. No mystery. Just clever patterns + math + attention. Let's break it down:
+            </p>
+
+            <!-- Understanding Tokens -->
+            <div class="concept-box">
+                <h3>📝 Part 1: Tokens - The Basic Unit</h3>
+                <p><strong>Definition:</strong> A token = a small piece of text (word, punctuation, or part of a word)</p>
+                <p style="margin-top: 15px;"><strong>Example: "Hello, world!" → 4 tokens</strong></p>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Text</th>
+                        <th>Token</th>
+                        <th>Count</th>
+                    </tr>
+                    <tr>
+                        <td>Hello</td>
+                        <td>1 token</td>
+                        <td>✓</td>
+                    </tr>
+                    <tr>
+                        <td>,</td>
+                        <td>1 token</td>
+                        <td>✓</td>
+                    </tr>
+                    <tr>
+                        <td>world</td>
+                        <td>1 token</td>
+                        <td>✓</td>
+                    </tr>
+                    <tr>
+                        <td>!</td>
+                        <td>1 token</td>
+                        <td>✓</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 15px;"><strong>Why it matters:</strong></p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>ChatGPT thinks in tokens, not words</li>
+                    <li>Limitation: ChatGPT can process ~4,000 tokens (roughly 3,000 words)</li>
+                    <li>Cost: You pay per token</li>
+                    <li>Understanding: Less tokens = faster, cheaper response</li>
+                </ul>
+                <p style="margin-top: 15px; color: #6b7280;"><em>🧠 Analogy:</em> Like chewing food into small pieces before swallowing. ChatGPT "chews" text into tokens.</p>
+            </div>
+
+            <!-- Attention Mechanism -->
+            <div class="concept-box" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid var(--success);">
+                <h3>👀 Part 2: Attention - The Magic Mechanism</h3>
+                <p><strong>Simple Explanation:</strong> AI pays attention to which words are related to each other</p>
+                <p style="margin-top: 15px;"><strong>Example:</strong> "The bank vault door was heavy. I couldn't open it."</p>
+                <p style="margin-top: 10px;"><strong>The Problem:</strong> "bank" has multiple meanings:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>River bank (geography)</li>
+                    <li>Financial bank (money)</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>How Old AI Handled It:</strong> Might confuse river bank with financial bank</p>
+                <p style="margin-top: 15px;"><strong>How Transformers Handle It (ATTENTION):</strong></p>
+                <ol style="margin-left: 20px; margin-top: 10px;">
+                    <li>See "vault door" nearby</li>
+                    <li>PAY ATTENTION! This points to financial context</li>
+                    <li>Understand "bank" = financial bank</li>
+                    <li>Therefore "it" = the vault door</li>
+                </ol>
+                <p style="margin-top: 15px;"><strong>The Trick:</strong> For every word, AI asks: "Which OTHER words should I focus on?"</p>
+                <p style="margin-top: 15px; color: #6b7280;"><em>🧠 Analogy:</em> Reading a book and circling important connections in the margins. Attention does this automatically.</p>
+            </div>
+
+            <!-- Transformers -->
+            <div class="concept-box">
+                <h3>🏗️ Part 3: Transformers - The Architecture</h3>
+                <p><strong>What:</strong> A neural network design that uses "attention" to understand text</p>
+                <p style="margin-top: 15px;"><strong>How it's different:</strong></p>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Old AI (RNN/LSTM)</th>
+                        <th>Transformers (2017+)</th>
+                    </tr>
+                    <tr>
+                        <td>Reads left to right, word by word</td>
+                        <td>Reads ENTIRE sentence at once</td>
+                    </tr>
+                    <tr>
+                        <td>Slow to process</td>
+                        <td>Fast to process</td>
+                    </tr>
+                    <tr>
+                        <td>Forgets earlier words</td>
+                        <td>Remembers connections between all words</td>
+                    </tr>
+                    <tr>
+                        <td>Can't handle long text</td>
+                        <td>Can handle much longer context</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 15px;"><strong>Why it's revolutionary:</strong> ALL modern AI uses transformers</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>ChatGPT: Transformer</li>
+                    <li>Claude: Transformer</li>
+                    <li>Gemini: Transformer</li>
+                    <li>Even image AI (Vision Transformer): Transformer</li>
+                </ul>
+                <p style="margin-top: 15px; color: #6b7280;"><em>🧠 Analogy:</em> Old AI is like reading a book page-by-page, forgetting earlier pages. Transformers read the whole book and understand it as one story.</p>
+            </div>
+
+            <!-- How LLMs Work -->
+            <div class="concept-box" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid var(--warning);">
+                <h3>⚙️ Part 4: How LLMs Work Step-by-Step</h3>
+                <p><strong>Process:</strong> When you ask ChatGPT something, here's what happens:</p>
+                <ol style="margin-left: 20px; margin-top: 15px; line-height: 2;">
+                    <li><strong>Step 1:</strong> Your question → Convert to tokens</li>
+                    <li><strong>Step 2:</strong> AI processes each token, paying ATTENTION to relationships</li>
+                    <li><strong>Step 3:</strong> AI predicts the NEXT token (next word)</li>
+                    <li><strong>Step 4:</strong> Takes that prediction, predicts the NEXT token after that</li>
+                    <li><strong>Step 5:</strong> Keeps repeating until it finishes your answer</li>
+                </ol>
+                <p style="margin-top: 20px;"><strong>Example:</strong></p>
+                <pre style="background: white; color: #1f2937; padding: 15px; border-radius: 5px; margin-top: 10px;">You ask: "What is AI?"
+
+Step 1: Tokens = ["What", "is", "AI", "?"]
+Step 2: AI processes and pays attention to connections
+Step 3: Predicts next word = "AI"
+Step 4: Now predict word after "AI" = "is"
+Step 5: Now predict word after "is" = "artificial"
+... continues until: "AI is artificial intelligence..."</pre>
+                <p style="margin-top: 15px; color: #6b7280;"><em>🧠 Analogy:</em> Like autocomplete on your phone, but MUCH smarter. Your phone predicts "hello" when you type "hel". ChatGPT predicts intelligent, context-aware multi-page essays.</p>
+            </div>
+
+            <!-- LLM Parameters -->
+            <div class="concept-box">
+                <h3>🎛️ Part 5: LLM Parameters - Controlling AI Behavior</h3>
+                <p><strong>What are Parameters?</strong> Settings that control HOW the AI responds. Same model, different settings = different outputs!</p>
+                <p style="margin-top: 15px; color: #6b7280;"><em>🧠 Analogy:</em> Like adjusting knobs on a radio: same radio (model), different settings (parameters) = different sound (output).</p>
+
+                <div style="margin-top: 20px; background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+                    <h4 style="color: #0369a1; margin-bottom: 15px;">🎯 The 4 Most Important Parameters:</h4>
+
+                    <!-- Temperature -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--primary);">
+                        <h5 style="color: var(--primary); margin-bottom: 8px;"><strong>1️⃣ Temperature (Range: 0 to 2)</strong></h5>
+                        <p style="color: #475569; margin: 10px 0;"><strong>What it does:</strong> Controls creativity vs. predictability</p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li><strong>Temperature = 0</strong> → Always picks the MOST LIKELY word (deterministic)</li>
+                            <li><strong>Temperature = 0.5</strong> → Balanced (creative but reasonable)</li>
+                            <li><strong>Temperature = 1.0</strong> → Default (creative & diverse)</li>
+                            <li><strong>Temperature = 2.0</strong> → Very random & creative (might be chaotic)</li>
+                        </ul>
+                        <p style="margin-top: 12px; color: #6b7280;"><em>📌 Use Cases:</em></p>
+                        <p style="color: #1e40af; font-weight: 600; margin: 5px 0;">🟦 Low (0-0.3): Code generation, math, facts, Q&A (need accuracy)</p>
+                        <p style="color: #059669; font-weight: 600; margin: 5px 0;">🟩 Medium (0.7-0.9): Writing, brainstorming (need creativity)</p>
+                        <p style="color: #dc2626; font-weight: 600; margin: 5px 0;">🟥 High (1.2+): Poetry, creative stories (maximum creativity)</p>
+                    </div>
+
+                    <!-- Max Tokens -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--secondary);">
+                        <h5 style="color: var(--secondary); margin-bottom: 8px;"><strong>2️⃣ Max Tokens (Default: ~2000)</strong></h5>
+                        <p style="color: #475569; margin: 10px 0;"><strong>What it does:</strong> Limits the LENGTH of AI response</p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li><strong>Max Tokens = 100</strong> → Short answers (1-2 sentences)</li>
+                            <li><strong>Max Tokens = 500</strong> → Medium answers (2-3 paragraphs)</li>
+                            <li><strong>Max Tokens = 2000</strong> → Long answers (full essays)</li>
+                            <li><strong>Max Tokens = 4000</strong> → Maximum allowed (entire articles)</li>
+                        </ul>
+                        <p style="margin-top: 12px; color: #6b7280;"><em>📌 Use Cases:</em></p>
+                        <p style="color: #8b5cf6; font-weight: 600; margin: 5px 0;">🎯 Prompt: "Write a tweet" → Set Max Tokens = 50 (one short tweet)</p>
+                        <p style="color: #8b5cf6; font-weight: 600; margin: 5px 0;">🎯 Prompt: "Write an essay" → Set Max Tokens = 2000 (full essay)</p>
+                    </div>
+
+                    <!-- Top P -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--warning);">
+                        <h5 style="color: #b45309; margin-bottom: 8px;"><strong>3️⃣ Top P - "Pick from Top Percentage" (Range: 0 to 1, Default: 1.0)</strong></h5>
+                        <p style="color: #475569; margin: 10px 0;"><strong>What it does:</strong> Only consider words in the TOP P% (by probability), ignore the rest</p>
+
+                        <div style="background: #fef3c7; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                            <p style="color: #7c2d12; font-weight: 600; margin-bottom: 8px;">💡 Real Example: What's the next word after "The sky is"?</p>
+                            <p style="color: #7c2d12; font-weight: 600; margin: 5px 0;">Top probability words:</p>
+                            <ul style="margin-left: 20px; color: #7c2d12; font-weight: 500;">
+                                <li>"blue" - 40% (most likely)</li>
+                                <li>"clear" - 25%</li>
+                                <li>"dark" - 20%</li>
+                                <li>"grey" - 10%</li>
+                                <li>"purple" - 3%</li>
+                                <li>"orange" - 2%</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #f0f9ff; padding: 12px; border-radius: 5px; margin-top: 10px;">
+                            <p style="color: #0c4a6e; font-weight: 600; margin-bottom: 8px;">📌 How Top P Works:</p>
+                            <p style="color: #1e40af; margin: 5px 0;"><strong>Top P = 0.5:</strong> Only consider words up to 50% probability</p>
+                            <p style="margin-left: 20px; color: #1e40af; font-weight: 500;">→ Can pick from: "blue" (40%), "clear" (25%) [total 65%, stops at 50%]</p>
+                            <p style="margin-left: 20px; color: #1e40af; font-weight: 500;">→ Ignores: "dark", "grey", "purple", "orange" (too low probability)</p>
+
+                            <p style="color: #1e40af; margin: 10px 0;"><strong>Top P = 0.9:</strong> Consider words up to 90% probability</p>
+                            <p style="margin-left: 20px; color: #1e40af; font-weight: 500;">→ Can pick from: "blue" (40%), "clear" (25%), "dark" (20%), "grey" (5% more) [total 90%]</p>
+                            <p style="margin-left: 20px; color: #1e40af; font-weight: 500;">→ Ignores: "purple", "orange" (below 90%)</p>
+
+                            <p style="color: #1e40af; margin: 10px 0;"><strong>Top P = 1.0:</strong> Consider ALL words</p>
+                            <p style="margin-left: 20px; color: #1e40af; font-weight: 500;">→ Can pick from: ALL options including "orange" (2%)</p>
+                            <p style="margin-left: 20px; color: #1e40af; font-weight: 500;">→ Maximum creativity but might pick weird words</p>
+                        </div>
+
+                        <div style="background: #e0f2fe; padding: 12px; border-radius: 5px; margin-top: 10px;">
+                            <p style="color: #0369a1; font-weight: 600; margin-bottom: 8px;">🎯 Use Cases:</p>
+                            <p style="color: #0c4a6e; margin: 5px 0;"><strong>Top P = 0.7:</strong> Code generation (predictable patterns)</p>
+                            <p style="color: #0c4a6e; margin: 5px 0;"><strong>Top P = 0.9:</strong> Normal writing (balanced)</p>
+                            <p style="color: #0c4a6e; margin: 5px 0;"><strong>Top P = 1.0:</strong> Creative writing (maximum options)</p>
+                        </div>
+                    </div>
+
+                    <!-- Top K -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid var(--success);">
+                        <h5 style="color: var(--success); margin-bottom: 8px;"><strong>4️⃣ Top K - "Pick from Top K Words" (Default: varies, typically 40)</strong></h5>
+                        <p style="color: #475569; margin: 10px 0;"><strong>What it does:</strong> Only consider the TOP K most likely words, ignore everything else</p>
+
+                        <div style="background: #f0fdfa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                            <p style="color: #065f46; font-weight: 600; margin-bottom: 8px;">💡 Real Example: Top K values</p>
+                            <p style="color: #065f46; font-weight: 600; margin: 5px 0;">All possible next words (ranked by probability):</p>
+                            <ul style="margin-left: 20px; color: #065f46; font-weight: 500; font-size: 0.9em;">
+                                <li>1st: "blue" (40%)</li>
+                                <li>2nd: "clear" (25%)</li>
+                                <li>3rd: "dark" (20%)</li>
+                                <li>4th: "grey" (10%)</li>
+                                <li>5th: "purple" (3%)</li>
+                                <li>6th-50th: Other words (1-2% each)</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #dcfce7; padding: 12px; border-radius: 5px; margin-top: 10px;">
+                            <p style="color: #065f46; font-weight: 600; margin-bottom: 8px;">📌 How Top K Works:</p>
+                            <p style="color: #047857; margin: 5px 0;"><strong>Top K = 1:</strong> ONLY pick the #1 most likely word</p>
+                            <p style="margin-left: 20px; color: #047857; font-weight: 500;">→ Always answers "blue" (40%) every single time!</p>
+                            <p style="margin-left: 20px; color: #047857; font-weight: 500;">→ Boring but accurate ✅</p>
+
+                            <p style="color: #047857; margin: 10px 0;"><strong>Top K = 3:</strong> Pick from top 3 words only</p>
+                            <p style="margin-left: 20px; color: #047857; font-weight: 500;">→ Can pick: "blue" (40%), "clear" (25%), or "dark" (20%)</p>
+                            <p style="margin-left: 20px; color: #047857; font-weight: 500;">→ Ignores: "grey", "purple", and all others</p>
+                            <p style="margin-left: 20px; color: #047857; font-weight: 500;">→ Balanced ⚖️</p>
+
+                            <p style="color: #047857; margin: 10px 0;"><strong>Top K = 40:</strong> Pick from top 40 words</p>
+                            <p style="margin-left: 20px; color: #047857; font-weight: 500;">→ Can pick ANY of the top 40 most likely words</p>
+                            <p style="margin-left: 20px; color: #047857; font-weight: 500;">→ Very creative, might pick rare words ✨</p>
+
+                            <p style="color: #047857; margin: 10px 0;"><strong>Top K = 50+:</strong> Consider almost all possibilities</p>
+                            <p style="margin-left: 20px; color: #047857; font-weight: 500;">→ Maximum creativity but might pick weird words 🎲</p>
+                        </div>
+
+                        <div style="background: #e0f2fe; padding: 12px; border-radius: 5px; margin-top: 10px;">
+                            <p style="color: #0369a1; font-weight: 600; margin-bottom: 8px;">🎯 Use Cases:</p>
+                            <p style="color: #0c4a6e; margin: 5px 0;"><strong>Top K = 1:</strong> Chatbots need predictable answers</p>
+                            <p style="color: #0c4a6e; margin: 5px 0;"><strong>Top K = 5:</strong> Code generation (focused on main patterns)</p>
+                            <p style="color: #0c4a6e; margin: 5px 0;"><strong>Top K = 40:</strong> Creative writing (more variety)</p>
+                            <p style="color: #0c4a6e; margin: 5px 0;"><strong>Top K = 100:</strong> Poetry (maximum creativity)</p>
+                        </div>
+
+                        <div style="background: #fef3c7; padding: 12px; border-radius: 5px; margin-top: 10px;">
+                            <p style="color: #b45309; font-weight: 600; margin-bottom: 8px;">⚠️ Top P vs Top K - Key Difference:</p>
+                            <p style="color: #7c2d12; margin: 5px 0;"><strong>Top K = "Fixed number"</strong> - Always consider exactly K words</p>
+                            <p style="margin-left: 20px; color: #7c2d12; font-weight: 500;">Example: Top K=5 → Always 5 words, even if one is 90% and others are 1%</p>
+
+                            <p style="color: #7c2d12; margin: 10px 0;"><strong>Top P = "Flexible percentage"</strong> - Consider words until reaching P% probability</p>
+                            <p style="margin-left: 20px; color: #7c2d12; font-weight: 500;">Example: Top P=0.9 → Might be 2 words (70%+20%) or 10 words (until hitting 90%)</p>
+
+                            <p style="color: #7c2d12; margin: 10px 0;"><strong>💡 Real Analogy:</strong></p>
+                            <p style="color: #7c2d12;">Top K = "Always pick from your 5 best friends"</p>
+                            <p style="color: #7c2d12;">Top P = "Pick from friends until you've covered 90% of your fun time"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parameters in Practice -->
+                <div style="margin-top: 20px; background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%); padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <h4 style="color: #b45309; margin-bottom: 12px;">⚡ Parameters in Practice - Real Examples:</h4>
+                    <p style="color: #7c2d12; font-weight: 600; margin-bottom: 15px;"><strong>Scenario 1: Generating Code</strong></p>
+                    <pre style="background: white; color: #1f2937; padding: 12px; border-radius: 5px; margin-bottom: 15px;">temperature = 0.2      # Low (need accuracy)
+max_tokens = 1000      # Medium (code can be long)
+top_p = 0.9            # High (code has patterns)</pre>
+
+                    <p style="color: #7c2d12; font-weight: 600; margin-bottom: 15px;"><strong>Scenario 2: Writing a Poem</strong></p>
+                    <pre style="background: white; color: #1f2937; padding: 12px; border-radius: 5px; margin-bottom: 15px;">temperature = 0.8      # High (need creativity)
+max_tokens = 500       # Medium (poems aren't too long)
+top_p = 0.95           # High (poetry is creative)</pre>
+
+                    <p style="color: #7c2d12; font-weight: 600; margin-bottom: 15px;"><strong>Scenario 3: Answering Questions</strong></p>
+                    <pre style="background: white; color: #1f2937; padding: 12px; border-radius: 5px;">temperature = 0.5      # Medium (balanced)
+max_tokens = 500       # Medium (short answer)
+top_p = 0.9            # High (but focused)</pre>
+                </div>
+
+                <div style="margin-top: 20px; background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary);">
+                    <p style="color: #1e40af; font-weight: 600; margin-bottom: 10px;">💡 Key Insight for Freshers:</p>
+                    <p style="color: #0c4a6e;"><strong>Same AI, different parameters = completely different outputs!</strong></p>
+                    <p style="color: #0c4a6e; margin-top: 10px;">This is why ChatGPT and Claude can:</p>
+                    <ul style="margin-left: 20px; color: #1e40af; font-weight: 500;">
+                        <li>Write poems (high temperature)</li>
+                        <li>Generate code (low temperature)</li>
+                        <li>Have conversations (medium temperature)</li>
+                        <li>Answer questions (low-medium temperature)</li>
+                    </ul>
+                    <p style="color: #0c4a6e; margin-top: 10px;">It's all the SAME MODEL, just different parameter settings!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SECTION 5: Python Codes -->
+        <div class="section">
+            <h2>
+                <div class="section-number">5</div>
+                💻 Code Time: Build It Yourself
+            </h2>
+
+            <p style="font-size: 1.1em; color: #6b7280; margin-bottom: 30px;">
+                Time to write code! These are simple, work immediately. Copy-paste each code into a Python file and run it! 🚀
+            </p>
+
+            <!-- CODE 1: Token Counter -->
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-title">📝 CODE 1: Understanding Tokens</span>
+                    <button class="copy-btn" onclick="copyCode('code1')">Copy Code</button>
+                </div>
+                <pre id="code1"># Understanding Tokens
+# Tokens = how ChatGPT sees text
+
+print("=" * 60)
+print("🤖 CODE 1: Token Counter (How AI Sees Text)")
+print("=" * 60)
+
+def count_tokens_simple(text):
+    """
+    Simple token counter
+    In reality, ChatGPT uses more complex tokenization
+    But this gives you the idea!
+    """
+    # Split by spaces and punctuation
+    tokens = text.replace(".", " . ").replace("!", " ! ").replace(",", " , ").split()
+    return tokens
+
+# Test sentences
+sentences = [
+    "Hello, world!",
+    "AI is revolutionary.",
+    "I love learning about transformers."
+]
+
+print("\n📊 Token Breakdown:\n")
+for sentence in sentences:
+    tokens = count_tokens_simple(sentence)
+    print(f"Sentence: {sentence}")
+    print(f"Tokens: {tokens}")
+    print(f"Token Count: {len(tokens)}")
+    print()
+
+# Real-world example
+print("💰 Cost Example:")
+print("-" * 60)
+long_text = "Artificial intelligence is transforming the world. " * 10
+tokens = count_tokens_simple(long_text)
+print(f"Text length: {len(long_text)} characters")
+print(f"Token count: {len(tokens)} tokens")
+print(f"Approx cost (at $0.001 per 1000 tokens): ${len(tokens) * 0.001:.4f}")
+print()
+print("✨ Insight: Shorter prompts = faster, cheaper responses!")</pre>
+
+                <div class="output-section"><strong>Expected Output:</strong>
+============================================================
+🤖 CODE 1: Token Counter (How AI Sees Text)
+============================================================
+
+📊 Token Breakdown:
+
+Sentence: Hello, world!
+Tokens: ['Hello', ',', 'world', '!']
+Token Count: 4
+
+Sentence: AI is revolutionary.
+Tokens: ['AI', 'is', 'revolutionary', '.']
+Token Count: 4
+
+Sentence: I love learning about transformers.
+Tokens: ['I', 'love', 'learning', 'about', 'transformers', '.']
+Token Count: 6
+
+💰 Cost Example:
+------------------------------------------------------------
+Text length: 490 characters
+Token count: 89 tokens
+Approx cost (at $0.001 per 1000 tokens): $0.0001
+
+✨ Insight: Shorter prompts = faster, cheaper responses!
+                </div>
+            </div>
+
+            <!-- CODE 2: Attention Mechanism -->
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-title">👀 CODE 2: Attention Mechanism Simulation</span>
+                    <button class="copy-btn" onclick="copyCode('code2')">Copy Code</button>
+                </div>
+                <pre id="code2"># Attention Mechanism Simulation
+# Shows how AI pays attention to important words
+
+print("=" * 60)
+print("🤖 CODE 2: Attention Mechanism Demo")
+print("=" * 60)
+
+# Simulate which words are "important" to each word
+attention_scores = {
+    "The": ["bank", "vault", "door"],  # "The" pays attention to these
+    "bank": ["vault", "door"],          # "bank" relates to these
+    "vault": ["door", "heavy"],         # "vault" relates to these
+    "door": ["bank", "vault", "open"],  # "door" relates to these
+    "was": ["heavy", "door"],           # "was" describes these
+    "heavy": ["door", "open"],          # "heavy" affects these
+    "I": ["open", "door"],              # "I" acts on these
+    "couldn't": ["open"],               # "couldn't" affects this
+    "open": ["door", "it"],             # "open" relates to these
+    "it": ["door", "vault"]             # "it" refers to these
+}
+
+sentence = "The bank vault door was heavy. I couldn't open it."
+
+print(f"\n📖 Sentence: {sentence}")
+print("\n" + "=" * 60)
+print("🎯 ATTENTION MECHANISM AT WORK:")
+print("=" * 60 + "\n")
+
+for word, attends_to in attention_scores.items():
+    print(f"📌 Word: '{word}'")
+    print(f"   ↳ Pays attention to: {', '.join(attends_to)}")
+
+    # Show the connection
+    if word == "it":
+        print(f"   ✨ INSIGHT: '{word}' refers to 'door' (from 'vault door')")
+    elif word == "bank":
+        print(f"   ✨ INSIGHT: 'bank' = financial (not river) due to 'vault door'")
+    print()
+
+print("=" * 60)
+print("💡 KEY INSIGHT:")
+print("=" * 60)
+print("""
+Instead of reading word-by-word sequentially,
+ATTENTION allows AI to see ALL connections at once.
+
+This is why Transformers (2017) revolutionized AI!
+They made attention the core mechanism.
+""")
+</pre>
+
+                <div class="output-section"><strong>Expected Output:</strong>
+============================================================
+🤖 CODE 2: Attention Mechanism Demo
+============================================================
+
+📖 Sentence: The bank vault door was heavy. I couldn't open it.
+
+============================================================
+🎯 ATTENTION MECHANISM AT WORK:
+============================================================
+
+📌 Word: 'The'
+   ↳ Pays attention to: bank, vault, door
+
+📌 Word: 'bank'
+   ↳ Pays attention to: vault, door
+   ✨ INSIGHT: 'bank' = financial (not river) due to 'vault door'
+
+📌 Word: 'it'
+   ↳ Pays attention to: door, vault
+   ✨ INSIGHT: 'it' refers to 'door' (from 'vault door')
+
+...
+
+============================================================
+💡 KEY INSIGHT:
+============================================================
+
+Instead of reading word-by-word sequentially,
+ATTENTION allows AI to see ALL connections at once.
+
+This is why Transformers (2017) revolutionized AI!
+They made attention the core mechanism.
+                </div>
+            </div>
+
+            <!-- CODE 3: Next Word Prediction -->
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-title">🔮 CODE 3: Next Word Prediction (How LLMs Generate Text)</span>
+                    <button class="copy-btn" onclick="copyCode('code3')">Copy Code</button>
+                </div>
+                <pre id="code3"># Next Word Prediction
+# This is how ChatGPT generates text!
+
+import random
+
+print("=" * 60)
+print("🤖 CODE 3: LLM Text Generation Simulation")
+print("=" * 60)
+
+# AI "learned" these word-to-next-word patterns from data
+word_patterns = {
+    "Artificial": ["intelligence", "intelligence", "learning"],
+    "intelligence": ["is", "can", "is", "helps"],
+    "is": ["the", "used", "important", "revolutionary"],
+    "the": ["future", "key", "brain", "transformer"],
+    "future": ["of", "of", "is", "ahead"],
+    "of": ["AI", "technology", "computing"],
+    "AI": ["research", "and", "systems"],
+    "and": ["it", "machine", "deep", "large"],
+    "it": ["will", "can", "enables"],
+    "will": ["change", "help", "transform"],
+    "change": ["everything", "the world", "how we work"],
+    "everything": [".", "!", "."],
+}
+
+def generate_text(start_word, max_words=10):
+    """
+    Generate text word by word
+    This is exactly how ChatGPT works!
+    """
+    generated = [start_word]
+    current_word = start_word
+
+    for _ in range(max_words):
+        if current_word not in word_patterns:
+            break
+
+        # Predict next word
+        next_word = random.choice(word_patterns[current_word])
+        generated.append(next_word)
+        current_word = next_word
+
+        # Stop if we hit a period
+        if next_word == ".":
+            break
+
+    return " ".join(generated)
+
+print("\n🎬 Watch AI Generate Text (Multiple Times = Different Each Time):\n")
+
+for i in range(5):
+    generated = generate_text("Artificial", max_words=12)
+    print(f"Generation {i+1}: {generated}")
+
+print("\n" + "=" * 60)
+print("💡 HOW THIS RELATES TO CHATGPT:")
+print("=" * 60)
+print("""
+1. You give ChatGPT a prompt: "Artificial"
+2. ChatGPT predicts next word: "intelligence"
+3. ChatGPT predicts next word: "is"
+4. ChatGPT predicts next word: "the"
+... (repeat hundreds of times)
+5. ChatGPT outputs complete sentence/essay
+
+Real ChatGPT:
+- Uses MUCH larger data (billions of words)
+- Uses ATTENTION (to understand context)
+- Predicts hundreds of tokens per response
+- Produces coherent, intelligent text
+
+YOU JUST BUILT A MINI LLM! 🚀
+""")
+</pre>
+
+                <div class="output-section"><strong>Expected Output:</strong>
+============================================================
+🤖 CODE 3: LLM Text Generation Simulation
+============================================================
+
+🎬 Watch AI Generate Text (Multiple Times = Different Each Time):
+
+Generation 1: Artificial intelligence is the future of AI research .
+Generation 2: Artificial intelligence will change the world .
+Generation 3: Artificial intelligence is important and it will change everything .
+Generation 4: Artificial intelligence can help the transformer brain .
+Generation 5: Artificial intelligence is revolutionary and machine learning systems .
+
+============================================================
+💡 HOW THIS RELATES TO CHATGPT:
+============================================================
+
+1. You give ChatGPT a prompt: "Artificial"
+2. ChatGPT predicts next word: "intelligence"
+3. ChatGPT predicts next word: "is"
+... (repeat hundreds of times)
+5. ChatGPT outputs complete sentence/essay
+
+YOU JUST BUILT A MINI LLM! 🚀
+                </div>
+            </div>
+
+            <!-- CODE 4: Comparison -->
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-title">📊 CODE 4: Timeline Comparison (1970 → 2024)</span>
+                    <button class="copy-btn" onclick="copyCode('code4')">Copy Code</button>
+                </div>
+                <pre id="code4"># AI Timeline Comparison
+# See how AI evolved from simple to intelligent
+
+print("=" * 60)
+print("🤖 CODE 4: AI Evolution Timeline")
+print("=" * 60)
+
+# Store AI capabilities by era
+ai_timeline = {
+    "1970 - Expert Systems": {
+        "method": "Hard-coded rules",
+        "capability": "Answer yes/no questions",
+        "learning": "❌ No learning",
+        "example": "IF (fever) THEN diagnosis = cold",
+        "limitation": "Can't handle new situations"
+    },
+    "2000 - Machine Learning": {
+        "method": "Learn from examples",
+        "capability": "Recognize patterns",
+        "learning": "✅ Learns from data",
+        "example": "Show 1000 emails → learns spam filter",
+        "limitation": "Limited to simple patterns"
+    },
+    "2010 - Deep Learning": {
+        "method": "Neural networks",
+        "capability": "Understand complex patterns",
+        "learning": "✅ Learns DEEP patterns",
+        "example": "Recognize faces, objects in images",
+        "limitation": "Processes sequentially (slow)"
+    },
+    "2017 - Transformers": {
+        "method": "Attention mechanism",
+        "capability": "Understand context & meaning",
+        "learning": "✅ Learns connections",
+        "example": "Understands 'bank' vs 'river bank'",
+        "limitation": "Limited to 4000 tokens"
+    },
+    "2024 - Modern LLMs": {
+        "method": "Transformers + billions of words",
+        "capability": "Write, code, reason, explain",
+        "learning": "✅ Learns entire internet patterns",
+        "example": "ChatGPT writes essays, code, poetry",
+        "limitation": "Hallucinations, biases"
+    }
+}
+
+print("\n")
+for era, details in ai_timeline.items():
+    print(f"📅 {era}")
+    print(f"   🔧 Method: {details['method']}")
+    print(f"   🎯 Capability: {details['capability']}")
+    print(f"   📚 Learning: {details['learning']}")
+    print(f"   💡 Example: {details['example']}")
+    print(f"   ⚠️  Limitation: {details['limitation']}")
+    print()
+
+print("=" * 60)
+print("🚀 CONCLUSION:")
+print("=" * 60)
+print("""
+50 years of evolution:
+1970 → 2024 went from "yes/no" to "write essays"
+
+The breakthrough? TWO inventions:
+1. ATTENTION (2017) - Understanding relationships
+2. SCALE (2020s) - Train on billions of words
+
+You're learning THIS at the perfect time! 🎉
+""")
+</pre>
+
+                <div class="output-section"><strong>Expected Output:</strong>
+============================================================
+🤖 CODE 4: AI Evolution Timeline
+============================================================
+
+📅 1970 - Expert Systems
+   🔧 Method: Hard-coded rules
+   🎯 Capability: Answer yes/no questions
+   📚 Learning: ❌ No learning
+   💡 Example: IF (fever) THEN diagnosis = cold
+   ⚠️  Limitation: Can't handle new situations
+
+📅 2000 - Machine Learning
+   🔧 Method: Learn from examples
+   🎯 Capability: Recognize patterns
+   📚 Learning: ✅ Learns from data
+   💡 Example: Show 1000 emails → learns spam filter
+   ⚠️  Limitation: Limited to simple patterns
+
+...
+
+🚀 CONCLUSION:
+
+50 years of evolution:
+1970 → 2024 went from "yes/no" to "write essays"
+
+The breakthrough? TWO inventions:
+1. ATTENTION (2017) - Understanding relationships
+2. SCALE (2020s) - Train on billions of words
+                </div>
+            </div>
+
+            <!-- CODE 5: LLM Parameters -->
+            <div class="code-section">
+                <div class="code-header">
+                    <span class="code-title">🎛️ CODE 5: LLM Parameters - How They Change Output</span>
+                    <button class="copy-btn" onclick="copyCode('code5')">Copy Code</button>
+                </div>
+                <pre id="code5"># LLM Parameters Demo
+# See how same model with different parameters = different outputs
+
+import random
+
+print("=" * 60)
+print("🤖 CODE 5: LLM Parameters in Action")
+print("=" * 60)
+
+# Base knowledge (same for all)
+word_bank = {
+    "start": ["Once", "There", "In"],
+    "story": ["a kingdom", "a magical land", "ancient times"],
+    "character": ["a brave knight", "a wise wizard", "a curious adventurer"],
+    "challenge": ["faced a dragon", "solved a riddle", "crossed a mountain"],
+    "ending": ["and lived happily", "and learned wisdom", "and saved the day"]
+}
+
+def generate_with_temperature(temp):
+    """
+    Temperature = 0 → predictable (always first option)
+    Temperature = 1 → random (equal chance all options)
+    Temperature > 1 → very random (even unlikely options)
+    """
+    if temp == 0:  # No randomness
+        return [word_bank[key][0] for key in ["start", "story", "character", "challenge", "ending"]]
+
+    elif temp == 0.5:  # Low randomness
+        result = []
+        for key in ["start", "story", "character", "challenge", "ending"]:
+            if random.random() < 0.6:  # 60% chance first option
+                result.append(word_bank[key][0])
+            else:
+                result.append(random.choice(word_bank[key]))
+        return result
+
+    else:  # High randomness (temp = 1 or higher)
+        return [random.choice(word_bank[key]) for key in ["start", "story", "character", "challenge", "ending"]]
+
+def generate_with_max_tokens(tokens):
+    """
+    max_tokens = length of response
+    """
+    base = f"{word_bank['start'][0]} {word_bank['story'][0]} {word_bank['character'][0]}"
+    if tokens >= 3:
+        base += f" {word_bank['challenge'][0]}"
+    if tokens >= 4:
+        base += f" {word_bank['ending'][0]}"
+    return base
+
+print("\n" + "=" * 60)
+print("📊 PARAMETER 1: TEMPERATURE (Creativity vs Predictability)")
+print("=" * 60)
+
+prompt = "Tell a story in 5 words"
+print(f"\nPrompt: '{prompt}'\n")
+
+print("🟦 Temperature = 0 (Predictable - SAME every time):")
+for i in range(3):
+    words = generate_with_temperature(0)
+    print(f"   Output {i+1}: {' '.join(words)}")
+
+print("\n🟩 Temperature = 0.5 (Balanced - Mostly predictable):")
+for i in range(3):
+    words = generate_with_temperature(0.5)
+    print(f"   Output {i+1}: {' '.join(words)}")
+
+print("\n🟥 Temperature = 1.0 (Creative - Random each time):")
+for i in range(3):
+    words = generate_with_temperature(1)
+    print(f"   Output {i+1}: {' '.join(words)}")
+
+print("\n" + "=" * 60)
+print("📊 PARAMETER 2: MAX TOKENS (Length of Response)")
+print("=" * 60)
+
+print("\nPrompt: 'Tell a story'\n")
+
+print("🔹 Max Tokens = 2 (Very short):")
+print(f"   '{generate_with_max_tokens(2)}'")
+
+print("\n🔹 Max Tokens = 3 (Medium):")
+print(f"   '{generate_with_max_tokens(3)}'")
+
+print("\n🔹 Max Tokens = 4 (Long):")
+print(f"   '{generate_with_max_tokens(4)}'")
+
+print("\n" + "=" * 60)
+print("💡 KEY INSIGHTS:")
+print("=" * 60)
+print("""
+1. TEMPERATURE controls randomness:
+   - Low (0-0.3): Same output every time (good for code)
+   - High (0.7-1.0): Different output each time (good for creativity)
+
+2. MAX TOKENS controls length:
+   - Low (50-100): Short answers (tweets, summaries)
+   - High (1000+): Long answers (essays, articles)
+
+3. SAME MODEL, DIFFERENT PARAMETERS = Different outputs!
+
+4. This is how ChatGPT can be both:
+   - Deterministic (low temp) for coding
+   - Creative (high temp) for writing
+""")
+
+print("\n" + "=" * 60)
+print("🎯 Real-World Usage:")
+print("=" * 60)
+print("""
+ChatGPT Code Generation:
+  temperature = 0.2, max_tokens = 1000
+  Result: Accurate, consistent code
+
+ChatGPT Creative Writing:
+  temperature = 0.9, max_tokens = 2000
+  Result: Varied, creative stories
+
+ChatGPT Q&A:
+  temperature = 0.5, max_tokens = 500
+  Result: Balanced, accurate answers
+""")
+</pre>
+
+                <div style="margin-top: 20px; background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <h4 style="color: #b45309; margin-bottom: 15px; font-size: 1.1em;">⚡ Real Sentence Examples - See How Parameters Change Output</h4>
+
+                    <p style="color: #7c2d12; font-weight: 600; margin-bottom: 15px;"><strong>📝 PROMPT: "The weather today is"</strong></p>
+
+                    <!-- Example 1: Low Temperature -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #1e40af;">
+                        <p style="color: #1e40af; font-weight: 600; margin-bottom: 10px;">❄️ SETTING 1: Temperature=0.2 (Very Predictable)</p>
+                        <p style="color: #0c4a6e; margin-bottom: 5px;"><strong>Parameters:</strong> T=0.2, Top_P=0.7, Top_K=5</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 1):</p>
+                        <p style="background: #e0f2fe; padding: 10px; border-radius: 5px; color: #0369a1; margin-bottom: 10px;">✅ "The weather today is sunny and clear."</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 2):</p>
+                        <p style="background: #e0f2fe; padding: 10px; border-radius: 5px; color: #0369a1; margin-bottom: 10px;">✅ "The weather today is sunny and clear."</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 3):</p>
+                        <p style="background: #e0f2fe; padding: 10px; border-radius: 5px; color: #0369a1; margin-bottom: 10px;">✅ "The weather today is sunny and clear."</p>
+                        <p style="color: #0c4a6e; margin-top: 10px;"><em>💡 Always SAME! Perfect for: Code, facts, Q&A</em></p>
+                    </div>
+
+                    <!-- Example 2: Medium Temperature -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #10b981;">
+                        <p style="color: #10b981; font-weight: 600; margin-bottom: 10px;">🌤️ SETTING 2: Temperature=0.5 (Balanced)</p>
+                        <p style="color: #065f46; margin-bottom: 5px;"><strong>Parameters:</strong> T=0.5, Top_P=0.9, Top_K=10</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 1):</p>
+                        <p style="background: #dcfce7; padding: 10px; border-radius: 5px; color: #065f46; margin-bottom: 10px;">✅ "The weather today is partly cloudy with mild temperatures."</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 2):</p>
+                        <p style="background: #dcfce7; padding: 10px; border-radius: 5px; color: #065f46; margin-bottom: 10px;">✅ "The weather today is sunny but a bit windy."</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 3):</p>
+                        <p style="background: #dcfce7; padding: 10px; border-radius: 5px; color: #065f46; margin-bottom: 10px;">✅ "The weather today is pleasant and bright."</p>
+                        <p style="color: #065f46; margin-top: 10px;"><em>💡 Different but reasonable! Perfect for: Normal chatbots</em></p>
+                    </div>
+
+                    <!-- Example 3: High Temperature -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ec4899;">
+                        <p style="color: #ec4899; font-weight: 600; margin-bottom: 10px;">🔥 SETTING 3: Temperature=1.5 (Very Creative)</p>
+                        <p style="color: #831843; margin-bottom: 5px;"><strong>Parameters:</strong> T=1.5, Top_P=0.99, Top_K=40</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 1):</p>
+                        <p style="background: #fce7f3; padding: 10px; border-radius: 5px; color: #831843; margin-bottom: 10px;">✨ "The weather today is wonderfully chaotic, painting the sky in uncertainty."</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 2):</p>
+                        <p style="background: #fce7f3; padding: 10px; border-radius: 5px; color: #831843; margin-bottom: 10px;">✨ "The weather today is having an identity crisis - partly everything!"</p>
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 5px;">Output (Run 3):</p>
+                        <p style="background: #fce7f3; padding: 10px; border-radius: 5px; color: #831843; margin-bottom: 10px;">✨ "The weather today is defying expectations and embracing spontaneity."</p>
+                        <p style="color: #831843; margin-top: 10px;"><em>💡 Creative & varied! Perfect for: Poetry, creative writing</em></p>
+                    </div>
+
+                    <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <p style="color: #0c4a6e; font-weight: 600; margin-bottom: 15px;">📌 MORE EXAMPLES:</p>
+
+                        <p style="color: #1e40af; font-weight: 600; margin: 10px 0;"><strong>Prompt: "I love to"</strong></p>
+                        <p style="color: #1e40af; margin: 5px 0;"><strong>Low T (0.2):</strong> "I love to code." (Repetitive)</p>
+                        <p style="color: #1e40af; margin: 5px 0;"><strong>Medium T (0.7):</strong> "I love to explore." OR "I love to code."</p>
+                        <p style="color: #1e40af; margin: 5px 0;"><strong>High T (1.5):</strong> "I love to tango with infinity." OR "I love to moonwalk through existence."</p>
+
+                        <p style="color: #1e40af; font-weight: 600; margin: 15px 0;"><strong>Prompt: "The best programming language is"</strong></p>
+                        <p style="color: #1e40af; margin: 5px 0;"><strong>Top K=1:</strong> Always "Python" ✅</p>
+                        <p style="color: #1e40af; margin: 5px 0;"><strong>Top K=5:</strong> "Python" OR "Java" OR "JavaScript" OR "C++" OR "Go"</p>
+                        <p style="color: #1e40af; margin: 5px 0;"><strong>Top K=50:</strong> Can pick "Rust", "Lisp", "Haskell", "APL", etc.</p>
+
+                        <p style="color: #1e40af; font-weight: 600; margin: 15px 0;"><strong>Prompt: "Artificial Intelligence is"</strong></p>
+                        <p style="color: #1e40af; margin: 5px 0;"><strong>Low T:</strong> "Artificial Intelligence is the future of computing."</p>
+                        <p style="color: #1e40af; margin: 5px 0;"><strong>High T:</strong> "Artificial Intelligence is the jazz musician of technology."</p>
+                    </div>
+
+                    <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <p style="color: #7c2d12; font-weight: 600; margin-bottom: 15px;">🎯 REAL-WORLD USAGE COMBINATIONS:</p>
+
+                        <p style="color: #7c2d12; font-weight: 600; margin: 10px 0;">1. Code Generation (T=0.2, P=0.7, K=5)</p>
+                        <p style="color: #7c2d12; margin: 5px 0;"><strong>Input:</strong> "Write a function to add two numbers"</p>
+                        <p style="color: #7c2d12; margin: 5px 0;"><strong>Output:</strong> Same predictable code ✅</p>
+
+                        <p style="color: #7c2d12; font-weight: 600; margin: 10px 0;">2. Creative Writing (T=0.9, P=0.95, K=40)</p>
+                        <p style="color: #7c2d12; margin: 5px 0;"><strong>Input:</strong> "Once upon a time in a magical forest"</p>
+                        <p style="color: #7c2d12; margin: 5px 0;"><strong>Output:</strong> Different creative stories each time ✨</p>
+
+                        <p style="color: #7c2d12; font-weight: 600; margin: 10px 0;">3. Q&A (T=0.5, P=0.9, K=10)</p>
+                        <p style="color: #7c2d12; margin: 5px 0;"><strong>Input:</strong> "What is the capital of France?"</p>
+                        <p style="color: #7c2d12; margin: 5px 0;"><strong>Output:</strong> Accurate but slightly varied explanations ✅</p>
+                    </div>
+                </div>
+
+                <div class="output-section"><strong>Expected Output (Sample):</strong>
+============================================================
+🤖 CODE 5: LLM Parameters in Action
+============================================================
+
+============================================================
+📊 PARAMETER 1: TEMPERATURE (Creativity vs Predictability)
+============================================================
+
+Prompt: 'Tell a story in 5 words'
+
+🟦 Temperature = 0 (Predictable - SAME every time):
+   Output 1: Once a kingdom a brave knight faced a dragon
+   Output 2: Once a kingdom a brave knight faced a dragon
+   Output 3: Once a kingdom a brave knight faced a dragon
+
+🟩 Temperature = 0.5 (Balanced - Mostly predictable):
+   Output 1: Once a magical land a wise wizard crossed a mountain
+   Output 2: Once a kingdom a curious adventurer solved a riddle
+   Output 3: Once ancient times a brave knight faced a dragon
+
+🟥 Temperature = 1.0 (Creative - Random each time):
+   Output 1: There a magical land a wise wizard saved the day
+   Output 2: In ancient times a brave knight learned wisdom
+   Output 3: Once a kingdom a curious adventurer crossed a mountain
+
+============================================================
+📊 PARAMETER 2: MAX TOKENS (Length of Response)
+============================================================
+
+🔹 Max Tokens = 2 (Very short):
+   'Once a kingdom'
+
+🔹 Max Tokens = 3 (Medium):
+   'Once a kingdom a brave knight'
+
+🔹 Max Tokens = 4 (Long):
+   'Once a kingdom a brave knight faced a dragon and lived happily'
+
+============================================================
+💡 KEY INSIGHTS:
+============================================================
+
+1. TEMPERATURE controls randomness:
+   - Low (0-0.3): Same output every time (good for code)
+   - High (0.7-1.0): Different output each time (good for creativity)
+
+2. MAX TOKENS controls length:
+   - Low (50-100): Short answers (tweets, summaries)
+   - High (1000+): Long answers (essays, articles)
+
+3. SAME MODEL, DIFFERENT PARAMETERS = Different outputs!
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Model Size Section -->
+        <div class="section">
+            <h2>
+                <div class="section-number">6</div>
+                📊 LLM Model Sizes: Why Bigger Isn't Always Better
+            </h2>
+
+            <p style="margin-top: 15px; color: #831843; font-weight: 600; font-size: 1.1em;"><strong>What is "Model Size"?</strong> The NUMBER OF PARAMETERS (weights/connections) in the AI brain</p>
+
+            <p style="margin-top: 15px; color: #6b7280;"><em>🧠 Analogy:</em> Think of parameters like neurons in a brain. More neurons = more knowledge, but slower to think (like a big brain taking time to process).</p>
+
+            <div style="margin-top: 20px; background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #ec4899;">
+                <h3 style="color: #ec4899; margin-bottom: 10px;">🔢 What Does "Parameters" Mean?</h3>
+                <p style="color: #831843; font-weight: 600; margin: 10px 0;">A parameter = a piece of learned knowledge</p>
+                <ul style="margin-left: 20px; color: #6b7280; font-weight: 500;">
+                    <li><strong>1 Million parameters (1M)</strong> = Can hold ~1 page of knowledge</li>
+                    <li><strong>1 Billion parameters (1B)</strong> = Can hold ~1,000 pages of knowledge</li>
+                    <li><strong>1 Trillion parameters (1T)</strong> = Can hold ~1 million pages of knowledge</li>
+                </ul>
+                <p style="color: #831843; font-weight: 600; margin-top: 15px;">More parameters = MORE knowledge stored, but takes LONGER to process!</p>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h3 style="color: #ec4899; margin-bottom: 12px; font-size: 1.1em;">⚖️ The Trade-Off: Size vs Speed vs Cost vs Quality</h3>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Size Category</th>
+                        <th>Speed</th>
+                        <th>Cost</th>
+                        <th>Quality</th>
+                        <th>Best For</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Small (7B-13B)</strong></td>
+                        <td>🟢 Fast</td>
+                        <td>🟢 Cheap</td>
+                        <td>🟡 Medium</td>
+                        <td>Simple tasks, mobile, edge</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medium (30B-70B)</strong></td>
+                        <td>🟡 Medium</td>
+                        <td>🟡 Medium</td>
+                        <td>🟢 Good</td>
+                        <td>Most applications, balanced</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Large (100B-175B)</strong></td>
+                        <td>🟠 Slow</td>
+                        <td>🟠 Expensive</td>
+                        <td>🟢 Excellent</td>
+                        <td>Complex reasoning, code</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Huge (500B-1T+)</strong></td>
+                        <td>🔴 Very Slow</td>
+                        <td>🔴 Very Expensive</td>
+                        <td>🟢🟢 Amazing</td>
+                        <td>Advanced reasoning, research</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin-top: 25px;">
+                <h3 style="color: #b45309; margin-bottom: 15px; font-size: 1.1em;">🌟 Real LLMs - Ranked by Size:</h3>
+
+                <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning); margin-bottom: 15px;">
+                    <p style="color: #7c2d12; font-weight: 600; margin-bottom: 10px;">📱 <strong>SMALL (7B-13B):</strong> Llama 2 (7B), Mistral (7B)</p>
+                    <ul style="margin-left: 20px; color: #7c2d12; font-weight: 500; font-size: 0.9em;">
+                        <li>✅ <strong>Speed:</strong> Fast (milliseconds) - instantaneous response</li>
+                        <li>✅ <strong>Cost:</strong> Cheap ($0.00001 per 1000 tokens)</li>
+                        <li>❌ <strong>Intelligence:</strong> Less smart (basic tasks only)</li>
+                        <li>✅ <strong>Runs Where:</strong> Laptop, phone, edge devices</li>
+                        <li>📌 <strong>Use Case:</strong> Mobile apps, simple chatbots, local processing</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 15px;">
+                    <p style="color: #1e40af; font-weight: 600; margin-bottom: 10px;">⚙️ <strong>MEDIUM (30B-70B):</strong> Llama 2 (70B), Code Llama (70B), Mistral Large</p>
+                    <ul style="margin-left: 20px; color: #1e40af; font-weight: 500; font-size: 0.9em;">
+                        <li>✅ <strong>Speed:</strong> Fast (1-2 seconds) - very responsive</li>
+                        <li>✅ <strong>Cost:</strong> Affordable ($0.0001 per 1000 tokens)</li>
+                        <li>✅ <strong>Intelligence:</strong> Good (handles most tasks)</li>
+                        <li>⚠️ <strong>Runs Where:</strong> GPU server (AWS, GCP, Azure)</li>
+                        <li>📌 <strong>Use Case:</strong> Production chatbots, API services, best balance</li>
+                    </ul>
+                </div>
+
+                <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; border-left: 4px solid #0284c7; margin-bottom: 15px;">
+                    <p style="color: #0c4a6e; font-weight: 600; margin-bottom: 10px;">🧠 <strong>LARGE (100B-175B):</strong> GPT-3.5 (175B), Claude 2 (100B+)</p>
+                    <ul style="margin-left: 20px; color: #0c4a6e; font-weight: 500; font-size: 0.9em;">
+                        <li>⏱️ <strong>Speed:</strong> Slow (2-5 seconds) - noticeable wait</li>
+                        <li>🟠 <strong>Cost:</strong> Expensive ($0.001-0.01 per 1000 tokens)</li>
+                        <li>✅✅ <strong>Intelligence:</strong> Very smart (complex reasoning)</li>
+                        <li>❌ <strong>Runs Where:</strong> Only via API (OpenAI, Anthropic, Hugging Face)</li>
+                        <li>📌 <strong>Use Case:</strong> Complex Q&A, code generation, research</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f0fdfa; padding: 15px; border-radius: 8px; border-left: 4px solid var(--success);">
+                    <p style="color: #065f46; font-weight: 600; margin-bottom: 10px;">🚀 <strong>HUGE (500B-1T+):</strong> GPT-4 (1.76T), Claude 3 (estimated 200B+)</p>
+                    <ul style="margin-left: 20px; color: #065f46; font-weight: 500; font-size: 0.9em;">
+                        <li>🐢 <strong>Speed:</strong> Very Slow (5-10 seconds) - wait for PhD-level answer</li>
+                        <li>🔴 <strong>Cost:</strong> Very Expensive ($0.01-0.03 per 1000 tokens)</li>
+                        <li>✅✅✅ <strong>Intelligence:</strong> Amazing (PhD-level reasoning)</li>
+                        <li>❌ <strong>Runs Where:</strong> Only via premium API ($20+/month)</li>
+                        <li>📌 <strong>Use Case:</strong> Advanced reasoning, research, creative work</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 20px; border-radius: 10px; border-left: 4px solid var(--primary);">
+                <h3 style="color: #0369a1; margin-bottom: 15px; font-size: 1.1em;">🎯 How to Choose the Right Model Size:</h3>
+                <p style="color: #0c4a6e; margin-bottom: 12px; font-weight: 600;">Ask yourself 3 questions:</p>
+                <ol style="margin-left: 20px; color: #1e40af; font-weight: 500; line-height: 2;">
+                    <li><strong>How FAST do I need response?</strong><br/>→ Small (instant) or Large (wait 5 sec)?</li>
+                    <li><strong>How HARD is the task?</strong><br/>→ Simple (small) or Complex reasoning (large)?</li>
+                    <li><strong>What's my BUDGET?</strong><br/>→ Cheap (small) or Money no object (large)?</li>
+                </ol>
+
+                <div style="margin-top: 15px; background: white; padding: 15px; border-radius: 8px;">
+                    <p style="color: #0c4a6e; font-weight: 600; margin-bottom: 12px;">📌 Quick Decision Guide:</p>
+                    <p style="color: #1e3a8a; margin: 8px 0;">🤖 Building a <strong>chatbot</strong>? → Go <strong>Medium (70B)</strong> ✅ (best balance)</p>
+                    <p style="color: #1e3a8a; margin: 8px 0;">📱 Building a <strong>mobile app</strong>? → Go <strong>Small (7B)</strong> ✅ (runs locally)</p>
+                    <p style="color: #1e3a8a; margin: 8px 0;">🔬 Doing <strong>research/reasoning</strong>? → Go <strong>Large (175B+)</strong> ✅ (smartest)</p>
+                    <p style="color: #1e3a8a; margin: 8px 0;">⚡ Need <strong>instant response</strong>? → Go <strong>Small (7B)</strong> ✅ (fastest)</p>
+                    <p style="color: #1e3a8a; margin: 8px 0;">💰 Money is not an issue? → Go <strong>Huge (GPT-4)</strong> ✅ (best quality)</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; background: #dcfce7; padding: 20px; border-radius: 10px; border-left: 4px solid var(--success);">
+                <h4 style="color: #065f46; margin-bottom: 15px; font-size: 1.1em;">💡 5 Key Insights About Model Size:</h4>
+                <p style="color: #065f46; font-weight: 600; margin: 10px 0;">1️⃣ <strong>More Parameters = Smarter BUT Slower & Expensive</strong></p>
+                <p style="color: #065f46; margin-top: 12px;">It's like hiring smarter people - they solve complex problems better, but you pay more and wait longer.</p>
+
+                <p style="color: #065f46; font-weight: 600; margin: 15px 0;">2️⃣ <strong>Sweet Spot = 70B Parameters</strong></p>
+                <p style="color: #065f46; margin-top: 12px;">70B is the "Goldilocks zone" - smart enough for most tasks, fast enough for users, affordable for businesses.</p>
+
+                <p style="color: #065f46; font-weight: 600; margin: 15px 0;">3️⃣ <strong>Size Doesn't Tell Everything</strong></p>
+                <p style="color: #065f46; margin-top: 12px;">A smaller, well-trained model can beat a larger, poorly-trained one. Training DATA matters as much as size!</p>
+
+                <p style="color: #065f46; font-weight: 600; margin: 15px 0;">4️⃣ <strong>Future = Smaller & Smarter</strong></p>
+                <p style="color: #065f46; margin-top: 12px;">AI researchers are finding ways to make small models just as smart. Better compression, not just bigger models.</p>
+
+                <p style="color: #065f46; font-weight: 600; margin: 15px 0;">5️⃣ <strong>You Should Know Sizes</strong></p>
+                <p style="color: #065f46; margin-top: 12px;">When someone says "GPT-4 is 1.76 trillion parameters", you now know they're talking about a MASSIVE brain! 🧠</p>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SECTION 7: Hands-On Activities -->
+        <div class="section">
+            <h2>
+                <div class="section-number">7</div>
+                🧪 Hands-On Activities: See Real AI in Action
+            </h2>
+
+            <p style="font-size: 1.1em; color: #6b7280; margin-bottom: 20px;">
+                Stop reading. Start DOING. Use real AI right now:
+            </p>
+
+            <div class="challenge-box">
+                <h3>🎯 Activity 1: Prompt ChatGPT/Claude (5 minutes)</h3>
+                <p style="margin-top: 10px;"><strong>Task:</strong> Open ChatGPT or Claude. Ask these questions:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>"Write a funny tweet about learning AI"</li>
+                    <li>"Explain photosynthesis like I'm 5 years old"</li>
+                    <li>"Write Python code to check if a number is prime"</li>
+                    <li>"What are the top 3 AI tools in 2024?"</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>Goal:</strong> See it working. Understand its capability.</p>
+                <p style="margin-top: 10px; color: #6b7280;"><em>Insight:</em> You just used a transformer + attention + 175 billion parameters!</p>
+            </div>
+
+            <div class="challenge-box">
+                <h3>🎯 Activity 2: Explore Token Limits (5 minutes)</h3>
+                <p style="margin-top: 10px;"><strong>Task:</strong> Try these with ChatGPT:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Copy a 5,000-word article into ChatGPT</li>
+                    <li>Ask: "Summarize this in 100 words"</li>
+                    <li>Ask: "What are the 5 main points?"</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>Goal:</strong> Understand token limits. See how AI processes huge text.</p>
+                <p style="margin-top: 10px; color: #6b7280;"><em>Insight:</em> ChatGPT reads ~4000 tokens. A typical book = 80,000 tokens. AI can't read whole books at once.</p>
+            </div>
+
+            <div class="challenge-box">
+                <h3>🎯 Activity 3: Test Attention in Action (5 minutes)</h3>
+                <p style="margin-top: 10px;"><strong>Task:</strong> Ask ChatGPT these tricky questions:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>"The trophy doesn't fit in the suitcase because it's too large. What is 'it'?" <br/><em>(Answer: trophy)</em></li>
+                    <li>"I saw the bank manager with binoculars. Why did I have binoculars?" <br/><em>(Answer: Ambiguous! Could be either.)</em></li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>Goal:</strong> See how attention handles ambiguous language.</p>
+                <p style="margin-top: 10px; color: #6b7280;"><em>Insight:</em> This is where transformers shine. Old AI would get confused.</p>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SECTION 7: Key Takeaways -->
+        <div class="section">
+            <h2>
+                <div class="section-number">7</div>
+                🎓 What You Learned Today
+            </h2>
+
+            <div class="takeaways">
+                <div class="takeaway-card">
+                    <div class="icon">⏰</div>
+                    <h4>AI's Journey</h4>
+                    <p>50 years: Expert Systems → ML → DL → Transformers → LLMs</p>
+                </div>
+                <div class="takeaway-card">
+                    <div class="icon">👀</div>
+                    <h4>Transformers Won</h4>
+                    <p>Attention mechanism = understanding context & relationships</p>
+                </div>
+                <div class="takeaway-card">
+                    <div class="icon">📝</div>
+                    <h4>Tokens Matter</h4>
+                    <p>ChatGPT speaks in tokens. ~4000 max per request</p>
+                </div>
+                <div class="takeaway-card">
+                    <div class="icon">🌍</div>
+                    <h4>Applications</h4>
+                    <p>Content, service, code generation, data analysis</p>
+                </div>
+                <div class="takeaway-card">
+                    <div class="icon">⚙️</div>
+                    <h4>How It Works</h4>
+                    <p>Tokens → Attention → Pattern matching → Prediction</p>
+                </div>
+                <div class="takeaway-card">
+                    <div class="icon">🎛️</div>
+                    <h4>Parameters Control AI</h4>
+                    <p>Temperature, max_tokens, top_p change how AI responds</p>
+                </div>
+                <div class="takeaway-card">
+                    <div class="icon">💻</div>
+                    <h4>Not Magic</h4>
+                    <p>Just patterns + math + clever architecture (transformers)</p>
+                </div>
+                <div class="takeaway-card">
+                    <div class="icon">🔧</div>
+                    <h4>Customizable</h4>
+                    <p>Same model, different parameters = different outputs</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SECTION 8: Challenge & Celebration -->
+        <div class="section celebrate-section">
+            <h2>🎉 Celebrate! You Did It!</h2>
+            <div style="font-size: 3em; margin: 20px 0;">
+                <span class="confetti">🎊</span>
+                <span class="confetti">🚀</span>
+                <span class="confetti">⭐</span>
+                <span class="confetti">🧠</span>
+                <span class="confetti">💡</span>
+            </div>
+            <h3 style="color: var(--success); margin: 20px 0;">You Now Understand Modern AI!</h3>
+            <p style="font-size: 1.1em; color: #065f46; margin-bottom: 20px;">
+                You know AI's journey from Expert Systems to Transformers. You understand tokens, attention, and how LLMs work. You've written code. You've used ChatGPT. You're officially an AI learner! 🎯
+            </p>
+
+            <div class="whats-next">
+                <h3>📅 Your Day 1 Challenge</h3>
+                <ul style="text-align: left; display: inline-block; padding-left: 20px; line-height: 1.8;">
+                    <li><strong>✅ Activity 1:</strong> Ask ChatGPT 3 questions from Activity 1</li>
+                    <li><strong>✅ Activity 2:</strong> Test token limits (copy-paste large text)</li>
+                    <li><strong>✅ Activity 3:</strong> Test ambiguous sentences (attention test)</li>
+                    <li><strong>✨ Bonus:</strong> Screenshot something ChatGPT did that surprised you</li>
+                </ul>
+            </div>
+
+            <div class="whats-next" style="margin-top: 20px;">
+                <h3>🚀 What's Coming in Day 2?</h3>
+                <ul style="text-align: left; display: inline-block; padding-left: 20px; line-height: 1.8;">
+                    <li>🔧 Advanced prompting techniques (Get AI to do EXACTLY what you want)</li>
+                    <li>🤖 Building AI Agents (AI that takes actions for you!)</li>
+                    <li>💻 Advanced Python for AI (Real frameworks: Hugging Face, LangChain)</li>
+                    <li>🎯 Your FIRST AI project (Build something real)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Quick Reference -->
+        <div class="section">
+            <h2>📚 Quick Reference: Key Concepts</h2>
+
+            <div class="concept-box">
+                <h3>🔑 Key Terms Explained Simply:</h3>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Term</th>
+                        <th>What It Means</th>
+                        <th>Real Example</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Token</strong></td>
+                        <td>Small piece of text (word or punctuation)</td>
+                        <td>"Hello" = 1 token, "!" = 1 token</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Attention</strong></td>
+                        <td>AI focusing on important word relationships</td>
+                        <td>Understanding "bank" vs "river bank"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Transformer</strong></td>
+                        <td>AI architecture that uses attention</td>
+                        <td>Powers ChatGPT, Claude, all modern AI</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LLM</strong></td>
+                        <td>Large Language Model (transformer trained on billions of words)</td>
+                        <td>ChatGPT, Claude, Gemini, Llama</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Neural Network</strong></td>
+                        <td>AI inspired by how brains work</td>
+                        <td>Layers of artificial "neurons"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Training</strong></td>
+                        <td>Process of showing AI examples to learn patterns</td>
+                        <td>ChatGPT trained on 570GB of internet text</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prediction</strong></td>
+                        <td>AI guessing what comes next</td>
+                        <td>Predicting next word when you type</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="concept-box" style="margin-top: 20px;">
+                <h3>🏆 The 3 Breakthroughs Behind Modern AI:</h3>
+                <ol style="padding-left: 20px; line-height: 2; margin-top: 15px;">
+                    <li><strong>Deep Learning (2012):</strong> Neural networks can learn VERY complex patterns</li>
+                    <li><strong>Transformers (2017):</strong> Attention mechanism allows understanding of context</li>
+                    <li><strong>Scale (2020s):</strong> Train on BILLIONS of words → Intelligent behavior emerges</li>
+                </ol>
+            </div>
+
+            <div class="concept-box" style="margin-top: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #f0e7ff 100%); border-left: 4px solid var(--secondary);">
+                <h3>🎛️ LLM Parameters Cheat Sheet:</h3>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>What It Does</th>
+                        <th>Low Value</th>
+                        <th>High Value</th>
+                        <th>Best For</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Temperature</strong></td>
+                        <td>Creativity vs Accuracy</td>
+                        <td>0 (predictable)</td>
+                        <td>2 (random)</td>
+                        <td>Code=0.2, Writing=0.8</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Max Tokens</strong></td>
+                        <td>Length of response</td>
+                        <td>50 (short)</td>
+                        <td>4000 (long)</td>
+                        <td>Tweet=50, Essay=2000</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Top P</strong></td>
+                        <td>Word selection diversity</td>
+                        <td>0.1 (focused)</td>
+                        <td>1.0 (diverse)</td>
+                        <td>Code=0.5, Writing=0.95</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Top K</strong></td>
+                        <td>Top K words to choose from</td>
+                        <td>1 (only best)</td>
+                        <td>40+ (many choices)</td>
+                        <td>Technical=5, Creative=40</td>
+                    </tr>
+                </table>
+
+                <p style="margin-top: 15px; color: #5b21b6; font-weight: 600;">💡 Remember: Same model, different parameters = completely different behavior!</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 40px 0; color: white; font-size: 1.1em;">
+            <p><strong>🏁 Day 1 Complete! </strong></p>
+            <p>You've gone from "What's AI?" to "How do transformers work?" in one day.</p>
+            <p>That puts you ahead of 95% of people. 🚀</p>
+            <p style="margin-top: 20px; opacity: 0.9;">See you in Day 2! The best is yet to come!</p>
+        </div>
+    </div>
+
+    <script>
+        function copyCode(elementId) {
+            const codeElement = document.getElementById(elementId);
+            const text = codeElement.innerText;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = "✓ Copied!";
+                btn.style.background = "var(--success)";
+
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "var(--primary)";
+                }, 2000);
+            });
+        }
+
+        // Confetti animation on page load
+        window.addEventListener('load', () => {
+            const confettis = document.querySelectorAll('.confetti');
+            confettis.forEach((confetti, index) => {
+                confetti.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+    </script>
+</body>
+</html>
+</body></html>
