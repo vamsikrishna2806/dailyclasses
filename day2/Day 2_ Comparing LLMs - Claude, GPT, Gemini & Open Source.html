@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 2: Comparing LLMs - Claude, GPT, Gemini & Open Source</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            margin: 20px 0 40px;
+        }
+
+        .header h1 {
+            font-size: 2.6em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Sections */
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        }
+
+        .section p {
+            color: #374151;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+
+        .section strong {
+            color: var(--primary);
+        }
+
+        .section ul {
+            color: #475569;
+            margin-left: 22px;
+        }
+
+        .section ul li {
+            margin: 8px 0;
+            font-weight: 500;
+        }
+
+        .section h2 {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2em;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .section h3 {
+            color: var(--dark);
+            font-size: 1.25em;
+            margin: 25px 0 12px;
+        }
+
+        .section-number {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            -webkit-text-fill-color: white;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .model-card {
+            border-radius: 10px;
+            padding: 20px;
+            border-top: 5px solid var(--primary);
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.1);
+        }
+
+        .model-card.open { border-top-color: var(--success); background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); }
+        .model-card.google { border-top-color: var(--warning); background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
+        .model-card.openai { border-top-color: var(--secondary); background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); }
+
+        .model-card h3 {
+            margin: 0 0 8px;
+            font-size: 1.15em;
+        }
+
+        .model-card .tag {
+            display: inline-block;
+            font-size: 0.75em;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: white;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .model-card p {
+            font-size: 0.92em;
+            margin-bottom: 8px;
+        }
+
+        /* Tables */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92em;
+        }
+
+        th {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 12px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            color: #374151;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) td { background: #f9fafb; }
+
+        /* Size bars */
+        .bar-row {
+            display: grid;
+            grid-template-columns: 170px 1fr 90px;
+            gap: 12px;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 0.92em;
+        }
+
+        .bar-track {
+            background: var(--border);
+            border-radius: 8px;
+            height: 16px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 8px;
+            transition: width 1.2s ease-out;
+        }
+
+        /* Callouts */
+        .concept-box {
+            background: #eef2ff;
+            border-left: 5px solid var(--primary);
+            padding: 18px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .warn-box {
+            background: #fffbeb;
+            border-left: 5px solid var(--warning);
+            padding: 18px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .success-box {
+            background: #ecfdf5;
+            border-left: 5px solid var(--success);
+            padding: 18px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        /* Code */
+        .code-section {
+            background: #1e1e2e;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: #313244;
+            color: #cdd6f4;
+            font-size: 0.9em;
+        }
+
+        .copy-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .code-section pre {
+            padding: 18px;
+            color: #cdd6f4;
+            overflow-x: auto;
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 0.88em;
+            line-height: 1.5;
+        }
+
+        /* Quiz */
+        .quiz-card {
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .quiz-card h3 { margin-top: 0; }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .opt-btn {
+            background: white;
+            border: 2px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            color: var(--dark);
+        }
+
+        .opt-btn:hover { border-color: var(--primary); }
+
+        .opt-btn.correct { border-color: var(--success); background: #ecfdf5; }
+        .opt-btn.wrong { border-color: #ef4444; background: #fef2f2; }
+
+        .feedback {
+            margin-top: 10px;
+            font-weight: 600;
+            min-height: 1.4em;
+        }
+
+        .feedback.good { color: var(--success); }
+        .feedback.bad { color: #ef4444; }
+
+        /* Results table input */
+        .score-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+
+        .btn {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            margin: 10px 8px 0 0;
+        }
+
+        .btn.secondary {
+            background: #6b7280;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.9;
+            padding: 20px 0 40px;
+        }
+
+        .note {
+            font-size: 0.85em;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .section { padding: 22px; }
+            .header h1 { font-size: 1.9em; }
+            .section h2 { font-size: 1.5em; }
+            .bar-row { grid-template-columns: 110px 1fr 70px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>Day 2: Comparing LLMs</h1>
+        <p>Claude, GPT, Gemini and open-source models: who to use, when, and how to test them yourself</p>
+    </div>
+
+    <!-- 1. Overview -->
+    <div class="section">
+        <h2><span class="section-number">1</span> 🗺️ The Model Landscape</h2>
+        <p>Today's language models fall into two families. <strong>Enterprise (closed) models</strong> are hosted by a company and reached through an API or a chat app. <strong>Open-weight models</strong> publish their weights, so you can run them on your own machine or cloud, or pick a hosting provider.</p>
+
+        <div class="card-grid">
+            <div class="model-card">
+                <span class="tag">Closed · Anthropic</span>
+                <h3>Claude 3 family</h3>
+                <p><strong>Strengths:</strong> careful reasoning, long documents, strong safety behaviour.</p>
+                <p><strong>Sizes:</strong> Haiku (fast), Sonnet (balanced), Opus (most capable).</p>
+            </div>
+            <div class="model-card openai">
+                <span class="tag">Closed · OpenAI</span>
+                <h3>GPT-4 family</h3>
+                <p><strong>Strengths:</strong> versatility across writing, coding, reasoning and tool use.</p>
+                <p><strong>Ecosystem:</strong> very wide third-party tooling and examples.</p>
+            </div>
+            <div class="model-card google">
+                <span class="tag">Closed · Google</span>
+                <h3>Gemini</h3>
+                <p><strong>Strengths:</strong> multimodal input (text, images, audio, video) and very long context windows.</p>
+                <p><strong>Ecosystem:</strong> tight integration with Google Cloud and Workspace.</p>
+            </div>
+            <div class="model-card open">
+                <span class="tag">Open weights · Meta</span>
+                <h3>Llama 2 / Llama 3</h3>
+                <p><strong>Strengths:</strong> free weights, run privately, fine-tune freely.</p>
+                <p><strong>Sizes:</strong> 7B, 13B, 70B (Llama 2); 8B and 70B (Llama 3).</p>
+            </div>
+            <div class="model-card open">
+                <span class="tag">Open weights · Mistral AI</span>
+                <h3>Mistral &amp; Mixtral</h3>
+                <p><strong>Strengths:</strong> fast inference for its size; Mixtral uses a mixture-of-experts design.</p>
+                <p><strong>Sizes:</strong> Mistral 7B; Mixtral 8x7B.</p>
+            </div>
+        </div>
+
+        <div class="concept-box">
+            <strong>Key idea:</strong> "Open" and "closed" describe how you get the model, not how good it is. The right choice depends on the task, the budget, the privacy needs and how much control you need.
+        </div>
+    </div>
+
+    <!-- 2. Model sizes -->
+    <div class="section">
+        <h2><span class="section-number">2</span> 📏 Model Size: 7B to 70B+ Parameters</h2>
+        <p>A <strong>parameter</strong> is one learned number inside the model. More parameters usually mean more knowledge and better reasoning, but also more memory, slower responses and higher cost.</p>
+
+        <h3>Rough size comparison (open models)</h3>
+        <div id="sizeBars"></div>
+        <p class="note">Bars are relative to a 70B model. Closed-model sizes are not published, so they are not shown.</p>
+
+        <div class="warn-box">
+            <strong>Bigger isn't always better.</strong> A well-trained 7B or 8B model can beat an older 70B model on narrow tasks, and it runs on a single consumer GPU or a laptop. Start small and move up only when quality requires it.
+        </div>
+    </div>
+
+    <!-- 3. Context windows -->
+    <div class="section">
+        <h2><span class="section-number">3</span> 🪟 Context Windows: 4K to 1M+ Tokens</h2>
+        <p>The <strong>context window</strong> is how much text (in tokens, roughly ¾ of a word) the model can read and respond to in one go: your prompt, the conversation so far, and any documents you paste in.</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Model</th><th>Context window</th><th>What that means</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Llama 2</td><td>4K tokens</td><td>A few pages; chunk long documents</td></tr>
+                    <tr><td>Llama 3</td><td>8K tokens</td><td>Short reports and long chats</td></tr>
+                    <tr><td>GPT-4 (original)</td><td>8K / 32K tokens</td><td>Essays and small codebases</td></tr>
+                    <tr><td>Claude 3 family</td><td>200K tokens</td><td>Whole books or large document sets</td></tr>
+                    <tr><td>Gemini 1.5 Pro</td><td>1M+ tokens</td><td>Hours of video or very large codebases</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="note">Context sizes change with each release. Check each provider's documentation for the current value.</p>
+    </div>
+
+    <!-- 4. Latency and cost -->
+    <div class="section">
+        <h2><span class="section-number">4</span> ⚡ Latency &amp; Cost</h2>
+        <p><strong>Latency</strong> is how long you wait. Two numbers matter: <em>time to first token</em> (how soon text starts appearing) and <em>tokens per second</em> (how fast it streams).</p>
+        <p><strong>Cost</strong> is usually charged per million input tokens and per million output tokens. Output tokens are typically more expensive. Self-hosted open models cost you hardware and electricity instead of per-token fees.</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Option</th><th>Latency</th><th>Cost pattern</th><th>Best when</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Small hosted model (e.g. Haiku-class, Mistral 7B)</td><td>Very low</td><td>Low per token</td><td>High-volume, simple tasks</td></tr>
+                    <tr><td>Large hosted model (e.g. Opus-class, GPT-4-class)</td><td>Higher</td><td>High per token</td><td>Hard reasoning, important outputs</td></tr>
+                    <tr><td>Self-hosted 7B–8B on a GPU</td><td>Low on your own hardware</td><td>Fixed hardware cost</td><td>Privacy, steady heavy use</td></tr>
+                    <tr><td>Self-hosted 70B</td><td>Needs large GPUs</td><td>Expensive hardware</td><td>Strong open model, in-house</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="concept-box">
+            <strong>Quick cost estimate:</strong> cost = (input tokens × input price + output tokens × output price) ÷ 1,000,000, multiplied by the number of requests. Always check the provider's current price sheet, because prices change often.
+        </div>
+    </div>
+
+    <!-- 5. Use cases -->
+    <div class="section">
+        <h2><span class="section-number">5</span> 🎯 Which Model for Which Job?</h2>
+        <p>There is no single best model. Here is a starting point. Always confirm with your own tests (Section 7).</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Use case</th><th>Good first choice</th><th>Why</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Customer chatbot</td><td>Small, fast hosted model, or Llama 3 8B</td><td>Low latency and low cost at high volume</td></tr>
+                    <tr><td>Coding assistant</td><td>GPT-4-class or Claude Sonnet/Opus-class</td><td>Strong at code generation and debugging</td></tr>
+                    <tr><td>Document analysis / summaries</td><td>Claude 3 family (200K context)</td><td>Handles long documents in one pass</td></tr>
+                    <tr><td>Images, audio or video input</td><td>Gemini</td><td>Native multimodal input</td></tr>
+                    <tr><td>Private or sensitive data</td><td>Self-hosted Llama 3 or Mistral</td><td>Data never leaves your infrastructure</td></tr>
+                    <tr><td>Specialized task (e.g. medical or legal terms)</td><td>Fine-tuned open model</td><td>Can be trained on your domain data</td></tr>
+                    <tr><td>Offline or edge device</td><td>Small quantized model (7B or less)</td><td>Runs without internet</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Quick quiz</h3>
+        <div class="quiz-card">
+            <h3>1. A hospital wants a summarizer for patient notes that must never leave its servers. Which option fits best?</h3>
+            <div class="options" data-answer="2" data-feedback="Correct! Self-hosting keeps data inside the hospital's infrastructure.">
+                <button class="opt-btn">A. Hosted GPT-4-class API</button>
+                <button class="opt-btn">B. Self-hosted Llama 3 or Mistral</button>
+                <button class="opt-btn">C. Gemini in a public chat app</button>
+            </div>
+            <div class="feedback"></div>
+        </div>
+        <div class="quiz-card">
+            <h3>2. You need to answer questions about a 300-page contract in one pass. Which context size matters most?</h3>
+            <div class="options" data-answer="1" data-feedback="Correct! A 200K+ window can hold the whole contract at once.">
+                <button class="opt-btn">A. 4K tokens</button>
+                <button class="opt-btn">B. 200K+ tokens</button>
+                <button class="opt-btn">C. 7B parameters</button>
+            </div>
+            <div class="feedback"></div>
+        </div>
+    </div>
+
+    <!-- 6. Practical: test models via APIs -->
+    <div class="section">
+        <h2><span class="section-number">6</span> 🧪 Hands-On: Test Models via APIs</h2>
+        <p>Reading about models is not enough. The fastest way to compare is to send the <strong>same prompts</strong> to several models and score the answers yourself. The script below does that for three providers. Each one needs its own API key (set as an environment variable), and the local Ollama option runs Llama and Mistral for free on your machine.</p>
+
+        <div class="code-section">
+            <div class="code-header">
+                <span>benchmark_models.py</span>
+                <button class="copy-btn" onclick="copyCode('benchCode', this)">Copy</button>
+            </div>
+<pre id="benchCode">import os, time, json, csv
+import requests
+from anthropic import Anthropic
+from openai import OpenAI
+
+PROMPTS = [
+    "Summarize this in one sentence: Photosynthesis converts light, water and CO2 into glucose and oxygen.",
+    "Write a Python function that returns the n-th Fibonacci number.",
+    "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much is the ball?",
+]
+
+def run_claude(prompt):
+    client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    msg = client.messages.create(
+        model="claude-sonnet-5-5",          # use the model ID from your provider's docs
+        max_tokens=512,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return msg.content[0].text, msg.usage.input_tokens, msg.usage.output_tokens
+
+def run_openai(prompt):
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    r = client.chat.completions.create(
+        model="gpt-4o",                     # any chat model you have access to
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return r.choices[0].message.content, r.usage.prompt_tokens, r.usage.completion_tokens
+
+def run_ollama(prompt, model="llama3"):   # local model, e.g. "mistral" or "llama3"
+    r = requests.post("http://localhost:11434/api/generate",
+                      json={"model": model, "prompt": prompt, "stream": False})
+    d = r.json()
+    return d["response"], d.get("prompt_eval_count", 0), d.get("eval_count", 0)
+
+MODELS = {
+    "claude": run_claude,
+    "gpt-4o": run_openai,
+    "llama3 (local)": run_ollama,
+}
+
+rows = []
+for name, fn in MODELS.items():
+    for i, prompt in enumerate(PROMPTS, 1):
+        start = time.perf_counter()
+        try:
+            answer, tin, tout = fn(prompt)
+        except Exception as e:
+            answer, tin, tout = f"ERROR: {e}", 0, 0
+        latency = time.perf_counter() - start
+        rows.append({
+            "model": name, "prompt_no": i, "latency_s": round(latency, 2),
+            "input_tokens": tin, "output_tokens": tout,
+            "tokens_per_s": round(tout / latency, 1) if latency else 0,
+            "answer": answer.strip(),
+        })
+        print(f"{name:16} prompt {i}  {latency:5.2f}s  {tout} out-tokens")
+
+with open("benchmark_results.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+    writer.writeheader()
+    writer.writerows(rows)
+
+print("Saved benchmark_results.csv: open it, read the answers and score each one.")
+</pre>
+        </div>
+
+        <h3>Run it</h3>
+        <div class="code-section">
+            <div class="code-header">
+                <span>Setup (Windows PowerShell)</span>
+                <button class="copy-btn" onclick="copyCode('setupCode', this)">Copy</button>
+            </div>
+<pre id="setupCode">pip install anthropic openai requests
+$env:ANTHROPIC_API_KEY = "your-key-here"
+$env:OPENAI_API_KEY = "your-key-here"
+# Local option: install Ollama from ollama.com, then run:
+ollama pull llama3
+python benchmark_models.py</pre>
+        </div>
+
+        <div class="warn-box">
+            <strong>Keep keys out of code.</strong> Set them as environment variables, as above. Never paste a real key into a script you share or commit to Git.
+        </div>
+
+        <h3>How to score the answers</h3>
+        <p>Use a simple rubric so every model is judged the same way. Score each answer 1–5 on these criteria, then average them:</p>
+        <ul>
+            <li><strong>Correctness:</strong> is the fact or code right? (the bat-and-ball question has a trap answer of $0.10)</li>
+            <li><strong>Instruction following:</strong> one sentence means one sentence</li>
+            <li><strong>Speed:</strong> the latency_s column</li>
+            <li><strong>Cost:</strong> token counts × the provider's price</li>
+        </ul>
+
+        <h3>Score your results</h3>
+        <p>Enter a 1–5 score for each model, and get an average. Your scores stay on this page only while it is open.</p>
+        <div class="table-wrap">
+            <table id="scoreTable">
+                <thead>
+                    <tr><th>Model</th><th>Correctness</th><th>Instructions</th><th>Speed (1–5)</th><th>Cost (1–5)</th><th>Average</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Claude</td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td class="avg">–</td></tr>
+                    <tr><td>GPT-4o</td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td class="avg">–</td></tr>
+                    <tr><td>Llama 3 (local)</td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td><input class="score-input" type="number" min="1" max="5"></td><td class="avg">–</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <button class="btn" onclick="calcScores()">Calculate averages</button>
+        <div id="scoreResult" class="feedback"></div>
+    </div>
+
+    <!-- 7. Takeaways -->
+    <div class="section">
+        <h2><span class="section-number">7</span> 🎓 What You Learned Today</h2>
+        <div class="success-box">
+            <ul>
+                <li><strong>Enterprise models</strong> (Claude, GPT-4, Gemini) are strong, easy to start with, and hosted for you.</li>
+                <li><strong>Open models</strong> (Llama, Mistral) give you privacy, control and fine-tuning, at the cost of running them yourself.</li>
+                <li><strong>Size, context window, latency and cost</strong> are the four numbers to compare before you choose.</li>
+                <li><strong>Match the model to the job:</strong> chatbots favour speed and cost; coding and analysis favour reasoning and context; sensitive data favours self-hosting.</li>
+                <li><strong>Always benchmark on your own prompts.</strong> A simple script and a scoring rubric beat any leaderboard for your use case.</li>
+            </ul>
+        </div>
+        <p class="note">Model names, context sizes and prices change frequently. Verify against each provider's current documentation before making a decision.</p>
+    </div>
+
+    <div class="footer">
+        Day 2 · Comparing LLMs
+    </div>
+</div>
+
+<script>
+    // Size bars (parameters in billions, scaled to 70B)
+    const sizes = [
+        { name: "Llama 3 8B", b: 8 },
+        { name: "Mistral 7B", b: 7 },
+        { name: "Llama 2 13B", b: 13 },
+        { name: "Llama 2 70B", b: 70 },
+        { name: "Llama 3 70B", b: 70 },
+    ];
+    const sizeBars = document.getElementById('sizeBars');
+    sizes.forEach(s => {
+        const pct = Math.round((s.b / 70) * 100);
+        sizeBars.insertAdjacentHTML('beforeend',
+            `<div class="bar-row"><span>${s.name}</span>
+               <div class="bar-track"><div class="bar-fill" data-w="${pct}"></div></div>
+               <span>${s.b}B params</span></div>`);
+    });
+    requestAnimationFrame(() => setTimeout(() => {
+        document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%');
+    }, 100));
+
+    // Quiz
+    document.querySelectorAll('.options').forEach(group => {
+        const answer = Number(group.dataset.answer);
+        const feedback = group.nextElementSibling;
+        const buttons = group.querySelectorAll('.opt-btn');
+        buttons.forEach((btn, i) => {
+            btn.addEventListener('click', () => {
+                if (group.dataset.locked) return;
+                group.dataset.locked = '1';
+                if (i === answer) {
+                    btn.classList.add('correct');
+                    feedback.textContent = group.dataset.feedback;
+                    feedback.className = 'feedback good';
+                } else {
+                    btn.classList.add('wrong');
+                    buttons[answer].classList.add('correct');
+                    feedback.textContent = 'Not quite. The green option is the best fit.';
+                    feedback.className = 'feedback bad';
+                }
+            });
+        });
+    });
+
+    // Copy code
+    function copyCode(id, btn) {
+        const text = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const original = btn.innerText;
+            btn.innerText = '✓ Copied!';
+            btn.style.background = 'var(--success)';
+            setTimeout(() => {
+                btn.innerText = original;
+                btn.style.background = 'var(--primary)';
+            }, 2000);
+        });
+    }
+
+    // Score averages
+    function calcScores() {
+        const rows = document.querySelectorAll('#scoreTable tbody tr');
+        const lines = [];
+        rows.forEach(row => {
+            const inputs = [...row.querySelectorAll('input')];
+            const vals = inputs.map(i => Number(i.value)).filter(v => v >= 1 && v <= 5);
+            const avgCell = row.querySelector('.avg');
+            if (vals.length === inputs.length) {
+                const avg = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2);
+                avgCell.textContent = avg;
+                lines.push(`${row.cells[0].innerText}: ${avg}`);
+            } else {
+                avgCell.textContent = '–';
+            }
+        });
+        const best = rows.length ? [...rows]
+            .filter(r => r.querySelector('.avg').textContent !== '–')
+            .sort((a, b) => parseFloat(b.querySelector('.avg').textContent) - parseFloat(a.querySelector('.avg').textContent))[0] : null;
+        document.getElementById('scoreResult').textContent = best
+            ? `Best overall for your rubric: ${best.cells[0].innerText} (${best.querySelector('.avg').textContent}).`
+            : 'Fill in all four scores for a model to see its average.';
+        document.getElementById('scoreResult').className = 'feedback good';
+    }
+</script>
+</body>
+</html>

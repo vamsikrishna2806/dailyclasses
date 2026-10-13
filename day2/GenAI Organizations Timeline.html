@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gen AI & Local Model Organizations: Timeline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header { text-align: center; color: white; margin: 30px 0 40px; }
+        .header h1 { font-size: 2.6em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.1em; opacity: 0.92; max-width: 800px; margin: 0 auto; }
+
+        /* Panels */
+        .panel {
+            background: var(--card);
+            border-radius: 15px;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        }
+
+        .panel h2 {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.9em;
+            margin-bottom: 18px;
+        }
+
+        .panel p { color: #374151; margin-bottom: 10px; }
+
+        /* Controls */
+        .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 10px; }
+        .controls input, .controls select {
+            padding: 10px 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-family: inherit;
+            background: white;
+            color: var(--dark);
+        }
+        .controls input { flex: 1; min-width: 220px; }
+        .controls input:focus, .controls select:focus { outline: none; border-color: var(--primary); }
+        .count { color: var(--muted); font-size: 0.9em; margin-top: 6px; }
+
+        /* Legend */
+        .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.78em;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+        }
+        .cat-frontier { background: #6366f1; }
+        .cat-bigtech { background: #0ea5e9; }
+        .cat-openweight { background: #10b981; }
+        .cat-china { background: #ef4444; }
+        .cat-europe { background: #8b5cf6; }
+        .cat-asia { background: #f59e0b; }
+        .cat-media { background: #ec4899; }
+        .cat-coding { background: #14b8a6; }
+        .cat-local { background: #84cc16; }
+        .cat-infra { background: #64748b; }
+
+        /* Year blocks */
+        .year-block { margin-bottom: 26px; }
+        .year-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .year-dot {
+            width: 62px; height: 62px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.05em;
+            flex-shrink: 0;
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+        }
+        .year-line { flex: 1; height: 3px; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 3px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+
+        .org {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            border-left: 4px solid var(--primary);
+            border-radius: 10px;
+            padding: 16px 18px;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.08);
+        }
+        .org-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+        .org h3 { font-size: 1.12em; color: var(--dark); }
+        .meta { font-size: 0.82em; color: var(--muted); margin-bottom: 8px; }
+        .org .how { color: #374151; font-size: 0.93em; margin-bottom: 8px; }
+        .org .label { font-weight: 700; color: var(--primary); font-size: 0.85em; }
+        .org .models { font-size: 0.88em; color: #374151; margin-top: 6px; }
+        .org .local { font-size: 0.88em; color: #065f46; margin-top: 6px; background: #ecfdf5; padding: 6px 8px; border-radius: 6px; }
+
+        /* Summary table */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+        th { background: #f5f3ff; color: var(--primary); position: sticky; top: 0; }
+        tr:hover td { background: #faf5ff; }
+
+        /* Notes */
+        .note {
+            background: #fffbeb;
+            border-left: 4px solid var(--warning);
+            padding: 14px 18px;
+            border-radius: 8px;
+            color: #78350f;
+            font-size: 0.93em;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            .panel { padding: 20px; }
+            .header h1 { font-size: 1.9em; }
+            .year-dot { width: 52px; height: 52px; font-size: 0.95em; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>Gen AI & Local Model Organizations</h1>
+        <p>Every major organization in generative AI and local (on-device / self-hosted) models, in chronological order of when each one first entered the field.</p>
+    </div>
+
+    <!-- Intro -->
+    <div class="panel">
+        <h2>How to read this page</h2>
+        <p><strong>Entered (year):</strong> the year the organization first put a generative model, product or tool into public use. This is the order used below.</p>
+        <p><strong>How they entered:</strong> the path each one took, same idea as Day 1: research breakthrough, then a model, then a product or open release.</p>
+        <p><strong>Local relevance:</strong> whether you can download and run the organization's models on your own computer.</p>
+        <div class="legend">
+            <span class="tag cat-frontier">Frontier lab</span>
+            <span class="tag cat-bigtech">Big Tech</span>
+            <span class="tag cat-openweight">Open-weight lab</span>
+            <span class="tag cat-china">China</span>
+            <span class="tag cat-europe">Europe</span>
+            <span class="tag cat-asia">Asia & Middle East</span>
+            <span class="tag cat-media">Media & creative</span>
+            <span class="tag cat-coding">Coding & apps</span>
+            <span class="tag cat-local">Local tools</span>
+            <span class="tag cat-infra">Infra & data</span>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="panel">
+        <h2>Search & filter</h2>
+        <div class="controls">
+            <input id="search" type="search" placeholder="Search organization, model or country...">
+            <select id="filter">
+                <option value="all">All categories</option>
+                <option value="Frontier lab">Frontier lab</option>
+                <option value="Big Tech">Big Tech</option>
+                <option value="Open-weight lab">Open-weight lab</option>
+                <option value="China">China</option>
+                <option value="Europe">Europe</option>
+                <option value="Asia & Middle East">Asia & Middle East</option>
+                <option value="Media & creative">Media & creative</option>
+                <option value="Coding & apps">Coding & apps</option>
+                <option value="Local tools">Local tools</option>
+                <option value="Infra & data">Infra & data</option>
+            </select>
+        </div>
+        <div class="count" id="count"></div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="panel">
+        <h2>Chronological timeline</h2>
+        <div id="timeline"></div>
+    </div>
+
+    <!-- Table -->
+    <div class="panel">
+        <h2>Quick reference table</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr><th>Year</th><th>Organization</th><th>Category</th><th>Headquarters</th><th>Founded</th><th>Key models / tools</th></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="panel">
+        <h2>Notes</h2>
+        <div class="note">
+            This list is based on my knowledge, which has a cutoff date, so releases from 2026 are not included. Dates are the year of first public release or entry, and some are approximate. Check each organization's official site before using these dates for citations or exams. Company names and products change often (for example, Zhipu also goes by Z.ai, and Google DeepMind was formed by merging teams in 2023).
+        </div>
+    </div>
+
+</div>
+
+<script>
+// [year, name, category, HQ, founded, how they entered, key models/tools, local-model note]
+const orgs = [
+    [2016, "Google DeepMind", "Big Tech", "London, UK", "2010 (Google-owned 2014)",
+        "Started as a London AI research lab. Generative entry: WaveNet (2016), a model that generates raw speech audio. Then AlphaGo, and later the Gemini family.",
+        "WaveNet, AlphaGo, Gemini, Gemma", "Gemma open-weight models run locally with Ollama and LM Studio."],
+
+    [2017, "Google Brain", "Big Tech", "Mountain View, USA", "2011",
+        "Published 'Attention Is All You Need' (June 2017), introducing the Transformer, the architecture every modern LLM is built on. Followed by BERT (2018), T5, LaMDA and PaLM.",
+        "Transformer, BERT, T5, PaLM", "Transformer design is the basis of every local LLM."],
+
+    [2018, "OpenAI", "Frontier lab", "San Francisco, USA", "Dec 2015 (non-profit)",
+        "Founded to build safe AGI. GPT-1 (June 2018) showed generative pre-training. GPT-2 (2019) was first held back for safety. GPT-3 API (2020) opened it to developers. ChatGPT (Nov 2022) brought genAI to the mainstream.",
+        "GPT-1 to GPT-4o, o-series, GPT-5, gpt-oss", "gpt-oss (2025) is an open-weight model you can run locally."],
+
+    [2018, "Hugging Face", "Infra & data", "New York, USA / Paris, France", "2016",
+        "Started as a teen chatbot app (2016), then pivoted to open-source NLP. The Transformers library (2018-19) and the Model Hub became the main place to download open and local models. BLOOM (2022) was a community-trained open LLM.",
+        "Transformers library, BLOOM, SmolLM, Model Hub", "Main source of downloadable models (safetensors and GGUF) used by local tools."],
+
+    [2019, "Microsoft", "Big Tech", "Redmond, USA", "1975",
+        "Invested about $1B in OpenAI in 2019 and built Azure OpenAI on its models. Turing-NLG (2020), GitHub Copilot (2021), Phi small models (2023), and in-house MAI models (2025).",
+        "Azure OpenAI, Copilot, Phi-3 / Phi-4", "Phi models are small enough to run on a laptop."],
+
+    [2019, "NVIDIA", "Infra & data", "Santa Clara, USA", "1993",
+        "Entered through the hardware and frameworks: Megatron-LM (2019) for training large transformers, then the NeMo framework. Its GPUs power most LLM training and inference.",
+        "Megatron-LM, NeMo, Nemotron", "CUDA GPU support is what local inference engines use on NVIDIA cards."],
+
+    [2021, "EleutherAI", "Open-weight lab", "Distributed (volunteer community)", "July 2020",
+        "Grassroots volunteer group that wanted an open GPT-3 alternative. GPT-Neo (2021), GPT-J, GPT-NeoX-20B and The Pile dataset.",
+        "GPT-Neo, GPT-J, GPT-NeoX, The Pile", "Fully open weights and data; widely used for local experiments."],
+
+    [2021, "AI21 Labs", "Frontier lab", "Tel Aviv, Israel", "2017",
+        "Israeli NLP company. Entered genAI with Jurassic-1 (Aug 2021), a large model sold through an API. Later Jamba, a hybrid Transformer and state-space open model.",
+        "Jurassic-1, Jamba", "Jamba open weights can be run locally with specialized builds."],
+
+    [2021, "Cohere", "Frontier lab", "Toronto, Canada", "2019",
+        "Founded by Aidan Gomez (a co-author of the Transformer paper) and others. Entered with an enterprise LLM API in 2021, then Command models for business use and RAG.",
+        "Command R / R+, Embed, Rerank", "Command R open weights are available for local use."],
+
+    [2021, "Naver", "Asia & Middle East", "Seongnam, South Korea", "1999",
+        "Korean internet company. Entered with HyperCLOVA (May 2021), one of the first large Korean-language LLMs.",
+        "HyperCLOVA, HyperCLOVA X", "Limited open release; mostly used through its own services."],
+
+    [2021, "Aleph Alpha", "Europe", "Heidelberg, Germany", "2019",
+        "German company focused on European and sovereign AI. Entered with the Luminous model family (Nov 2021), then pivoted to enterprise and government customers.",
+        "Luminous, Pharia", "Some open models; mostly enterprise deployments."],
+
+    [2021, "GitHub (Copilot)", "Coding & apps", "San Francisco, USA (Microsoft)", "2008",
+        "Entered genAI as a coding assistant. Copilot (preview June 2021) was built on OpenAI Codex and became the first mass-market AI coding tool.",
+        "GitHub Copilot", "Cloud service; no local model option in the basic product."],
+
+    [2022, "Meta AI (FAIR)", "Big Tech", "Menlo Park, USA", "2013 (as FAIR)",
+        "Entered with OPT (May 2022), an open decoder-only LLM up to 175B parameters. LLaMA (Feb 2023) was the turning point, and Llama 2, 3 and 4 followed.",
+        "OPT, LLaMA, Llama 2 / 3 / 4", "The most widely used local model family in the world."],
+
+    [2022, "Stability AI", "Media & creative", "London, UK", "2019",
+        "Released Stable Diffusion (Aug 2022) as open weights, which started the local image-generation community. Later SDXL and Stable Video.",
+        "Stable Diffusion 1.5, SDXL, Stable Video", "Open weights run on a consumer GPU through ComfyUI and Automatic1111."],
+
+    [2022, "Midjourney", "Media & creative", "San Francisco, USA", "2021",
+        "Started as a small research lab. Open beta (July 2022) through Discord made AI image generation popular with artists.",
+        "Midjourney v5 to v7", "Closed, cloud-only service."],
+
+    [2022, "Character.AI", "Media & creative", "Menlo Park, USA", "2021",
+        "Founded by former Google researchers (Noam Shazeer and Daniel De Freitas). Launched a consumer chatbot-persona app (Sept 2022).",
+        "Character personas", "Closed, cloud-only service."],
+
+    [2022, "Perplexity", "Coding & apps", "San Francisco, USA", "2022",
+        "Entered as an AI answer engine that cites web sources, instead of a chatbot. Launched its search product in Dec 2022.",
+        "Sonar, multi-model answer engine", "Closed, cloud-only service."],
+
+    [2022, "Adept", "Coding & apps", "San Francisco, USA", "2022",
+        "Focused on AI agents that act in software (ACT-1, Sept 2022). Its team was later absorbed by Amazon (2024).",
+        "ACT-1 (agent model)", "Research-stage; no local release."],
+
+    [2022, "LAION", "Infra & data", "Hamburg, Germany", "2021",
+        "Non-profit that released LAION-5B (2022), a large open image-text dataset. It was used to train Stable Diffusion and other open image models.",
+        "LAION-5B dataset, OpenCLIP", "Open datasets; used by local image-model builders."],
+
+    [2023, "Runway", "Media & creative", "New York, USA", "2018",
+        "Video and image-editing company. Entered genAI video with Gen-1 (Feb 2023), then Gen-2 and Gen-3 / Gen-4 video models.",
+        "Gen-1 to Gen-4 video", "Closed, cloud-only service."],
+
+    [2023, "ElevenLabs", "Media & creative", "London / New York", "2022",
+        "Entered with a high-quality text-to-speech and voice-cloning service (beta, Jan 2023). Now also offers voice agents and music tools.",
+        "Multilingual voice models", "Closed, cloud-only service."],
+
+    [2023, "Anthropic", "Frontier lab", "San Francisco, USA", "2021",
+        "Founded by former OpenAI staff, including Dario and Daniela Amodei. Claude launched (Mar 2023). Claude 3 (2024) and Claude 4 (2025) followed.",
+        "Claude 3 / 3.5 / 4 family", "Closed, cloud-only service."],
+
+    [2023, "Stanford CRFM (Alpaca)", "Open-weight lab", "Stanford, USA", "Academic",
+        "Academic group that fine-tuned LLaMA 7B cheaply into Alpaca (Mar 2023). This showed that small labs could build useful chat models.",
+        "Alpaca", "Research model; weights based on LLaMA."],
+
+    [2023, "LMSYS (UC Berkeley)", "Open-weight lab", "Berkeley, USA", "Academic",
+        "Released Vicuna (Mar 2023), a chat model fine-tuned from LLaMA. Also runs Chatbot Arena, the widely used public model leaderboard.",
+        "Vicuna, Chatbot Arena", "Open weights; the arena is a comparison tool."],
+
+    [2023, "llama.cpp (Georgi Gerganov)", "Local tools", "Open source (global)", "2023",
+        "Single-developer C/C++ project (Mar 2023) that ran LLaMA on an ordinary laptop CPU. Created the GGUF format used by most local tools today.",
+        "llama.cpp, GGUF", "The core engine behind most local LLM apps."],
+
+    [2023, "Nomic AI (GPT4All)", "Local tools", "New York, USA", "2022",
+        "Released GPT4All (Mar 2023), a desktop app that runs chat models offline. Nomic also makes embedding models and the Atlas data-visualization tool.",
+        "GPT4All, Nomic Embed", "Desktop app for offline chat with local models."],
+
+    [2023, "Ollama", "Local tools", "San Francisco, USA", "2023",
+        "Launched (Jul 2023) as a simple command-line tool for downloading and running local models, similar to Docker for LLMs. Now the most used local model runner.",
+        "Llama, Gemma, Qwen, DeepSeek, Mistral (via library)", "The easiest way to run local models: ollama run <model>."],
+
+    [2023, "LM Studio", "Local tools", "USA (Element Labs)", "2023",
+        "Desktop app with a built-in chat interface and model browser for running local GGUF models on Windows, Mac and Linux.",
+        "Any GGUF model", "Desktop GUI for local models with an OpenAI-compatible server."],
+
+    [2023, "Jan (Menlo Research)", "Local tools", "USA / Vietnam", "2023",
+        "Open-source offline ChatGPT alternative. Runs local models and can also connect to cloud APIs.",
+        "Any GGUF model", "Open-source desktop app for offline use."],
+
+    [2023, "Text Generation WebUI (oobabooga)", "Local tools", "Open source (community)", "2022-23",
+        "Community web interface for running local models with many loaders and fine-tuning options.",
+        "Any Transformers / GGUF / EXL2 model", "Popular community UI for enthusiasts."],
+
+    [2023, "KoboldCpp", "Local tools", "Open source (community)", "2023",
+        "Single-file, portable build of llama.cpp with a story-writing and chat UI. Popular for creative writing with local models.",
+        "Any GGUF model", "Portable local runner, no installation needed."],
+
+    [2023, "MLC LLM", "Local tools", "Open source (CMU and community)", "2023",
+        "Compiles LLMs to run natively on phones, browsers, GPUs and laptops using one compiler stack.",
+        "Llama, Phi, Gemma, Qwen (compiled)", "On-device and in-browser local inference."],
+
+    [2023, "vLLM", "Infra & data", "UC Berkeley (open source)", "2023",
+        "High-throughput inference engine (PagedAttention) that became the standard for serving open models on GPU servers.",
+        "Any Hugging Face model", "Server-side engine for self-hosted models."],
+
+    [2023, "Unsloth", "Local tools", "Open source (USA)", "2023",
+        "Fine-tuning library that makes training and quantizing LLMs faster and lighter on consumer GPUs.",
+        "Llama, Qwen, Gemma fine-tunes", "Lets you fine-tune models on your own GPU."],
+
+    [2023, "Llamafile (Mozilla Ocho)", "Local tools", "Mozilla (open source)", "2023",
+        "Packs a model and its runtime into a single executable file that runs on most operating systems with no install.",
+        "Any GGUF model packaged as a single file", "Single-file local model distribution."],
+
+    [2023, "Mistral AI", "Europe", "Paris, France", "Apr 2023",
+        "Founded by former DeepMind and Meta researchers. Released Mistral 7B (Sept 2023) with open weights, then Mixtral and Mistral Large.",
+        "Mistral 7B, Mixtral, Mistral Large, Ministral", "Strong open-weight models; popular for local use."],
+
+    [2023, "TII (Technology Innovation Institute)", "Asia & Middle East", "Abu Dhabi, UAE", "2020 (research center)",
+        "Abu Dhabi government research center. Released Falcon 40B (May 2023) and Falcon 180B as open models that topped open leaderboards.",
+        "Falcon 40B, Falcon 180B, Falcon 2 / 3", "Open weights; Falcon 3 models run on modest hardware."],
+
+    [2023, "Databricks", "Infra & data", "San Francisco, USA", "2013",
+        "Data platform company. Entered with Dolly 2.0 (Apr 2023), an open instruction-tuned model, and later bought MosaicML for its MPT models.",
+        "Dolly 2.0, DBRX", "Open weights for DBRX; Dolly is small enough to run locally."],
+
+    [2023, "MosaicML", "Infra & data", "San Francisco, USA", "2021",
+        "Built efficient LLM training tools. Released MPT-7B (May 2023), an open commercial-use model with long context. Acquired by Databricks (2023).",
+        "MPT-7B, MPT-30B", "Open weights; now part of Databricks."],
+
+    [2023, "Together AI", "Infra & data", "San Francisco, USA", "2022",
+        "Cloud platform for open models. Co-released RedPajama (Apr 2023), an open reproduction of the LLaMA training data.",
+        "RedPajama, Llama and Qwen hosting", "Hosts open models; not a local runner."],
+
+    [2023, "Nous Research", "Open-weight lab", "New York, USA (community)", "2022",
+        "Community research group that fine-tunes open models (the Hermes series) and publishes them for local use.",
+        "Hermes 2 / 3 / 4", "Popular open fine-tunes for local use."],
+
+    [2023, "Inflection AI", "Frontier lab", "Palo Alto, USA", "2022",
+        "Founded by Mustafa Suleyman, Reid Hoffman and Karen Simonyan. Launched Pi, a personal chatbot (May 2023). In 2024 most of its team moved to Microsoft.",
+        "Inflection-2.5, Pi", "Closed, cloud-only service."],
+
+    [2023, "Alibaba Cloud (Qwen)", "China", "Hangzhou, China", "1999 (Alibaba)",
+        "Announced Tongyi Qianwen (Apr 2023), then released Qwen open weights from Aug 2023. Qwen2.5 and Qwen3 are among the most-used local models.",
+        "Qwen 2.5, Qwen 3, Qwen-VL, Qwen-Coder", "Strong open weights in many sizes; widely used locally."],
+
+    [2023, "Baidu", "China", "Beijing, China", "2000",
+        "Entered with ERNIE Bot (Mar 2023), built on its ERNIE models that date back to 2019.",
+        "ERNIE 4.0 / 4.5", "Mostly cloud; some open ERNIE releases."],
+
+    [2023, "Zhipu AI (Z.ai)", "China", "Beijing, China", "2019 (Tsinghua spin-off)",
+        "Spun out of Tsinghua University. ChatGLM (Mar 2023) was one of China's first open bilingual LLMs. GLM-4 and GLM-4.5 followed.",
+        "ChatGLM, GLM-4, GLM-4.5", "Open GLM weights are published for local use."],
+
+    [2023, "01.AI", "China", "Beijing, China", "Mar 2023",
+        "Founded by Kai-Fu Lee. Released the open Yi model series (Nov 2023) with long-context variants.",
+        "Yi-34B, Yi-1.5", "Open weights for local use."],
+
+    [2023, "Baichuan Intelligence", "China", "Beijing, China", "Apr 2023",
+        "Founded by Wang Xiaochuan, a former Sogou CEO. Released Baichuan open models in mid-2023.",
+        "Baichuan 2, Baichuan 4", "Open weights for local use."],
+
+    [2023, "Moonshot AI (Kimi)", "China", "Beijing, China", "Mar 2023",
+        "Launched the Kimi chatbot (Oct 2023) with long-context support. Kimi K2 (2025) was released as an open model.",
+        "Kimi K2 and Kimi chat", "Open K2 weights; very large to run locally."],
+
+    [2023, "Tencent (Hunyuan)", "China", "Shenzhen, China", "1998",
+        "Entered with Hunyuan LLMs (Sept 2023) for its own apps. Later released open Hunyuan models.",
+        "Hunyuan, Hunyuan-Large", "Some open weights."],
+
+    [2023, "DeepSeek", "China", "Hangzhou, China", "2023 (from High-Flyer quant fund)",
+        "Founded by Liang Wenfeng. DeepSeek LLM (Nov 2023) was open; V2 and V3 (2024) and R1 (Jan 2025) drew global attention for low training cost and strong reasoning.",
+        "DeepSeek LLM, V3, R1, Coder", "Open weights; distilled R1 versions run locally with Ollama."],
+
+    [2023, "xAI", "Frontier lab", "Palo Alto, USA", "July 2023",
+        "Founded by Elon Musk. Grok launched (Nov 2023) inside X. Grok-1 weights were released as open source in Mar 2024.",
+        "Grok 1 (open), Grok 2 to Grok 4", "Grok-1 open weights exist but are very large."],
+
+    [2023, "Amazon (AWS)", "Big Tech", "Seattle, USA", "1994",
+        "Entered through the cloud. Amazon Bedrock and Titan models (Apr 2023) let companies use models from several providers. Nova models followed (Dec 2024).",
+        "Bedrock, Titan, Nova", "Cloud service; some Nova models in Bedrock."],
+
+    [2023, "IBM", "Big Tech", "Armonk, USA", "1911",
+        "Entered with watsonx (July 2023), a business AI platform. Granite open models (2024) built for enterprise use.",
+        "watsonx, Granite", "Granite open weights are available for local use."],
+
+    [2023, "Adobe", "Media & creative", "San Jose, USA", "1982",
+        "Entered with Firefly (Mar 2023), image generation trained on licensed Adobe Stock content and public-domain material.",
+        "Firefly Image models", "Closed, cloud-only service inside Adobe apps."],
+
+    [2023, "Suno", "Media & creative", "Cambridge, USA", "2022",
+        "AI music generation company. Entered with a text-to-song service (2023) that makes full songs with vocals.",
+        "Suno v3 / v4 / v5", "Closed, cloud-only service."],
+
+    [2023, "Pika", "Media & creative", "Palo Alto, USA", "2023",
+        "Text and image to video startup that launched its consumer app in 2023.",
+        "Pika video models", "Closed, cloud-only service."],
+
+    [2023, "Ideogram", "Media & creative", "Toronto, Canada", "2022",
+        "Entered with an image model known for legible text in images (Aug 2023).",
+        "Ideogram v2 / v3", "Closed, cloud-only service."],
+
+    [2023, "Cursor (Anysphere)", "Coding & apps", "San Francisco, USA", "2022",
+        "AI-first code editor built on VS Code. Entered with Cursor (2023) and became a major tool for AI-assisted coding.",
+        "Cursor, multi-model agent", "Closed, cloud-based editor; can use local models through custom endpoints."],
+
+    [2023, "Apple (MLX)", "Big Tech", "Cupertino, USA", "1976",
+        "Entered local models with MLX (Dec 2023), an array framework for running and training models on Apple silicon. Apple Intelligence (June 2024) followed.",
+        "MLX, OpenELM, Apple Intelligence", "MLX is the standard for local models on Mac."],
+
+    [2023, "Cerebras", "Infra & data", "Sunnyvale, USA", "2016",
+        "Hardware company. Released Cerebras-GPT (Mar 2023), a set of open models trained on its wafer-scale chips.",
+        "Cerebras-GPT, Inference cloud", "Open weights for the early models; hardware-focused."],
+
+    [2023, "Upstage", "Asia & Middle East", "Seoul, South Korea", "2020",
+        "Korean AI company. Released the Solar open models (Dec 2023), which topped some open leaderboards.",
+        "Solar 10.7B, Solar Pro", "Open Solar weights for local use."],
+
+    [2023, "StepFun", "China", "Shanghai, China", "2023",
+        "Founded by former Microsoft Research Asia staff. Released Step models for chat and multimodal use in 2024.",
+        "Step-1, Step-2", "Some open releases."],
+
+    [2023, "G42 / Inception (Jais)", "Asia & Middle East", "Abu Dhabi, UAE", "2018",
+        "Released Jais (Aug 2023), an open Arabic-English model, the largest Arabic LLM at the time.",
+        "Jais, Jais 2", "Open weights; Arabic language focus."],
+
+    [2024, "Google Gemma", "Big Tech", "Mountain View, USA", "Gemma line from 2024",
+        "Released Gemma (Feb 2024), a family of open-weight small models built from the Gemini research.",
+        "Gemma 2 / 3", "Designed to run on a laptop or single GPU."],
+
+    [2024, "Apple Intelligence", "Big Tech", "Cupertino, USA", "1976",
+        "Apple's on-device and private cloud AI (June 2024). Also released OpenELM open models.",
+        "Apple Intelligence, OpenELM", "Runs small models on the device for privacy."],
+
+    [2024, "Black Forest Labs", "Europe", "Freiburg, Germany", "2024",
+        "Founded by former Stability AI researchers. Released FLUX (Aug 2024), an open-weight image model that many users run locally.",
+        "FLUX.1 dev / schnell, FLUX Pro", "Open FLUX.1 dev and schnell weights run on consumer GPUs."],
+
+    [2024, "Luma AI", "Media & creative", "Palo Alto, USA", "2021",
+        "3D and video company. Entered with Dream Machine (June 2024), a text-to-video model.",
+        "Dream Machine, Ray", "Closed, cloud-only service."],
+
+    [2024, "Kuaishou (Kling)", "China", "Beijing, China", "2011",
+        "Video platform company. Launched Kling (June 2024), a text-to-video model that became one of China's leading video generators.",
+        "Kling video models", "Closed, cloud-only service."],
+
+    [2024, "Ai2 (Allen Institute)", "Open-weight lab", "Seattle, USA", "2014",
+        "Non-profit research institute. Released OLMo (Feb 2024), a fully open model with open data, code and training logs.",
+        "OLMo, Tulu, Molmo", "Fully open; designed for research."],
+
+    [2024, "Snowflake", "Infra & data", "Bozeman, USA", "2012",
+        "Data cloud company. Released Arctic (Apr 2024), an open model built for enterprise SQL and coding tasks.",
+        "Arctic", "Open weights; large model."],
+
+    [2024, "Groq", "Infra & data", "Mountain View, USA", "2016",
+        "Hardware company that built the LPU chip for very fast inference. Entered genAI by serving open models through its cloud.",
+        "LPU inference cloud", "Cloud service for open models."],
+
+    [2024, "ByteDance (Doubao)", "China", "Beijing, China", "2012",
+        "Launched Doubao (May 2024), its chatbot for TikTok's parent company's apps. Its Seed research team also releases models.",
+        "Doubao, Seed", "Mostly closed; some open releases."],
+
+    [2024, "LG AI Research (EXAONE)", "Asia & Middle East", "Seoul, South Korea", "2020",
+        "Released EXAONE (Dec 2024), an open Korean-English model used across LG products.",
+        "EXAONE 3.0 / 3.5", "Open weights for local use."],
+
+    [2024, "Sarvam AI", "Asia & Middle East", "Bengaluru, India", "2023",
+        "Indian AI company focused on Indic languages. Released Sarvam-1 (Oct 2024), an open model for Indian languages.",
+        "Sarvam-1, Sarvam-M", "Open weights for local use."],
+
+    [2024, "Krutrim (Ola)", "Asia & Middle East", "Bengaluru, India", "2023",
+        "AI company launched by Ola (Bhavish Aggarwal). Released Krutrim models for Indian languages in 2024.",
+        "Krutrim LLM", "Mostly cloud-based."],
+
+    [2024, "Liquid AI", "Open-weight lab", "Boston, USA", "2023",
+        "MIT CSAIL spin-off. Released Liquid Foundation Models (LFM, 2024) built for efficient on-device and edge use.",
+        "LFM 1B / 3B, LFM2", "Built for phones and laptops."],
+
+    [2024, "Sakana AI", "Asia & Middle East", "Tokyo, Japan", "2023",
+        "Japanese research company. Released The AI Scientist (2024) and Japanese language models.",
+        "The AI Scientist", "Mostly research releases."],
+
+    [2024, "Preferred Networks (PLaMo)", "Asia & Middle East", "Tokyo, Japan", "2014",
+        "Japanese AI firm. Released PLaMo, a Japanese-language model (2024).",
+        "PLaMo", "Some open releases."],
+
+    [2024, "Reka AI", "Frontier lab", "San Francisco, USA", "2022",
+        "Founded by former DeepMind and Meta researchers. Released Reka Flash and Reka Core (2024), multimodal models for businesses.",
+        "Reka Core, Reka Flash, Reka Edge", "Reka Flash and Edge open weights exist."],
+
+    [2024, "Cognition (Devin)", "Coding & apps", "San Francisco, USA", "2023",
+        "Entered as an autonomous AI software engineer (Devin, Mar 2024).",
+        "Devin, Windsurf", "Closed, cloud-only service."],
+
+    [2024, "Safe Superintelligence (SSI)", "Frontier lab", "Palo Alto, USA / Tel Aviv", "June 2024",
+        "Founded by Ilya Sutskever after his time at OpenAI. Focused on safe superintelligence research; no product releases so far.",
+        "No public products", "Research-only."],
+
+    [2024, "Reflection AI", "Open-weight lab", "San Francisco, USA", "2024",
+        "Founded by former DeepMind researchers, with a focus on open frontier-scale models.",
+        "Planned open models", "Plans for open releases."],
+
+    [2025, "Thinking Machines Lab", "Frontier lab", "San Francisco, USA", "2025",
+        "Founded by Mira Murati (former OpenAI CTO) and others. Focused on AI that is customizable and interpretable.",
+        "Tinker (fine-tuning API)", "Mostly API-based."],
+
+    [2025, "Xiaomi (MiMo)", "China", "Beijing, China", "2010",
+        "Consumer electronics maker that released its MiMo open reasoning models in 2025.",
+        "MiMo", "Open weights for local use."],
+
+    [2025, "Kakao (Kanana)", "Asia & Middle East", "Seongnam, South Korea", "2010",
+        "Korean internet company. Released Kanana open models in 2025 for Korean language tasks.",
+        "Kanana", "Open weights for local use."],
+
+    [2025, "Ant Group (Ling)", "China", "Hangzhou, China", "2014",
+        "Fintech company (Alibaba affiliate). Released Ling open models in 2025 for reasoning and coding.",
+        "Ling / Ring models", "Open weights for local use."]
+];
+
+const catClass = {
+    "Frontier lab": "cat-frontier",
+    "Big Tech": "cat-bigtech",
+    "Open-weight lab": "cat-openweight",
+    "China": "cat-china",
+    "Europe": "cat-europe",
+    "Asia & Middle East": "cat-asia",
+    "Media & creative": "cat-media",
+    "Coding & apps": "cat-coding",
+    "Local tools": "cat-local",
+    "Infra & data": "cat-infra"
+};
+
+const sorted = orgs.slice().sort((a, b) => a[0] - b[0]);
+
+function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function render() {
+    const q = document.getElementById("search").value.trim().toLowerCase();
+    const cat = document.getElementById("filter").value;
+    const rows = sorted.filter(o => {
+        const okCat = cat === "all" || o[2] === cat;
+        const hay = (o[1] + " " + o[3] + " " + o[6] + " " + o[5]).toLowerCase();
+        return okCat && (q === "" || hay.includes(q));
+    });
+
+    document.getElementById("count").textContent = "Showing " + rows.length + " of " + sorted.length + " organizations";
+
+    // Timeline grouped by year
+    const byYear = {};
+    rows.forEach(o => { (byYear[o[0]] = byYear[o[0]] || []).push(o); });
+    let html = "";
+    Object.keys(byYear).sort((a, b) => a - b).forEach(y => {
+        html += '<div class="year-block"><div class="year-head"><div class="year-dot">' + y + '</div><div class="year-line"></div></div><div class="grid">';
+        byYear[y].forEach(o => {
+            html += '<div class="org">' +
+                '<div class="org-top"><h3>' + esc(o[1]) + '</h3><span class="tag ' + catClass[o[2]] + '">' + esc(o[2]) + '</span></div>' +
+                '<div class="meta">HQ: ' + esc(o[3]) + ' &middot; Founded: ' + esc(o[4]) + '</div>' +
+                '<div class="how"><span class="label">How they entered: </span>' + esc(o[5]) + '</div>' +
+                '<div class="models"><strong>Key models / tools:</strong> ' + esc(o[6]) + '</div>' +
+                '<div class="local"><strong>Local models:</strong> ' + esc(o[7]) + '</div>' +
+                '</div>';
+        });
+        html += '</div></div>';
+    });
+    document.getElementById("timeline").innerHTML = html || '<p>No organizations match this search.</p>';
+
+    // Quick reference table
+    document.getElementById("tableBody").innerHTML = rows.map(o =>
+        '<tr><td>' + o[0] + '</td><td><strong>' + esc(o[1]) + '</strong></td><td>' + esc(o[2]) + '</td><td>' +
+        esc(o[3]) + '</td><td>' + esc(o[4]) + '</td><td>' + esc(o[6]) + '</td></tr>'
+    ).join("");
+}
+
+document.getElementById("search").addEventListener("input", render);
+document.getElementById("filter").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
