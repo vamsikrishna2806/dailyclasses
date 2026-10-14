@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Gemini API - Hello World</title>
+<style>
+:root{--bg:#f5f7ff;--card:#fff;--text:#1f2340;--muted:#5b6185;--code-bg:#111827;--code-text:#e5e7eb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+header{background:linear-gradient(120deg,var(--c1),var(--c2));color:#fff;padding:44px 20px 38px;text-align:center}
+header h1{margin:0 0 8px;font-size:2.1rem}
+header p{margin:0;opacity:.93;font-size:1.05rem}
+main{max-width:940px;margin:-24px auto 50px;padding:0 16px}
+section{background:var(--card);border-radius:16px;padding:26px 28px;margin-bottom:22px;box-shadow:0 6px 20px rgba(31,35,64,.08);border-left:6px solid var(--c1)}
+section h2{margin:0 0 10px;color:var(--c1);font-size:1.4rem}
+h3{margin:18px 0 6px}
+pre{background:var(--code-bg);color:var(--code-text);padding:14px 16px;border-radius:10px;overflow-x:auto;font-family:Consolas,"Courier New",monospace;font-size:.92rem;margin:10px 0}
+code{font-family:Consolas,"Courier New",monospace;background:#ede9fe;color:#5b21b6;padding:2px 6px;border-radius:6px;font-size:.92em}
+pre code{background:none;color:inherit;padding:0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.96rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #e5e7eb;vertical-align:top}
+th{background:linear-gradient(90deg,var(--c1),var(--c2));color:#fff}
+.callout{border-radius:10px;padding:12px 16px;margin:14px 0}
+.tip{background:#ecfdf5;border-left:4px solid #16a34a}
+.warn{background:#fff7ed;border-left:4px solid #ea580c}
+.info{background:#eff6ff;border-left:4px solid #2563eb}
+.out{background:#052e16;color:#bbf7d0;border-radius:10px;padding:12px 16px;margin:10px 0}
+.out pre{background:none;color:inherit;padding:0;margin:0}
+.tree{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;font-family:Consolas,"Courier New",monospace;font-size:.93rem;white-space:pre}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin:14px 0}
+.box{padding:10px 14px;border-radius:10px;color:#fff;font-weight:600;text-align:center;background:var(--c1);font-size:.95rem}
+.box small{font-weight:400;opacity:.92}
+.box.alt{background:var(--c2)}
+.arrow{color:var(--muted);font-size:1.3rem}
+.step{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.num{flex:0 0 40px;height:40px;border-radius:50%;background:var(--c1);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.step>div{flex:1;min-width:0}
+.step h3{margin:6px 0 4px}
+footer{text-align:center;color:var(--muted);font-size:.9rem;padding-bottom:30px}
+@media(max-width:600px){header h1{font-size:1.6rem}section{padding:20px 16px}.step{flex-direction:column}.arrow{display:none}}
+</style>
+</head>
+<body style="--c1:#2563eb;--c2:#0d9488">
+
+<header>
+  <h1>Google Gemini API</h1>
+  <p>Hello World: one prompt to Gemini</p>
+</header>
+
+<main>
+
+<section>
+  <h2>1. Project structure</h2>
+  <p>Each provider lives in its own folder with its own virtual environment, key file and library list.</p>
+<div class="tree">D:&#92;getwork&#92;day3&#92;
+  anthropic&#92;            &lt;- Claude (self-contained)
+  gemini&#92;               &lt;- Gemini (self-contained)
+  chatgpt&#92;              &lt;- ChatGPT (self-contained)
+     gemini&#92;
+       venv&#92;               &lt;- this folder&#39;s own virtual environment
+       .env              &lt;- your secret key and model name
+       requirements.txt  &lt;- libraries for this folder
+       hello_gemini.py   &lt;- the program
+       gemini_hello.html    &lt;- this guide</div>
+  <div class="callout info"><strong>Why a venv per folder?</strong> Each folder can be copied or pushed to GitHub
+  on its own, and its libraries never clash with the other providers.</div>
+</section>
+
+<section>
+  <h2>2. What this program does</h2>
+  <p>Sends one prompt to Gemini and prints the generated text.</p>
+</section>
+
+<section>
+  <h2>3. How the call happens (in a nutshell)</h2>
+  <div class="flow"><div class="box ">Your script<br><small>hello_*.py</small></div><div class="arrow">&rarr;</div><div class="box alt">Read the key<br><small>GEMINI_API_KEY from .env</small></div><div class="arrow">&rarr;</div><div class="box ">genai.Client()<br><small>official google-genai library</small></div><div class="arrow">&rarr;</div><div class="box alt">HTTPS request<br><small>JSON with your message</small></div><div class="arrow">&rarr;</div><div class="box ">AI model<br><small>reads it and writes a reply</small></div><div class="arrow">&rarr;</div><div class="box alt">JSON reply<br><small>back to the SDK</small></div><div class="arrow">&rarr;</div><div class="box ">Print<br><small>you read the text</small></div></div>
+  <table>
+    <tr><th>Stage</th><th>What happens</th></tr>
+    <tr><td>1. Your script</td><td>Runs the code line by line.</td></tr>
+    <tr><td>2. Key</td><td><code>load_dotenv()</code> reads <code>.env</code> so the key is not typed in the code.</td></tr>
+    <tr><td>3. SDK</td><td><code>genai.Client()</code> prepares the request for you.</td></tr>
+    <tr><td>4. Request</td><td>The SDK sends <code>client.models.generate_content(...)</code> to <code>Google&#x27;s Gemini endpoint (generativelanguage.googleapis.com)</code> with your key, which the SDK sends in a request header.</td></tr>
+    <tr><td>5. Model</td><td>The AI reads your message and writes a reply on its server.</td></tr>
+    <tr><td>6. Reply</td><td>The answer comes back as data; the SDK turns it into a Python object.</td></tr>
+    <tr><td>7. Print</td><td>You extract the text with <code>response.text</code> and print it.</td></tr>
+  </table>
+  <div class="callout tip"><strong>Key idea:</strong> your computer never runs the AI. It only sends a message over the internet
+  and receives the answer. The key proves who is paying for the call, so keep it secret.</div>
+</section>
+
+<section>
+  <h2>4. The main call, line by line</h2>
+  <table>
+    <tr><th>Part</th><th>Meaning</th></tr>
+    <tr><td><code>model</code></td><td>Which Gemini model answers (here: <code>gemini-2.5-flash</code>).</td></tr><tr><td><code>contents</code></td><td>Your prompt text.</td></tr>
+  </table>
+  <div class="callout info"><strong>Model name:</strong> stored in <code>.env</code> as <code>GEMINI_MODEL</code>.
+  Change it there, not in the code. Default: <code>gemini-2.5-flash</code>.</div>
+</section>
+
+<section>
+  <h2>5. Setup (do once)</h2>
+
+  <div class="step"><div class="num">1</div><div>
+    <h3>Get your key</h3>
+    <p>Sign in at <strong>aistudio.google.com</strong> and create a Gemini API key (from Google AI Studio). Copy it and keep it private.</p>
+  </div></div>
+
+  <div class="step"><div class="num">2</div><div>
+    <h3>Put the key in this folder's <code>.env</code></h3>
+    <p>Open <code>gemini\.env</code> and replace the placeholder:</p>
+<pre><code>GEMINI_API_KEY=your-key-here</code></pre>
+    <div class="callout warn">Never paste the key in chat, in code, or in GitHub. <code>.gitignore</code> blocks every <code>.env</code> file.</div>
+  </div></div>
+
+  <div class="step"><div class="num">3</div><div>
+    <h3>Create and activate this folder's virtual environment (once to create)</h3>
+<pre><code>cd D:\getwork\day3\gemini
+python -m venv venv
+.&#92;venv&#92;Scripts&#92;Activate.ps1</code></pre>
+    <p>The prompt should start with <code>(venv)</code>.</p>
+  </div></div>
+
+  <div class="step"><div class="num">4</div><div>
+    <h3>Install this folder's libraries (once, while venv is active)</h3>
+<pre><code>pip install -r requirements.txt</code></pre>
+  </div></div>
+</section>
+
+<section>
+  <h2>6. Run it</h2>
+<pre><code>cd D:\getwork\day3\gemini
+python hello_gemini.py</code></pre>
+
+  <h3>Expected output</h3>
+  <div class="out"><pre><code>Model : gemini-2.5-flash
+Reply : Hello, world! It&#x27;s a pleasure to say hi to you today.</code></pre></div>
+  <p>The reply text changes every time, but you should see the model name and a reply.</p>
+
+  <h3>Common problems</h3>
+  <table>
+    <tr><th>Message</th><th>Fix</th></tr>
+    <tr><td>Add your GEMINI_API_KEY to the .env file first.</td><td>The placeholder is still there. Save your real key in <code>gemini\.env</code>.</td></tr>
+    <tr><td><code>ModuleNotFoundError</code></td><td>Activate <code>venv</code> and run the install step again.</td></tr>
+    <tr><td>Authentication / 401 error</td><td>The key is wrong or was copied with extra spaces.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>7. The full code</h2>
+<pre><code>&quot;&quot;&quot;Hello World with the Google Gemini API.&quot;&quot;&quot;
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+from google import genai
+
+# Read the .env file that sits next to this script
+load_dotenv(Path(__file__).resolve().parent / &quot;.env&quot;)
+
+api_key = os.getenv(&quot;GEMINI_API_KEY&quot;)
+model = os.getenv(&quot;GEMINI_MODEL&quot;, &quot;gemini-2.5-flash&quot;)
+
+if not api_key or api_key == &quot;your-gemini-key-here&quot;:
+    raise SystemExit(&quot;Add your GEMINI_API_KEY to the .env file first.&quot;)
+
+client = genai.Client(api_key=api_key)
+
+response = client.models.generate_content(
+    model=model,
+    contents=&quot;Say hello world in one friendly sentence.&quot;,
+)
+
+print(&quot;Model :&quot;, model)
+print(&quot;Reply :&quot;, response.text)
+</code></pre>
+</section>
+
+</main>
+
+<footer>Google Gemini API &middot; Hello World guide</footer>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Commands - Guide</title>
+<style>
+  :root {
+    --bg: #f5f7ff;
+    --card: #ffffff;
+    --text: #1f2340;
+    --muted: #5b6185;
+    --purple: #7c3aed;
+    --blue: #2563eb;
+    --teal: #0d9488;
+    --orange: #ea580c;
+    --pink: #db2777;
+    --green: #16a34a;
+    --code-bg: #111827;
+    --code-text: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(120deg, #ea580c, #db2777 50%, #7c3aed);
+    color: #fff;
+    padding: 48px 20px 40px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 8px; font-size: 2.2rem; }
+  header p { margin: 0; opacity: .92; font-size: 1.05rem; }
+  main { max-width: 960px; margin: -24px auto 60px; padding: 0 16px; }
+  section {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 6px 20px rgba(31, 35, 64, .08);
+    border-left: 6px solid var(--accent, var(--purple));
+  }
+  section h2 { margin-top: 0; color: var(--accent, var(--purple)); font-size: 1.5rem; }
+  section h3 { margin: 18px 0 6px; }
+  .s-purple { --accent: var(--purple); }
+  .s-blue   { --accent: var(--blue); }
+  .s-teal   { --accent: var(--teal); }
+  .s-orange { --accent: var(--orange); }
+  .s-pink   { --accent: var(--pink); }
+  .s-green  { --accent: var(--green); }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card {
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: #faf9ff;
+    border: 1px solid #e6e1ff;
+  }
+  .card.blue   { background: #eff6ff; border-color: #bfdbfe; }
+  .card.teal   { background: #f0fdfa; border-color: #99f6e4; }
+  .card.orange { background: #fff7ed; border-color: #fed7aa; }
+  .card.pink   { background: #fdf2f8; border-color: #fbcfe8; }
+  .card.green  { background: #f0fdf4; border-color: #bbf7d0; }
+  .card h3 { margin-top: 0; }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 14px 16px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .95rem;
+    margin: 10px 0;
+  }
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    background: #ede9fe;
+    color: #5b21b6;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: .92em;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  .c-cmd { color: #34d399; }
+  .c-com { color: #94a3b8; }
+
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin: 14px 0;
+  }
+  .flow span {
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 600;
+    font-size: .95rem;
+  }
+  .flow .arrow { background: none; color: var(--muted); font-size: 1.3rem; padding: 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .96rem; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  th { background: linear-gradient(90deg, #ea580c, #db2777); color: #fff; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  td code { white-space: nowrap; }
+
+  .callout { border-radius: 10px; padding: 12px 16px; margin: 14px 0; font-size: .98rem; }
+  .callout.tip  { background: #ecfdf5; border-left: 4px solid var(--green); }
+  .callout.warn { background: #fff7ed; border-left: 4px solid var(--orange); }
+  .callout.info { background: #eff6ff; border-left: 4px solid var(--blue); }
+
+  ul.check { list-style: none; padding-left: 0; }
+  ul.check li::before { content: "\2713  "; color: var(--green); font-weight: 700; }
+
+  footer { text-align: center; color: var(--muted); font-size: .9rem; padding-bottom: 30px; }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.7rem; }
+    section { padding: 20px 16px; }
+    table { font-size: .88rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Git Commands</h1>
+  <p>The important commands you need every day, with clear examples</p>
+</header>
+
+<main>
+
+<!-- 1. CORE IDEA -->
+<section class="s-orange">
+  <h2>1. The Core Idea</h2>
+  <p>
+    Git tracks changes to your files over time. Every change you want to keep is saved as a
+    <strong>commit</strong>. Files move through three stages:
+  </p>
+  <div class="flow">
+    <span style="background:#2563eb">Working Directory<br><small>edit files</small></span>
+    <span class="arrow">&rarr;</span>
+    <span style="background:#7c3aed">Staging Area<br><small>git add</small></span>
+    <span class="arrow">&rarr;</span>
+    <span style="background:#16a34a">Repository<br><small>git commit</small></span>
+    <span class="arrow">&rarr;</span>
+    <span style="background:#db2777">Remote<br><small>git push</small></span>
+  </div>
+</section>
+
+<!-- 2. SETUP -->
+<section class="s-blue">
+  <h2>2. One-Time Setup</h2>
+  <p>Tell Git who you are. This is stored in every commit you make.</p>
+<pre><code><span class="c-cmd">git</span> config --global user.name "Your Name"
+<span class="c-cmd">git</span> config --global user.email "you@example.com"
+<span class="c-cmd">git</span> config --global init.defaultBranch main
+<span class="c-cmd">git</span> config --list</code></pre>
+</section>
+
+<!-- 3. START -->
+<section class="s-purple">
+  <h2>3. Starting a Project</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Create a new repository</h3>
+      <p>Run inside an existing folder to start tracking it.</p>
+<pre><code><span class="c-cmd">git</span> init</code></pre>
+    </div>
+    <div class="card blue">
+      <h3>Copy an existing repository</h3>
+      <p>Downloads the full project and its history.</p>
+<pre><code><span class="c-cmd">git</span> clone https://github.com/user/repo.git</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 4. DAILY -->
+<section class="s-teal">
+  <h2>4. Daily Workflow: Save Your Changes</h2>
+
+  <h3>See what changed</h3>
+<pre><code><span class="c-cmd">git</span> status          <span class="c-com"># files changed, staged, or untracked</span>
+<span class="c-cmd">git</span> diff            <span class="c-com"># line-by-line changes not yet staged</span>
+<span class="c-cmd">git</span> diff --staged   <span class="c-com"># changes already staged</span></code></pre>
+
+  <h3>Stage and commit</h3>
+<pre><code><span class="c-cmd">git</span> add report.txt        <span class="c-com"># stage one file</span>
+<span class="c-cmd">git</span> add .                 <span class="c-com"># stage everything in this folder</span>
+<span class="c-cmd">git</span> commit -m "Add login page"   <span class="c-com"># save a snapshot with a message</span>
+<span class="c-cmd">git</span> commit -am "Fix typo"        <span class="c-com"># stage tracked files and commit in one step</span></code></pre>
+
+  <div class="callout tip">
+    <strong>Good commit messages</strong> are short and describe <em>what</em> changed and <em>why</em>,
+    e.g. <code>Add input validation for email field</code>.
+  </div>
+</section>
+
+<!-- 5. HISTORY -->
+<section class="s-pink">
+  <h2>5. Viewing History</h2>
+<pre><code><span class="c-cmd">git</span> log                       <span class="c-com"># full commit history</span>
+<span class="c-cmd">git</span> log --oneline           <span class="c-com"># one line per commit</span>
+<span class="c-cmd">git</span> log --oneline --graph --all   <span class="c-com"># visual branch graph</span>
+<span class="c-cmd">git</span> show abc1234           <span class="c-com"># details of one commit</span></code></pre>
+</section>
+
+<!-- 6. BRANCHES -->
+<section class="s-green">
+  <h2>6. Branches</h2>
+  <p>A branch is an independent line of work. Use one per feature so <code>main</code> stays stable.</p>
+<pre><code><span class="c-cmd">git</span> branch                   <span class="c-com"># list local branches</span>
+<span class="c-cmd">git</span> branch feature-login       <span class="c-com"># create a branch</span>
+<span class="c-cmd">git</span> switch feature-login       <span class="c-com"># move to a branch (modern)</span>
+<span class="c-cmd">git</span> switch -c feature-login    <span class="c-com"># create and switch in one step</span>
+<span class="c-cmd">git</span> checkout -b feature-login  <span class="c-com"># older equivalent of the line above</span>
+<span class="c-cmd">git</span> merge feature-login       <span class="c-com"># bring branch changes into the current branch</span>
+<span class="c-cmd">git</span> branch -d feature-login    <span class="c-com"># delete a merged branch</span></code></pre>
+</section>
+
+<!-- 7. REMOTE -->
+<section class="s-orange">
+  <h2>7. Working With a Remote (GitHub, GitLab, etc.)</h2>
+<pre><code><span class="c-cmd">git</span> remote add origin https://github.com/user/repo.git   <span class="c-com"># connect to a remote</span>
+<span class="c-cmd">git</span> remote -v                                             <span class="c-com"># show remote URLs</span>
+<span class="c-cmd">git</span> push -u origin main       <span class="c-com"># first push; sets upstream</span>
+<span class="c-cmd">git</span> push                       <span class="c-com"># later pushes</span>
+<span class="c-cmd">git</span> pull                       <span class="c-com"># download and merge remote changes</span>
+<span class="c-cmd">git</span> fetch                      <span class="c-com"># download changes without merging</span></code></pre>
+</section>
+
+<!-- 8. UNDO -->
+<section class="s-blue">
+  <h2>8. Undoing Things</h2>
+  <div class="grid">
+    <div class="card blue">
+      <h3>Discard unstaged edits</h3>
+<pre><code><span class="c-cmd">git</span> restore report.txt</code></pre>
+    </div>
+    <div class="card">
+      <h3>Unstage a file</h3>
+<pre><code><span class="c-cmd">git</span> restore --staged report.txt</code></pre>
+    </div>
+    <div class="card orange">
+      <h3>Fix the last commit message</h3>
+<pre><code><span class="c-cmd">git</span> commit --amend -m "New message"</code></pre>
+    </div>
+    <div class="card pink">
+      <h3>Undo a commit, keep the changes</h3>
+<pre><code><span class="c-cmd">git</span> reset --soft HEAD~1</code></pre>
+    </div>
+  </div>
+  <div class="callout warn">
+    <strong>Be careful:</strong> <code>git reset --hard</code> and <code>git restore</code> permanently discard
+    uncommitted work. Commit or stash first if unsure.
+  </div>
+</section>
+
+<!-- 9. STASH -->
+<section class="s-purple">
+  <h2>9. Temporarily Setting Work Aside (Stash)</h2>
+  <p>Need to switch branches but aren't ready to commit? Stash your changes.</p>
+<pre><code><span class="c-cmd">git</span> stash              <span class="c-com"># save uncommitted changes and clean the folder</span>
+<span class="c-cmd">git</span> stash list         <span class="c-com"># see saved stashes</span>
+<span class="c-cmd">git</span> stash pop          <span class="c-com"># restore the latest stash and remove it</span></code></pre>
+</section>
+
+<!-- 10. IGNORE -->
+<section class="s-teal">
+  <h2>10. Ignoring Files</h2>
+  <p>Create a file named <code>.gitignore</code> in the project root to keep files out of Git:</p>
+<pre><code>venv/
+__pycache__/
+*.pyc
+.env
+.ipynb_checkpoints/</code></pre>
+  <p>Files already tracked by Git must be removed with <code>git rm --cached &lt;file&gt;</code> before they are ignored.</p>
+</section>
+
+<!-- USE CASE A: CLONE AND PULL -->
+<section class="s-blue">
+  <h2>Use Case A: Download a Project and Get Updates (Clone + Pull)</h2>
+
+  <div class="callout info">
+    <strong>In simple words:</strong> Someone else (or you, on another computer) already has the project on GitHub.
+    <strong>Clone</strong> = download it once. <strong>Pull</strong> = download only the new changes later.
+  </div>
+
+  <h3>Step 1: Download the project (you do this only once)</h3>
+  <p>Go to the GitHub page of the project, click the green <em>Code</em> button, and copy the link. Then run:</p>
+<pre><code><span class="c-cmd">git</span> clone https://github.com/user/repo.git   <span class="c-com"># paste your link here</span></code></pre>
+  <p>A new folder named <code>repo</code> appears. Enter it:</p>
+<pre><code><span class="c-cmd">cd</span> repo                                       <span class="c-com"># go inside the project folder</span></code></pre>
+
+  <h3>Step 2: Get the latest changes (do this whenever you want updates)</h3>
+<pre><code><span class="c-cmd">git</span> pull                                     <span class="c-com"># download the newest changes</span></code></pre>
+
+  <div class="callout tip">
+    <strong>Remember:</strong> Clone is done <em>once</em>. Pull is done <em>again and again</em>.
+  </div>
+
+  <h3>Special case: "local changes would be overwritten"</h3>
+  <p>
+    <strong>What the message means:</strong> you have edited files on your computer that are <em>not committed</em> yet,
+    and the same files were changed on GitHub. Git stops the pull so your edits are not lost.
+  </p>
+  <p><strong>The fix: shelve, pull, bring back</strong></p>
+  <ol>
+    <li><strong>Shelve your edits:</strong> <code>git stash</code> &nbsp;(your files go back to their saved version; your edits are kept on a temporary shelf)</li>
+    <li><strong>Get the new changes:</strong> <code>git pull</code> &nbsp;(now nothing is in the way)</li>
+    <li><strong>Bring your edits back:</strong> <code>git stash pop</code> &nbsp;(your edits are applied on top of the new code and removed from the shelf)</li>
+  </ol>
+<pre><code><span class="c-cmd">git</span> stash          <span class="c-com"># 1. shelve my unsaved edits</span>
+<span class="c-cmd">git</span> pull           <span class="c-com"># 2. download the newest changes</span>
+<span class="c-cmd">git</span> stash pop      <span class="c-com"># 3. put my edits back</span></code></pre>
+
+  <div class="callout info">
+    <strong>If <code>git stash pop</code> shows a conflict:</strong> the same lines were changed in both places.
+    Open the file, keep the correct lines (Git marks them with <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>),
+    save it, then run <code>git add &lt;file&gt;</code>.
+  </div>
+
+  <div class="callout tip">
+    <strong>Simpler alternative:</strong> if your work is finished, <code>git add .</code> and
+    <code>git commit -m "message"</code> first, then <code>git pull</code>. Git merges both sets of changes for you.
+  </div>
+</section>
+
+<!-- USE CASE B: REGULAR PUSH -->
+<section class="s-green">
+  <h2>Use Case B: Upload Your Work to Your Own GitHub (Push)</h2>
+
+  <div class="callout info">
+    <strong>In simple words:</strong> You write code on your computer. <strong>Push</strong> sends a copy of it to
+    your GitHub, so it is backed up and safe. Do this every day.
+  </div>
+
+  <h3>Step 1: Connect your folder to GitHub (you do this only once)</h3>
+  <p>First, create an empty repository on GitHub (click <em>New</em> on github.com and give it a name).
+     Then, inside your project folder, run:</p>
+<pre><code><span class="c-cmd">cd</span> D:\getwork\day3
+<span class="c-cmd">git</span> remote add origin https://github.com/your-name/your-repo.git
+<span class="c-cmd">git</span> push -u origin main</code></pre>
+
+  <h3>Step 2: Every day, do these 4 things</h3>
+  <ol>
+    <li><strong>See what you changed:</strong> <code>git status</code></li>
+    <li><strong>Pick the changes to save:</strong> <code>git add .</code> &nbsp;(the dot means "all of them")</li>
+    <li><strong>Write a short note about it:</strong> <code>git commit -m "Day 3 practice done"</code></li>
+    <li><strong>Upload:</strong> <code>git push</code></li>
+  </ol>
+
+<pre><code><span class="c-cmd">git</span> status
+<span class="c-cmd">git</span> add .
+<span class="c-cmd">git</span> commit -m "Day 3 practice done"
+<span class="c-cmd">git</span> push</code></pre>
+
+  <div class="callout tip">
+    <strong>Tip:</strong> If <code>git push</code> is rejected saying "updates were rejected", someone else changed the
+    project on GitHub. Run <code>git pull</code> first, then <code>git push</code> again.
+  </div>
+
+  <div class="callout warn">
+    <strong>Login:</strong> GitHub does not accept your normal password here. When asked, sign in through the
+    browser window that opens, or use a Personal Access Token. Never share your token.
+  </div>
+</section>
+
+<!-- 11. CHEAT TABLE -->
+<section class="s-pink">
+  <h2>11. Quick Reference</h2>
+  <table>
+    <tr><th>Goal</th><th>Command</th></tr>
+    <tr><td>Start a repo</td><td><code>git init</code></td></tr>
+    <tr><td>Copy a repo</td><td><code>git clone &lt;url&gt;</code></td></tr>
+    <tr><td>Check status</td><td><code>git status</code></td></tr>
+    <tr><td>Stage files</td><td><code>git add &lt;file&gt;</code> or <code>git add .</code></td></tr>
+    <tr><td>Save snapshot</td><td><code>git commit -m "message"</code></td></tr>
+    <tr><td>View history</td><td><code>git log --oneline</code></td></tr>
+    <tr><td>New branch</td><td><code>git switch -c &lt;name&gt;</code></td></tr>
+    <tr><td>Merge branch</td><td><code>git merge &lt;name&gt;</code></td></tr>
+    <tr><td>Upload</td><td><code>git push</code></td></tr>
+    <tr><td>Download</td><td><code>git pull</code></td></tr>
+    <tr><td>Stash work</td><td><code>git stash</code> / <code>git stash pop</code></td></tr>
+  </table>
+</section>
+
+<!-- 12. CHECKLIST -->
+<section class="s-green">
+  <h2>12. Best Practices</h2>
+  <ul class="check">
+    <li>Run <code>git status</code> before every commit.</li>
+    <li>Commit small, related changes with clear messages.</li>
+    <li>Pull before you push to avoid conflicts.</li>
+    <li>Use a branch for each feature or experiment.</li>
+    <li>Never commit secrets (passwords, API keys); keep them in <code>.env</code> and ignore that file.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>Git Commands Guide &middot; Prepared for Day 3 study material</footer>
+
+</body>
+</html>

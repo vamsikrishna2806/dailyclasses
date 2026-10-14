@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Virtual Environments - Guide</title>
+<style>
+  :root {
+    --bg: #f5f7ff;
+    --card: #ffffff;
+    --text: #1f2340;
+    --muted: #5b6185;
+    --purple: #7c3aed;
+    --blue: #2563eb;
+    --teal: #0d9488;
+    --orange: #ea580c;
+    --pink: #db2777;
+    --green: #16a34a;
+    --code-bg: #111827;
+    --code-text: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(120deg, #7c3aed, #2563eb 50%, #0d9488);
+    color: #fff;
+    padding: 48px 20px 40px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 8px; font-size: 2.2rem; }
+  header p { margin: 0; opacity: .92; font-size: 1.05rem; }
+  main { max-width: 960px; margin: -24px auto 60px; padding: 0 16px; }
+  section {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 6px 20px rgba(31, 35, 64, .08);
+    border-left: 6px solid var(--accent, var(--purple));
+  }
+  section h2 { margin-top: 0; color: var(--accent, var(--purple)); font-size: 1.5rem; }
+  section h3 { margin-bottom: 6px; color: var(--text); }
+  .s-purple { --accent: var(--purple); }
+  .s-blue   { --accent: var(--blue); }
+  .s-teal   { --accent: var(--teal); }
+  .s-orange { --accent: var(--orange); }
+  .s-pink   { --accent: var(--pink); }
+  .s-green  { --accent: var(--green); }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .card {
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: #faf9ff;
+    border: 1px solid #e6e1ff;
+  }
+  .card.blue   { background: #eff6ff; border-color: #bfdbfe; }
+  .card.teal   { background: #f0fdfa; border-color: #99f6e4; }
+  .card.orange { background: #fff7ed; border-color: #fed7aa; }
+  .card.pink   { background: #fdf2f8; border-color: #fbcfe8; }
+  .card.green  { background: #f0fdf4; border-color: #bbf7d0; }
+  .card h3 { margin-top: 0; }
+
+  .step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 22px;
+  }
+  .num {
+    flex: 0 0 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent, var(--purple));
+    font-size: 1.1rem;
+  }
+  .step-body { flex: 1; min-width: 0; }
+  .step-body h3 { margin: 6px 0 6px; }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 14px 16px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .95rem;
+    margin: 10px 0;
+  }
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    background: #ede9fe;
+    color: #5b21b6;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: .92em;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  .c-com { color: #94a3b8; }
+  .c-cmd { color: #34d399; }
+  .c-ok  { color: #fbbf24; }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #fff;
+    margin-right: 6px;
+  }
+  .tag.win  { background: var(--blue); }
+  .tag.mac  { background: var(--teal); }
+  .tag.note { background: var(--orange); }
+
+  .callout {
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: .98rem;
+  }
+  .callout.tip  { background: #ecfdf5; border-left: 4px solid var(--green); }
+  .callout.warn { background: #fff7ed; border-left: 4px solid var(--orange); }
+  .callout.info { background: #eff6ff; border-left: 4px solid var(--blue); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: .97rem;
+  }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  th { background: linear-gradient(90deg, #7c3aed, #2563eb); color: #fff; }
+  tr:nth-child(even) td { background: #f9fafb; }
+
+  ul.check { list-style: none; padding-left: 0; }
+  ul.check li::before { content: "\2713  "; color: var(--green); font-weight: 700; }
+
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin: 14px 0;
+  }
+  .flow span {
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .flow .arrow { background: none; color: var(--muted); font-size: 1.4rem; padding: 0; }
+
+  footer { text-align: center; color: var(--muted); font-size: .9rem; padding-bottom: 30px; }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.7rem; }
+    section { padding: 20px 16px; }
+    .step { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Python Virtual Environments</h1>
+  <p>What they are, why every Python learner needs them, and how to create one step by step</p>
+</header>
+
+<main>
+
+<!-- 1. WHAT -->
+<section class="s-purple">
+  <h2>1. What is a Virtual Environment?</h2>
+  <p>
+    A <strong>virtual environment (venv)</strong> is an <strong>isolated folder</strong> that contains its own
+    Python interpreter and its own set of installed libraries (packages).
+  </p>
+  <p>
+    Think of it as a <strong>separate toolbox for each project</strong>. Whatever you install inside one
+    toolbox does not leak into the others.
+  </p>
+
+  <div class="flow">
+    <span style="background:#7c3aed">Project A<br><small>pandas 1.5</small></span>
+    <span style="background:#2563eb">Project B<br><small>pandas 2.2</small></span>
+    <span style="background:#0d9488">Project C<br><small>Django 5</small></span>
+  </div>
+  <p style="text-align:center;color:var(--muted)">Each project has its own environment, so versions never clash.</p>
+</section>
+
+<!-- 2. WHY -->
+<section class="s-pink">
+  <h2>2. Why Do We Need It?</h2>
+  <div class="grid">
+    <div class="card pink">
+      <h3>Version conflicts</h3>
+      <p>Project A needs <code>numpy 1.26</code> while Project B needs <code>numpy 2.0</code>. Only one can be installed globally at a time. A venv solves this.</p>
+    </div>
+    <div class="card blue">
+      <h3>Clean system Python</h3>
+      <p>Installing random libraries globally can break Python itself or other tools on your computer.</p>
+    </div>
+    <div class="card teal">
+      <h3>Reproducibility</h3>
+      <p>Export the exact list with <code>pip freeze &gt; requirements.txt</code>. Anyone can rebuild the same setup on their machine.</p>
+    </div>
+    <div class="card green">
+      <h3>Team and deployment</h3>
+      <p>Colleagues and servers get the same libraries, which removes "it works on my machine" problems.</p>
+    </div>
+    <div class="card orange">
+      <h3>Easy cleanup</h3>
+      <p>Delete the folder and the environment is gone. Nothing else on your system is affected.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3. PROCEDURE WINDOWS -->
+<section class="s-blue">
+  <h2>3. Procedure to Create a Virtual Environment</h2>
+  <p>
+    <span class="tag win">Windows</span>
+    <span class="tag mac">macOS / Linux</span>
+    Commands are shown for each. Open a terminal inside your project folder first.
+  </p>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div class="step-body">
+      <h3>Check that Python is installed</h3>
+      <p><span class="tag win">Windows</span></p>
+      <pre><code><span class="c-cmd">python</span> --version</code></pre>
+      <p><span class="tag mac">macOS / Linux</span></p>
+      <pre><code><span class="c-cmd">python3</span> --version</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div class="step-body">
+      <h3>Go to your project folder</h3>
+      <pre><code><span class="c-cmd">cd</span> D:\getwork\day3</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div class="step-body">
+      <h3>Create the environment</h3>
+      <p>The name <code>venv</code> is the usual convention. The command creates a folder called <code>venv</code>.</p>
+      <p><span class="tag win">Windows</span></p>
+      <pre><code><span class="c-cmd">python</span> -m venv venv</code></pre>
+      <p><span class="tag mac">macOS / Linux</span></p>
+      <pre><code><span class="c-cmd">python3</span> -m venv venv</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div class="step-body">
+      <h3>Activate the environment</h3>
+      <p><span class="tag win">Windows (PowerShell)</span></p>
+      <pre><code><span class="c-cmd">.\venv\Scripts\Activate.ps1</span></code></pre>
+      <p><span class="tag win">Windows (Command Prompt)</span></p>
+      <pre><code><span class="c-cmd">venv\Scripts\activate.bat</span></code></pre>
+      <p><span class="tag mac">macOS / Linux</span></p>
+      <pre><code><span class="c-cmd">source venv/bin/activate</span></code></pre>
+      <p>When it works, the prompt starts with <code>(venv)</code>:</p>
+      <pre><code><span class="c-ok">(venv)</span> PS D:\getwork\day3&gt;</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">5</div>
+    <div class="step-body">
+      <h3>Install packages inside it</h3>
+      <pre><code><span class="c-cmd">pip</span> install pandas numpy</code></pre>
+      <p>Packages go only into <code>venv</code>, not into the system Python.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">6</div>
+    <div class="step-body">
+      <h3>Save your dependencies (optional, recommended)</h3>
+      <pre><code><span class="c-cmd">pip</span> freeze &gt; requirements.txt</code></pre>
+      <p>Later, or on another machine, restore everything with:</p>
+      <pre><code><span class="c-cmd">pip</span> install -r requirements.txt</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">7</div>
+    <div class="step-body">
+      <h3>Deactivate when finished</h3>
+      <pre><code><span class="c-cmd">deactivate</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 4. TROUBLESHOOTING -->
+<section class="s-orange">
+  <h2>4. Common Problems and Fixes</h2>
+
+  <div class="callout warn">
+    <strong>"running scripts is disabled on this system"</strong> (PowerShell)<br>
+    Allow local scripts for your user account only, then try activating again:
+    <pre><code><span class="c-cmd">Set-ExecutionPolicy</span> -Scope CurrentUser -ExecutionPolicy RemoteSigned</code></pre>
+  </div>
+
+  <div class="callout info">
+    <strong>"python is not recognized"</strong><br>
+    Python is not on your PATH. Reinstall Python from python.org and tick <em>"Add python.exe to PATH"</em>, or use the <code>py</code> launcher: <code>py -m venv venv</code>.
+  </div>
+
+  <div class="callout tip">
+    <strong>Delete and recreate a broken environment</strong><br>
+    The environment is just a folder, so it is safe to delete and rebuild:
+    <pre><code>deactivate
+Remove-Item -Recurse -Force venv
+python -m venv venv</code></pre>
+  </div>
+</section>
+
+<!-- 5. GIT -->
+<section class="s-teal">
+  <h2>5. Important: Do Not Commit the venv</h2>
+  <p>
+    The <code>venv</code> folder is large and specific to your machine. Add it to <code>.gitignore</code>:
+  </p>
+  <pre><code>venv/
+__pycache__/
+*.pyc</code></pre>
+  <p>Commit <code>requirements.txt</code> instead, so others can recreate the environment.</p>
+</section>
+
+<!-- 6. QUICK SUMMARY -->
+<section class="s-green">
+  <h2>6. Quick Summary</h2>
+  <table>
+    <tr><th>Task</th><th>Windows (PowerShell)</th><th>macOS / Linux</th></tr>
+    <tr><td>Create</td><td><code>python -m venv venv</code></td><td><code>python3 -m venv venv</code></td></tr>
+    <tr><td>Activate</td><td><code>.\venv\Scripts\Activate.ps1</code></td><td><code>source venv/bin/activate</code></td></tr>
+    <tr><td>Install</td><td><code>pip install package</code></td><td><code>pip install package</code></td></tr>
+    <tr><td>Save list</td><td><code>pip freeze &gt; requirements.txt</code></td><td><code>pip freeze &gt; requirements.txt</code></td></tr>
+    <tr><td>Restore</td><td><code>pip install -r requirements.txt</code></td><td><code>pip install -r requirements.txt</code></td></tr>
+    <tr><td>Leave</td><td><code>deactivate</code></td><td><code>deactivate</code></td></tr>
+  </table>
+
+  <ul class="check">
+    <li>Always activate the venv before installing or running project code.</li>
+    <li>One venv per project.</li>
+    <li>Keep <code>requirements.txt</code> updated; keep <code>venv/</code> out of Git.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>Python Virtual Environment Guide &middot; Prepared for Day 3 study material</footer>
+
+</body>
+</html>
