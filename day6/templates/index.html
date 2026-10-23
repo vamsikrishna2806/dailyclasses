@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Task Tracker</title>
+    <!-- Link to the external CSS stylesheet -->
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Google Fonts for clean, modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <main class="app-container">
+        <!-- Application Header -->
+        <header class="app-header">
+            <div class="header-icon">🎓</div>
+            <h1>Student Task Tracker</h1>
+            <p class="subtitle">Stay focused, manage your study goals, and get things done.</p>
+        </header>
+
+        <!-- Task Input Section (Feature 1: Add a task) -->
+        <section class="add-task-section">
+            <form id="taskForm" class="task-form" novalidate>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="taskTitleInput" 
+                        placeholder="What do you need to study today? (e.g., Read Biology Chapter 3)" 
+                        maxlength="200" 
+                        autocomplete="off"
+                        aria-label="New task title"
+                    >
+                    <span id="charCounter" class="char-counter">0/200</span>
+                </div>
+                <button type="submit" id="addTaskBtn" class="btn-primary">Add Task</button>
+            </form>
+
+            <!-- Error banner for validation feedback -->
+            <div id="errorBanner" class="error-banner" role="alert" style="display: none;"></div>
+        </section>
+
+        <!-- Task List Section (Feature 2: See all tasks) -->
+        <section class="task-list-section">
+            <div class="list-header">
+                <h2>Your Tasks</h2>
+                <span id="taskStats" class="task-stats">0 tasks</span>
+            </div>
+
+            <!-- Empty state when no tasks exist -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">📝</div>
+                <p class="empty-text">No tasks yet! Add your first study task above.</p>
+            </div>
+
+            <!-- List container where tasks are dynamically placed by app.js -->
+            <ul id="taskList" class="task-list" aria-live="polite"></ul>
+        </section>
+    </main>
+
+    <!-- Link to the external JavaScript logic -->
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learn Flask Interactively</title>
+<style>
+  :root {
+    --bg: #f7f7f4;
+    --surface: #ffffff;
+    --surface-2: #f0efe9;
+    --text: #1d1d1b;
+    --muted: #64635d;
+    --border: #e2e0d8;
+    --accent: #2f6fde;
+    --accent-soft: #e5eefc;
+    --good: #1f8a4c;
+    --good-soft: #e3f4ea;
+    --bad: #c4352b;
+    --bad-soft: #fbe7e5;
+    --warn: #a86a00;
+    --warn-soft: #fbf0d9;
+    --code-bg: #1e1f24;
+    --code-text: #e6e6e6;
+    --code-kw: #c792ea;
+    --code-str: #a5d6a7;
+    --code-dec: #ffcb6b;
+    --code-com: #7f848e;
+    --code-num: #f78c6c;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.05);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141413; --surface: #1d1d1b; --surface-2: #262624; --text: #ecebe6; --muted: #a09f98;
+      --border: #34332f; --accent: #6f9cf0; --accent-soft: #1e2a40; --good: #4cc27f; --good-soft: #17301f;
+      --bad: #f07a70; --bad-soft: #3a1d1a; --warn: #f0b84d; --warn-soft: #3a2e14; --code-bg: #111214;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141413; --surface: #1d1d1b; --surface-2: #262624; --text: #ecebe6; --muted: #a09f98;
+    --border: #34332f; --accent: #6f9cf0; --accent-soft: #1e2a40; --good: #4cc27f; --good-soft: #17301f;
+    --bad: #f07a70; --bad-soft: #3a1d1a; --warn: #f0b84d; --warn-soft: #3a2e14; --code-bg: #111214;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  code, pre, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+  a { color: var(--accent); }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
+  }
+  .topbar-inner { max-width: 1080px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px; align-items: center; }
+  .brand { font-weight: 700; white-space: nowrap; }
+  .nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a {
+    text-decoration: none; color: var(--muted); font-size: 13px; padding: 4px 10px; border-radius: 999px;
+    white-space: nowrap; border: 1px solid transparent;
+  }
+  .nav a.visited { color: var(--text); }
+  .nav a.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .theme-btn { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+  .progress { height: 3px; background: var(--accent); width: 0; transition: width .15s; }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 0 16px 80px; }
+  section { padding: 56px 0 8px; scroll-margin-top: 60px; }
+  h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.15; margin: 0 0 12px; }
+  h2 { font-size: clamp(22px, 3.5vw, 30px); margin: 0 0 6px; }
+  h3 { margin: 0 0 8px; font-size: 18px; }
+  .kicker { color: var(--accent); font-weight: 600; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+  .lead { color: var(--muted); font-size: 18px; max-width: 720px; }
+  .sub { color: var(--muted); margin: 0 0 20px; max-width: 760px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .grid { display: grid; gap: 14px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+  button.btn {
+    font: inherit; font-size: 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); padding: 7px 14px; cursor: pointer; transition: transform .05s, background .15s;
+  }
+  button.btn:hover { background: var(--surface-2); }
+  button.btn:active { transform: scale(.97); }
+  button.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.btn.primary:hover { filter: brightness(1.08); }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  input, select, textarea {
+    font: inherit; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 10px; min-width: 0;
+  }
+  textarea { width: 100%; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* ---------- hero ---------- */
+  .hero { padding-top: 48px; }
+  .hero-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: center; }
+  @media (max-width: 800px) { .hero-grid { grid-template-columns: 1fr; } }
+  .pill { display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .facts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .fact { font-size: 13px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+
+  /* ---------- code block ---------- */
+  .code {
+    background: var(--code-bg); color: var(--code-text); border-radius: 12px; padding: 14px 0; overflow-x: auto;
+    font-size: 13.5px; line-height: 1.65;
+  }
+  .code .ln { display: block; padding: 0 16px 0 0; white-space: pre; border-left: 3px solid transparent; transition: background .2s; }
+  .code .ln .num { display: inline-block; width: 34px; text-align: right; color: #5c6370; margin-right: 14px; user-select: none; }
+  .code .ln.hl { background: rgba(111,156,240,.18); border-left-color: #6f9cf0; }
+  .code .ln.dim { opacity: .45; }
+  .code.clickable .ln { cursor: pointer; }
+  .code.clickable .ln:hover { background: rgba(255,255,255,.05); }
+  .tk-kw { color: var(--code-kw); } .tk-str { color: var(--code-str); } .tk-dec { color: var(--code-dec); }
+  .tk-com { color: var(--code-com); font-style: italic; } .tk-num { color: var(--code-num); }
+
+  /* ---------- analogy ---------- */
+  .ana { cursor: pointer; text-align: left; font: inherit; color: inherit; position: relative; min-height: 150px; }
+  .ana .emoji { font-size: 34px; }
+  .ana .role { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .ana .back { display: none; color: var(--text); font-size: 14px; margin-top: 6px; }
+  .ana.open .back { display: block; }
+  .ana.open { border-color: var(--accent); }
+  .ana .hint { font-size: 12px; color: var(--accent); margin-top: 6px; }
+  .ana.open .hint { display: none; }
+
+  /* ---------- flow ---------- */
+  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: stretch; margin: 18px 0; }
+  @media (max-width: 760px) { .flow { grid-template-columns: 1fr; } }
+  .node {
+    border: 2px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; background: var(--surface);
+    transition: all .25s; position: relative;
+  }
+  .node .ic { font-size: 28px; }
+  .node .nm { font-weight: 600; font-size: 14px; }
+  .node .ds { font-size: 12px; color: var(--muted); }
+  .node.on { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-3px); box-shadow: 0 6px 18px rgba(47,111,222,.2); }
+  .node.skip { opacity: .35; }
+  .node.done { border-color: var(--good); }
+  .flow-msg { min-height: 74px; padding: 14px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+  .flow-msg b { color: var(--accent); }
+  .steps-dots { display: flex; gap: 6px; }
+  .steps-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+  .steps-dots span.on { background: var(--accent); }
+
+  /* ---------- explainer ---------- */
+  .explain { padding: 16px; border-radius: 12px; background: var(--accent-soft); border: 1px solid var(--accent); min-height: 120px; }
+  .explain .t { font-weight: 700; margin-bottom: 4px; }
+
+  /* ---------- playground ---------- */
+  .pg { display: grid; grid-template-columns: 1.05fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .pg { grid-template-columns: 1fr; } }
+  .urlbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .urlbar .host { color: var(--muted); font-size: 13px; }
+  .urlbar input { flex: 1; min-width: 140px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .presets button { font-size: 12px; padding: 4px 9px; }
+  .method { font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 5px; margin-right: 4px; }
+  .m-GET { background: var(--good-soft); color: var(--good); } .m-POST { background: var(--warn-soft); color: var(--warn); }
+  .m-PATCH { background: var(--accent-soft); color: var(--accent); } .m-DELETE { background: var(--bad-soft); color: var(--bad); }
+  .resp { margin-top: 12px; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+  .resp-head { padding: 8px 12px; font-size: 13px; display: flex; justify-content: space-between; gap: 8px; background: var(--surface-2); flex-wrap: wrap; }
+  .status { font-weight: 700; padding: 1px 8px; border-radius: 6px; }
+  .s2 { background: var(--good-soft); color: var(--good); } .s4 { background: var(--bad-soft); color: var(--bad); }
+  .resp-body { padding: 12px; font-size: 13px; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow: auto; background: var(--surface); }
+  .why { margin-top: 10px; font-size: 14px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
+  .log { font-size: 12px; max-height: 140px; overflow: auto; margin-top: 10px; color: var(--muted); }
+  .log div { padding: 2px 0; border-bottom: 1px dashed var(--border); }
+
+  /* ---------- templates ---------- */
+  .tpl { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 800px) { .tpl { grid-template-columns: 1fr; } }
+  .rendered { padding: 14px; border: 1px dashed var(--border); border-radius: 12px; min-height: 160px; background: var(--surface); }
+  .rendered h2 { font-size: 20px; }
+  .err { color: var(--bad); font-size: 13px; }
+  .cheats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .cheats code { font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); padding: 3px 7px; border-radius: 6px; cursor: pointer; }
+  .cheats code:hover { border-color: var(--accent); }
+
+  /* ---------- methods ---------- */
+  .mcard { border-top: 4px solid var(--border); }
+  .mcard.GET { border-top-color: var(--good); } .mcard.POST { border-top-color: var(--warn); }
+  .mcard.PATCH { border-top-color: var(--accent); } .mcard.DELETE { border-top-color: var(--bad); }
+  .mcard .crud { font-size: 12px; color: var(--muted); }
+  .codes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .codes button { font-family: ui-monospace, Consolas, monospace; }
+  .code-info { margin-top: 10px; min-height: 48px; }
+
+  /* ---------- tree ---------- */
+  .tree { font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+  .tree .it { padding: 5px 8px; border-radius: 8px; cursor: pointer; display: block; width: 100%; text-align: left; background: none; border: none; color: var(--text); font: inherit; }
+  .tree .it:hover { background: var(--surface-2); }
+  .tree .it.sel { background: var(--accent-soft); color: var(--accent); }
+  .tree .i1 { padding-left: 28px; }
+
+  /* ---------- quiz ---------- */
+  .q { margin-bottom: 14px; }
+  .q .opts { display: grid; gap: 8px; margin-top: 10px; }
+  .q .opt { text-align: left; font: inherit; font-size: 15px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+  .q .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .q .opt.right { background: var(--good-soft); border-color: var(--good); }
+  .q .opt.wrong { background: var(--bad-soft); border-color: var(--bad); }
+  .q .fb { margin-top: 8px; font-size: 14px; color: var(--muted); }
+  .score { font-size: 20px; font-weight: 700; }
+
+  /* ---------- setup ---------- */
+  .step { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; margin-bottom: 14px; }
+  .step .n { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  .cmd { display: flex; align-items: center; gap: 8px; background: var(--code-bg); color: var(--code-text); border-radius: 10px; padding: 8px 8px 8px 14px; margin-top: 6px; overflow-x: auto; }
+  .cmd code { flex: 1; white-space: pre; font-size: 13.5px; }
+  .cmd button { flex: none; font-size: 12px; background: #33353b; color: #fff; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+
+  footer { text-align: center; color: var(--muted); font-size: 14px; padding: 30px 16px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 10px; font-size: 14px; transition: transform .25s; z-index: 20; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">🧪 Flask Lab</div>
+    <nav class="nav" id="nav">
+      <a href="#what">1 · What</a>
+      <a href="#analogy">2 · Analogy</a>
+      <a href="#flow">3 · Request flow</a>
+      <a href="#hello">4 · First app</a>
+      <a href="#playground">5 · Playground</a>
+      <a href="#templates">6 · Templates</a>
+      <a href="#methods">7 · HTTP</a>
+      <a href="#structure">8 · Project</a>
+      <a href="#quiz">9 · Quiz</a>
+      <a href="#setup">10 · Run it</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" title="Toggle theme">🌓</button>
+  </div>
+  <div class="progress" id="progress"></div>
+</div>
+
+<main>
+
+<!-- 1. WHAT -->
+<section id="what" class="hero">
+  <div class="hero-grid">
+    <div>
+      <span class="pill">Beginner friendly · No experience needed</span>
+      <h1>What is <span style="color:var(--accent)">Flask</span>?</h1>
+      <p class="lead">Flask is a small Python library for building websites and web APIs. You write normal Python functions, and Flask connects each one to a web address (URL). When someone visits that address, your function runs and its answer goes back to their browser.</p>
+      <div class="facts">
+        <span class="fact">🐍 Written in Python</span>
+        <span class="fact">🪶 "Micro" framework: small core, add only what you need</span>
+        <span class="fact">⚡ A working app in 5 lines</span>
+        <span class="fact">🏢 Used by Netflix, Reddit, LinkedIn and many others</span>
+      </div>
+      <p class="sub" style="margin-top:18px">Scroll down or use the chips at the top. Every section has something to click, type or try.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">The smallest Flask app:</div>
+      <div class="code" id="heroCode"></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:10px">Visit <code>http://localhost:5000/</code> → browser shows <b>Hello, World!</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. ANALOGY -->
+<section id="analogy">
+  <div class="kicker">The big picture</div>
+  <h2>Think of a restaurant 🍽️</h2>
+  <p class="sub">A web app works a lot like a restaurant. Click each card to see which part of the web it stands for.</p>
+  <div class="grid g4" id="anaGrid"></div>
+</section>
+
+<!-- 3. FLOW -->
+<section id="flow">
+  <div class="kicker">How it works</div>
+  <h2>Follow one request, step by step</h2>
+  <p class="sub">Pick a scenario, then press <b>Next</b> (or <b>Play</b>) to watch what happens between typing a URL and seeing the page.</p>
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div class="row">
+        <button class="btn primary" data-scn="page">👋 Visit /hello/Asha</button>
+        <button class="btn" data-scn="db">🗄️ GET /api/tasks (uses database)</button>
+      </div>
+      <div class="steps-dots" id="flowDots"></div>
+    </div>
+    <div class="flow" id="flowNodes"></div>
+    <div class="flow-msg" id="flowMsg"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="flowPrev">← Back</button>
+      <button class="btn primary" id="flowNext">Next →</button>
+      <button class="btn" id="flowPlay">▶ Play</button>
+      <button class="btn" id="flowReset">↺ Reset</button>
+    </div>
+  </div>
+</section>
+
+<!-- 4. HELLO -->
+<section id="hello">
+  <div class="kicker">Your first app</div>
+  <h2>Read a Flask app line by line</h2>
+  <p class="sub">Click any line of code to see what it does in plain English.</p>
+  <div class="grid g2">
+    <div class="code clickable" id="helloCode"></div>
+    <div class="explain" id="helloExplain">
+      <div class="t">👈 Click a line</div>
+      <div>Start with line 1. Each explanation tells you what the line does and why it is there.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. PLAYGROUND -->
+<section id="playground">
+  <div class="kicker">Hands-on</div>
+  <h2>Route playground: be the browser</h2>
+  <p class="sub">This is a pretend Flask app running inside the page. Choose a method and a URL, then press <b>Send</b>. The matching route lights up on the left, and the response shows on the right. Try a URL that doesn't exist, or the wrong method, to see the errors.</p>
+  <div class="pg">
+    <div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">📄 app.py</div>
+      <div class="code" id="pgCode"></div>
+    </div>
+    <div class="card">
+      <div class="urlbar">
+        <select id="pgMethod">
+          <option>GET</option><option>POST</option><option>PATCH</option><option>DELETE</option>
+        </select>
+        <span class="host">localhost:5000</span>
+        <input id="pgPath" value="/hello/Asha" aria-label="URL path">
+        <button class="btn primary" id="pgSend">Send</button>
+      </div>
+      <div id="bodyWrap" style="margin-top:10px;display:none">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Request body (JSON)</div>
+        <textarea id="pgBody" rows="2">{"title": "Finish math homework"}</textarea>
+      </div>
+      <div class="presets" id="pgPresets"></div>
+      <div class="resp">
+        <div class="resp-head"><span id="pgStatus">No request sent yet</span><span id="pgType" class="mono"></span></div>
+        <div class="resp-body mono" id="pgResp">Press Send ↑</div>
+      </div>
+      <div class="why" id="pgWhy">💡 The explanation of what Flask did will appear here.</div>
+      <div class="log mono" id="pgLog"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. TEMPLATES -->
+<section id="templates">
+  <div class="kicker">HTML pages</div>
+  <h2>Templates: HTML with blanks to fill in</h2>
+  <p class="sub">Returning one line of text is fine, but real pages need HTML. Flask uses <b>Jinja</b> templates: HTML files with placeholders. Your Python sends data in, and Jinja fills the blanks. Edit the template or the data below and watch the page update live.</p>
+  <div class="card" style="margin-bottom:14px">
+    <div class="code" id="tplPy"></div>
+  </div>
+  <div class="tpl">
+    <div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:4px">📄 templates/index.html</div>
+      <textarea id="tplSrc" rows="12"></textarea>
+      <div class="cheats" id="tplCheats"></div>
+      <div style="font-size:13px;color:var(--muted);margin:12px 0 4px">🐍 Data from Python (JSON)</div>
+      <textarea id="tplData" rows="8"></textarea>
+    </div>
+    <div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:4px">🌐 What the browser shows</div>
+      <div class="rendered" id="tplOut"></div>
+      <div class="err" id="tplErr"></div>
+      <div class="why" style="margin-top:12px">
+        <b>Syntax:</b><br>
+        <code>{{ x }}</code> prints a value.<br>
+        <code>{% for … %}</code> / <code>{% if … %}</code> add logic.<br>
+        <code>{{ x|upper }}</code> applies a <i>filter</i>.<br>
+        🔒 Jinja escapes values automatically. Try setting a name to <code>&lt;b&gt;hi&lt;/b&gt;</code>: it shows as text and is never run as HTML.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. METHODS -->
+<section id="methods">
+  <div class="kicker">The language of the web</div>
+  <h2>HTTP methods and status codes</h2>
+  <p class="sub">Every request has a <b>method</b> (what you want to do) and every response has a <b>status code</b> (how it went). In Flask you choose methods with <code>methods=["POST"]</code> in <code>@app.route</code>.</p>
+  <div class="grid g4" id="methodCards"></div>
+  <div class="card" style="margin-top:14px">
+    <h3>Status codes: click one</h3>
+    <div class="codes" id="codeBtns"></div>
+    <div class="code-info" id="codeInfo">Status codes are 3-digit numbers. The first digit tells you the kind: <b>2xx</b> success, <b>3xx</b> redirect, <b>4xx</b> your mistake, <b>5xx</b> server's mistake.</div>
+  </div>
+</section>
+
+<!-- 8. STRUCTURE -->
+<section id="structure">
+  <div class="kicker">Real project</div>
+  <h2>How a Flask project is organised</h2>
+  <p class="sub">This is the layout of the <b>Student Task Tracker</b> you'll build today. Flask looks for HTML in <code>templates/</code> and for CSS/JS/images in <code>static/</code>. Click a file.</p>
+  <div class="grid g2">
+    <div class="card tree" id="tree"></div>
+    <div>
+      <div class="explain" id="treeInfo"><div class="t">👈 Pick a file</div>Each file has one job. Keeping them separate makes the project easier to read and change.</div>
+      <div class="code" id="treeCode" style="margin-top:12px;display:none"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. QUIZ -->
+<section id="quiz">
+  <div class="kicker">Check yourself</div>
+  <h2>Quick quiz</h2>
+  <p class="sub">Answer each question. You get feedback right away.</p>
+  <div class="card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <div class="score" id="score">Score: 0 / 0</div>
+    <button class="btn" id="quizReset">↺ Try again</button>
+  </div>
+  <div id="quizBox"></div>
+</section>
+
+<!-- 10. SETUP -->
+<section id="setup">
+  <div class="kicker">Your turn</div>
+  <h2>Run Flask on your own computer</h2>
+  <p class="sub">Open a terminal in an empty folder and follow these steps. Use the copy buttons.</p>
+  <div class="card" id="setupSteps"></div>
+  <div class="card" style="margin-top:14px">
+    <h3>🎯 Challenges to try next</h3>
+    <ol style="margin:0;padding-left:20px">
+      <li>Add a route <code>/about</code> that returns your name.</li>
+      <li>Add <code>/square/&lt;int:n&gt;</code> that returns <code>n * n</code>.</li>
+      <li>Make <code>/hello/&lt;name&gt;</code> render a template instead of plain text.</li>
+      <li>Build the full <b>Student Task Tracker</b> from today's prompt (Flask + SQLite + fetch()).</li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer>Made for Day 6 · Learn Flask by clicking around 🐍</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   Helpers
+   ========================================================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+// Tiny Python syntax highlighter (works on one line at a time)
+const PY_RE = /(#.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(@[\w.]+)|\b(from|import|def|return|if|not|in|for|and|or|True|False|None|else|elif|with|as)\b|\b(\d+)\b/g;
+function hlPy(line) {
+  return esc(line).replace(PY_RE, (m, com, str, dec, kw, num) => {
+    if (com) return `<span class="tk-com">${com}</span>`;
+    if (str) return `<span class="tk-str">${str}</span>`;
+    if (dec) return `<span class="tk-dec">${dec}</span>`;
+    if (kw) return `<span class="tk-kw">${kw}</span>`;
+    if (num) return `<span class="tk-num">${num}</span>`;
+    return m;
+  });
+}
+function renderCode(el, lines, { highlight = true } = {}) {
+  el.innerHTML = lines.map((l, i) =>
+    `<span class="ln" data-i="${i}"><span class="num">${i + 1}</span>${highlight ? hlPy(l) : esc(l)}</span>`
+  ).join("");
+}
+
+/* =========================================================
+   Theme + nav progress
+   ========================================================= */
+(function theme() {
+  let saved = null;
+  try { saved = localStorage.getItem("flask-theme"); } catch (e) {}
+  if (saved) document.documentElement.dataset.theme = saved;
+  $("#themeBtn").onclick = () => {
+    const cur = document.documentElement.dataset.theme ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const next = cur === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("flask-theme", next); } catch (e) {}
+  };
+})();
+
+(function navProgress() {
+  const links = $$("#nav a");
+  const sections = links.map(a => $(a.getAttribute("href")));
+  function onScroll() {
+    const h = document.documentElement;
+    $("#progress").style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%";
+    let idx = 0;
+    sections.forEach((s, i) => { if (s.getBoundingClientRect().top < 140) idx = i; });
+    links.forEach((a, i) => {
+      a.classList.toggle("active", i === idx);
+      if (i <= idx) a.classList.add("visited");
+    });
+    const act = links[idx];
+    if (act && onScroll.last !== idx) { act.scrollIntoView({ block: "nearest", inline: "center" }); onScroll.last = idx; }
+  }
+  addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+
+/* =========================================================
+   1. Hero code
+   ========================================================= */
+renderCode($("#heroCode"), [
+  'from flask import Flask',
+  'app = Flask(__name__)',
+  '',
+  '@app.route("/")',
+  'def home():',
+  '    return "Hello, World!"',
+]);
+
+/* =========================================================
+   2. Analogy
+   ========================================================= */
+const ANALOGY = [
+  ["🙋", "Customer", "Browser (you)", "You open a website by typing a URL, like ordering from a menu. The browser sends a <b>request</b>."],
+  ["🧾", "Menu item", "URL / Route", "Each dish has a name, like <code>/menu/pizza</code>. In Flask a <b>route</b> such as <code>@app.route(\"/hello\")</code> is one menu item."],
+  ["🤵", "Waiter", "Flask", "Flask takes your order, finds the right chef (function) for it, and brings the answer back to you. It handles all the back-and-forth."],
+  ["👨‍🍳", "Chef", "View function", "Your Python function does the actual work: calculating, loading data, building HTML. Whatever it <code>return</code>s is the dish."],
+  ["🥫", "Pantry", "Database", "Where ingredients (data) are stored, such as SQLite. The chef fetches from it when needed."],
+  ["🍝", "Plated dish", "Response", "The finished result: HTML, text or JSON, plus a status code like <b>200 OK</b>."],
+  ["📖", "Recipe card", "Template", "A reusable HTML layout with blanks (<code>{{ name }}</code>) that gets filled in for each order."],
+  ["🚪", "Restaurant address", "localhost:5000", "Where your app lives while you develop it. <code>localhost</code> means your own computer, and 5000 is the door number (port)."],
+];
+$("#anaGrid").innerHTML = ANALOGY.map(([e, a, b, d]) => `
+  <button class="card ana">
+    <div class="emoji">${e}</div>
+    <div class="role">${a}</div>
+    <h3>= ${b}</h3>
+    <div class="hint">Tap to reveal →</div>
+    <div class="back">${d}</div>
+  </button>`).join("");
+$$(".ana").forEach(c => c.onclick = () => c.classList.toggle("open"));
+
+/* =========================================================
+   3. Request flow
+   ========================================================= */
+const NODES = [
+  ["🌐", "Browser", "sends request"],
+  ["🤵", "Flask", "receives it"],
+  ["🧭", "Router", "matches URL"],
+  ["🐍", "View function", "runs your code"],
+  ["🗄️", "Database", "stores data"],
+];
+const SCENARIOS = {
+  page: [
+    [0, "You type <b>http://localhost:5000/hello/Asha</b> and press Enter. The browser sends an HTTP request: <code>GET /hello/Asha</code>."],
+    [1, "<b>Flask</b> is running and listening on port 5000. It receives the request and reads the <b>method</b> (GET) and the <b>path</b> (/hello/Asha)."],
+    [2, "The <b>router</b> checks every <code>@app.route</code>. <code>/hello/&lt;name&gt;</code> matches, and Flask pulls out <code>name = \"Asha\"</code>."],
+    [3, "Flask calls <code>hello(name=\"Asha\")</code>. Your function runs and returns <code>\"Hello, Asha!\"</code>. This page doesn't need the database, so that step is skipped."],
+    [1, "Flask wraps the return value in an HTTP <b>response</b>: status <code>200 OK</code>, content-type <code>text/html</code>, body <code>Hello, Asha!</code>."],
+    [0, "The browser receives the response and shows <b>Hello, Asha!</b> 🎉 The whole trip usually takes a few milliseconds."],
+  ],
+  db: [
+    [0, "Your JavaScript calls <code>fetch(\"/api/tasks\")</code>. The browser sends <code>GET /api/tasks</code>."],
+    [1, "<b>Flask</b> receives the request and reads method = GET, path = /api/tasks."],
+    [2, "The router finds <code>@app.route(\"/api/tasks\", methods=[\"GET\"])</code>. Path and method both match ✅."],
+    [3, "Flask calls <code>get_tasks()</code>. Your function needs data, so it asks the database."],
+    [4, "SQLite runs <code>SELECT * FROM tasks ORDER BY id DESC</code> and returns rows such as <code>(1, 'Read chapter 3', 0)</code>."],
+    [3, "The function turns the rows into a Python list of dicts and calls <code>jsonify(tasks)</code> to turn it into JSON."],
+    [1, "Flask sends the response: <code>200 OK</code>, content-type <code>application/json</code>, body <code>[{\"id\":1,\"title\":\"Read chapter 3\",\"done\":0}]</code>."],
+    [0, "Your JavaScript receives the JSON and draws the task list on the page 🎉"],
+  ],
+};
+let scn = "page", step = -1, playT = null;
+$("#flowNodes").innerHTML = NODES.map(([i, n, d], k) =>
+  `<div class="node" data-k="${k}"><div class="ic">${i}</div><div class="nm">${n}</div><div class="ds">${d}</div></div>`).join("");
+
+function drawFlow() {
+  const steps = SCENARIOS[scn];
+  const used = new Set(steps.map(s => s[0]));
+  const seen = new Set(steps.slice(0, step + 1).map(s => s[0]));
+  $$(".node").forEach(n => {
+    const k = +n.dataset.k;
+    n.classList.toggle("on", step >= 0 && steps[step][0] === k);
+    n.classList.toggle("skip", !used.has(k));
+    n.classList.toggle("done", seen.has(k) && !(step >= 0 && steps[step][0] === k));
+  });
+  $("#flowMsg").innerHTML = step < 0
+    ? "Press <b>Next →</b> to send the request."
+    : `<b>Step ${step + 1} of ${steps.length}.</b> ${steps[step][1]}`;
+  $("#flowDots").innerHTML = steps.map((_, i) => `<span class="${i <= step ? "on" : ""}"></span>`).join("");
+  $("#flowPrev").disabled = step < 0;
+  $("#flowNext").disabled = step >= steps.length - 1;
+}
+function stopPlay() { clearInterval(playT); playT = null; $("#flowPlay").textContent = "▶ Play"; }
+$("#flowNext").onclick = () => { step = Math.min(step + 1, SCENARIOS[scn].length - 1); drawFlow(); };
+$("#flowPrev").onclick = () => { stopPlay(); step = Math.max(step - 1, -1); drawFlow(); };
+$("#flowReset").onclick = () => { stopPlay(); step = -1; drawFlow(); };
+$("#flowPlay").onclick = () => {
+  if (playT) return stopPlay();
+  if (step >= SCENARIOS[scn].length - 1) step = -1;
+  $("#flowPlay").textContent = "⏸ Pause";
+  const tick = () => {
+    if (step >= SCENARIOS[scn].length - 1) return stopPlay();
+    step++; drawFlow();
+  };
+  tick();
+  playT = setInterval(tick, 2200);
+};
+$$("[data-scn]").forEach(b => b.onclick = () => {
+  stopPlay();
+  scn = b.dataset.scn; step = -1;
+  $$("[data-scn]").forEach(x => x.classList.toggle("primary", x === b));
+  drawFlow();
+});
+drawFlow();
+
+/* =========================================================
+   4. Hello world explainer
+   ========================================================= */
+const HELLO = [
+  ['from flask import Flask', "Import Flask", "Loads the <code>Flask</code> class from the flask package, which you installed with <code>pip install flask</code>. Everything starts here."],
+  ['', "Blank line", "Blank lines just make code easier to read. Python ignores them."],
+  ['app = Flask(__name__)', "Create the app", "Makes your web application object and names it <code>app</code>. <code>__name__</code> tells Flask where your file is, so it can find the <code>templates/</code> and <code>static/</code> folders next to it."],
+  ['', "Blank line", "Just spacing."],
+  ['@app.route("/")', "A route (decorator)", "The <code>@</code> line is a <b>decorator</b>. It tells Flask: <i>\"When someone visits <code>/</code> (the home page), run the function right below.\"</i> This is how URLs connect to Python code."],
+  ['def home():', "The view function", "A normal Python function. Flask calls it a <b>view function</b> because it produces what the user sees. The name can be anything, but each one must be unique."],
+  ['    return "Hello, World!"', "The response", "Whatever you <code>return</code> is sent to the browser. It can be a string (shown as HTML), <code>render_template(...)</code> for a full page, or <code>jsonify(...)</code> for data."],
+  ['', "Blank line", "Just spacing."],
+  ['@app.route("/hello/<name>")', "A dynamic route", "<code>&lt;name&gt;</code> is a <b>variable part</b> of the URL. Visiting <code>/hello/Ravi</code> passes <code>\"Ravi\"</code> into the function. Use <code>&lt;int:id&gt;</code> to accept numbers only."],
+  ['def hello(name):', "Receives the variable", "The parameter name must match the one in the route (<code>name</code>)."],
+  ['    return f"Hello, {name}!"', "Personalised answer", "An f-string puts the value into the text: <code>/hello/Ravi</code> → <b>Hello, Ravi!</b>"],
+  ['', "Blank line", "Just spacing."],
+  ['if __name__ == "__main__":', "Only when run directly", "This is true when you run <code>python app.py</code> yourself, and false when another file imports this one. It's the standard Python way to say \"start here\"."],
+  ['    app.run(debug=True)', "Start the server", "Starts the development server at <code>http://127.0.0.1:5000</code>. <code>debug=True</code> reloads the server when you save a change and shows helpful error pages. ⚠️ Never use debug mode on a real public server."],
+];
+renderCode($("#helloCode"), HELLO.map(h => h[0]));
+$$("#helloCode .ln").forEach(ln => ln.onclick = () => {
+  const i = +ln.dataset.i;
+  $$("#helloCode .ln").forEach(x => x.classList.toggle("hl", x === ln));
+  $("#helloExplain").innerHTML = `<div class="t">Line ${i + 1}: ${HELLO[i][1]}</div><div>${HELLO[i][2]}</div>`;
+});
+
+/* =========================================================
+   5. Playground: a mini Flask simulator
+   ========================================================= */
+const PG_CODE = [
+  'from flask import Flask, jsonify, request',            // 0
+  '',                                                    // 1
+  'app = Flask(__name__)',                               // 2
+  'tasks = []   # pretend database (a list)',            // 3
+  '',                                                    // 4
+  '@app.route("/")',                                     // 5
+  'def home():',                                         // 6
+  '    return "<h1>Welcome to Flask!</h1>"',             // 7
+  '',                                                    // 8
+  '@app.route("/hello/<name>")',                         // 9
+  'def hello(name):',                                    // 10
+  '    return f"Hello, {name}!"',                        // 11
+  '',                                                    // 12
+  '@app.route("/square/<int:n>")',                       // 13
+  'def square(n):',                                      // 14
+  '    return f"{n} x {n} = {n * n}"',                   // 15
+  '',                                                    // 16
+  '@app.route("/api/tasks", methods=["GET"])',           // 17
+  'def get_tasks():',                                    // 18
+  '    return jsonify(tasks)',                           // 19
+  '',                                                    // 20
+  '@app.route("/api/tasks", methods=["POST"])',          // 21
+  'def add_task():',                                     // 22
+  '    title = request.json.get("title", "").strip()',   // 23
+  '    if not title:',                                   // 24
+  '        return jsonify(error="Title is required"), 400', // 25
+  '    task = {"id": next_id(), "title": title, "done": False}', // 26
+  '    tasks.append(task)',                              // 27
+  '    return jsonify(task), 201',                       // 28
+  '',                                                    // 29
+  '@app.route("/api/tasks/<int:id>", methods=["PATCH"])', // 30
+  'def toggle_task(id):',                                // 31
+  '    task = find(id)        # 404 if missing',         // 32
+  '    task["done"] = not task["done"]',                 // 33
+  '    return jsonify(task)',                            // 34
+  '',                                                    // 35
+  '@app.route("/api/tasks/<int:id>", methods=["DELETE"])', // 36
+  'def delete_task(id):',                                // 37
+  '    tasks.remove(find(id))',                          // 38
+  '    return jsonify(ok=True)',                         // 39
+];
+renderCode($("#pgCode"), PG_CODE);
+
+let tasks = [], nextId = 1;
+const ROUTES = [
+  { pattern: "/", method: "GET", lines: [5, 7], fn: "home",
+    run: () => ({ status: 200, type: "text/html", body: "<h1>Welcome to Flask!</h1>",
+      why: "Path <code>/</code> matched the home route, so <code>home()</code> ran and returned an HTML string." }) },
+  { pattern: "/hello/<name>", method: "GET", lines: [9, 11], fn: "hello",
+    run: p => ({ status: 200, type: "text/html", body: `Hello, ${p.name}!`,
+      why: `<code>&lt;name&gt;</code> captured <code>"${esc(p.name)}"</code> from the URL and passed it to <code>hello(name)</code>.` }) },
+  { pattern: "/square/<int:n>", method: "GET", lines: [13, 15], fn: "square",
+    run: p => ({ status: 200, type: "text/html", body: `${p.n} x ${p.n} = ${p.n * p.n}`,
+      why: `<code>&lt;int:n&gt;</code> only accepts whole numbers. Flask converted <code>"${p.n}"</code> to the integer ${p.n} for you. (Try <code>/square/abc</code>: you'll get a 404.)` }) },
+  { pattern: "/api/tasks", method: "GET", lines: [17, 19], fn: "get_tasks",
+    run: () => ({ status: 200, type: "application/json", body: JSON.stringify(tasks, null, 2),
+      why: tasks.length ? `<code>jsonify(tasks)</code> turned the Python list (${tasks.length} task${tasks.length > 1 ? "s" : ""}) into JSON.`
+                        : "The list is empty, so you get <code>[]</code>. Use the <b>POST</b> preset to add a task, then GET again." }) },
+  { pattern: "/api/tasks", method: "POST", lines: [21, 28], fn: "add_task",
+    run: (p, body) => {
+      let data;
+      try { data = JSON.parse(body || "{}"); }
+      catch (e) { return { status: 400, type: "application/json", body: '{\n  "error": "Body is not valid JSON"\n}', why: "The request body couldn't be parsed as JSON. Check your quotes and braces." }; }
+      const title = String(data.title ?? "").trim();
+      if (!title) return { status: 400, type: "application/json", body: '{\n  "error": "Title is required"\n}', hl: [21, 25],
+        why: "Validation failed: the title was empty, so the function returned early with <b>400 Bad Request</b>. Always check user input!" };
+      const task = { id: nextId++, title, done: false };
+      tasks.push(task);
+      return { status: 201, type: "application/json", body: JSON.stringify(task, null, 2),
+        why: "A new task was created and added to <code>tasks</code>. <b>201 Created</b> is the standard reply for \"new thing made\". Now try <b>GET /api/tasks</b>." };
+    } },
+  { pattern: "/api/tasks/<int:id>", method: "PATCH", lines: [30, 34], fn: "toggle_task",
+    run: p => {
+      const t = tasks.find(t => t.id === p.id);
+      if (!t) return { status: 404, type: "application/json", body: '{\n  "error": "Task not found"\n}', hl: [30, 32], why: `There is no task with id ${p.id}. Add one with POST first.` };
+      t.done = !t.done;
+      return { status: 200, type: "application/json", body: JSON.stringify(t, null, 2),
+        why: `Task ${p.id} flipped to <code>done: ${t.done}</code>. PATCH means "change part of an existing thing".` };
+    } },
+  { pattern: "/api/tasks/<int:id>", method: "DELETE", lines: [36, 39], fn: "delete_task",
+    run: p => {
+      const i = tasks.findIndex(t => t.id === p.id);
+      if (i < 0) return { status: 404, type: "application/json", body: '{\n  "error": "Task not found"\n}', hl: [36, 38], why: `No task with id ${p.id} exists.` };
+      tasks.splice(i, 1);
+      return { status: 200, type: "application/json", body: '{\n  "ok": true\n}', why: `Task ${p.id} was removed from the list.` };
+    } },
+];
+
+// Turn "/hello/<name>" or "/x/<int:id>" into a regex with named groups
+function compile(pattern) {
+  const names = [];
+  const src = pattern.replace(/<(?:(int|string):)?(\w+)>/g, (_, conv, name) => {
+    names.push([name, conv || "string"]);
+    return conv === "int" ? "(\\d+)" : "([^/]+)";
+  });
+  return { re: new RegExp("^" + src + "$"), names };
+}
+ROUTES.forEach(r => Object.assign(r, compile(r.pattern)));
+
+function matchPath(path) {
+  const hits = [];
+  for (const r of ROUTES) {
+    const m = path.match(r.re);
+    if (!m) continue;
+    const params = {};
+    r.names.forEach(([n, conv], i) => params[n] = conv === "int" ? parseInt(m[i + 1], 10) : decodeURIComponent(m[i + 1]));
+    hits.push({ r, params });
+  }
+  return hits;
+}
+
+function highlightLines(range) {
+  $$("#pgCode .ln").forEach(ln => {
+    const i = +ln.dataset.i;
+    const on = range && i >= range[0] && i <= range[1];
+    ln.classList.toggle("hl", !!on);
+    ln.classList.toggle("dim", !!range && !on);
+  });
+  if (range) {
+    const first = $(`#pgCode .ln[data-i="${range[0]}"]`);
+    const box = $("#pgCode");
+    box.scrollTop = first.offsetTop - box.offsetTop - 20;
+  }
+}
+
+function sendRequest() {
+  const method = $("#pgMethod").value;
+  let path = $("#pgPath").value.trim() || "/";
+  if (!path.startsWith("/")) path = "/" + path;
+  path = path.split("?")[0];
+  const hits = matchPath(path);
+  const hit = hits.find(h => h.r.method === method);
+  let res;
+  if (hit) {
+    res = hit.r.run(hit.params, $("#pgBody").value);
+    highlightLines(res.hl || hit.r.lines);
+  } else if (hits.length) {
+    const allowed = [...new Set(hits.map(h => h.r.method))].join(", ");
+    res = { status: 405, type: "text/html", body: "405 Method Not Allowed",
+      why: `The URL exists, but no route accepts <b>${method}</b> there. Allowed: <b>${allowed}</b>. Flask checks the method as well as the path.` };
+    highlightLines(hits[0].r.lines);
+  } else {
+    res = { status: 404, type: "text/html", body: "404 Not Found\n\nThe requested URL was not found on the server.",
+      why: "No <code>@app.route</code> pattern matches this path, so Flask returns <b>404 Not Found</b> automatically." };
+    highlightLines(null);
+  }
+  const label = { 200: "OK", 201: "Created", 400: "Bad Request", 404: "Not Found", 405: "Method Not Allowed" }[res.status];
+  $("#pgStatus").innerHTML = `<span class="status ${res.status < 300 ? "s2" : "s4"}">${res.status} ${label}</span>`;
+  $("#pgType").textContent = res.type;
+  $("#pgResp").textContent = res.body;
+  $("#pgWhy").innerHTML = "💡 " + res.why;
+  const log = $("#pgLog");
+  log.insertAdjacentHTML("afterbegin", `<div>127.0.0.1 - "${esc(method)} ${esc(path)} HTTP/1.1" ${res.status}</div>`);
+}
+
+const PRESETS = [
+  ["GET", "/"], ["GET", "/hello/Asha"], ["GET", "/square/7"], ["GET", "/square/abc"],
+  ["POST", "/api/tasks", '{"title": "Finish math homework"}'], ["POST", "/api/tasks", '{"title": ""}'],
+  ["GET", "/api/tasks"], ["PATCH", "/api/tasks/1"], ["DELETE", "/api/tasks/1"],
+  ["DELETE", "/hello/Asha"], ["GET", "/secret"],
+];
+$("#pgPresets").innerHTML = PRESETS.map(([m, p, b], i) =>
+  `<button class="btn" data-p="${i}"><span class="method m-${m}">${m}</span>${esc(p)}${b && b.includes('""') ? " (empty)" : ""}</button>`).join("");
+$$("#pgPresets button").forEach(btn => btn.onclick = () => {
+  const [m, p, b] = PRESETS[+btn.dataset.p];
+  $("#pgMethod").value = m; $("#pgPath").value = p;
+  if (b) $("#pgBody").value = b;
+  syncBody(); sendRequest();
+});
+function syncBody() { $("#bodyWrap").style.display = $("#pgMethod").value === "POST" ? "block" : "none"; }
+$("#pgMethod").onchange = syncBody;
+$("#pgSend").onclick = sendRequest;
+$("#pgPath").onkeydown = e => { if (e.key === "Enter") sendRequest(); };
+$("#pgCode").style.maxHeight = "560px";
+
+/* =========================================================
+   6. Mini Jinja template engine
+   ========================================================= */
+renderCode($("#tplPy"), [
+  'from flask import render_template',
+  '',
+  '@app.route("/dashboard")',
+  'def dashboard():',
+  '    # Python sends data into the template as keyword arguments',
+  '    return render_template("index.html", name=name, tasks=tasks)',
+]);
+
+const TPL_DEFAULT = `<h2>Hello, {{ name|title }}! 👋</h2>
+<p>You have {{ tasks|length }} tasks.</p>
+<ul>
+{% for task in tasks %}
+  <li>{{ loop.index }}. {{ task.title }}
+      {% if task.done %}✅{% else %}⏳{% endif %}</li>
+{% endfor %}
+</ul>
+{% if tasks|length > 2 %}<p><b>Busy day!</b> 💪</p>{% endif %}`;
+const DATA_DEFAULT = `{
+  "name": "priya",
+  "tasks": [
+    {"title": "Read chapter 3", "done": true},
+    {"title": "Finish math homework", "done": false},
+    {"title": "Practice Flask routes", "done": false}
+  ]
+}`;
+
+function tplTokenize(src) {
+  return src.split(/(\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\})/).filter(s => s !== "");
+}
+function tplParse(tokens, pos, stops) {
+  const nodes = [];
+  while (pos.i < tokens.length) {
+    const t = tokens[pos.i];
+    if (t.startsWith("{{")) { nodes.push({ type: "var", expr: t.slice(2, -2).trim() }); pos.i++; continue; }
+    if (t.startsWith("{%")) {
+      const tag = t.slice(2, -2).trim();
+      const word = tag.split(/\s+/)[0];
+      if (stops && stops.includes(word)) return { nodes, stop: word };
+      pos.i++;
+      if (word === "for") {
+        const m = tag.match(/^for\s+(\w+)\s+in\s+(.+)$/);
+        if (!m) throw new Error(`Bad for-loop: "{% ${tag} %}". Use {% for item in items %}`);
+        const body = tplParse(tokens, pos, ["endfor"]);
+        if (body.stop !== "endfor") throw new Error("Missing {% endfor %}");
+        pos.i++;
+        nodes.push({ type: "for", name: m[1], expr: m[2], body: body.nodes });
+      } else if (word === "if") {
+        const body = tplParse(tokens, pos, ["else", "endif"]);
+        let elseNodes = [];
+        if (body.stop === "else") { pos.i++; const e = tplParse(tokens, pos, ["endif"]); if (e.stop !== "endif") throw new Error("Missing {% endif %}"); elseNodes = e.nodes; }
+        else if (body.stop !== "endif") throw new Error("Missing {% endif %}");
+        pos.i++;
+        nodes.push({ type: "if", expr: tag.slice(2).trim(), body: body.nodes, elseBody: elseNodes });
+      } else {
+        throw new Error(`Unknown tag "{% ${word} %}" (this demo supports for / if / else)`);
+      }
+      continue;
+    }
+    nodes.push({ type: "text", text: t }); pos.i++;
+  }
+  if (stops) throw new Error(`Missing {% ${stops[stops.length - 1]} %}`);
+  return { nodes };
+}
+const FILTERS = {
+  upper: v => String(v).toUpperCase(),
+  lower: v => String(v).toLowerCase(),
+  title: v => String(v).replace(/\b\w/g, c => c.toUpperCase()),
+  length: v => (v == null ? 0 : v.length ?? Object.keys(v).length),
+  reverse: v => Array.isArray(v) ? [...v].reverse() : String(v).split("").reverse().join(""),
+};
+function tplEval(expr, ctx) {
+  expr = expr.trim();
+  const cmp = expr.match(/^(.+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/);
+  if (cmp) {
+    const a = tplEval(cmp[1], ctx), b = tplEval(cmp[3], ctx);
+    return { "==": a == b, "!=": a != b, ">=": a >= b, "<=": a <= b, ">": a > b, "<": a < b }[cmp[2]];
+  }
+  if (expr.startsWith("not ")) return !tplEval(expr.slice(4), ctx);
+  const [base, ...filters] = expr.split("|").map(s => s.trim());
+  let v;
+  if (/^(['"]).*\1$/.test(base)) v = base.slice(1, -1);
+  else if (/^-?\d+(\.\d+)?$/.test(base)) v = Number(base);
+  else if (base === "true" || base === "True") v = true;
+  else if (base === "false" || base === "False") v = false;
+  else v = base.split(".").reduce((o, k) => (o == null ? undefined : o[k]), ctx);
+  for (const f of filters) {
+    if (!FILTERS[f]) throw new Error(`Unknown filter "|${f}". Try: ${Object.keys(FILTERS).join(", ")}`);
+    v = FILTERS[f](v);
+  }
+  return v;
+}
+function tplRender(nodes, ctx) {
+  return nodes.map(n => {
+    if (n.type === "text") return n.text;
+    if (n.type === "var") { const v = tplEval(n.expr, ctx); return v == null ? "" : esc(v); } // autoescape like Flask
+    if (n.type === "if") return tplRender(tplEval(n.expr, ctx) ? n.body : n.elseBody, ctx);
+    if (n.type === "for") {
+      const list = tplEval(n.expr, ctx) || [];
+      if (!Array.isArray(list)) throw new Error(`"${n.expr}" is not a list`);
+      return list.map((item, i) => tplRender(n.body, { ...ctx, [n.name]: item,
+        loop: { index: i + 1, index0: i, first: i === 0, last: i === list.length - 1, length: list.length } })).join("");
+    }
+  }).join("");
+}
+function updateTemplate() {
+  let ctx;
+  try { ctx = JSON.parse($("#tplData").value); }
+  catch (e) { $("#tplErr").textContent = "⚠️ Data is not valid JSON: " + e.message; return; }
+  try {
+    const tree = tplParse(tplTokenize($("#tplSrc").value), { i: 0 });
+    $("#tplOut").innerHTML = tplRender(tree.nodes, ctx);
+    $("#tplErr").textContent = "";
+  } catch (e) { $("#tplErr").textContent = "⚠️ Template error: " + e.message; }
+}
+$("#tplSrc").value = TPL_DEFAULT;
+$("#tplData").value = DATA_DEFAULT;
+$("#tplSrc").oninput = updateTemplate;
+$("#tplData").oninput = updateTemplate;
+const CHEATS = ["{{ name|upper }}", "{{ tasks|length }}", "{% if not tasks %}No tasks!{% endif %}", "{{ name|reverse }}", "{% for t in tasks|reverse %}{{ t.title }}, {% endfor %}"];
+$("#tplCheats").innerHTML = `<span style="font-size:12px;color:var(--muted)">Click to insert:</span>` + CHEATS.map(c => `<code>${esc(c)}</code>`).join("");
+$$("#tplCheats code").forEach((c, i) => c.onclick = () => {
+  const ta = $("#tplSrc");
+  ta.value += "\n<p>" + CHEATS[i] + "</p>";
+  updateTemplate();
+  toast("Inserted, see the result →");
+});
+updateTemplate();
+
+/* =========================================================
+   7. HTTP methods + status codes
+   ========================================================= */
+const METHODS = [
+  ["GET", "Read", "Ask for something. Opening a page or loading a list.", 'GET /api/tasks'],
+  ["POST", "Create", "Send new data. Submitting a form or adding a task.", 'POST /api/tasks'],
+  ["PATCH", "Update", "Change part of something that already exists.", 'PATCH /api/tasks/3'],
+  ["DELETE", "Delete", "Remove something.", 'DELETE /api/tasks/3'],
+];
+$("#methodCards").innerHTML = METHODS.map(([m, c, d, ex]) => `
+  <div class="card mcard ${m}">
+    <div><span class="method m-${m}">${m}</span> <span class="crud">CRUD: ${c}</span></div>
+    <p style="margin:8px 0;font-size:14px">${d}</p>
+    <code style="font-size:12px">${ex}</code>
+  </div>`).join("");
+const CODES = [
+  [200, "OK", "Everything worked. Flask uses this by default when you <code>return</code> something."],
+  [201, "Created", "A new thing was made. Return it from POST routes: <code>return jsonify(task), 201</code>"],
+  [302, "Found (redirect)", "\"Go look over there instead.\" Use <code>return redirect(url_for('home'))</code>"],
+  [400, "Bad Request", "The client sent something wrong, such as an empty title. You return this from your validation code."],
+  [404, "Not Found", "No route matches the URL, or the item doesn't exist. Flask sends it automatically, or you can call <code>abort(404)</code>."],
+  [405, "Method Not Allowed", "The URL exists but not for that method, e.g. DELETE on a GET-only route."],
+  [500, "Internal Server Error", "Your Python code crashed. With <code>debug=True</code>, Flask shows you the exact line."],
+];
+$("#codeBtns").innerHTML = CODES.map(([c], i) => `<button class="btn" data-c="${i}">${c}</button>`).join("");
+$$("#codeBtns button").forEach(b => b.onclick = () => {
+  const [c, n, d] = CODES[+b.dataset.c];
+  $$("#codeBtns button").forEach(x => x.classList.toggle("primary", x === b));
+  $("#codeInfo").innerHTML = `<span class="status ${c < 400 ? "s2" : "s4"}">${c} ${n}</span><p style="margin:8px 0 0">${d}</p>`;
+});
+
+/* =========================================================
+   8. Project structure
+   ========================================================= */
+const TREE = [
+  ["📁 student-task-tracker/", 0, "The project folder. Everything for the app lives here.", null],
+  ["🐍 app.py", 1, "<b>The Flask server.</b> Creates <code>app</code>, defines all the routes (<code>/</code>, <code>/api/tasks</code>, …) and starts the server.", [
+    '@app.route("/")', 'def index():', '    return render_template("index.html")', '',
+    '@app.route("/api/tasks", methods=["GET"])', 'def list_tasks():', '    return jsonify(database.get_all())']],
+  ["🗄️ database.py", 1, "<b>Talks to SQLite.</b> Creates the table and runs SQL queries. Keeping SQL here keeps <code>app.py</code> short. Always use <code>?</code> placeholders to stay safe from SQL injection.", [
+    'import sqlite3', '', 'def add(title):', '    with sqlite3.connect("tasks.db") as db:',
+    '        db.execute("INSERT INTO tasks (title) VALUES (?)", (title,))']],
+  ["🗃️ tasks.db", 1, "<b>The database file.</b> Created automatically the first time the app runs. Don't edit it by hand.", null],
+  ["📁 templates/", 1, "Flask looks here when you call <code>render_template()</code>. Folder name must be exactly <code>templates</code>.", null],
+  ["📄 index.html", 2, "<b>The page.</b> HTML with a text box, Add button and the task list. It loads CSS/JS with <code>url_for('static', filename='style.css')</code>.", null],
+  ["📁 static/", 1, "Files sent to the browser as they are: CSS, JavaScript, images. Served at <code>/static/…</code>.", null],
+  ["🎨 style.css", 2, "<b>Styling.</b> Colors, spacing and phone-friendly layout.", null],
+  ["⚙️ app.js", 2, "<b>Frontend logic.</b> Uses <code>fetch()</code> to call the Flask API, then updates the list without reloading the page.", null],
+  ["📦 requirements.txt", 1, "Lists the packages to install. Here it's just one line: <code>flask</code>. Install with <code>pip install -r requirements.txt</code>.", null],
+  ["📘 README.md", 1, "Setup instructions so anyone can run your project.", null],
+];
+$("#tree").innerHTML = TREE.map(([n, d], i) =>
+  `<button class="it" data-t="${i}" style="padding-left:${8 + d * 22}px">${n}</button>`).join("");
+$$("#tree .it").forEach(b => b.onclick = () => {
+  const [n, , info, code] = TREE[+b.dataset.t];
+  $$("#tree .it").forEach(x => x.classList.toggle("sel", x === b));
+  $("#treeInfo").innerHTML = `<div class="t">${n}</div><div>${info}</div>`;
+  const cb = $("#treeCode");
+  if (code) { renderCode(cb, code); cb.style.display = "block"; } else cb.style.display = "none";
+});
+
+/* =========================================================
+   9. Quiz
+   ========================================================= */
+const QUIZ = [
+  ["What is Flask?", ["A Python database", "A lightweight Python web framework", "A JavaScript library", "A code editor"], 1,
+    "Flask is a micro web framework: it helps Python code answer web requests."],
+  ['What does <code>@app.route("/about")</code> do?', ["Creates a file called about", "Links the URL /about to the function below it", "Redirects users to /about", "Deletes the /about page"], 1,
+    "A route connects a URL to a Python function."],
+  ["Which HTTP method is normally used to <b>create</b> new data?", ["GET", "POST", "DELETE", "PATCH"], 1,
+    "POST sends new data to the server. GET only reads."],
+  ["Where must HTML templates go for <code>render_template()</code> to find them?", ["static/", "html/", "templates/", "Anywhere"], 2,
+    "Flask looks in a folder named exactly <code>templates</code>."],
+  ['In <code>@app.route("/user/&lt;name&gt;")</code>, what is <code>&lt;name&gt;</code>?', ["An HTML tag", "A variable part of the URL passed to the function", "A comment", "The page title"], 1,
+    "Visiting /user/Ravi calls the function with <code>name=\"Ravi\"</code>."],
+  ["You request a URL that has no route. What status code do you get?", ["200", "201", "404", "500"], 2,
+    "404 Not Found: Flask couldn't match any route."],
+  ["What does <code>jsonify(tasks)</code> do?", ["Saves tasks to a file", "Turns Python data into a JSON response", "Sorts the list", "Prints to the terminal"], 1,
+    "jsonify turns a dict or list into JSON with the right content-type, ideal for APIs and fetch()."],
+  ["Why use <code>?</code> placeholders in SQL queries?", ["They make queries faster", "They prevent SQL injection", "SQLite requires them", "They add comments"], 1,
+    "Parameterized queries keep user input as data, so it can never run as SQL code."],
+];
+let answered = 0, correct = 0;
+function buildQuiz() {
+  answered = 0; correct = 0; updateScore();
+  $("#quizBox").innerHTML = QUIZ.map(([q, opts], qi) => `
+    <div class="card q" data-q="${qi}">
+      <div><b>Q${qi + 1}.</b> ${q}</div>
+      <div class="opts">${opts.map((o, oi) => `<button class="opt" data-o="${oi}">${o}</button>`).join("")}</div>
+      <div class="fb"></div>
+    </div>`).join("");
+  $$(".q").forEach(card => {
+    const qi = +card.dataset.q;
+    $$(".opt", card).forEach(b => b.onclick = () => {
+      const oi = +b.dataset.o, right = QUIZ[qi][2];
+      $$(".opt", card).forEach(x => x.disabled = true);
+      $$(".opt", card)[right].classList.add("right");
+      if (oi !== right) b.classList.add("wrong"); else correct++;
+      answered++;
+      $(".fb", card).innerHTML = (oi === right ? "✅ Correct! " : "❌ Not quite. ") + QUIZ[qi][3];
+      updateScore();
+      if (answered === QUIZ.length) toast(correct === QUIZ.length ? "🏆 Perfect score!" : `Done! ${correct}/${QUIZ.length}`);
+    });
+  });
+}
+function updateScore() {
+  $("#score").textContent = `Score: ${correct} / ${answered}` + (answered === QUIZ.length ? (correct === QUIZ.length ? "  🏆" : "  ✔ finished") : `  (${QUIZ.length - answered} left)`);
+}
+$("#quizReset").onclick = buildQuiz;
+buildQuiz();
+
+/* =========================================================
+   10. Setup steps
+   ========================================================= */
+const SETUP = [
+  ["Create a virtual environment", "A private box for this project's packages.", ["python -m venv .venv"]],
+  ["Activate it", "Windows (first line) or Mac/Linux (second line). You'll see <code>(.venv)</code> in your prompt.", [".venv\\Scripts\\activate", "source .venv/bin/activate"]],
+  ["Install Flask", "", ["pip install flask"]],
+  ["Create app.py", "Paste the code from section 4 into a new file named <code>app.py</code>.", null],
+  ["Run it", "", ["python app.py"]],
+  ["Open the browser", "Go to the address below. Press <code>Ctrl + C</code> in the terminal to stop the server.", ["http://localhost:5000/hello/YourName"]],
+];
+$("#setupSteps").innerHTML = SETUP.map(([t, d, cmds], i) => `
+  <div class="step">
+    <div class="n">${i + 1}</div>
+    <div>
+      <b>${t}</b>${d ? `<div style="font-size:14px;color:var(--muted)">${d}</div>` : ""}
+      ${(cmds || []).map(c => `<div class="cmd"><code>${esc(c)}</code><button data-copy="${esc(c)}">Copy</button></div>`).join("")}
+    </div>
+  </div>`).join("");
+$$("[data-copy]").forEach(b => b.onclick = async () => {
+  try { await navigator.clipboard.writeText(b.dataset.copy); toast("Copied ✔"); }
+  catch (e) { toast("Copy not allowed here, select the text instead"); }
+});
+</script>
+</body>
+</html>

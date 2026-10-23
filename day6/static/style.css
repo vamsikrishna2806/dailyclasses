@@ -1,0 +1,310 @@
+/* 
+  ======================================================
+  STUDENT TASK TRACKER - CSS STYLESHEET
+  Clean, beginner-friendly styling that looks great on
+  both mobile phones and desktop computers.
+  ======================================================
+*/
+
+/* CSS Variables for a consistent, modern color palette */
+:root {
+    --bg-page: #f1f5f9;          /* Soft light slate background */
+    --bg-card: #ffffff;          /* White card surface */
+    --text-main: #0f172a;        /* Deep slate for high contrast readability */
+    --text-muted: #64748b;       /* Muted gray for timestamps and subtitles */
+    --primary: #4f46e5;          /* Vibrant indigo primary brand color */
+    --primary-hover: #4338ca;    /* Darker indigo on button hover */
+    --border-color: #e2e8f0;     /* Subtle light gray border */
+    --danger: #ef4444;           /* Coral red for delete action */
+    --danger-hover: #dc2626;     /* Darker red on hover */
+    --danger-light: #fef2f2;     /* Soft red background for alerts */
+    --success: #10b981;          /* Emerald green for completed checkmark */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --radius: 12px;              /* Smooth rounded corners */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Reset margins and set up box-sizing */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    line-height: 1.5;
+    padding: 24px 16px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* Main Container centered in the viewport */
+.app-container {
+    width: 100%;
+    max-width: 600px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 32px 24px;
+    border: 1px solid var(--border-color);
+}
+
+/* Header Section */
+.app-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.header-icon {
+    font-size: 2.2rem;
+    margin-bottom: 6px;
+}
+
+.app-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Add Task Form */
+.add-task-section {
+    margin-bottom: 24px;
+}
+
+.task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 12px 64px 12px 14px;
+    font-size: 0.95rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-wrapper input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.char-counter {
+    position: absolute;
+    right: 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.2s, transform 0.1s;
+    min-height: 44px; /* Touch-friendly size */
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+/* Error Banner */
+.error-banner {
+    background-color: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid #fca5a5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Task List Section */
+.task-list-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.list-header h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.task-stats {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background: var(--bg-page);
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.empty-text {
+    font-size: 0.95rem;
+}
+
+/* Task Items */
+.task-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    gap: 12px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.task-item:hover {
+    border-color: #cbd5e1;
+}
+
+/* Completed task state */
+.task-item.is-done {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.task-item.is-done .task-title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+/* Left part of the item: Checkbox and title */
+.task-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0; /* Prevents overflow with long text */
+}
+
+/* Checkbox (Feature 3: Mark done or not done) */
+.task-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--success);
+    flex-shrink: 0;
+}
+
+/* Text & Timestamp details */
+.task-details {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.task-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    word-break: break-word;
+    color: var(--text-main);
+    transition: color 0.2s;
+}
+
+.task-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Delete Button (Feature 4: Delete a task) */
+.btn-delete {
+    background-color: transparent;
+    color: var(--danger);
+    border: 1px solid #fecaca;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+    transition: background-color 0.2s, color 0.2s;
+    min-height: 36px;
+}
+
+.btn-delete:hover {
+    background-color: var(--danger);
+    color: #ffffff;
+}
+
+/* Mobile Responsiveness adjustments */
+@media (min-width: 480px) {
+    .task-form {
+        flex-direction: row;
+    }
+
+    .input-wrapper {
+        flex: 1;
+    }
+
+    .btn-primary {
+        width: auto;
+    }
+}

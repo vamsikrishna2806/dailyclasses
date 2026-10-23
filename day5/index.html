@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Q&A Assistant</title>
+  <meta name="description" content="Modern AI Question and Answer interface powered by ChatGPT API">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-badge">
+        <span class="badge-dot"></span>
+        <span>OpenAI API Integrated</span>
+      </div>
+      <h1 class="app-title">ChatGPT Q&A Assistant</h1>
+      <p class="app-subtitle">Submit your query below and get intelligent responses generated directly from ChatGPT</p>
+    </header>
+
+    <!-- Configuration Settings Accordion -->
+    <section class="card config-card" id="config-card">
+      <div class="card-header config-toggle" id="config-toggle-btn">
+        <div class="header-title-group">
+          <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span class="card-heading">API Configuration</span>
+        </div>
+        <div class="toggle-action">
+          <span class="config-status" id="api-status-badge">API Key Needed</span>
+          <svg class="chevron-icon" id="config-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <div class="config-content" id="config-content">
+        <div class="input-row">
+          <div class="field-group flex-2">
+            <label for="api-key-input" class="field-label">
+              <span>OpenAI API Key</span>
+              <span class="secure-badge">🔒 Stored in browser memory</span>
+            </label>
+            <div class="input-with-button">
+              <input 
+                type="password" 
+                id="api-key-input" 
+                placeholder="sk-proj-..." 
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button type="button" class="icon-btn" id="toggle-key-visibility-btn" title="Toggle visibility">
+                <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            <p class="field-hint">Never shared with third parties. Used directly in the client to call OpenAI.</p>
+          </div>
+
+          <div class="field-group flex-1">
+            <label for="model-select" class="field-label">Model Selection</label>
+            <div class="select-wrapper">
+              <select id="model-select">
+                <option value="gpt-4o-mini" selected>gpt-4o-mini (Fast & Cost-effective)</option>
+                <option value="gpt-4o">gpt-4o (High Intelligence)</option>
+                <option value="gpt-3.5-turbo">gpt-3.5-turbo (Legacy)</option>
+              </select>
+            </div>
+            <p class="field-hint">Choose model balance of speed and depth</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Q&A Workspace Grid -->
+    <main class="qa-grid">
+      <!-- TASK 1: Question Box with Submit Button -->
+      <section class="card q-card">
+        <div class="card-header">
+          <div class="header-title-group">
+            <div class="icon-avatar q-avatar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Question</h2>
+              <span class="card-desc">Enter your prompt or question for ChatGPT</span>
+            </div>
+          </div>
+          <button type="button" class="btn-ghost" id="clear-question-btn" title="Clear text">
+            Clear
+          </button>
+        </div>
+
+        <div class="card-body">
+          <div class="textarea-container">
+            <textarea 
+              id="question-textbox" 
+              name="question"
+              placeholder="Ask anything... (e.g. Write a clean Python function to reverse a linked list, or Explain quantum computing simply)"
+              rows="6"
+              spellcheck="true"
+            ></textarea>
+            <div class="textarea-footer">
+              <span class="char-count" id="question-char-count">0 characters</span>
+              <span class="shortcut-tip">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <div class="status-indicator" id="network-status">
+            <span class="indicator-dot ready"></span>
+            <span class="status-text" id="network-status-text">Ready to submit</span>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="button" class="btn-primary" id="submit-btn">
+            <span class="btn-text">Submit Question</span>
+            <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            <div class="spinner" id="btn-spinner"></div>
+          </button>
+        </div>
+      </section>
+
+      <!-- TASK 3: Answer Box with ChatGPT Response -->
+      <section class="card a-card">
+        <div class="card-header">
+          <div class="header-title-group">
+            <div class="icon-avatar a-avatar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Answer</h2>
+              <span class="card-desc">Response generated by ChatGPT API</span>
+            </div>
+          </div>
+
+          <div class="answer-actions">
+            <button type="button" class="btn-secondary" id="copy-btn" title="Copy answer to clipboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copy-text">Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="textarea-container">
+            <textarea 
+              id="answer-textbox" 
+              name="answer"
+              placeholder="Your answer will appear here once you submit a question..."
+              rows="6"
+              readonly
+            ></textarea>
+            <div class="textarea-footer">
+              <span class="char-count" id="answer-char-count">0 characters</span>
+              <span class="timing-badge" id="response-time-badge" style="display: none;">0.0s</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer a-footer">
+          <div class="response-meta" id="response-meta">
+            <span class="meta-item" id="model-used-tag">Model: —</span>
+            <span class="meta-item" id="timestamp-tag">Time: —</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Quick Prompt Suggestions for instant testing -->
+    <section class="suggestions-section">
+      <span class="suggestions-label">Try a sample question:</span>
+      <div class="suggestions-list">
+        <button class="chip-btn" data-prompt="What are the three core principles of Object-Oriented Programming?">Core OOP Principles</button>
+        <button class="chip-btn" data-prompt="Explain the difference between synchronous and asynchronous JavaScript with a simple analogy.">Sync vs Async JS</button>
+        <button class="chip-btn" data-prompt="Write a concise SQL query to find duplicate email addresses in a users table.">SQL Find Duplicates</button>
+        <button class="chip-btn" data-prompt="Give me 3 practical tips for optimizing web application performance.">Web Performance Tips</button>
+      </div>
+    </section>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

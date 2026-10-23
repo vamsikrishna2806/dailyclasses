@@ -1,0 +1,36 @@
+Build a simple "Student Task Tracker" web app for beginners. Use Python Flask for the backend,
+ SQLite (built into Python, stored in a local file) for the database, and plain HTML, CSS, and JavaScript for the frontend. 
+ Explain each file in plain English and add short comments.
+
+FEATURES (only these four)
+1. Add a task: a text box and an "Add" button.
+2. See all tasks in a list, newest first.
+3. Mark a task as done or not done with a checkbox.
+4. Delete a task with a "Delete" button.
+
+RULES
+- Use the sqlite3 module from Python's standard library. No ORM, no other database.
+- Create the database file (tasks.db) and the table automatically the first time the app starts.
+- Use parameterized SQL queries (the ? placeholder) to prevent SQL injection.
+- The table has: id (integer, primary key), title (text, required), done (integer, 0 or 1), created_at (text).
+- Validate input: the title must not be empty and must be under 200 characters. Show a message on the page if it fails.
+- No login, no frameworks beyond Flask.
+
+FILES
+- app.py: Flask server with routes: GET /api/tasks, POST /api/tasks, PATCH /api/tasks/<id> (toggle done), DELETE /api/tasks/<id>. Also serves the home page.
+- database.py: functions to create the table and run the queries (get_all, add, toggle, delete)
+- templates/index.html: the page
+- static/style.css: clean, simple styling that works on phones
+- static/app.js: calls the API with fetch() and updates the list on the page
+- requirements.txt: flask
+- README.md: setup steps
+
+SETUP STEPS (put these in README.md)
+python -m venv .venv
+.venv\Scripts\activate   (Windows) or source .venv/bin/activate (Mac/Linux)
+pip install -r requirements.txt
+python app.py
+Open http://localhost:5000
+
+OUTPUT
+Give every file with its full contents, in the order listed. Then show three example tasks the student can add and what the tasks.db table looks like after adding them (use a simple SQL SELECT example they can run in the sqlite3 command line).
