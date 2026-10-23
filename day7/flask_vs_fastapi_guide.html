@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flask vs FastAPI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: "two lanes on one clock" - every idea is shown as a Flask lane and a FastAPI lane side by side, stacking on phones. */
+:root {
+  --bg: #f2f5f5;
+  --surface: #ffffff;
+  --surface-2: #e7eded;
+  --ink: #142120;
+  --muted: #566665;
+  --line: #d3dddc;
+  --flask: #b0501a;
+  --flask-soft: #f7e5d8;
+  --fast: #00806f;
+  --fast-soft: #d4eeea;
+  --good: #2b7a33;
+  --good-soft: #def0df;
+  --bad: #c0352b;
+  --bad-soft: #f8e1de;
+  --warn: #946200;
+  --warn-soft: #f6ead0;
+  --code-bg: #15201f;
+  --code-ink: #e3ecea;
+  --c-kw: #f29c6b;
+  --c-str: #9fdcb4;
+  --c-com: #7d918f;
+  --c-fn: #7fd3e6;
+  --c-num: #f4c56a;
+  --c-meta: #e8a2d8;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1413; --surface: #15201f; --surface-2: #1c2a29; --ink: #e2ebea; --muted: #93a6a4; --line: #2a3b3a;
+    --flask: #f08b4c; --flask-soft: #3a2416; --fast: #3fc8b5; --fast-soft: #0f302c;
+    --good: #6ccf78; --good-soft: #15301a; --bad: #f2847a; --bad-soft: #3b1c19; --warn: #f0bd55; --warn-soft: #362a12;
+    --code-bg: #0a100f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1413; --surface: #15201f; --surface-2: #1c2a29; --ink: #e2ebea; --muted: #93a6a4; --line: #2a3b3a;
+  --flask: #f08b4c; --flask-soft: #3a2416; --fast: #3fc8b5; --fast-soft: #0f302c;
+  --good: #6ccf78; --good-soft: #15301a; --bad: #f2847a; --bad-soft: #3b1c19; --warn: #f0bd55; --warn-soft: #362a12;
+  --code-bg: #0a100f; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 17px/1.65 var(--font-body);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.2rem); font-weight: 800; letter-spacing: -0.01em; }
+h3 { font-size: 1.15rem; font-weight: 700; }
+p { margin: 0; }
+code, pre, .mono { font-family: var(--font-mono); }
+:not(pre) > code { font-size: .86em; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
+a { color: var(--fast); }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--fast); outline-offset: 2px; border-radius: 6px; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* names */
+.fl { color: var(--flask); font-weight: 700; }
+.fa { color: var(--fast); font-weight: 700; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 12px; padding-block: 8px; }
+.brand { font-family: var(--font-display); font-weight: 800; white-space: nowrap; }
+.nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.nav::-webkit-scrollbar { display: none; }
+.nav a { text-decoration: none; color: var(--muted); font-size: 13.5px; padding: 3px 10px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent; }
+.nav a:hover { color: var(--ink); }
+.nav a.active { color: var(--ink); border-color: var(--line); background: var(--surface); }
+.icon-btn { background: var(--surface); border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 4px 10px; cursor: pointer; font-size: 13.5px; white-space: nowrap; }
+
+/* hero */
+.hero { padding-block: 48px 32px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.hero h1 { font-size: clamp(2.6rem, 8vw, 5.2rem); font-weight: 800; letter-spacing: -0.03em; margin-top: 8px; }
+.hero h1 .vs { font-weight: 500; color: var(--muted); font-size: .55em; vertical-align: .25em; padding: 0 .15em; }
+.hero .lead { font-size: 1.2rem; max-width: 62ch; margin-top: 14px; color: var(--muted); }
+.lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.lanes > * { min-width: 0; }
+@media (max-width: 760px) { .lanes { grid-template-columns: 1fr; } }
+.hero .lanes { margin-top: 28px; }
+.id-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 10px; }
+.id-card.flask { border-top: 4px solid var(--flask); }
+.id-card.fast { border-top: 4px solid var(--fast); }
+.id-card .name { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.id-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font-size: 15px; }
+.id-card dt { color: var(--muted); font-family: var(--font-mono); font-size: 12.5px; padding-top: 3px; text-transform: uppercase; letter-spacing: .05em; }
+.id-card dd { margin: 0; }
+.id-card .motto { font-style: italic; color: var(--muted); }
+.glyph { width: 34px; height: 34px; flex: none; }
+
+/* sections */
+section.lesson { padding-block: 44px; border-top: 1px solid var(--line); scroll-margin-top: 56px; }
+.lesson-head { display: grid; gap: 8px; max-width: 70ch; margin-bottom: 22px; }
+.lesson-num { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.lesson-head p { color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.note { background: var(--warn-soft); border-radius: 10px; padding: 12px 14px; font-size: 15.5px; margin-top: 16px; }
+.note strong { color: var(--warn); }
+.tip { background: var(--fast-soft); border-radius: 10px; padding: 12px 14px; font-size: 15.5px; margin-top: 16px; }
+
+.btn { background: var(--ink); color: var(--bg); border: 0; padding: 9px 16px; border-radius: 9px; cursor: pointer; font-weight: 700; }
+.btn:hover { opacity: .9; }
+.btn.ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 16px; }
+.controls label { font-size: 14.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.controls input[type=range] { width: 120px; accent-color: var(--fast); }
+.chip { display: inline-block; font-family: var(--font-mono); font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; }
+.chip.flask { background: var(--flask-soft); color: var(--flask); border-color: transparent; }
+.chip.fast { background: var(--fast-soft); color: var(--fast); border-color: transparent; }
+.chip.tie { background: var(--surface-2); color: var(--muted); }
+
+/* ---------- restaurant analogy ---------- */
+.analogy { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.analogy > * { min-width: 0; }
+@media (max-width: 760px) { .analogy { grid-template-columns: 1fr; } }
+.analogy .panel { display: grid; gap: 6px; }
+.analogy .panel.flask { border-left: 4px solid var(--flask); }
+.analogy .panel.fast { border-left: 4px solid var(--fast); }
+
+/* ---------- race ---------- */
+.race-lane { display: grid; gap: 8px; }
+.race-lane + .race-lane { margin-top: 22px; }
+.race-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.race-clock { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.4rem; font-weight: 600; }
+.race-row { display: grid; grid-template-columns: 74px 1fr 92px; gap: 10px; align-items: center; font-size: 13.5px; }
+.race-row .who { font-family: var(--font-mono); color: var(--muted); }
+.race-row .status { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.race-row .status.done { color: var(--good); font-weight: 600; }
+.track { position: relative; height: 22px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+.seg { position: absolute; top: 0; bottom: 0; }
+.seg .fill { height: 100%; width: 100%; }
+.seg.queue .fill { background: repeating-linear-gradient(45deg, transparent 0 5px, color-mix(in srgb, var(--muted) 30%, transparent) 5px 7px); }
+.seg.work .fill { background: var(--ink); }
+.seg.wait.flask .fill { background: repeating-linear-gradient(-45deg, var(--flask) 0 6px, color-mix(in srgb, var(--flask) 65%, var(--surface)) 6px 12px); }
+.seg.wait.fast .fill { background: repeating-linear-gradient(-45deg, var(--fast) 0 6px, color-mix(in srgb, var(--fast) 65%, var(--surface)) 6px 12px); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13.5px; color: var(--muted); margin-top: 14px; }
+.legend i { display: inline-block; width: 22px; height: 11px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.legend .l-queue { background: repeating-linear-gradient(45deg, var(--surface-2) 0 5px, color-mix(in srgb, var(--muted) 40%, transparent) 5px 7px); border: 1px solid var(--line); }
+.legend .l-work { background: var(--ink); }
+.legend .l-wait { background: linear-gradient(90deg, var(--flask) 50%, var(--fast) 50%); }
+@media (max-width: 520px) { .race-row { grid-template-columns: 44px 1fr 66px; gap: 6px; } }
+
+/* ---------- journey ---------- */
+.journey { display: grid; gap: 10px; }
+.journey + .journey { margin-top: 20px; }
+.stations { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.station { border: 1px solid var(--line); background: var(--surface); padding: 8px 12px; border-radius: 10px; font-size: 14px; line-height: 1.3; transition: transform .25s, background .25s, border-color .25s; }
+.station small { display: block; color: var(--muted); font-size: 12px; }
+.station.auto { border-style: dashed; }
+.station.you { border-width: 2px; }
+.flask-j .station.active { background: var(--flask-soft); border-color: var(--flask); transform: translateY(-3px); }
+.fast-j .station.active { background: var(--fast-soft); border-color: var(--fast); transform: translateY(-3px); }
+.arrow { color: var(--muted); font-size: 14px; }
+.j-log { font-family: var(--font-mono); font-size: 13px; min-height: 2.6em; color: var(--muted); }
+
+/* ---------- validation playground ---------- */
+.play-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; }
+@media (max-width: 860px) { .play-grid { grid-template-columns: 1fr; } }
+textarea#body { width: 100%; min-height: 128px; font: 14px/1.5 var(--font-mono); background: var(--code-bg); color: var(--code-ink); border: 1px solid var(--line); border-radius: 10px; padding: 12px; resize: vertical; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+.presets button { font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.presets button:hover { border-color: var(--ink); }
+.resp { border-radius: 10px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.resp-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.resp.flask .resp-head { background: var(--flask-soft); }
+.resp.fast .resp-head { background: var(--fast-soft); }
+.status-pill { font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.status-pill.ok { background: var(--good-soft); color: var(--good); }
+.status-pill.err { background: var(--bad-soft); color: var(--bad); }
+.status-pill.warn { background: var(--warn-soft); color: var(--warn); }
+.resp pre { margin: 0; padding: 12px; font-size: 12.5px; line-height: 1.5; overflow-x: auto; white-space: pre; background: var(--code-bg); color: var(--code-ink); flex: 1; }
+.resp .verdict { padding: 9px 12px; font-size: 14px; border-top: 1px solid var(--line); }
+.resp-stack { display: grid; gap: 12px; }
+.resp.pop { animation: pop .45s ease; }
+@keyframes pop { 0% { transform: scale(.97); opacity: .4; } 100% { transform: none; opacity: 1; } }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink); cursor: pointer; }
+.switch input { accent-color: var(--flask); width: 16px; height: 16px; }
+
+/* ---------- auto docs ---------- */
+.docs-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 860px) { .docs-grid { grid-template-columns: 1fr; } }
+.typer { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px; font: 13px/1.55 var(--font-mono); min-height: 300px; overflow-x: auto; white-space: pre; margin: 0; }
+.typer .cursor { display: inline-block; width: 7px; height: 1.1em; background: var(--fast); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.swagger { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; min-width: 0; }
+.sw-op, .sw-title { flex-wrap: wrap; min-width: 0; }
+.sw-op > span { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .sw-op .try { display: none; } .sw-op .m { min-width: 56px; } }
+.sw-bar { background: var(--surface-2); padding: 8px 12px; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.sw-bar .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.sw-body { padding: 14px; display: grid; gap: 8px; }
+.sw-title { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.sw-op { display: flex; align-items: center; gap: 10px; border-radius: 8px; padding: 7px 10px; font-family: var(--font-mono); font-size: 13px; border: 1px solid; animation: slidein .4s ease both; }
+.sw-op .m { font-weight: 700; color: #fff; border-radius: 5px; padding: 2px 8px; min-width: 64px; text-align: center; font-size: 12px; }
+.sw-op.get { background: color-mix(in srgb, #3b82c4 10%, var(--surface)); border-color: color-mix(in srgb, #3b82c4 45%, transparent); }
+.sw-op.get .m { background: #2f6fae; }
+.sw-op.post { background: color-mix(in srgb, #2e9a63 10%, var(--surface)); border-color: color-mix(in srgb, #2e9a63 45%, transparent); }
+.sw-op.post .m { background: #2a8a58; }
+.sw-op.delete { background: color-mix(in srgb, #d0443a 10%, var(--surface)); border-color: color-mix(in srgb, #d0443a 45%, transparent); }
+.sw-op.delete .m { background: #bb3a31; }
+.sw-op .try { margin-left: auto; font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+.sw-schema { font-family: var(--font-mono); font-size: 12.5px; border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; color: var(--muted); animation: slidein .4s ease both; }
+@keyframes slidein { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+.flask-404 { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); font-size: 15px; }
+.flask-404 .mono { color: var(--flask); }
+
+/* ---------- types / deps ---------- */
+.mini { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-family: var(--font-mono); font-size: 14px; }
+.mini input { font: 14px var(--font-mono); padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: 110px; }
+.mini-out { display: grid; gap: 8px; margin-top: 12px; }
+.mini-out .resp pre { white-space: pre-wrap; word-break: break-word; }
+.deps-stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 760px) { .deps-stage { grid-template-columns: 1fr; } }
+.plugboard { display: grid; gap: 10px; }
+.plug { display: flex; align-items: center; gap: 10px; border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .5s, border-color .3s, background .3s; }
+.plug .mono { font-size: 13.5px; }
+.plug small { color: var(--muted); display: block; font-size: 13px; }
+.plug.out { transform: translateX(-24px); opacity: .35; }
+.plug.in { border-style: solid; border-color: var(--fast); background: var(--fast-soft); }
+.socket { border: 2px solid var(--fast); border-radius: 12px; padding: 12px; background: var(--surface); }
+
+/* ---------- code ---------- */
+.code-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 960px) { .code-grid { grid-template-columns: 1fr; } }
+.code-card { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--code-bg); min-width: 0; display: flex; flex-direction: column; }
+.code-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; font-family: var(--font-mono); font-size: 13px; flex-wrap: wrap; }
+.code-card.flask header { background: var(--flask-soft); color: var(--flask); }
+.code-card.fast header { background: var(--fast-soft); color: var(--fast); }
+.code-card pre { margin: 0; overflow-x: auto; flex: 1; }
+.code-card code, pre.block code { display: block; padding: 14px; font-size: 12.8px; line-height: 1.6; color: var(--code-ink); background: transparent; }
+pre.block { margin: 0; background: var(--code-bg); border-radius: 10px; overflow-x: auto; }
+.hljs-keyword, .hljs-built_in, .hljs-literal { color: var(--c-kw); }
+.hljs-string { color: var(--c-str); }
+.hljs-comment { color: var(--c-com); font-style: italic; }
+.hljs-title, .hljs-title.function_ { color: var(--c-fn); }
+.hljs-number { color: var(--c-num); }
+.hljs-meta { color: var(--c-meta); }
+.hljs-params { color: var(--code-ink); }
+.hljs-type, .hljs-title.class_ { color: var(--c-num); }
+.counts { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 16px; font-size: 15px; }
+.counts b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- table ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.filters button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 14px; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+thead th { font-family: var(--font-mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--surface-2); position: sticky; top: 0; }
+tbody tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 700; width: 18%; }
+td:nth-child(2) { width: 33%; }
+td:nth-child(3) { width: 35%; }
+.score { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; font-size: 15px; color: var(--muted); }
+
+/* ---------- impact ---------- */
+.impact-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .impact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .impact-grid { grid-template-columns: 1fr; } }
+.impact { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 6px; align-content: start; }
+.impact .before { font-size: 14.5px; color: var(--muted); }
+.impact .after { font-size: 15px; }
+.impact .tag { font-family: var(--font-mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--fast); }
+.timeline { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin-top: 24px; position: relative; }
+.timeline::before { content: ""; position: absolute; left: 0; right: 0; top: 9px; height: 2px; background: var(--line); }
+.tl { position: relative; padding-top: 26px; padding-right: 10px; font-size: 14px; }
+.tl::before { content: ""; position: absolute; top: 3px; left: 0; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--muted); }
+.tl.flask::before { border-color: var(--flask); }
+.tl.fast::before { border-color: var(--fast); }
+.tl b { font-family: var(--font-mono); display: block; }
+@media (max-width: 760px) {
+  .timeline { grid-template-columns: 1fr; gap: 12px; }
+  .timeline::before { left: 6px; right: auto; top: 0; bottom: 0; width: 2px; height: auto; }
+  .tl { padding-top: 0; padding-left: 28px; }
+}
+
+/* ---------- myths ---------- */
+.myths { display: grid; gap: 10px; }
+details.myth { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; }
+details.myth summary { cursor: pointer; padding: 12px 0; font-weight: 700; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+details.myth summary::-webkit-details-marker { display: none; }
+details.myth summary::before { content: "+"; font-family: var(--font-mono); color: var(--muted); width: 1ch; }
+details.myth[open] summary::before { content: "−"; }
+details.myth .body { padding: 0 0 14px 22px; display: grid; gap: 10px; }
+
+/* ---------- chooser + quiz ---------- */
+.q-list { display: grid; gap: 10px; }
+.q-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; flex-wrap: wrap; }
+.q-item span { min-width: 0; flex: 1 1 260px; }
+.yn { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.yn button { border: 0; background: var(--surface); color: var(--ink); padding: 5px 14px; cursor: pointer; font-size: 14px; }
+.yn button + button { border-left: 1px solid var(--line); }
+.yn button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.verdict-box { margin-top: 16px; border-radius: 12px; padding: 16px; border: 2px solid var(--line); background: var(--surface); display: grid; gap: 8px; }
+.verdict-box.flask { border-color: var(--flask); }
+.verdict-box.fast { border-color: var(--fast); }
+.meter { height: 12px; border-radius: 999px; background: var(--fast); overflow: hidden; position: relative; }
+.meter span { position: absolute; inset: 0 auto 0 0; background: var(--flask); transition: width .5s ease; }
+.meter-labels { display: flex; justify-content: space-between; font-size: 13px; font-family: var(--font-mono); }
+.quiz { display: grid; gap: 14px; }
+.quiz-q { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+.quiz-q .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.quiz-q .opts button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 15px; text-align: left; }
+.quiz-q .opts button.right { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.quiz-q .opts button.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.quiz-q .why { font-size: 15px; color: var(--muted); }
+.quiz-score { font-family: var(--font-mono); font-size: 15px; }
+
+/* ---------- cheat ---------- */
+.cheat { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cheat > * { min-width: 0; }
+@media (max-width: 760px) { .cheat { grid-template-columns: 1fr; } }
+.cheat ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+.cmd { display: grid; gap: 8px; margin-top: 12px; }
+footer { padding-block: 36px 56px; color: var(--muted); font-size: 14.5px; border-top: 1px solid var(--line); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <span class="brand">Day 7</span>
+    <nav class="nav" id="nav" aria-label="Lessons">
+      <a href="#idea">Big picture</a>
+      <a href="#race">Async race</a>
+      <a href="#journey">Request journey</a>
+      <a href="#validate">Validation</a>
+      <a href="#docs">Auto docs</a>
+      <a href="#types">Type hints</a>
+      <a href="#deps">Depends</a>
+      <a href="#code">Same app, 2 ways</a>
+      <a href="#table">360° table</a>
+      <a href="#impact">What changed</a>
+      <a href="#myths">Myths</a>
+      <a href="#choose">Which one?</a>
+      <a href="#quiz">Quiz</a>
+      <a href="#cheat">Cheat sheet</a>
+    </nav>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch light or dark theme">Theme</button>
+  </div>
+</div>
+
+<main>
+<!-- ================= HERO ================= -->
+<header class="hero wrap" id="idea">
+  <div class="eyebrow">Day 7 · Python web backends</div>
+  <h1><span class="fl">Flask</span><span class="vs">vs</span><span class="fa">FastAPI</span></h1>
+  <p class="lead">Both are Python tools for building the <b>backend</b> of an app: the part that receives a request, does some work, and sends back an answer. On Day 6 you built a task app with Flask. Today you will see the same app in FastAPI and learn what changed, why it matters, and when to pick each one.</p>
+
+  <div class="lanes">
+    <article class="id-card flask">
+      <div class="name">
+        <svg class="glyph" viewBox="0 0 34 34" aria-hidden="true"><path d="M13 4h8M14 4v9L6 27a3 3 0 0 0 2.6 4.5h16.8A3 3 0 0 0 28 27l-8-14V4" fill="none" stroke="var(--flask)" stroke-width="2.4" stroke-linejoin="round"/><path d="M9.5 22h15l3 5.2a2 2 0 0 1-1.7 3H8.2a2 2 0 0 1-1.7-3z" fill="var(--flask)" opacity=".35"/></svg>
+        <span class="fl">Flask</span>
+      </div>
+      <p class="motto">"A micro framework. Start tiny, add what you need."</p>
+      <dl>
+        <dt>Born</dt><dd>2010, by Armin Ronacher</dd>
+        <dt>Built on</dt><dd>Werkzeug (web tools) + Jinja2 (HTML templates)</dd>
+        <dt>Standard</dt><dd><b>WSGI</b> — one request per worker at a time</dd>
+        <dt>Style</dt><dd>Sync first. You write the checks and docs yourself.</dd>
+        <dt>Great for</dt><dd>Websites with HTML pages, small apps, learning</dd>
+      </dl>
+    </article>
+    <article class="id-card fast">
+      <div class="name">
+        <svg class="glyph" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="14" fill="none" stroke="var(--fast)" stroke-width="2.4"/><path d="M19 6 10 19h6l-2 9 9-13h-6z" fill="var(--fast)"/></svg>
+        <span class="fa">FastAPI</span>
+      </div>
+      <p class="motto">"Write normal Python type hints. Get checks, docs and speed for free."</p>
+      <dl>
+        <dt>Born</dt><dd>2018, by Sebastián Ramírez</dd>
+        <dt>Built on</dt><dd>Starlette (web tools) + Pydantic (data checks)</dd>
+        <dt>Standard</dt><dd><b>ASGI</b> — one worker can juggle many requests</dd>
+        <dt>Style</dt><dd>Async ready. Validation and docs are automatic.</dd>
+        <dt>Great for</dt><dd>JSON APIs, AI / LLM backends, microservices</dd>
+      </dl>
+    </article>
+  </div>
+</header>
+
+<!-- ================= 1. ASYNC RACE ================= -->
+<section class="lesson" id="race">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 1 · Sync vs async</span>
+      <h2>The waiter story: who wastes time waiting?</h2>
+      <p>Most of a backend's time is spent <b>waiting</b>: for the database, for another website, or for an AI model like ChatGPT or Claude to answer. What a framework does while it waits is the biggest difference between Flask and FastAPI.</p>
+    </div>
+
+    <div class="analogy">
+      <div class="panel flask">
+        <h3 class="fl">Flask waiter (sync)</h3>
+        <p>Takes the order from table 1, gives it to the kitchen, and <b>stands at the kitchen door</b> until the food is ready. Only then does table 2 get a menu.</p>
+      </div>
+      <div class="panel fast">
+        <h3 class="fa">FastAPI waiter (async)</h3>
+        <p>Takes the order from table 1, gives it to the kitchen, and <b>goes straight to table 2</b>, then table 3. When a dish is ready, the waiter serves it.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <button class="btn" id="raceBtn" type="button">▶ Send the requests</button>
+        <label for="raceN">Requests <input id="raceN" type="range" min="2" max="8" value="5"> <b id="raceNv" class="mono">5</b></label>
+        <label for="raceW">Each waits <input id="raceW" type="range" min="5" max="30" value="10"> <b id="raceWv" class="mono">1.0s</b></label>
+      </div>
+
+      <div class="race-lane" id="laneFlask">
+        <div class="race-title"><h3 class="fl">Flask · 1 sync worker</h3><span class="race-clock" id="clockFlask">0.0s</span></div>
+        <div class="rows"></div>
+      </div>
+      <div class="race-lane" id="laneFast">
+        <div class="race-title"><h3 class="fa">FastAPI · 1 async worker</h3><span class="race-clock" id="clockFast">0.0s</span></div>
+        <div class="rows"></div>
+      </div>
+
+      <div class="legend">
+        <span><i class="l-queue"></i>Waiting in line</span>
+        <span><i class="l-work"></i>Python code running (0.1s)</span>
+        <span><i class="l-wait"></i>Waiting for database / AI model</span>
+      </div>
+    </div>
+
+    <p class="note"><strong>Fair play:</strong> real Flask apps run several workers or threads (for example <code>gunicorn -w 4</code>), so they are not this slow. But each worker can only stand at one kitchen door at a time. Async lets <b>one</b> worker handle hundreds of waits, which saves memory and money. It helps most when your app waits a lot, like calling an LLM API that takes 3–10 seconds.</p>
+
+    <div class="lanes" style="margin-top:16px">
+      <pre class="block"><code class="language-python"># Flask: the worker is blocked while it waits
+@app.get("/ask")
+def ask():
+    answer = call_llm()      # waits 3s, worker frozen
+    return {"answer": answer}</code></pre>
+      <pre class="block"><code class="language-python"># FastAPI: "await" = go serve other tables
+@app.get("/ask")
+async def ask():
+    answer = await call_llm()  # waits 3s, worker free
+    return {"answer": answer}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2. JOURNEY ================= -->
+<section class="lesson" id="journey">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 2 · Under the hood</span>
+      <h2>Follow one request from the browser and back</h2>
+      <p>Press the button and watch which stations the request visits. <b>Thick border</b> = code you write. <b>Dashed border</b> = the framework does it for you.</p>
+    </div>
+    <div class="panel">
+      <div class="controls"><button class="btn" id="journeyBtn" type="button">▶ Send POST /tasks</button></div>
+      <div class="journey flask-j" id="jFlask">
+        <h3 class="fl">Flask</h3>
+        <div class="stations">
+          <div class="station">Browser<small>sends JSON</small></div><span class="arrow">→</span>
+          <div class="station auto">Gunicorn<small>WSGI server</small></div><span class="arrow">→</span>
+          <div class="station auto">Werkzeug<small>finds the route</small></div><span class="arrow">→</span>
+          <div class="station you">Read JSON<small>request.get_json()</small></div><span class="arrow">→</span>
+          <div class="station you">Check input<small>your if-statements</small></div><span class="arrow">→</span>
+          <div class="station you">Your logic<small>save the task</small></div><span class="arrow">→</span>
+          <div class="station you">jsonify()<small>you build output</small></div>
+        </div>
+        <div class="j-log" id="jFlaskLog" aria-live="polite">5 of 7 stations are code you write.</div>
+      </div>
+      <div class="journey fast-j" id="jFast">
+        <h3 class="fa">FastAPI</h3>
+        <div class="stations">
+          <div class="station">Browser<small>sends JSON</small></div><span class="arrow">→</span>
+          <div class="station auto">Uvicorn<small>ASGI server</small></div><span class="arrow">→</span>
+          <div class="station auto">Starlette<small>finds the route</small></div><span class="arrow">→</span>
+          <div class="station auto">Pydantic<small>reads + checks input</small></div><span class="arrow">→</span>
+          <div class="station you">Your logic<small>save the task</small></div><span class="arrow">→</span>
+          <div class="station auto">Response model<small>filters output</small></div><span class="arrow">→</span>
+          <div class="station auto">JSON out<small>automatic</small></div>
+        </div>
+        <div class="j-log" id="jFastLog" aria-live="polite">Only 1 of 7 stations is code you write.</div>
+      </div>
+    </div>
+    <p class="tip"><b>WSGI vs ASGI in one line:</b> WSGI (2003) is the old agreement between Python apps and web servers: one request in, one response out, one at a time per worker. ASGI (2016+) is the newer agreement that adds <code>async</code>, WebSockets and streaming.</p>
+  </div>
+</section>
+
+<!-- ================= 3. VALIDATION ================= -->
+<section class="lesson" id="validate">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 3 · Data validation</span>
+      <h2>Send bad data and see who catches it</h2>
+      <p>A task needs a <code>title</code> (1–200 letters) and a <code>priority</code> (whole number 1–5). Edit the JSON or pick a preset, then send it to both servers. Responses below are the real ones from the two apps in this folder.</p>
+    </div>
+    <div class="play-grid">
+      <div class="panel">
+        <label for="body" class="eyebrow">Request body · POST /tasks</label>
+        <div class="presets" id="presets">
+          <button type="button" data-body='{"title": "Learn FastAPI", "priority": 2}'>Good task</button>
+          <button type="button" data-body='{"title": "Revise SQL", "priority": "high"}'>Priority as a word</button>
+          <button type="button" data-body='{"title": "   ", "priority": 2}'>Blank title</button>
+          <button type="button" data-body='{"priority": 4}'>Missing title</button>
+          <button type="button" data-body='{"title": "Gym", "priority": 9}'>Priority 9</button>
+          <button type="button" data-body='{"title": "Read notes", "priority": "4"}'>Number in quotes</button>
+          <button type="button" data-body='{"title": 42, "priority": "x"}'>Two mistakes</button>
+        </div>
+        <textarea id="body" spellcheck="false">{"title": "Revise SQL", "priority": "high"}</textarea>
+        <div class="controls" style="margin:12px 0 0">
+          <button class="btn" id="sendBtn" type="button">Send to both ▶</button>
+          <label class="switch" for="forgot"><input type="checkbox" id="forgot"> Flask dev forgot to write checks</label>
+        </div>
+      </div>
+      <div class="resp-stack">
+        <div class="resp flask" id="respFlask">
+          <div class="resp-head"><b class="fl">Flask</b><span class="status-pill" id="pillFlask">—</span></div>
+          <pre id="outFlask"></pre>
+          <div class="verdict" id="vFlask"></div>
+        </div>
+        <div class="resp fast" id="respFast">
+          <div class="resp-head"><b class="fa">FastAPI</b><span class="status-pill" id="pillFast">—</span></div>
+          <pre id="outFast"></pre>
+          <div class="verdict" id="vFast"></div>
+        </div>
+      </div>
+    </div>
+    <div class="lanes" style="margin-top:16px">
+      <div>
+        <p style="margin-bottom:8px">In <span class="fl">Flask</span> the rules are <b>11 lines of if-statements</b> you write and maintain:</p>
+        <pre class="block"><code class="language-python">title = data.get("title")
+if not isinstance(title, str) or not title.strip():
+    return jsonify({"error": "title is required"}), 400
+if len(title.strip()) &gt; 200:
+    return jsonify({"error": "title must be 200 characters or less"}), 400
+
+priority = data.get("priority", 3)
+if isinstance(priority, bool) or not isinstance(priority, int):
+    return jsonify({"error": "priority must be a whole number"}), 400
+if not 1 &lt;= priority &lt;= 5:
+    return jsonify({"error": "priority must be from 1 to 5"}), 400</code></pre>
+      </div>
+      <div>
+        <p style="margin-bottom:8px">In <span class="fa">FastAPI</span> the rules are <b>a class with type hints</b>. Pydantic checks every field:</p>
+        <pre class="block"><code class="language-python">class TaskIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str = Field(min_length=1, max_length=200)
+    priority: int = Field(default=3, ge=1, le=5)
+
+
+@app.post("/tasks", status_code=201)
+def create_task(task_in: TaskIn) -&gt; Task:
+    ...  # task_in is already clean here</code></pre>
+      </div>
+    </div>
+    <p class="tip"><b>Notice:</b> FastAPI lists <b>every</b> mistake at once and says exactly where (<code>loc</code>). It also converts safe values for you: <code>"4"</code> becomes <code>4</code>. Status <code>422</code> means "I understood your JSON, but the data is wrong".</p>
+  </div>
+</section>
+
+<!-- ================= 4. AUTO DOCS ================= -->
+<section class="lesson" id="docs">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 4 · Automatic docs</span>
+      <h2>Write the code. The help page writes itself.</h2>
+      <p>Every FastAPI app gets a live, clickable docs page at <code>/docs</code> (Swagger UI) and <code>/redoc</code>, built from your code. Frontend developers and testers can try every endpoint from the browser. Watch it grow as the code is typed.</p>
+    </div>
+    <div class="controls"><button class="btn" id="docsBtn" type="button">▶ Type the code</button></div>
+    <div class="docs-grid">
+      <pre class="typer" id="typer" aria-label="FastAPI code being typed"></pre>
+      <div class="swagger" aria-live="polite">
+        <div class="sw-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>127.0.0.1:8000/docs</div>
+        <div class="sw-body" id="swBody"></div>
+      </div>
+    </div>
+    <div class="flask-404">
+      <b class="fl">Flask:</b> open <span class="mono">127.0.0.1:5000/docs</span> and you get <span class="mono">404 Not Found</span>. You can add docs with an extension such as <b>flask-smorest</b> or <b>Flasgger</b>, but you describe each endpoint yourself, and the docs can drift away from the real code.
+    </div>
+  </div>
+</section>
+
+<!-- ================= 5. TYPE HINTS ================= -->
+<section class="lesson" id="types">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 5 · Type hints do the work</span>
+      <h2>One small <code>: int</code> does three jobs</h2>
+      <p>In FastAPI, writing <code>task_id: int</code> <b>checks</b> the value, <b>converts</b> the text "42" into the number 42, and <b>documents</b> it. Your code editor also starts auto-completing, because it knows the types. Try a URL:</p>
+    </div>
+    <div class="panel">
+      <div class="mini">
+        <span>GET /tasks/</span><input id="tid" value="abc" aria-label="Task id in the URL">
+        <button class="btn" id="tidBtn" type="button">Visit ▶</button>
+      </div>
+      <div class="mini-out lanes">
+        <div class="resp flask" id="tidFlask">
+          <div class="resp-head"><b class="fl">Flask</b> <code>/tasks/&lt;int:task_id&gt;</code><span class="status-pill" id="tidPillF">—</span></div>
+          <pre id="tidOutF"></pre>
+        </div>
+        <div class="resp fast" id="tidFast">
+          <div class="resp-head"><b class="fa">FastAPI</b> <code>task_id: int</code><span class="status-pill" id="tidPillA">—</span></div>
+          <pre id="tidOutA"></pre>
+        </div>
+      </div>
+    </div>
+    <p class="tip">Flask has URL converters too (<code>&lt;int:id&gt;</code>), but a wrong value just gives a general <code>404</code> page. FastAPI explains the mistake. Type hints also work for query strings: <code>def search(q: str, limit: int = 10)</code> makes <code>?q=python&amp;limit=5</code> work with no extra code.</p>
+  </div>
+</section>
+
+<!-- ================= 6. DEPENDS ================= -->
+<section class="lesson" id="deps">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 6 · Dependency injection</span>
+      <h2><code>Depends()</code>: plug in shared helpers like LEGO</h2>
+      <p>Many routes need the same things: a database connection, the logged-in user, an API key check. FastAPI lets a route <b>ask</b> for them, and it plugs them in before your function runs. Flask usually uses the global <code>g</code> object, decorators or extensions like Flask-Login for this.</p>
+    </div>
+    <div class="deps-stage">
+      <div class="plugboard" id="plugs">
+        <div class="plug out" data-i="0"><span class="mono">get_db()</span><small>opens a database session, closes it after</small></div>
+        <div class="plug out" data-i="1"><span class="mono">get_current_user()</span><small>reads the token, returns the user or 401</small></div>
+        <div class="plug out" data-i="2"><span class="mono">rate_limit()</span><small>blocks spammers before your code runs</small></div>
+        <button class="btn" id="plugBtn" type="button">▶ Plug them in</button>
+      </div>
+      <div class="socket">
+        <pre class="block"><code class="language-python">@app.get("/my-tasks")
+def my_tasks(
+    db = Depends(get_db),
+    user = Depends(get_current_user),
+    _ = Depends(rate_limit),
+):
+    return db.tasks_for(user.id)</code></pre>
+        <p style="margin-top:10px;font-size:15px">Write a helper once, reuse it in 50 routes. In tests you can swap the real database for a fake one with <code>app.dependency_overrides</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 7. CODE ================= -->
+<section class="lesson" id="code">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 7 · Same app, two ways</span>
+      <h2>The full Task API, side by side</h2>
+      <p>Both files are in this folder and do the same four things: list, create, get and delete tasks. Run them and compare.</p>
+    </div>
+    <div class="code-grid">
+      <div class="code-card flask">
+        <header><span>flask_app/app.py</span><span class="chip flask">python app.py → :5000</span></header>
+        <pre><code class="language-python">from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+tasks = []      # our "database" (a plain Python list in memory)
+next_id = 1
+
+
+@app.get("/tasks")
+def list_tasks():
+    return jsonify(tasks)
+
+
+@app.post("/tasks")
+def create_task():
+    global next_id
+    data = request.get_json(silent=True) or {}
+
+    # Flask does NOT check the input for you.
+    # Every rule below is written by hand.
+    title = data.get("title")
+    if not isinstance(title, str) or not title.strip():
+        return jsonify({"error": "title is required"}), 400
+    if len(title.strip()) &gt; 200:
+        return jsonify({"error": "title must be 200 characters or less"}), 400
+
+    priority = data.get("priority", 3)
+    # bool is a subclass of int in Python, so True would sneak through without this
+    if isinstance(priority, bool) or not isinstance(priority, int):
+        return jsonify({"error": "priority must be a whole number"}), 400
+    if not 1 &lt;= priority &lt;= 5:
+        return jsonify({"error": "priority must be from 1 to 5"}), 400
+
+    task = {"id": next_id, "title": title.strip(), "priority": priority, "done": False}
+    tasks.append(task)
+    next_id += 1
+    return jsonify(task), 201
+
+
+@app.get("/tasks/&lt;int:task_id&gt;")
+def get_task(task_id):
+    for task in tasks:
+        if task["id"] == task_id:
+            return jsonify(task)
+    return jsonify({"error": "task not found"}), 404
+
+
+@app.delete("/tasks/&lt;int:task_id&gt;")
+def delete_task(task_id):
+    for task in tasks:
+        if task["id"] == task_id:
+            tasks.remove(task)
+            return "", 204
+    return jsonify({"error": "task not found"}), 404
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)</code></pre>
+      </div>
+      <div class="code-card fast">
+        <header><span>fastapi_app/main.py</span><span class="chip fast">fastapi dev main.py → :8000</span></header>
+        <pre><code class="language-python">from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
+
+app = FastAPI(title="Task API", version="1.0")
+
+
+# The rules live in the type hints. FastAPI + Pydantic check them for you.
+class TaskIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str = Field(min_length=1, max_length=200)
+    priority: int = Field(default=3, ge=1, le=5)
+
+
+class Task(TaskIn):
+    id: int
+    done: bool = False
+
+
+tasks: list[Task] = []   # our "database" (a plain Python list in memory)
+next_id = 1
+
+
+@app.get("/tasks")
+def list_tasks() -&gt; list[Task]:
+    return tasks
+
+
+@app.post("/tasks", status_code=201)
+def create_task(task_in: TaskIn) -&gt; Task:
+    global next_id
+    task = Task(id=next_id, **task_in.model_dump())
+    tasks.append(task)
+    next_id += 1
+    return task
+
+
+@app.get("/tasks/{task_id}")
+def get_task(task_id: int) -&gt; Task:
+    for task in tasks:
+        if task.id == task_id:
+            return task
+    raise HTTPException(status_code=404, detail="task not found")
+
+
+@app.delete("/tasks/{task_id}", status_code=204)
+def delete_task(task_id: int) -&gt; None:
+    for task in tasks:
+        if task.id == task_id:
+            tasks.remove(task)
+            return
+    raise HTTPException(status_code=404, detail="task not found")</code></pre>
+      </div>
+    </div>
+    <div class="counts">
+      <span>Spot the differences: <span class="fl">Flask</span> uses <code>&lt;int:task_id&gt;</code> and <code>jsonify()</code>; <span class="fa">FastAPI</span> uses <code>{task_id}</code>, type hints and plain return values.</span>
+      <span><span class="fa">FastAPI</span> extra, for free: <code>/docs</code>, <code>/redoc</code>, <code>/openapi.json</code>, clear 422 errors.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 8. TABLE ================= -->
+<section class="lesson" id="table">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 8 · The 360° view</span>
+      <h2>Every feature, compared</h2>
+      <p>Filter by topic. The last column says which one has the edge for that feature. Neither wins everything.</p>
+    </div>
+    <div class="filters" id="filters" role="group" aria-label="Filter features">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="basics" aria-pressed="false">Basics</button>
+      <button type="button" data-f="speed" aria-pressed="false">Speed</button>
+      <button type="button" data-f="dx" aria-pressed="false">Developer experience</button>
+      <button type="button" data-f="features" aria-pressed="false">Built-in features</button>
+      <button type="button" data-f="eco" aria-pressed="false">Ecosystem</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Feature</th><th>Flask</th><th>FastAPI</th><th>Edge</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="score" id="score"></div>
+  </div>
+</section>
+
+<!-- ================= 9. IMPACT ================= -->
+<section class="lesson" id="impact">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 9 · Why it mattered</span>
+      <h2>What FastAPI changed in app development</h2>
+      <p>FastAPI did not invent async, type hints or OpenAPI. It joined them so tightly that a normal Python function became a validated, documented, fast API. That changed how teams work.</p>
+    </div>
+    <div class="impact-grid">
+      <div class="impact"><span class="tag">Contract</span><h3>Type hints became the API contract</h3><p class="before">Before: rules lived in if-statements, docs lived in a Word file.</p><p class="after">After: one Python class is the rule, the check and the documentation.</p></div>
+      <div class="impact"><span class="tag">Docs</span><h3>Docs that never go stale</h3><p class="before">Before: someone forgot to update the API docs.</p><p class="after">After: <code>/docs</code> is generated from the code on every start.</p></div>
+      <div class="impact"><span class="tag">AI apps</span><h3>The default for AI and ML backends</h3><p class="before">Before: data scientists struggled to put a model online.</p><p class="after">After: load the model, add one route, done. Async handles slow LLM calls and token streaming.</p></div>
+      <div class="impact"><span class="tag">Teamwork</span><h3>Frontend teams generate code</h3><p class="before">Before: frontend devs guessed field names.</p><p class="after">After: tools read <code>/openapi.json</code> and generate a ready TypeScript client.</p></div>
+      <div class="impact"><span class="tag">Quality</span><h3>Bugs stopped at the door</h3><p class="before">Before: bad data got saved and crashed something later.</p><p class="after">After: wrong input gets a clear 422 before your code runs.</p></div>
+      <div class="impact"><span class="tag">Python</span><h3>Async Python went mainstream</h3><p class="before">Before: high-traffic APIs often moved to Node.js or Go.</p><p class="after">After: Python on Uvicorn handles lots of waiting connections well, so teams can stay in Python.</p></div>
+    </div>
+    <div class="timeline">
+      <div class="tl flask"><b>2010</b>Flask released (it started as an April Fools' joke).</div>
+      <div class="tl"><b>2016</b>ASGI idea appears, bringing async to Python web servers.</div>
+      <div class="tl fast"><b>2018</b>FastAPI first released, built on Starlette + Pydantic.</div>
+      <div class="tl flask"><b>2021</b>Flask 2.0 adds <code>async def</code> views (still on WSGI).</div>
+      <div class="tl fast"><b>2023–24</b>Pydantic v2 (much faster core) and the <code>fastapi dev</code> command.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 10. MYTHS ================= -->
+<section class="lesson" id="myths">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 10 · Common mistakes</span>
+      <h2>Myths students believe</h2>
+      <p>Tap each one.</p>
+    </div>
+    <div class="myths">
+      <details class="myth"><summary>"FastAPI is always faster than Flask."</summary><div class="body"><p>Only when the app <b>waits</b> a lot (I/O-bound). If your route does heavy maths for 2 seconds (CPU-bound), both frameworks are equally stuck, because the CPU is busy. Async helps with waiting, not with computing.</p></div></details>
+      <details class="myth"><summary>"Just add async to everything."</summary><div class="body"><p>Inside <code>async def</code> you must use async libraries. A blocking call like <code>time.sleep()</code> or <code>requests.get()</code> freezes the whole event loop, so <b>every</b> user waits.</p>
+<pre class="block"><code class="language-python"># ❌ freezes everyone
+async def bad():
+    time.sleep(3)
+
+# ✅ use await with async tools
+async def good():
+    await asyncio.sleep(3)
+
+# ✅ or plain def: FastAPI runs it in a thread pool
+def also_fine():
+    time.sleep(3)</code></pre></div></details>
+      <details class="myth"><summary>"Flask is old, so it is dead."</summary><div class="body"><p>No. Flask is actively maintained, used by many companies, and has a huge set of extensions (Flask-Login, Flask-SQLAlchemy, Flask-WTF, Flask-Admin). For websites that render HTML pages, it is still a great choice.</p></div></details>
+      <details class="myth"><summary>"Flask cannot do async at all."</summary><div class="body"><p>Since Flask 2.0 you can write <code>async def</code> views. But Flask still runs on WSGI, so each request still holds a worker until it finishes. You get async syntax, not FastAPI-style concurrency. For a fully async Flask-like framework, look at <b>Quart</b>.</p></div></details>
+      <details class="myth"><summary>"FastAPI can't serve web pages."</summary><div class="body"><p>It can, with <code>Jinja2Templates</code> and <code>StaticFiles</code>. It is just designed API-first, so Flask feels more natural for template-heavy websites.</p></div></details>
+      <details class="myth"><summary>"Type hints in Python are just comments."</summary><div class="body"><p>Plain Python ignores them at runtime. FastAPI and Pydantic <b>read</b> them while the app runs and use them to check, convert and document data. That is FastAPI's main trick.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 11. CHOOSER ================= -->
+<section class="lesson" id="choose">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 11 · Decide</span>
+      <h2>Which one should my project use?</h2>
+      <p>Answer for your own project idea. The meter moves as you answer.</p>
+    </div>
+    <div class="q-list" id="chooser"></div>
+    <div class="verdict-box" id="verdict">
+      <div class="meter" aria-hidden="true"><span id="meterFill" style="width:50%"></span></div>
+      <div class="meter-labels"><span class="fl">Flask</span><span class="fa">FastAPI</span></div>
+      <h3 id="verdictTitle">Answer the questions above</h3>
+      <p id="verdictText">Both are good tools. Your answers decide which fits better.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 12. QUIZ ================= -->
+<section class="lesson" id="quiz">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Lesson 12 · Check yourself</span>
+      <h2>Quick quiz</h2>
+      <p class="quiz-score" id="quizScore">Score: 0 / 6</p>
+    </div>
+    <div class="quiz" id="quizList"></div>
+  </div>
+</section>
+
+<!-- ================= 13. CHEAT SHEET ================= -->
+<section class="lesson" id="cheat">
+  <div class="wrap">
+    <div class="lesson-head">
+      <span class="lesson-num">Take home</span>
+      <h2>Cheat sheet</h2>
+    </div>
+    <div class="cheat">
+      <div class="panel" style="border-top:4px solid var(--flask)">
+        <h3 class="fl">Remember Flask as…</h3>
+        <ul>
+          <li>Simple, flexible, mature (since 2010)</li>
+          <li>WSGI, sync: one request per worker</li>
+          <li>Jinja2 HTML templates built in</li>
+          <li>You write validation and docs yourself</li>
+          <li>Huge extension ecosystem</li>
+        </ul>
+        <div class="cmd">
+          <pre class="block"><code class="language-bash">cd flask_app
+python app.py</code></pre>
+        </div>
+      </div>
+      <div class="panel" style="border-top:4px solid var(--fast)">
+        <h3 class="fa">Remember FastAPI as…</h3>
+        <ul>
+          <li>Type hints → validation + docs + editor help</li>
+          <li>ASGI, async: one worker juggles many requests</li>
+          <li>Automatic <code>/docs</code> and <code>/redoc</code></li>
+          <li>Clear 422 errors, <code>Depends()</code>, WebSockets</li>
+          <li>First choice for AI / LLM APIs</li>
+        </ul>
+        <div class="cmd">
+          <pre class="block"><code class="language-bash">cd fastapi_app
+fastapi dev main.py</code></pre>
+        </div>
+      </div>
+    </div>
+    <p class="tip" style="margin-top:16px"><b>One sentence to remember:</b> Flask gives you a blank notebook and freedom; FastAPI gives you a smart form that checks, documents and multitasks for you.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">Day 7 · Flask vs FastAPI. Code for both apps is in <code>flask_app/</code> and <code>fastapi_app/</code>. Validation responses on this page match what the real apps return (Flask 3.1, FastAPI 0.161, Pydantic 2.14).</div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  /* ---------- theme ---------- */
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem("d7-theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+  $("themeBtn").addEventListener("click", function () {
+    var cur = root.getAttribute("data-theme");
+    if (!cur) cur = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    var next = cur === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("d7-theme", next); } catch (e) {}
+  });
+
+  /* ---------- nav highlight ---------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll("#nav a"));
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          links.forEach(function (a) {
+            var on = a.getAttribute("href") === "#" + en.target.id;
+            a.classList.toggle("active", on);
+            if (on && a.scrollIntoView) { var nav = $("nav"); nav.scrollLeft = a.offsetLeft - nav.clientWidth / 2 + a.clientWidth / 2; }
+          });
+        }
+      });
+    }, { rootMargin: "-45% 0px -50% 0px" });
+    links.forEach(function (a) { var s = document.querySelector(a.getAttribute("href")); if (s) io.observe(s); });
+  }
+
+  /* ---------- 1. async race ---------- */
+  var WORK = 0.1;
+  var raceState = null;
+  function buildSchedule(n, wait) {
+    var flask = [], fast = [];
+    for (var i = 0; i < n; i++) {
+      var s = i * (WORK + wait);
+      flask.push({ queue: [0, s], work: [s, s + WORK], wait: [s + WORK, s + WORK + wait], end: s + WORK + wait });
+      var a = i * WORK;
+      fast.push({ queue: [0, a], work: [a, a + WORK], wait: [a + WORK, a + WORK + wait], end: a + WORK + wait });
+    }
+    return { flask: flask, fast: fast, total: (n - 1) * (WORK + wait) + WORK + wait };
+  }
+  function renderLane(laneId, rows, total, kind) {
+    var box = document.querySelector("#" + laneId + " .rows");
+    box.innerHTML = "";
+    rows.forEach(function (r, i) {
+      var row = document.createElement("div");
+      row.className = "race-row";
+      var html = '<span class="who">user ' + (i + 1) + '</span><div class="track">';
+      ["queue", "work", "wait"].forEach(function (k) {
+        var a = r[k][0], b = r[k][1];
+        if (b - a <= 0.0001) return;
+        html += '<div class="seg ' + k + " " + kind + '" data-a="' + a + '" data-b="' + b + '" style="left:' + (a / total * 100) + "%;width:" + ((b - a) / total * 100) + '%"><div class="fill"></div></div>';
+      });
+      html += '</div><span class="status done" data-end="' + r.end + '">✓ ' + r.end.toFixed(1) + "s</span>";
+      row.innerHTML = html;
+      box.appendChild(row);
+    });
+  }
+  function drawRace() {
+    var n = +$("raceN").value, w = +$("raceW").value / 10;
+    $("raceNv").textContent = n; $("raceWv").textContent = w.toFixed(1) + "s";
+    var sch = buildSchedule(n, w);
+    renderLane("laneFlask", sch.flask, sch.total, "flask");
+    renderLane("laneFast", sch.fast, sch.total, "fast");
+    $("clockFlask").textContent = sch.flask[n - 1].end.toFixed(1) + "s total";
+    $("clockFast").textContent = sch.fast[n - 1].end.toFixed(1) + "s total";
+    return sch;
+  }
+  function frameRace(t, sch) {
+    document.querySelectorAll("#race .seg").forEach(function (s) {
+      var a = +s.dataset.a, b = +s.dataset.b;
+      var p = Math.max(0, Math.min(1, (t - a) / (b - a)));
+      s.firstChild.style.width = (p * 100) + "%";
+    });
+    [["laneFlask", sch.flask, "clockFlask"], ["laneFast", sch.fast, "clockFast"]].forEach(function (L) {
+      var statuses = document.querySelectorAll("#" + L[0] + " .status");
+      var last = L[1][L[1].length - 1].end;
+      L[1].forEach(function (r, i) {
+        var st = statuses[i];
+        if (t >= r.end) { st.textContent = "✓ " + r.end.toFixed(1) + "s"; st.classList.add("done"); }
+        else {
+          st.classList.remove("done");
+          st.textContent = t < r.work[0] ? "in line" : t < r.work[1] ? "running" : "waiting…";
+        }
+      });
+      $(L[2]).textContent = (t >= last ? last.toFixed(1) + "s total" : t.toFixed(1) + "s");
+    });
+  }
+  function playRace() {
+    if (raceState) cancelAnimationFrame(raceState);
+    var sch = drawRace();
+    if (reduceMotion) return;
+    var start = performance.now();
+    $("raceBtn").textContent = "↻ Run again";
+    function tick(now) {
+      var t = (now - start) / 1000;
+      frameRace(t, sch);
+      if (t < sch.total + 0.05) raceState = requestAnimationFrame(tick); else raceState = null;
+    }
+    frameRace(0, sch);
+    raceState = requestAnimationFrame(tick);
+  }
+  $("raceBtn").addEventListener("click", playRace);
+  $("raceN").addEventListener("input", function () { if (raceState) cancelAnimationFrame(raceState); raceState = null; drawRace(); });
+  $("raceW").addEventListener("input", function () { if (raceState) cancelAnimationFrame(raceState); raceState = null; drawRace(); });
+  drawRace();
+
+  /* ---------- 2. journey ---------- */
+  var flaskSteps = [
+    "Browser sends {\"title\": \"Study\", \"priority\": 2}",
+    "Gunicorn hands the request to ONE sync worker",
+    "Werkzeug matches POST /tasks to create_task()",
+    "YOU read the body with request.get_json()",
+    "YOU check title and priority with if-statements",
+    "YOU save the task to the list",
+    "YOU turn it into JSON with jsonify(task), 201 ✓"
+  ];
+  var fastSteps = [
+    "Browser sends {\"title\": \"Study\", \"priority\": 2}",
+    "Uvicorn hands the request to the async event loop",
+    "Starlette matches POST /tasks to create_task()",
+    "Pydantic reads, converts and checks it into a TaskIn object",
+    "YOU save the task (the only line of logic you wrote)",
+    "The -> Task return type filters the output fields",
+    "JSON response sent with status 201 ✓"
+  ];
+  var jTimer = null;
+  function runJourney() {
+    clearTimeout(jTimer);
+    var fl = document.querySelectorAll("#jFlask .station"), fa = document.querySelectorAll("#jFast .station");
+    var i = 0, delay = reduceMotion ? 0 : 750;
+    function step() {
+      [fl, fa].forEach(function (list) { list.forEach(function (s, k) { s.classList.toggle("active", k === i); }); });
+      $("jFlaskLog").textContent = (i + 1) + ". " + flaskSteps[i];
+      $("jFastLog").textContent = (i + 1) + ". " + fastSteps[i];
+      i++;
+      if (i < fl.length) jTimer = setTimeout(step, delay);
+      else jTimer = setTimeout(function () {
+        [fl, fa].forEach(function (list) { list.forEach(function (s) { s.classList.remove("active"); }); });
+        $("jFlaskLog").textContent = "Done. 5 of 7 stations were code you wrote.";
+        $("jFastLog").textContent = "Done. Only 1 of 7 stations was code you wrote.";
+      }, delay + 600);
+    }
+    step();
+  }
+  $("journeyBtn").addEventListener("click", runJourney);
+
+  /* ---------- 3. validation (mirrors the real apps) ---------- */
+  var flaskId = 1, fastId = 1;
+  function isInt(v) { return typeof v === "number" && Number.isInteger(v); }
+  function flaskCreate(raw, forgot) {
+    var data;
+    try { data = JSON.parse(raw); } catch (e) { data = null; }
+    if (data === null || typeof data !== "object" || Array.isArray(data)) data = {};
+    if (forgot) {
+      var t = { done: false, id: flaskId++, priority: ("priority" in data) ? data.priority : 3, title: ("title" in data) ? data.title : null };
+      var warns = [];
+      if (typeof t.title !== "string" || !String(t.title).trim()) warns.push("title is " + JSON.stringify(t.title));
+      if (!isInt(t.priority) || typeof t.priority === "boolean") warns.push("priority is " + JSON.stringify(t.priority) + " (not a number)");
+      else if (t.priority < 1 || t.priority > 5) warns.push("priority " + t.priority + " is out of range");
+      return { code: 201, body: t, warn: warns };
+    }
+    var title = data.title;
+    if (typeof title !== "string" || !title.trim()) return { code: 400, body: { error: "title is required" } };
+    if (title.trim().length > 200) return { code: 400, body: { error: "title must be 200 characters or less" } };
+    var pr = ("priority" in data) ? data.priority : 3;
+    if (!isInt(pr)) return { code: 400, body: { error: "priority must be a whole number" } };
+    if (pr < 1 || pr > 5) return { code: 400, body: { error: "priority must be from 1 to 5" } };
+    return { code: 201, body: { done: false, id: flaskId++, priority: pr, title: title.trim() } };
+  }
+  function fastCreate(raw) {
+    var data;
+    try { data = JSON.parse(raw); } catch (e) {
+      return { code: 422, body: { detail: [{ type: "json_invalid", loc: ["body", 0], msg: "JSON decode error", input: {}, ctx: { error: "Expecting value" } }] } };
+    }
+    if (data === null || typeof data !== "object" || Array.isArray(data)) {
+      return { code: 422, body: { detail: [{ type: "model_attributes_type", loc: ["body"], msg: "Input should be a valid dictionary or object to extract fields from", input: data }] } };
+    }
+    var errs = [], title, pr;
+    if (!("title" in data)) errs.push({ type: "missing", loc: ["body", "title"], msg: "Field required", input: data });
+    else if (typeof data.title !== "string") errs.push({ type: "string_type", loc: ["body", "title"], msg: "Input should be a valid string", input: data.title });
+    else {
+      title = data.title.trim();
+      if (title.length < 1) errs.push({ type: "string_too_short", loc: ["body", "title"], msg: "String should have at least 1 character", input: data.title, ctx: { min_length: 1 } });
+      else if (title.length > 200) errs.push({ type: "string_too_long", loc: ["body", "title"], msg: "String should have at most 200 characters", input: data.title, ctx: { max_length: 200 } });
+    }
+    if (!("priority" in data)) pr = 3;
+    else {
+      var v = data.priority;
+      if (typeof v === "boolean") pr = v ? 1 : 0;
+      else if (typeof v === "number") {
+        if (Number.isInteger(v)) pr = v;
+        else errs.push({ type: "int_from_float", loc: ["body", "priority"], msg: "Input should be a valid integer, got a number with a fractional part", input: v });
+      } else if (typeof v === "string") {
+        if (/^\s*[+-]?\d+\s*$/.test(v)) pr = parseInt(v, 10);
+        else errs.push({ type: "int_parsing", loc: ["body", "priority"], msg: "Input should be a valid integer, unable to parse string as an integer", input: v });
+      } else errs.push({ type: "int_type", loc: ["body", "priority"], msg: "Input should be a valid integer", input: v });
+      if (pr !== undefined) {
+        if (pr < 1) errs.push({ type: "greater_than_equal", loc: ["body", "priority"], msg: "Input should be greater than or equal to 1", input: v, ctx: { ge: 1 } });
+        else if (pr > 5) errs.push({ type: "less_than_equal", loc: ["body", "priority"], msg: "Input should be less than or equal to 5", input: v, ctx: { le: 5 } });
+      }
+    }
+    if (errs.length) return { code: 422, body: { detail: errs } };
+    return { code: 201, body: { title: title, priority: pr, id: fastId++, done: false } };
+  }
+  function pretty(o) { return JSON.stringify(o, null, 2); }
+  function setPill(el, code, warn) {
+    var names = { 200: "200 OK", 201: "201 Created", 400: "400 Bad Request", 404: "404 Not Found", 422: "422 Unprocessable" };
+    el.textContent = names[code] || String(code);
+    el.className = "status-pill " + (warn ? "warn" : code < 300 ? "ok" : "err");
+  }
+  function bump(el) { if (reduceMotion) return; el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+  function sendBoth() {
+    var raw = $("body").value, forgot = $("forgot").checked;
+    var f = flaskCreate(raw, forgot), a = fastCreate(raw);
+    var fWarn = f.warn && f.warn.length;
+    setPill($("pillFlask"), f.code, fWarn);
+    $("outFlask").textContent = pretty(f.body);
+    if (forgot) {
+      $("vFlask").innerHTML = fWarn
+        ? "⚠ <b>Saved bad data!</b> " + esc(f.warn.join("; ")) + ". Nothing stopped it. Something will crash later."
+        : "Saved. It worked this time, but only because the data happened to be good.";
+    } else {
+      $("vFlask").innerHTML = f.code < 300 ? "✓ Accepted. Your hand-written checks passed."
+        : "✓ Caught by <b>your own if-statements</b>. Stops at the first problem only.";
+    }
+    setPill($("pillFast"), a.code, false);
+    $("outFast").textContent = pretty(a.body);
+    if (a.code < 300) {
+      var conv = /"priority"\s*:\s*"/.test(raw) || /"priority"\s*:\s*(true|false)/.test(raw);
+      $("vFast").innerHTML = "✓ Accepted" + (conv ? ". Pydantic <b>converted</b> the value to a whole number for you." : ". Zero if-statements written.");
+    } else {
+      var n = a.body.detail.length;
+      $("vFast").innerHTML = "✓ Caught <b>automatically</b>: " + n + " problem" + (n > 1 ? "s" : "") + " listed, each with its exact location.";
+    }
+    bump($("respFlask")); bump($("respFast"));
+  }
+  document.querySelectorAll("#presets button").forEach(function (b) {
+    b.addEventListener("click", function () { $("body").value = b.getAttribute("data-body"); sendBoth(); });
+  });
+  $("sendBtn").addEventListener("click", sendBoth);
+  $("forgot").addEventListener("change", sendBoth);
+  sendBoth();
+
+  /* ---------- 4. auto docs ---------- */
+  var docsScript = [
+    { code: 'app = FastAPI(title="Task API", version="1.0")\n\n', show: "title" },
+    { code: "class TaskIn(BaseModel):\n    title: str = Field(min_length=1, max_length=200)\n    priority: int = Field(default=3, ge=1, le=5)\n\n", show: "schema" },
+    { code: '@app.get("/tasks")\ndef list_tasks() -> list[Task]: ...\n\n', show: ["get", "/tasks", "List Tasks"] },
+    { code: '@app.post("/tasks", status_code=201)\ndef create_task(task_in: TaskIn) -> Task: ...\n\n', show: ["post", "/tasks", "Create Task"] },
+    { code: '@app.get("/tasks/{task_id}")\ndef get_task(task_id: int) -> Task: ...\n\n', show: ["get", "/tasks/{task_id}", "Get Task"] },
+    { code: '@app.delete("/tasks/{task_id}", status_code=204)\ndef delete_task(task_id: int) -> None: ...', show: ["delete", "/tasks/{task_id}", "Delete Task"] }
+  ];
+  function swAdd(show) {
+    var body = $("swBody"), el;
+    if (show === "title") {
+      el = document.createElement("div"); el.className = "sw-title";
+      el.innerHTML = 'Task API <span class="chip">1.0</span><span class="chip">OAS 3.1</span>';
+    } else if (show === "schema") {
+      el = document.createElement("div"); el.className = "sw-schema";
+      el.innerHTML = "Schema <b>TaskIn</b> · title: string (1–200) · priority: integer (1–5, default 3)";
+    } else {
+      el = document.createElement("div"); el.className = "sw-op " + show[0];
+      el.innerHTML = '<span class="m">' + show[0].toUpperCase() + "</span><span>" + esc(show[1]) + '</span><span style="color:var(--muted)">' + esc(show[2]) + '</span><span class="try">Try it out</span>';
+    }
+    body.appendChild(el);
+  }
+  function docsFinal() {
+    var t = $("typer"); t.textContent = docsScript.map(function (s) { return s.code; }).join("");
+    $("swBody").innerHTML = ""; docsScript.forEach(function (s) { swAdd(s.show); });
+  }
+  var docsTimer = null;
+  function playDocs() {
+    clearTimeout(docsTimer);
+    if (reduceMotion) { docsFinal(); return; }
+    var t = $("typer"); t.innerHTML = ""; $("swBody").innerHTML = "";
+    var typed = "", si = 0, ci = 0;
+    var cursor = '<span class="cursor"></span>';
+    function tick() {
+      var step = docsScript[si];
+      typed += step.code.slice(ci, ci + 3); ci += 3;
+      t.innerHTML = esc(typed) + cursor;
+      if (ci >= step.code.length) { swAdd(step.show); si++; ci = 0; }
+      if (si < docsScript.length) docsTimer = setTimeout(tick, 22);
+      else t.innerHTML = esc(typed);
+    }
+    tick();
+  }
+  $("docsBtn").addEventListener("click", playDocs);
+  docsFinal();
+
+  /* ---------- 5. type hints ---------- */
+  function visitTid() {
+    var v = $("tid").value;
+    var isNum = /^\d+$/.test(v);
+    var known = isNum && +v === 1;
+    if (isNum) {
+      setPill($("tidPillF"), known ? 200 : 404);
+      $("tidOutF").textContent = known ? pretty({ done: false, id: 1, priority: 2, title: "Learn FastAPI" }) : pretty({ error: "task not found" });
+      setPill($("tidPillA"), known ? 200 : 404);
+      $("tidOutA").textContent = known ? pretty({ title: "Learn FastAPI", priority: 2, id: 1, done: false }) : pretty({ detail: "task not found" });
+    } else {
+      setPill($("tidPillF"), 404);
+      $("tidOutF").textContent = "<!doctype html>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server...</p>\n\n(no hint that the id must be a number)";
+      setPill($("tidPillA"), 422);
+      $("tidOutA").textContent = pretty({ detail: [{ type: "int_parsing", loc: ["path", "task_id"], msg: "Input should be a valid integer, unable to parse string as an integer", input: v }] });
+    }
+    bump($("tidFlask")); bump($("tidFast"));
+  }
+  $("tidBtn").addEventListener("click", visitTid);
+  $("tid").addEventListener("keydown", function (e) { if (e.key === "Enter") visitTid(); });
+  visitTid();
+
+  /* ---------- 6. depends ---------- */
+  var plugged = false;
+  $("plugBtn").addEventListener("click", function () {
+    plugged = !plugged;
+    var plugs = document.querySelectorAll("#plugs .plug");
+    plugs.forEach(function (p, i) {
+      setTimeout(function () { p.classList.toggle("out", !plugged); p.classList.toggle("in", plugged); }, reduceMotion ? 0 : i * 260);
+    });
+    $("plugBtn").textContent = plugged ? "↺ Unplug" : "▶ Plug them in";
+  });
+
+  /* ---------- 8. table ---------- */
+  var rows = [
+    ["basics", "What it is", "Micro web framework for websites and APIs", "Framework made mainly for building APIs", "tie"],
+    ["basics", "First release", "2010", "2018", "tie"],
+    ["basics", "Built on", "Werkzeug + Jinja2", "Starlette + Pydantic", "tie"],
+    ["basics", "Server standard", "WSGI (gunicorn, waitress)", "ASGI (uvicorn, hypercorn)", "fast"],
+    ["basics", "Run command", "<code>flask run</code> or <code>python app.py</code>", "<code>fastapi dev main.py</code> or <code>uvicorn main:app --reload</code>", "tie"],
+    ["speed", "Handling many waiting requests", "One request per worker; add more workers or threads", "One worker juggles many requests with <code>async</code>/<code>await</code>", "fast"],
+    ["speed", "Raw performance", "Good for most apps", "Among the fastest Python frameworks in public benchmarks", "fast"],
+    ["speed", "Heavy CPU work (maths, image processing)", "Same limits", "Same limits; async does not help here", "tie"],
+    ["dx", "Input validation", "Write if-statements, or add Marshmallow / WTForms", "Automatic from type hints (Pydantic)", "fast"],
+    ["dx", "Error messages for bad input", "Whatever you write; often stops at the first problem", "Standard 422 with every problem and its location", "fast"],
+    ["dx", "API documentation", "Add flask-smorest or Flasgger and describe endpoints", "Automatic <code>/docs</code>, <code>/redoc</code>, <code>/openapi.json</code>", "fast"],
+    ["dx", "Editor auto-complete", "Limited (request data is a plain dict)", "Strong, because everything is typed", "fast"],
+    ["dx", "Learning curve", "Very gentle; few new ideas", "Gentle, plus type hints, Pydantic and async", "flask"],
+    ["dx", "Testing", "<code>app.test_client()</code>", "<code>TestClient</code> + <code>dependency_overrides</code> for fakes", "tie"],
+    ["features", "HTML pages / templates", "Jinja2 built in; feels natural", "Possible with <code>Jinja2Templates</code>; API-first", "flask"],
+    ["features", "Async support", "<code>async def</code> views since 2.0, still on WSGI", "Native, from day one", "fast"],
+    ["features", "WebSockets (live chat)", "Needs an extension such as Flask-SocketIO", "Built in: <code>@app.websocket()</code>", "fast"],
+    ["features", "Streaming (LLM token by token)", "Possible with generators", "<code>StreamingResponse</code>, async friendly", "fast"],
+    ["features", "Dependency injection", "No built-in system; use <code>g</code>, decorators", "<code>Depends()</code> built in", "fast"],
+    ["features", "Background tasks", "Usually Celery or RQ", "<code>BackgroundTasks</code> for small jobs (Celery for big ones)", "fast"],
+    ["features", "Security helpers", "Flask-Login, Flask-JWT-Extended", "<code>fastapi.security</code>: OAuth2, API keys, shown in docs", "tie"],
+    ["eco", "Extensions and plugins", "Huge and mature: Login, SQLAlchemy, Admin, WTF, Mail", "Growing; uses general Python libraries (SQLModel, SQLAlchemy)", "flask"],
+    ["eco", "Tutorials and answers online", "15+ years of material", "Lots, and very good official docs", "flask"],
+    ["eco", "Common in job posts for", "Web apps, internal tools, older codebases", "AI / ML APIs, microservices, new backends", "tie"],
+    ["eco", "Best for", "Websites with pages, small apps, prototypes, learning", "JSON APIs, AI apps, high-traffic services", "tie"]
+  ];
+  var edgeChip = { flask: '<span class="chip flask">Flask</span>', fast: '<span class="chip fast">FastAPI</span>', tie: '<span class="chip tie">Tie</span>' };
+  function drawTable(filter) {
+    var html = "", score = { flask: 0, fast: 0, tie: 0 };
+    rows.forEach(function (r) {
+      if (filter !== "all" && r[0] !== filter) return;
+      score[r[4]]++;
+      html += "<tr><td>" + r[1] + "</td><td>" + r[2] + "</td><td>" + r[3] + "</td><td>" + edgeChip[r[4]] + "</td></tr>";
+    });
+    $("tbody").innerHTML = html;
+    $("score").innerHTML = "<span>Shown: <b>" + (score.flask + score.fast + score.tie) + "</b> features</span><span>" + edgeChip.flask + " edge: " + score.flask + "</span><span>" + edgeChip.fast + " edge: " + score.fast + "</span><span>" + edgeChip.tie + ": " + score.tie + "</span>";
+  }
+  document.querySelectorAll("#filters button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("#filters button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      drawTable(b.getAttribute("data-f"));
+    });
+  });
+  drawTable("all");
+
+  /* ---------- 11. chooser ---------- */
+  var qs = [
+    ["Will the app mostly show HTML pages (a website with forms and templates)?", "flask", 2],
+    ["Is it mainly a JSON API for a React, Flutter or mobile frontend?", "fast", 2],
+    ["Will it call slow services (LLM APIs, other APIs) for many users at once?", "fast", 2],
+    ["Do you need live features like chat or streaming AI answers?", "fast", 1],
+    ["Are you adding to an existing Flask project or relying on Flask extensions?", "flask", 3],
+    ["Do you want automatic validation and API docs?", "fast", 1],
+    ["Is this your very first backend and you want the fewest new ideas?", "flask", 1]
+  ];
+  var answers = {};
+  var ch = $("chooser");
+  qs.forEach(function (q, i) {
+    var div = document.createElement("div"); div.className = "q-item";
+    div.innerHTML = "<span>" + q[0] + '</span><span class="yn" role="group" aria-label="Answer"><button type="button" data-v="y" aria-pressed="false">Yes</button><button type="button" data-v="n" aria-pressed="false">No</button></span>';
+    div.querySelectorAll("button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        div.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        answers[i] = b.getAttribute("data-v"); updateVerdict();
+      });
+    });
+    ch.appendChild(div);
+  });
+  function updateVerdict() {
+    var f = 0, a = 0, n = 0, reasons = { flask: [], fast: [] };
+    qs.forEach(function (q, i) {
+      if (answers[i] === "y") { n++; if (q[1] === "flask") { f += q[2]; reasons.flask.push(q[0]); } else { a += q[2]; reasons.fast.push(q[0]); } }
+      else if (answers[i] === "n") n++;
+    });
+    var share = (f + a) ? f / (f + a) : 0.5;
+    $("meterFill").style.width = (share * 100) + "%";
+    var box = $("verdict"); box.className = "verdict-box";
+    if (!n) { $("verdictTitle").textContent = "Answer the questions above"; $("verdictText").textContent = "Both are good tools. Your answers decide which fits better."; return; }
+    if (f === a) { $("verdictTitle").textContent = "Either one works"; $("verdictText").textContent = "Your project fits both. Pick the one your team knows better, or try FastAPI if you want to learn something new."; return; }
+    if (a > f) {
+      box.classList.add("fast");
+      $("verdictTitle").innerHTML = '<span class="fa">FastAPI</span> fits better';
+      $("verdictText").textContent = "You are building an API that waits on other services or needs clean, documented data. FastAPI's async, validation and /docs will save you time.";
+    } else {
+      box.classList.add("flask");
+      $("verdictTitle").innerHTML = '<span class="fl">Flask</span> fits better';
+      $("verdictText").textContent = "You are building pages or working in the Flask world. Flask's templates, simplicity and extensions fit your project well.";
+    }
+  }
+
+  /* ---------- 12. quiz ---------- */
+  var quiz = [
+    ["What does FastAPI use to check incoming data?", ["Jinja2", "Pydantic", "Werkzeug"], 1, "Pydantic reads your type hints and validates the data. Jinja2 is for HTML templates; Werkzeug is Flask's toolkit."],
+    ["Your API calls an LLM that takes 5 seconds. Which helps one worker serve many users meanwhile?", ["async / await", "More if-statements", "jsonify()"], 0, "While one request awaits the LLM, the event loop serves others."],
+    ["Which status code does FastAPI return for wrong input data?", ["200", "404", "422"], 2, "422 Unprocessable Content: the JSON was readable, but the data broke the rules."],
+    ["Where are FastAPI's free interactive docs?", ["/help", "/docs", "/swagger.html"], 1, "/docs shows Swagger UI. /redoc shows a second style."],
+    ["You put time.sleep(3) inside an async def route. What happens?", ["Nothing bad", "Every user is frozen for 3s", "FastAPI fixes it"], 1, "A blocking call inside async def blocks the event loop. Use await asyncio.sleep() or a plain def."],
+    ["Building a blog that renders HTML pages with forms, using Flask-Login. Best fit?", ["Flask", "FastAPI", "Neither can do it"], 0, "Template-heavy websites with Flask extensions are Flask's home ground."]
+  ];
+  var scoreState = {};
+  var ql = $("quizList");
+  quiz.forEach(function (q, i) {
+    var d = document.createElement("div"); d.className = "quiz-q";
+    var opts = q[1].map(function (o, k) { return '<button type="button" data-k="' + k + '">' + esc(o) + "</button>"; }).join("");
+    d.innerHTML = "<b>" + (i + 1) + ". " + esc(q[0]) + '</b><div class="opts">' + opts + '</div><p class="why" hidden></p>';
+    d.querySelectorAll("button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (i in scoreState) return;
+        var k = +b.getAttribute("data-k"), ok = k === q[2];
+        scoreState[i] = ok;
+        b.classList.add(ok ? "right" : "wrong");
+        if (!ok) d.querySelectorAll("button")[q[2]].classList.add("right");
+        var why = d.querySelector(".why"); why.hidden = false; why.textContent = (ok ? "Correct. " : "Not quite. ") + q[3];
+        var s = 0; Object.keys(scoreState).forEach(function (x) { if (scoreState[x]) s++; });
+        $("quizScore").textContent = "Score: " + s + " / " + quiz.length + (Object.keys(scoreState).length === quiz.length ? (s === quiz.length ? " · Perfect!" : " · Scroll up to review") : "");
+      });
+    });
+    ql.appendChild(d);
+  });
+
+  /* ---------- syntax colours ---------- */
+  if (window.hljs) document.querySelectorAll("pre code").forEach(function (el) { window.hljs.highlightElement(el); });
+})();
+</script>
+</body>
+</html>
