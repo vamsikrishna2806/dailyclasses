@@ -1,0 +1,1588 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full-Stack Layers Guide</title>
+<style>
+:root{
+  --bg:#f6f7fb; --surface:#ffffff; --surface-2:#f0f2f8; --text:#1c2033; --muted:#5d6480;
+  --border:#dde1ec; --accent:#4f46e5; --accent-soft:#eceafe;
+  --fe:#0ea5e9; --fe-soft:#e0f4fd; --be:#16a34a; --be-soft:#e3f6ea; --db:#d97706; --db-soft:#fdf1df;
+  --code-bg:#1e2235; --code-text:#e4e7f5; --ok:#16a34a; --bad:#dc2626;
+  --shadow:0 1px 3px rgba(20,24,50,.08),0 4px 14px rgba(20,24,50,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11131c; --surface:#1a1d29; --surface-2:#232737; --text:#e7e9f3; --muted:#9aa1bd;
+    --border:#2e3346; --accent:#8b85ff; --accent-soft:#2a2850;
+    --fe:#38bdf8; --fe-soft:#12303f; --be:#4ade80; --be-soft:#123222; --db:#fbbf24; --db-soft:#3a2c10;
+    --code-bg:#0b0d14; --code-text:#e4e7f5; --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11131c; --surface:#1a1d29; --surface-2:#232737; --text:#e7e9f3; --muted:#9aa1bd;
+  --border:#2e3346; --accent:#8b85ff; --accent-soft:#2a2850;
+  --fe:#38bdf8; --fe-soft:#12303f; --be:#4ade80; --be-soft:#123222; --db:#fbbf24; --db-soft:#3a2c10;
+  --code-bg:#0b0d14; --code-text:#e4e7f5; --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.top{background:var(--surface);border-bottom:1px solid var(--border)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:22px;padding-bottom:18px;flex-wrap:wrap}
+h1{font-size:1.65rem;margin:0;line-height:1.25}
+.sub{color:var(--muted);margin:4px 0 0}
+.theme-btn{border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit;font-size:.9rem}
+nav.tabs{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--border)}
+nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin}
+nav.tabs button{flex:0 0 auto;border:0;background:none;color:var(--muted);font:inherit;font-size:.92rem;padding:12px 12px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs button.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+nav.tabs button .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+main{padding:24px 0 60px}
+section.panel{display:none}
+section.panel.active{display:block}
+h2{font-size:1.35rem;margin:0 0 6px}
+h3{font-size:1.08rem;margin:22px 0 8px}
+.lead{color:var(--muted);margin:0 0 18px;max-width:820px}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input{flex:1 1 220px;min-width:0;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font:inherit}
+.toolbar .btn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;padding:8px 12px;cursor:pointer;font:inherit;font-size:.88rem}
+/* tech cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.card summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;gap:12px;align-items:center}
+.card summary::-webkit-details-marker{display:none}
+.card .ico{flex:0 0 40px;height:40px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.card .nm{font-weight:650;font-size:1.02rem}
+.card .one{color:var(--muted);font-size:.9rem}
+.card .chev{margin-left:auto;color:var(--muted);transition:transform .2s;flex:0 0 auto}
+.card[open] .chev{transform:rotate(90deg)}
+.tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted);margin-left:6px;vertical-align:middle;font-weight:500}
+.card .body{padding:0 16px 16px;border-top:1px solid var(--border)}
+.w5{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:14px}
+.w{background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.w b{display:block;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.w.what b{color:#6366f1}.w.why b{color:#db2777}.w.when b{color:#0891b2}.w.where b{color:#ca8a04}.w.how b{color:#16a34a}
+.ex-h{font-weight:600;font-size:.9rem;margin:14px 0 6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.copy{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:6px;padding:3px 9px;font-size:.78rem;cursor:pointer}
+pre{background:var(--code-bg);color:var(--code-text);padding:14px;border-radius:10px;overflow-x:auto;font:13px/1.55 ui-monospace,"Cascadia Code",Consolas,monospace;margin:0;white-space:pre}
+code.i{background:var(--surface-2);padding:1px 6px;border-radius:5px;font-size:.88em}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.pc div{border-radius:10px;padding:10px 12px;font-size:.88rem}
+.pros{background:var(--be-soft)}.cons{background:#fde8e8}
+:root[data-theme="dark"] .cons{background:#3b1717}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .cons{background:#3b1717}}
+.pc b{display:block;margin-bottom:2px}
+.pc ul{margin:0;padding-left:18px}
+@media (max-width:560px){.pc{grid-template-columns:1fr}}
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:620px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+th{background:var(--surface-2);font-weight:600}
+tr:last-child td{border-bottom:0}
+/* layers */
+.layer-pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.8rem;font-weight:600}
+.fe{background:var(--fe-soft);color:var(--fe)}.be{background:var(--be-soft);color:var(--be)}.db{background:var(--db-soft);color:var(--db)}
+.diagram{width:100%;height:auto;display:block}
+.analogy{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.analogy .a{border-radius:12px;padding:14px;border:1px solid var(--border);background:var(--surface)}
+.analogy .a h4{margin:6px 0 4px}
+.analogy .a p{margin:0;color:var(--muted);font-size:.92rem}
+.big{font-size:1.6rem}
+/* theme demos */
+.demo{border-radius:10px;padding:22px;display:flex;justify-content:center;align-items:center;margin-top:12px;min-height:170px}
+.d-card{width:220px;padding:16px}
+.d-title{font-weight:700;font-size:1rem}
+.d-text{font-size:.85rem;margin:4px 0 12px}
+.d-btn{font:inherit;font-size:.88rem;padding:8px 16px;cursor:pointer;border:0}
+.demo-flat{background:#ecf0f1}
+.demo-flat .d-card{background:#3498db;color:#fff;border-radius:0}
+.demo-flat .d-btn{background:#e74c3c;color:#fff;border-radius:0}
+.demo-material{background:#fafafa}
+.demo-material .d-card{background:#fff;color:#212121;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.2),0 4px 10px rgba(0,0,0,.12)}
+.demo-material .d-btn{background:#6200ee;color:#fff;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;box-shadow:0 3px 5px rgba(98,0,238,.35)}
+.demo-skeuo{background:repeating-linear-gradient(45deg,#8b5a2b,#8b5a2b 6px,#7a4e25 6px,#7a4e25 12px)}
+.demo-skeuo .d-card{background:linear-gradient(#fdf6e3,#efe3c2);color:#4a3520;border-radius:8px;border:1px solid #b89b6a;box-shadow:inset 0 1px 0 #fff,0 6px 12px rgba(0,0,0,.45);font-family:Georgia,serif}
+.demo-skeuo .d-btn{background:linear-gradient(#7fd06b,#3f9a2c);color:#fff;border-radius:6px;border:1px solid #2f7420;text-shadow:0 -1px 0 rgba(0,0,0,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 3px rgba(0,0,0,.4)}
+.demo-neu{background:#e0e5ec}
+.demo-neu .d-card{background:#e0e5ec;color:#4a5568;border-radius:18px;box-shadow:9px 9px 16px #a3b1c6,-9px -9px 16px #ffffff}
+.demo-neu .d-btn{background:#e0e5ec;color:#4a5568;border-radius:12px;box-shadow:5px 5px 10px #a3b1c6,-5px -5px 10px #fff;font-weight:600}
+.demo-neu .d-btn:active{box-shadow:inset 4px 4px 8px #a3b1c6,inset -4px -4px 8px #fff}
+.demo-glass{background:linear-gradient(135deg,#ff6ec4,#7873f5 50%,#4ade80)}
+.demo-glass .d-card{background:rgba(255,255,255,.18);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.4);border-radius:16px;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.demo-glass .d-btn{background:rgba(255,255,255,.3);color:#fff;border-radius:10px;border:1px solid rgba(255,255,255,.5)}
+.demo-min{background:#fff}
+.demo-min .d-card{background:#fff;color:#111;border-top:1px solid #111;border-radius:0;font-family:Georgia,serif}
+.demo-min .d-text{color:#777}
+.demo-min .d-btn{background:none;color:#111;border-bottom:1px solid #111;padding:4px 0;border-radius:0}
+.demo-dark{background:#0d1117}
+.demo-dark .d-card{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:8px}
+.demo-dark .d-text{color:#8b949e}
+.demo-dark .d-btn{background:#238636;color:#fff;border-radius:6px}
+.demo-brutal{background:#fde047}
+.demo-brutal .d-card{background:#fff;color:#000;border:3px solid #000;box-shadow:6px 6px 0 #000;border-radius:0;font-family:"Courier New",monospace}
+.demo-brutal .d-btn{background:#f472b6;color:#000;border:3px solid #000;box-shadow:3px 3px 0 #000;font-weight:700;font-family:inherit}
+.demo-clay{background:#c7d2fe}
+.demo-clay .d-card{background:#eef2ff;color:#3730a3;border-radius:28px;box-shadow:inset -6px -6px 12px rgba(99,102,241,.25),inset 6px 6px 12px rgba(255,255,255,.9),10px 14px 24px rgba(79,70,229,.3)}
+.demo-clay .d-btn{background:#fb923c;color:#fff;border-radius:99px;box-shadow:inset -3px -3px 6px rgba(0,0,0,.15),inset 3px 3px 6px rgba(255,255,255,.5)}
+/* flow example */
+.flow{display:flex;flex-direction:column;gap:0}
+.step{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:start}
+.step .n{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff}
+.step .c{padding-bottom:18px;border-left:2px dashed var(--border);margin-left:-35px;padding-left:35px;min-width:0}
+.step:last-child .c{border-left-color:transparent}
+.trace{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 4px}
+.trace .t{padding:6px 10px;border-radius:8px;font-size:.85rem;font-weight:600}
+.trace .ar{color:var(--muted)}
+#anim{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}
+#anim .t{opacity:.35;transition:opacity .3s,transform .3s}
+#anim .t.on{opacity:1;transform:translateY(-2px)}
+/* quiz */
+.q{margin-bottom:14px}
+.q p{margin:0 0 8px;font-weight:600}
+.opts{display:grid;gap:6px}
+.opts button{text-align:left;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:9px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:.93rem}
+.opts button.right{border-color:var(--ok);background:var(--be-soft)}
+.opts button.wrong{border-color:var(--bad);background:#fde8e8;color:#7f1d1d}
+.explain{font-size:.88rem;color:var(--muted);margin-top:6px;display:none}
+.score{font-weight:700;font-size:1.05rem}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin-bottom:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+footer{color:var(--muted);font-size:.85rem;text-align:center;padding:20px 16px 40px}
+@media print{nav.tabs,.toolbar,.theme-btn,.copy{display:none}section.panel{display:block!important}details{open:true}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div>
+      <h1>Full-Stack Layers: Frontend · Backend · Persistence</h1>
+      <p class="sub">Every technology explained with <b>What · Why · When · Where · How</b> (4W+H), plus a working example.</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle dark mode">◐ Theme</button>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap" id="tabbar">
+    <button data-tab="overview" class="active">1 · Big Picture</button>
+    <button data-tab="themes"><span class="dot" style="background:var(--fe)"></span>2 · UI Design Themes</button>
+    <button data-tab="ui"><span class="dot" style="background:var(--fe)"></span>3 · UI Technologies</button>
+    <button data-tab="render"><span class="dot" style="background:var(--fe)"></span>4 · Rendering Patterns</button>
+    <button data-tab="backend"><span class="dot" style="background:var(--be)"></span>5 · Backend Technologies</button>
+    <button data-tab="api"><span class="dot" style="background:var(--be)"></span>6 · API Styles &amp; Architecture</button>
+    <button data-tab="db"><span class="dot" style="background:var(--db)"></span>7 · Persistence Layer</button>
+    <button data-tab="e2e">8 · One App, All Layers</button>
+    <button data-tab="cheat">9 · Cheat Sheet &amp; Quiz</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ 1. OVERVIEW ============ -->
+<section class="panel active" id="overview">
+  <h2>The 3-Tier Architecture</h2>
+  <p class="lead">Almost every app you use (Swiggy, Instagram, ChatGPT, your bank) splits into three layers. Each layer has one job, and they talk to each other in a fixed order.</p>
+
+  <div class="box">
+    <svg class="diagram" viewBox="0 0 900 260" role="img" aria-label="Request flows from browser to backend to database and back">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+      </defs>
+      <g font-family="system-ui,sans-serif" text-anchor="middle">
+        <rect x="20" y="40" width="230" height="150" rx="14" fill="var(--fe-soft)" stroke="var(--fe)" stroke-width="2"/>
+        <text x="135" y="72" font-weight="700" font-size="17" fill="var(--fe)">FRONTEND</text>
+        <text x="135" y="94" font-size="13" fill="var(--text)">Presentation layer</text>
+        <text x="135" y="124" font-size="12.5" fill="var(--muted)">HTML · CSS · JavaScript</text>
+        <text x="135" y="144" font-size="12.5" fill="var(--muted)">React · Angular · Vue</text>
+        <text x="135" y="164" font-size="12.5" fill="var(--muted)">Runs in the browser / app</text>
+
+        <rect x="335" y="40" width="230" height="150" rx="14" fill="var(--be-soft)" stroke="var(--be)" stroke-width="2"/>
+        <text x="450" y="72" font-weight="700" font-size="17" fill="var(--be)">BACKEND</text>
+        <text x="450" y="94" font-size="13" fill="var(--text)">Business-logic layer</text>
+        <text x="450" y="124" font-size="12.5" fill="var(--muted)">Flask · FastAPI · Django</text>
+        <text x="450" y="144" font-size="12.5" fill="var(--muted)">Node · Spring · .NET</text>
+        <text x="450" y="164" font-size="12.5" fill="var(--muted)">Runs on a server</text>
+
+        <rect x="650" y="40" width="230" height="150" rx="14" fill="var(--db-soft)" stroke="var(--db)" stroke-width="2"/>
+        <text x="765" y="72" font-weight="700" font-size="17" fill="var(--db)">PERSISTENCE</text>
+        <text x="765" y="94" font-size="13" fill="var(--text)">Data layer</text>
+        <text x="765" y="124" font-size="12.5" fill="var(--muted)">PostgreSQL · MySQL</text>
+        <text x="765" y="144" font-size="12.5" fill="var(--muted)">MongoDB · Redis · Vector DB</text>
+        <text x="765" y="164" font-size="12.5" fill="var(--muted)">Stores data permanently</text>
+
+        <g style="color:var(--muted)" stroke="currentColor" stroke-width="2" fill="none">
+          <line x1="255" y1="95" x2="328" y2="95" marker-end="url(#ah)"/>
+          <line x1="328" y1="140" x2="255" y2="140" marker-end="url(#ah)"/>
+          <line x1="570" y1="95" x2="643" y2="95" marker-end="url(#ah)"/>
+          <line x1="643" y1="140" x2="570" y2="140" marker-end="url(#ah)"/>
+        </g>
+        <text x="292" y="86" font-size="11" fill="var(--muted)">HTTP request</text>
+        <text x="292" y="158" font-size="11" fill="var(--muted)">JSON / HTML</text>
+        <text x="607" y="86" font-size="11" fill="var(--muted)">SQL / query</text>
+        <text x="607" y="158" font-size="11" fill="var(--muted)">rows / docs</text>
+        <text x="450" y="232" font-size="13" fill="var(--muted)">The frontend never talks to the database directly. The backend sits in between and enforces rules and security.</text>
+      </g>
+    </svg>
+  </div>
+
+  <h3>Restaurant analogy</h3>
+  <div class="analogy">
+    <div class="a" style="border-top:4px solid var(--fe)"><div class="big">🍽️</div><h4>Frontend = Dining area &amp; menu</h4><p>What the customer sees and touches: the menu, the table, the waiter taking the order. Looks matter here.</p></div>
+    <div class="a" style="border-top:4px solid var(--be)"><div class="big">👨‍🍳</div><h4>Backend = Kitchen</h4><p>Hidden from customers. Takes the order, follows recipes (business rules), checks stock, and prepares the dish.</p></div>
+    <div class="a" style="border-top:4px solid var(--db)"><div class="big">🧊</div><h4>Persistence = Store room / fridge</h4><p>Where ingredients are kept safely and stay there after the restaurant closes for the night.</p></div>
+  </div>
+
+  <h3>The 4W+H framework used on every page</h3>
+  <div class="w5">
+    <div class="w what"><b>What</b>What is it, in one or two sentences?</div>
+    <div class="w why"><b>Why</b>What problem does it solve? Why does it exist?</div>
+    <div class="w when"><b>When</b>In which situations should you pick it (and when not)?</div>
+    <div class="w where"><b>Where</b>Where is it used in the real world (companies, products)?</div>
+    <div class="w how"><b>How</b>How does it work and how do you get started?</div>
+  </div>
+
+  <h3>Layer summary</h3>
+  <div class="tw"><table>
+    <tr><th>Layer</th><th>Job</th><th>Runs on</th><th>Main technologies</th><th>Speaks</th></tr>
+    <tr><td><span class="layer-pill fe">Frontend</span></td><td>Show data, take user input</td><td>Browser, phone, desktop</td><td>HTML/CSS/JS, React, Angular, Vue, Flutter, Streamlit</td><td>HTTP, fetch(), WebSocket</td></tr>
+    <tr><td><span class="layer-pill be">Backend</span></td><td>Validate, apply rules, security, call AI models</td><td>Server / cloud / serverless</td><td>Flask, FastAPI, Django, Express, Spring Boot, ASP.NET</td><td>REST, GraphQL, gRPC</td></tr>
+    <tr><td><span class="layer-pill db">Persistence</span></td><td>Store and retrieve data reliably</td><td>DB server / managed cloud</td><td>PostgreSQL, MySQL, SQLite, MongoDB, Redis, Vector DBs</td><td>SQL, query APIs, drivers/ORM</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ 2. THEMES ============ -->
+<section class="panel" id="themes">
+  <h2><span class="layer-pill fe">Frontend</span> UI Design Themes (Presentation Styles)</h2>
+  <p class="lead">A design theme is the <b>visual language</b> of an app: shapes, shadows, colors and depth. The same "Course Card" is drawn below in each style, so you can compare them side by side. Open a card to see the live demo and the CSS behind it.</p>
+  <div class="toolbar"><input type="search" placeholder="Search themes…" data-filter="themesList"><button class="btn" data-expand="themesList">Expand all</button><button class="btn" data-collapse="themesList">Collapse all</button></div>
+  <div id="themesList"></div>
+</section>
+
+<!-- ============ 3. UI TECH ============ -->
+<section class="panel" id="ui">
+  <h2><span class="layer-pill fe">Frontend</span> UI Technologies</h2>
+  <p class="lead">These are the tools you use to <b>build</b> the presentation layer. Every example below builds the same thing: a counter or course list, so you can compare the syntax.</p>
+  <div class="toolbar"><input type="search" placeholder="Search UI technologies…" data-filter="uiList"><button class="btn" data-expand="uiList">Expand all</button><button class="btn" data-collapse="uiList">Collapse all</button></div>
+  <div id="uiList"></div>
+</section>
+
+<!-- ============ 4. RENDERING ============ -->
+<section class="panel" id="render">
+  <h2><span class="layer-pill fe">Frontend</span> Rendering Patterns</h2>
+  <p class="lead">Where and when is the HTML produced: on the server, in the browser, or at build time? This choice affects speed, SEO and how complex your app becomes.</p>
+  <div class="toolbar"><input type="search" placeholder="Search patterns…" data-filter="renderList"><button class="btn" data-expand="renderList">Expand all</button><button class="btn" data-collapse="renderList">Collapse all</button></div>
+  <div id="renderList"></div>
+</section>
+
+<!-- ============ 5. BACKEND ============ -->
+<section class="panel" id="backend">
+  <h2><span class="layer-pill be">Backend</span> Backend Technologies</h2>
+  <p class="lead">Every example builds the same endpoint, <code class="i">GET /api/courses</code>, which returns a JSON list, so you can compare languages and frameworks directly.</p>
+  <div class="toolbar"><input type="search" placeholder="Search backends…" data-filter="beList"><button class="btn" data-expand="beList">Expand all</button><button class="btn" data-collapse="beList">Collapse all</button></div>
+  <div id="beList"></div>
+</section>
+
+<!-- ============ 6. API ============ -->
+<section class="panel" id="api">
+  <h2><span class="layer-pill be">Backend</span> API Styles &amp; Architecture Styles</h2>
+  <p class="lead">The <b>API style</b> is how the frontend and backend talk. The <b>architecture style</b> is how the backend itself is split up and deployed.</p>
+  <div class="toolbar"><input type="search" placeholder="Search…" data-filter="apiList"><button class="btn" data-expand="apiList">Expand all</button><button class="btn" data-collapse="apiList">Collapse all</button></div>
+  <div id="apiList"></div>
+</section>
+
+<!-- ============ 7. DB ============ -->
+<section class="panel" id="db">
+  <h2><span class="layer-pill db">Persistence</span> Data Persistence Layer</h2>
+  <p class="lead">"Persistence" means the data survives after the program stops or the server restarts. Different data shapes need different kinds of storage.</p>
+  <div class="legend">
+    <span><i style="background:#6366f1"></i>Relational (SQL)</span>
+    <span><i style="background:#16a34a"></i>NoSQL</span>
+    <span><i style="background:#db2777"></i>AI / Specialised</span>
+    <span><i style="background:#64748b"></i>Files &amp; Access layer</span>
+  </div>
+  <div class="toolbar"><input type="search" placeholder="Search databases…" data-filter="dbList"><button class="btn" data-expand="dbList">Expand all</button><button class="btn" data-collapse="dbList">Collapse all</button></div>
+  <div id="dbList"></div>
+
+  <h3>SQL vs NoSQL at a glance</h3>
+  <div class="tw"><table>
+    <tr><th></th><th>SQL (Relational)</th><th>NoSQL</th></tr>
+    <tr><td>Data shape</td><td>Tables with fixed columns</td><td>Documents, key-value, graph, wide-column</td></tr>
+    <tr><td>Schema</td><td>Defined up front (strict)</td><td>Flexible, can change per record</td></tr>
+    <tr><td>Relationships</td><td>JOINs across tables</td><td>Embed data or link manually</td></tr>
+    <tr><td>Transactions</td><td>Strong ACID guarantees</td><td>Varies; often eventual consistency</td></tr>
+    <tr><td>Scaling</td><td>Mostly vertical (bigger machine), read replicas</td><td>Built for horizontal (more machines)</td></tr>
+    <tr><td>Pick it for</td><td>Banking, orders, inventory, users</td><td>Catalogs, logs, caching, social feeds, IoT</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ 8. E2E ============ -->
+<section class="panel" id="e2e">
+  <h2>One App Through All Three Layers</h2>
+  <p class="lead">Let's follow a single click: a student presses <b>"Enroll"</b> on a course. Here's what each layer does, with real code: HTML + JavaScript → Flask → SQLite (via SQLAlchemy).</p>
+
+  <div class="box">
+    <b>Watch the request travel</b>
+    <div id="anim">
+      <span class="t layer-pill fe">1 Click "Enroll"</span><span class="ar">→</span>
+      <span class="t layer-pill fe">2 fetch POST /api/enroll</span><span class="ar">→</span>
+      <span class="t layer-pill be">3 Flask validates</span><span class="ar">→</span>
+      <span class="t layer-pill db">4 INSERT into SQLite</span><span class="ar">→</span>
+      <span class="t layer-pill be">5 201 + JSON</span><span class="ar">→</span>
+      <span class="t layer-pill fe">6 UI shows ✅</span>
+    </div>
+    <div style="margin-top:12px"><button class="btn toolbar" id="playBtn" style="border:1px solid var(--border);background:var(--accent);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit">▶ Play the flow</button></div>
+  </div>
+
+  <div class="flow">
+    <div class="step"><div class="n" style="background:var(--fe)">1</div><div class="c">
+      <h3 style="margin-top:4px"><span class="layer-pill fe">Frontend</span> index.html</h3>
+      <p>Shows the button and sends the data to the backend with <code class="i">fetch()</code>. It does not know where the data is stored.</p>
+      <div class="ex-h">templates/index.html <button class="copy">Copy</button></div>
+<pre>&lt;!doctype html&gt;
+&lt;html&gt;
+&lt;body&gt;
+  &lt;h2&gt;GenAI Bootcamp&lt;/h2&gt;
+  &lt;input id="name" placeholder="Your name"&gt;
+  &lt;button onclick="enroll()"&gt;Enroll&lt;/button&gt;
+  &lt;p id="msg"&gt;&lt;/p&gt;
+  &lt;ul id="list"&gt;&lt;/ul&gt;
+
+  &lt;script&gt;
+    async function enroll() {
+      const name = document.getElementById("name").value;
+      const res = await fetch("/api/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student: name, course: "GenAI Bootcamp" })
+      });
+      const data = await res.json();
+      document.getElementById("msg").textContent =
+        res.ok ? "✅ Enrolled! id = " + data.id : "❌ " + data.error;
+      loadList();
+    }
+
+    async function loadList() {
+      const res = await fetch("/api/enrollments");
+      const rows = await res.json();
+      document.getElementById("list").innerHTML =
+        rows.map(r =&gt; "&lt;li&gt;" + r.student + " → " + r.course + "&lt;/li&gt;").join("");
+    }
+    loadList();
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+    </div></div>
+
+    <div class="step"><div class="n" style="background:var(--be)">2</div><div class="c">
+      <h3 style="margin-top:4px"><span class="layer-pill be">Backend</span> app.py (Flask)</h3>
+      <p>Receives the request, <b>validates</b> it (business rules), saves it through the data layer, and returns JSON with a proper status code.</p>
+      <div class="ex-h">app.py <button class="copy">Copy</button></div>
+<pre>from flask import Flask, request, jsonify, render_template
+from models import db, Enrollment
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///school.db"
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()                      # create tables if missing
+
+@app.get("/")
+def home():
+    return render_template("index.html")
+
+@app.post("/api/enroll")
+def enroll():
+    data = request.get_json()
+    student = (data.get("student") or "").strip()
+    if not student:                      # business rule / validation
+        return jsonify(error="Name is required"), 400
+
+    row = Enrollment(student=student, course=data["course"])
+    db.session.add(row)
+    db.session.commit()                  # persisted!
+    return jsonify(id=row.id), 201
+
+@app.get("/api/enrollments")
+def list_enrollments():
+    rows = Enrollment.query.all()
+    return jsonify([{"student": r.student, "course": r.course} for r in rows])
+
+if __name__ == "__main__":
+    app.run(debug=True)</pre>
+    </div></div>
+
+    <div class="step"><div class="n" style="background:var(--db)">3</div><div class="c">
+      <h3 style="margin-top:4px"><span class="layer-pill db">Persistence</span> models.py (SQLAlchemy + SQLite)</h3>
+      <p>Defines the table. SQLAlchemy (an ORM) turns Python objects into SQL. Swapping to PostgreSQL later means changing only the connection string.</p>
+      <div class="ex-h">models.py <button class="copy">Copy</button></div>
+<pre>from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+class Enrollment(db.Model):
+    id      = db.Column(db.Integer, primary_key=True)
+    student = db.Column(db.String(100), nullable=False)
+    course  = db.Column(db.String(100), nullable=False)
+
+# What SQLAlchemy actually runs for you:
+#   CREATE TABLE enrollment (id INTEGER PRIMARY KEY,
+#                            student VARCHAR(100) NOT NULL,
+#                            course  VARCHAR(100) NOT NULL);
+#   INSERT INTO enrollment (student, course) VALUES (?, ?);</pre>
+      <div class="ex-h">Run it <button class="copy">Copy</button></div>
+<pre>pip install flask flask-sqlalchemy
+python app.py
+# open http://127.0.0.1:5000</pre>
+    </div></div>
+  </div>
+
+  <h3>Swap any layer, the others don't care</h3>
+  <div class="tw"><table>
+    <tr><th>Want to change…</th><th>Replace</th><th>With</th><th>What else changes?</th></tr>
+    <tr><td><span class="layer-pill fe">Frontend</span></td><td>Plain HTML + JS</td><td>React / Vue / Streamlit</td><td>Nothing. The API stays the same.</td></tr>
+    <tr><td><span class="layer-pill be">Backend</span></td><td>Flask</td><td>FastAPI / Express / Spring Boot</td><td>Nothing, as long as the URLs and JSON stay the same.</td></tr>
+    <tr><td><span class="layer-pill db">Persistence</span></td><td>SQLite</td><td>PostgreSQL / MySQL</td><td>One line: the connection string.</td></tr>
+  </table></div>
+  <p class="lead" style="margin-top:12px">This is the main benefit of layering: <b>separation of concerns</b>. Each layer can be changed, scaled or handled by a different team on its own.</p>
+</section>
+
+<!-- ============ 9. CHEAT + QUIZ ============ -->
+<section class="panel" id="cheat">
+  <h2>Cheat Sheet: "What should I pick?"</h2>
+  <p class="lead">Quick defaults for common situations. These are good starting points, not strict rules.</p>
+  <div class="tw"><table>
+    <tr><th>Situation</th><th><span class="layer-pill fe">Frontend</span></th><th><span class="layer-pill be">Backend</span></th><th><span class="layer-pill db">Persistence</span></th></tr>
+    <tr><td>Quick GenAI demo / prototype</td><td>Streamlit or Gradio</td><td>(built in) or FastAPI</td><td>SQLite + Chroma</td></tr>
+    <tr><td>Chatbot with RAG (production)</td><td>React / Next.js</td><td>FastAPI (async, streaming)</td><td>PostgreSQL + pgvector, Redis cache</td></tr>
+    <tr><td>College project / CRUD app</td><td>HTML + Bootstrap or React</td><td>Flask or Django</td><td>SQLite → MySQL</td></tr>
+    <tr><td>E-commerce site</td><td>Next.js (SEO)</td><td>Django / Spring Boot</td><td>PostgreSQL + Redis + Elasticsearch</td></tr>
+    <tr><td>Enterprise / banking</td><td>Angular</td><td>Spring Boot / ASP.NET Core</td><td>Oracle / SQL Server / PostgreSQL</td></tr>
+    <tr><td>Real-time chat / live dashboard</td><td>React + WebSocket</td><td>Node.js (Express / Socket.IO) or Go</td><td>Redis pub/sub + MongoDB</td></tr>
+    <tr><td>Mobile app (Android + iOS)</td><td>Flutter / React Native</td><td>FastAPI / Node</td><td>PostgreSQL / Firebase</td></tr>
+    <tr><td>Blog / docs / marketing site</td><td>Static site (SSG) e.g. Astro, Hugo</td><td>None needed</td><td>Markdown files</td></tr>
+    <tr><td>IoT sensors / metrics</td><td>Grafana dashboard</td><td>Go / Node</td><td>InfluxDB / TimescaleDB</td></tr>
+    <tr><td>Social network / recommendations</td><td>React</td><td>Microservices</td><td>Neo4j + Cassandra</td></tr>
+  </table></div>
+
+  <h3>Practise: mini project prompts</h3>
+  <p class="lead">Ready to build? Open <a href="project_prompts.html"><b>12 Mini Project Prompts</b></a>. Each small app uses a different frontend + backend + database combination from this guide.</p>
+
+  <h3>Test yourself</h3>
+  <div class="box">
+    <div id="quiz"></div>
+    <div class="score" id="score">Score: 0 / 0</div>
+  </div>
+</section>
+
+</main>
+<footer>Full-Stack Layers Guide · Day 8 · Click any card to expand it · Use the ◐ button for dark mode</footer>
+
+<script>
+/* ---------- helpers ---------- */
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function card(it, colorVar, softVar){
+  const demo = it.demo ? '<div class="demo '+it.demo+'"><div class="d-card"><div class="d-title">Course Card</div><div class="d-text">GenAI Bootcamp · Day 8 · 4.9★</div><button class="d-btn">Enroll</button></div></div>' : "";
+  const pc = (it.pros||it.cons) ? '<div class="pc"><div class="pros"><b>👍 Pros</b><ul>'+(it.pros||[]).map(p=>"<li>"+p+"</li>").join("")+'</ul></div><div class="cons"><b>👎 Cons</b><ul>'+(it.cons||[]).map(p=>"<li>"+p+"</li>").join("")+'</ul></div></div>' : "";
+  const ex = it.code ? '<div class="ex-h">Example: '+(it.exTitle||"")+' <button class="copy">Copy</button></div><pre>'+esc(it.code.replace(/^\n/,""))+'</pre>' : "";
+  const ic = it.color || ("var("+colorVar+")");
+  const bg = it.color ? (it.color+"22") : ("var("+softVar+")");
+  return '<details class="card" data-search="'+esc((it.name+" "+it.one+" "+(it.tag||"")+" "+it.what).toLowerCase())+'">'+
+    '<summary><div class="ico" style="background:'+bg+';color:'+ic+'">'+it.ico+'</div>'+
+    '<div><div class="nm">'+it.name+(it.tag?'<span class="tag">'+it.tag+'</span>':'')+'</div><div class="one">'+it.one+'</div></div>'+
+    '<span class="chev">▶</span></summary>'+
+    '<div class="body">'+demo+
+      '<div class="w5">'+
+        '<div class="w what"><b>What</b>'+it.what+'</div>'+
+        '<div class="w why"><b>Why</b>'+it.why+'</div>'+
+        '<div class="w when"><b>When</b>'+it.when+'</div>'+
+        '<div class="w where"><b>Where</b>'+it.where+'</div>'+
+        '<div class="w how"><b>How</b>'+it.how+'</div>'+
+      '</div>'+pc+ex+
+    '</div></details>';
+}
+function render(id, list, c, s){document.getElementById(id).innerHTML = list.map(i=>card(i,c,s)).join("");}
+
+/* ---------- 2. DESIGN THEMES ---------- */
+const THEMES = [
+{name:"Flat Design",ico:"▭",tag:"2012+",demo:"demo-flat",one:"Bold solid colors, no shadows, no gradients",
+ what:"A style that removes all 3D effects. Everything is drawn as simple flat shapes with strong, solid colors and clean typography.",
+ why:"Fast to load, easy to read on small screens, and it moved the web away from heavy, fake-realistic graphics.",
+ when:"Dashboards, mobile apps, icons and infographics, or when you need clarity and speed.",
+ where:"Windows 8/10 'Metro' tiles, Microsoft Office icons, many early mobile apps.",
+ how:"Use solid background colors, no box-shadow, square or slightly rounded corners and bold sans-serif fonts.",
+ pros:["Very fast and lightweight","Clean, easy to scan"],cons:["Buttons can look like plain text","Can feel bland"],
+ exTitle:"flat.css",code:`
+.card   { background:#3498db; color:#fff; border-radius:0; }
+.button { background:#e74c3c; color:#fff; border:none; border-radius:0; }
+/* No shadows, no gradients: that is the whole idea */`},
+{name:"Material Design",ico:"M",tag:"Google · 2014",demo:"demo-material",one:"Paper-like layers with soft shadows and motion",
+ what:"Google's design system. UI elements behave like sheets of paper: they sit at different heights (elevation) and cast realistic shadows.",
+ why:"Flat design lost the cues for 'what is clickable'. Material brings back depth through shadows while keeping things clean, and it comes with a full ready-made component library.",
+ when:"Android apps, admin panels, and any product that needs a consistent, well-documented design system.",
+ where:"Gmail, Google Drive, YouTube, Android OS. Libraries: Material UI (MUI) for React, Angular Material.",
+ how:"Use elevation shadows (dp levels), a primary/secondary color palette, the Roboto font, and ripple animations on click.",
+ pros:["Huge component libraries","Accessibility guidance built in"],cons:["Apps look 'Google-like'","Heavy if you use the full library"],
+ exTitle:"React + MUI",code:`
+import { Card, CardContent, Button, Typography } from "@mui/material";
+
+export default function CourseCard() {
+  return (
+    <Card elevation={3}>
+      <CardContent>
+        <Typography variant="h6">Course Card</Typography>
+        <Button variant="contained">Enroll</Button>
+      </CardContent>
+    </Card>
+  );
+}`},
+{name:"Skeuomorphism",ico:"📒",tag:"Pre-2013",demo:"demo-skeuo",one:"Digital things that imitate real-world objects",
+ what:"UI elements copy the look of physical objects: leather, wood, paper, shiny glossy buttons.",
+ why:"When smartphones were new, it helped people understand digital controls by making them look familiar (a notes app that looks like a notepad).",
+ when:"Games, music/audio apps (knobs, sliders), learning apps for kids, or for nostalgic/premium branding.",
+ where:"Early iPhone iOS 1–6 (Notes, iBooks wooden shelf), audio plugins and DAWs, calculator apps.",
+ how:"Use textures, gradients, inner highlights, drop shadows and serif fonts to mimic real materials.",
+ pros:["Very intuitive for beginners","Rich, tactile feel"],cons:["Heavy images, slow","Looks dated, cluttered"],
+ exTitle:"skeuo.css",code:`
+.card {
+  background: linear-gradient(#fdf6e3, #efe3c2);    /* paper */
+  border: 1px solid #b89b6a;
+  box-shadow: inset 0 1px 0 #fff, 0 6px 12px rgba(0,0,0,.45);
+  font-family: Georgia, serif;
+}
+.button {
+  background: linear-gradient(#7fd06b, #3f9a2c);    /* glossy */
+  text-shadow: 0 -1px 0 rgba(0,0,0,.4);
+}`},
+{name:"Neumorphism",ico:"◍",tag:"Soft UI · 2020",demo:"demo-neu",one:"Soft, extruded shapes from the same color as the background",
+ what:"'New skeuomorphism'. Elements look as if they're pushed out of (or pressed into) the background, using a light shadow on one side and a dark shadow on the other.",
+ why:"A middle path between flat and skeuomorphic: soft, calm and modern-looking.",
+ when:"Small apps with few controls: calculators, smart-home controls, music players, concept designs.",
+ where:"Dribbble concept shots, some smart-home and fitness apps, calculator widgets.",
+ how:"Same color for background and element, plus two box-shadows: light top-left and dark bottom-right. Use inset shadows for the 'pressed' state.",
+ pros:["Soft, elegant look","Pressed states feel physical"],cons:["Low contrast: poor accessibility","Hard to tell what is clickable"],
+ exTitle:"neumorphism.css",code:`
+body  { background:#e0e5ec; }
+.card {
+  background:#e0e5ec;                 /* same as background */
+  border-radius:18px;
+  box-shadow:  9px  9px 16px #a3b1c6, /* dark shadow  */
+              -9px -9px 16px #ffffff; /* light shadow */
+}
+.button:active { box-shadow: inset 4px 4px 8px #a3b1c6,
+                             inset -4px -4px 8px #fff; }`},
+{name:"Glassmorphism",ico:"◇",tag:"2020+",demo:"demo-glass",one:"Frosted-glass panels over colorful backgrounds",
+ what:"Semi-transparent panels with a background blur, so they look like frosted glass floating over a colorful backdrop.",
+ why:"Gives depth and a premium, modern feel while still showing the context behind the panel.",
+ when:"Landing pages, overlays, modals, music/weather widgets, crypto/fintech dashboards.",
+ where:"macOS Big Sur and later, Windows 11 'Mica/Acrylic', iOS Control Center, Apple Vision Pro UI.",
+ how:"Use rgba() backgrounds, backdrop-filter: blur(), a thin light border, and a vivid gradient behind the panel.",
+ pros:["Modern, premium look","Keeps the background context visible"],cons:["Text contrast can suffer","backdrop-filter is heavy on low-end devices"],
+ exTitle:"glass.css",code:`
+.card {
+  background: rgba(255,255,255,.18);
+  backdrop-filter: blur(12px);        /* the frosted effect */
+  border: 1px solid rgba(255,255,255,.4);
+  border-radius: 16px;
+}`},
+{name:"Claymorphism",ico:"●",tag:"2022+",demo:"demo-clay",one:"Puffy, inflated 3D shapes with playful colors",
+ what:"Rounded, 'inflated' elements that look like soft clay or toys, made with double inner shadows plus an outer shadow.",
+ why:"Friendly and playful. It stands out from the many flat corporate sites.",
+ when:"Kids' and education apps, onboarding screens, games, startups with a fun brand.",
+ where:"Ed-tech landing pages, 3D illustration sets, NFT/game sites.",
+ how:"Use large border-radius, two inset shadows (light and dark) and one soft colored outer shadow.",
+ pros:["Fun, memorable","Good for illustrations"],cons:["Not serious enough for enterprise","Can feel childish"],
+ exTitle:"clay.css",code:`
+.card {
+  border-radius: 28px;
+  background: #eef2ff;
+  box-shadow: inset -6px -6px 12px rgba(99,102,241,.25),
+              inset  6px  6px 12px rgba(255,255,255,.9),
+              10px 14px 24px rgba(79,70,229,.3);
+}`},
+{name:"Minimalism",ico:"—",tag:"Timeless",demo:"demo-min",one:"Only what is necessary: whitespace, typography, few colors",
+ what:"A design approach that strips everything down to essentials: lots of whitespace, 1–2 colors and strong typography.",
+ why:"Less noise means the user focuses on content. It also loads fast and ages well.",
+ when:"Portfolios, blogs, documentation, luxury brands, and content-heavy sites.",
+ where:"Apple.com, Medium, Notion, Muji, most premium fashion sites.",
+ how:"Generous padding, a limited palette, good font pairing, and hide secondary actions until they're needed.",
+ pros:["Clean and elegant","Fast, easy to maintain"],cons:["Can hide important features","Needs strong typography skill"],
+ exTitle:"minimal.css",code:`
+.card   { border-top:1px solid #111; padding:24px 0; font-family:Georgia, serif; }
+.text   { color:#777; }
+.button { background:none; border:none; border-bottom:1px solid #111; }`},
+{name:"Dark Mode",ico:"☾",tag:"Theme variant",demo:"demo-dark",one:"Light text on dark surfaces, easy on the eyes at night",
+ what:"A color theme that flips the usual scheme: dark backgrounds with light text. Usually offered alongside a light theme.",
+ why:"Less eye strain in low light, saves battery on OLED screens, and many users prefer it.",
+ when:"Developer tools, media/video apps, dashboards used for long hours, and as a user option in almost every modern app.",
+ where:"VS Code, GitHub, YouTube, Discord, Netflix, ChatGPT. This page also has one (◐ button at the top).",
+ how:"Define colors as CSS variables, then redefine them under @media (prefers-color-scheme: dark) or a data-theme attribute.",
+ pros:["Comfortable at night","Respects the user's system setting"],cons:["Two themes to design and test","Long text can be harder to read"],
+ exTitle:"CSS variables + system setting",code:`
+:root { --bg:#ffffff; --text:#111111; }
+
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#0d1117; --text:#e6edf3; }
+}
+
+body { background:var(--bg); color:var(--text); }`},
+{name:"Neo-Brutalism",ico:"■",tag:"2021+",demo:"demo-brutal",one:"Raw, loud: thick black borders, hard shadows, clashing colors",
+ what:"A deliberately 'raw' style: thick black outlines, hard offset shadows with no blur, bright clashing colors and monospace fonts.",
+ why:"Rebels against polished, same-looking corporate UI. It's bold and memorable.",
+ when:"Creative portfolios, indie products, startup landing pages, events.",
+ where:"Gumroad, Figma's marketing pages, many indie-hacker sites.",
+ how:"Use 3px solid black borders, box-shadow with offsets and 0 blur, saturated colors and quirky fonts.",
+ pros:["Highly distinctive","Easy to build with CSS"],cons:["Polarising","Can hurt readability if overdone"],
+ exTitle:"brutal.css",code:`
+.card   { border:3px solid #000; box-shadow:6px 6px 0 #000; background:#fff; }
+.button { background:#f472b6; border:3px solid #000; box-shadow:3px 3px 0 #000; }`}
+];
+
+/* ---------- 3. UI TECHNOLOGIES ---------- */
+const UI = [
+{name:"HTML + CSS + Vanilla JavaScript",ico:"JS",color:"#e8a400",tag:"Foundation",one:"The three core languages of every web page",
+ what:"HTML = structure (what is on the page), CSS = style (how it looks), JavaScript = behavior (what happens when you click). No framework.",
+ why:"Every framework compiles down to these three. The browser understands only HTML, CSS and JS.",
+ when:"Learning, small sites, landing pages, embedding widgets, or when you want zero dependencies.",
+ where:"Every website. Government sites, simple portfolios, email templates.",
+ how:"Write an .html file, link a .css file, add a &lt;script&gt;, and open it in a browser. No install needed.",
+ pros:["No build tools","Fastest to load"],cons:["Gets messy as the app grows","You manage DOM updates by hand"],
+ exTitle:"counter.html",code:`
+<button id="btn">Clicked 0 times</button>
+<script>
+  let count = 0;
+  const btn = document.getElementById("btn");
+  btn.addEventListener("click", () => {
+    count++;
+    btn.textContent = "Clicked " + count + " times";   // manual DOM update
+  });
+<\/script>`},
+{name:"React",ico:"⚛",color:"#0ea5e9",tag:"Library · Meta",one:"Component-based UI library with a virtual DOM",
+ what:"A JavaScript library for building UIs out of reusable components. You describe what the UI should look like for a given state, and React updates the page for you.",
+ why:"Manual DOM updates become error-prone in large apps. React's 'UI = f(state)' model makes complex UIs predictable.",
+ when:"Single-page apps, dashboards, chat UIs, and when you want the biggest job market and ecosystem.",
+ where:"Facebook, Instagram, WhatsApp Web, Netflix, Airbnb, the ChatGPT web app.",
+ how:"Create a project with <code class='i'>npm create vite@latest</code>, write components in JSX, and manage state with hooks like useState.",
+ pros:["Huge ecosystem and jobs","Reusable components"],cons:["Just a library: you pick routing, state, etc.","JSX and the build step can be new for beginners"],
+ exTitle:"Counter.jsx",code:`
+import { useState } from "react";
+
+export default function Counter() {
+  const [count, setCount] = useState(0);        // state
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Clicked {count} times
+    </button>
+  );                                            // React updates the DOM
+}`},
+{name:"Angular",ico:"A",color:"#dd0031",tag:"Framework · Google",one:"Full, opinionated framework written in TypeScript",
+ what:"A complete frontend framework that includes routing, forms, HTTP client, dependency injection and testing tools out of the box, written in TypeScript.",
+ why:"Large teams need consistency. Angular decides the structure for you, so every project looks the same.",
+ when:"Large enterprise apps, banking/insurance portals, and teams coming from Java/C#.",
+ where:"Google Ads, Google Cloud Console, Deutsche Bank, Microsoft Office web parts, many Indian IT service projects.",
+ how:"Install the CLI: <code class='i'>npm i -g @angular/cli</code>, then <code class='i'>ng new app</code>. Write components with a TypeScript class plus an HTML template.",
+ pros:["Everything included","Strong typing, great for big teams"],cons:["Steeper learning curve","More boilerplate"],
+ exTitle:"counter.component.ts",code:`
+import { Component, signal } from "@angular/core";
+
+@Component({
+  selector: "app-counter",
+  standalone: true,
+  template: \`<button (click)="inc()">Clicked {{ count() }} times</button>\`
+})
+export class CounterComponent {
+  count = signal(0);
+  inc() { this.count.update(c => c + 1); }
+}`},
+{name:"Vue.js",ico:"V",color:"#42b883",tag:"Progressive framework",one:"Approachable framework with HTML-like templates",
+ what:"A 'progressive' framework: you can drop it into one part of a page or build a full SPA. It uses familiar HTML templates with reactive data.",
+ why:"Easier to learn than Angular and more structured than React. Good docs and gentle learning curve.",
+ when:"Small-to-medium apps, adding interactivity to existing server-rendered pages, and teams that like HTML templates.",
+ where:"Alibaba, Xiaomi, GitLab, Nintendo, Laravel projects (often paired with Laravel).",
+ how:"<code class='i'>npm create vue@latest</code> and write Single-File Components (.vue) with &lt;template&gt;, &lt;script&gt; and &lt;style&gt;.",
+ pros:["Easy to learn","Great official docs"],cons:["Smaller job market than React","Fewer large enterprise users"],
+ exTitle:"Counter.vue",code:`
+<script setup>
+import { ref } from "vue";
+const count = ref(0);
+<\/script>
+
+<template>
+  <button @click="count++">Clicked {{ count }} times</button>
+</template>`},
+{name:"Svelte / SvelteKit",ico:"S",color:"#ff3e00",tag:"Compiler",one:"Compiles components to tiny vanilla JS: no virtual DOM",
+ what:"A compiler, not a runtime library. Svelte turns your components into small, plain JavaScript at build time.",
+ why:"Less code is shipped to the browser, so pages are faster. The syntax is also very short.",
+ when:"Performance-sensitive sites, interactive graphics and data stories, small teams that want simplicity.",
+ where:"The New York Times interactive pieces, Apple Music web parts, Spotify Wrapped pages, IKEA.",
+ how:"<code class='i'>npx sv create my-app</code>, then write .svelte files. Assigning a variable updates the UI.",
+ pros:["Very small bundles","Least boilerplate"],cons:["Smaller ecosystem","Fewer jobs"],
+ exTitle:"Counter.svelte",code:`
+<script>
+  let count = $state(0);
+<\/script>
+
+<button onclick={() => count++}>Clicked {count} times</button>`},
+{name:"Next.js",ico:"N",color:"#64748b",tag:"React meta-framework",one:"React plus routing, server rendering and API routes",
+ what:"A framework built on React that adds file-based routing, server-side rendering (SSR), static generation (SSG) and backend API routes.",
+ why:"Plain React renders in the browser, which is bad for SEO and first load. Next.js renders on the server too.",
+ when:"Public sites that need SEO (e-commerce, blogs, marketing) and full-stack React apps.",
+ where:"TikTok web, Hulu, Nike, Notion marketing site, the OpenAI and Vercel websites.",
+ how:"<code class='i'>npx create-next-app@latest</code>. Each file in <code class='i'>app/</code> becomes a route. Components run on the server by default.",
+ pros:["SEO-friendly and fast","Frontend and backend in one project"],cons:["More concepts (server vs client components)","Best experience is tied to Vercel"],
+ exTitle:"app/courses/page.jsx (runs on the server)",code:`
+export default async function CoursesPage() {
+  const res = await fetch("https://api.example.com/courses");
+  const courses = await res.json();          // fetched on the server
+  return (
+    <ul>
+      {courses.map(c => <li key={c.id}>{c.title}</li>)}
+    </ul>
+  );                                          // HTML arrives ready = good SEO
+}`},
+{name:"Bootstrap & Tailwind CSS",ico:"🎨",color:"#7952b3",tag:"CSS frameworks",one:"Ready-made styling so you don't write all the CSS yourself",
+ what:"Bootstrap gives you pre-built components (navbar, card, modal). Tailwind gives you small utility classes (p-4, bg-blue-500) that you combine yourself.",
+ why:"Writing responsive, consistent CSS from scratch is slow. These frameworks give a grid system and design tokens for free.",
+ when:"Bootstrap: quick admin panels and college projects. Tailwind: custom designs in React/Vue/Next projects.",
+ where:"Bootstrap: Twitter (where it was born), countless admin templates. Tailwind: OpenAI, GitHub Next, Shopify, Vercel.",
+ how:"Add a CDN link (Bootstrap) or install it with npm (Tailwind), then use the class names in your HTML.",
+ pros:["Fast, responsive by default","Consistent spacing and colors"],cons:["Bootstrap sites can look the same","Tailwind HTML gets long"],
+ exTitle:"Same card, two frameworks",code:`
+<!-- Bootstrap: component classes -->
+<div class="card p-3 shadow">
+  <h5 class="card-title">Course Card</h5>
+  <button class="btn btn-primary">Enroll</button>
+</div>
+
+<!-- Tailwind: utility classes -->
+<div class="rounded-xl p-4 shadow-lg bg-white">
+  <h5 class="text-lg font-bold">Course Card</h5>
+  <button class="bg-indigo-600 text-white px-4 py-2 rounded">Enroll</button>
+</div>`},
+{name:"HTMX",ico:"&lt;/&gt;",color:"#3d72d7",tag:"Hypermedia",one:"Make HTML interactive with attributes, no JavaScript framework",
+ what:"A small library that lets any HTML element send AJAX requests and swap in HTML returned by the server, using attributes like hx-get and hx-post.",
+ why:"Many apps don't need a heavy SPA. HTMX keeps the logic on the server (Flask/Django) and still feels dynamic.",
+ when:"Flask/Django/Laravel apps, internal tools, and Python developers who don't want to learn React.",
+ where:"Growing use in Django and Flask communities, admin tools and internal dashboards.",
+ how:"Add one &lt;script&gt; tag. The server returns HTML fragments instead of JSON.",
+ pros:["Very little JS","Works with any backend"],cons:["Not suited for very rich client apps","Server must return HTML"],
+ exTitle:"HTMX + Flask",code:`
+<!-- index.html -->
+<script src="https://unpkg.com/htmx.org@2.0.3"><\/script>
+<button hx-get="/courses" hx-target="#list">Load courses</button>
+<ul id="list"></ul>
+
+# app.py
+@app.get("/courses")
+def courses():
+    return "<li>GenAI</li><li>Python</li>"   # HTML, not JSON`},
+{name:"Streamlit & Gradio",ico:"Py",color:"#ff4b4b",tag:"Python UI",one:"Build web UIs in pure Python: perfect for AI/ML demos",
+ what:"Python libraries that turn a script into an interactive web app. You write no HTML, CSS or JS.",
+ why:"Data scientists and AI engineers can share models and chatbots in minutes without frontend skills.",
+ when:"GenAI prototypes, ML model demos, internal data tools, hackathons. Not ideal for large customer-facing products.",
+ where:"Hugging Face Spaces (Gradio), Snowflake (owns Streamlit), countless LLM chatbot demos.",
+ how:"<code class='i'>pip install streamlit</code>, write app.py, then run <code class='i'>streamlit run app.py</code>.",
+ pros:["Fastest path from model to UI","Pure Python"],cons:["Limited layout control","The whole script reruns on every interaction (Streamlit)"],
+ exTitle:"chat_app.py (Streamlit)",code:`
+import streamlit as st
+
+st.title("GenAI Course Assistant")
+question = st.chat_input("Ask something...")
+
+if question:
+    st.chat_message("user").write(question)
+    answer = "You asked: " + question     # call your LLM here
+    st.chat_message("assistant").write(answer)`},
+{name:"Flutter & React Native",ico:"📱",color:"#02569b",tag:"Mobile / cross-platform",one:"One codebase for Android and iOS apps",
+ what:"Flutter (Google, Dart language) draws its own widgets. React Native (Meta, JavaScript) uses native platform components. Both build Android and iOS apps from one codebase.",
+ why:"Writing separate Kotlin (Android) and Swift (iOS) apps doubles cost and effort.",
+ when:"Startups and teams that need mobile apps on both platforms with one team.",
+ where:"Flutter: Google Pay, BMW, Alibaba Xianyu. React Native: Instagram, Discord, Shopify, Microsoft Teams parts.",
+ how:"Flutter: <code class='i'>flutter create app</code>. React Native: <code class='i'>npx create-expo-app</code>.",
+ pros:["One code, two platforms","Hot reload"],cons:["Native features sometimes need platform code","Larger app size"],
+ exTitle:"Flutter counter (Dart)",code:`
+class Counter extends StatefulWidget {
+  @override
+  State<Counter> createState() => _CounterState();
+}
+
+class _CounterState extends State<Counter> {
+  int count = 0;
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () => setState(() => count++),
+      child: Text("Clicked $count times"),
+    );
+  }
+}`},
+{name:"Electron & Tauri",ico:"🖥",color:"#47848f",tag:"Desktop",one:"Desktop apps built with web technologies",
+ what:"Frameworks that wrap an HTML/CSS/JS app into a desktop application for Windows, macOS and Linux.",
+ why:"Web developers can ship desktop apps without learning C++, C# or Swift.",
+ when:"Cross-platform desktop tools such as editors, chat apps and AI desktop assistants.",
+ where:"Electron: VS Code, Slack, Discord, Figma desktop, the Claude and ChatGPT desktop apps. Tauri: smaller newer apps.",
+ how:"Electron: a main.js creates a BrowserWindow that loads your index.html. Tauri uses Rust plus the system webview (smaller apps).",
+ pros:["Reuse web skills","One app for all operating systems"],cons:["Electron apps use a lot of RAM","Large download size"],
+ exTitle:"main.js (Electron)",code:`
+const { app, BrowserWindow } = require("electron");
+
+app.whenReady().then(() => {
+  const win = new BrowserWindow({ width: 900, height: 600 });
+  win.loadFile("index.html");     // your normal web page
+});`}
+];
+
+/* ---------- 4. RENDERING PATTERNS ---------- */
+const RENDER = [
+{name:"MPA / Server-Side Rendering (classic)",ico:"SSR",tag:"Multi-Page App",one:"Server builds full HTML for every page",
+ what:"Each click requests a new page. The server fills an HTML template with data and sends the complete page.",
+ why:"Simple, SEO-friendly, and works even without JavaScript. This is how the web worked originally.",
+ when:"Content sites, admin panels, Flask/Django apps, and forms-heavy business apps.",
+ where:"Wikipedia, Amazon product pages, Stack Overflow, Django admin.",
+ how:"The backend uses a template engine (Jinja2, Thymeleaf, EJS, Blade) and returns HTML.",
+ pros:["Great SEO and first load","Simple mental model"],cons:["Full page reload on each click","Less 'app-like'"],
+ exTitle:"Flask + Jinja2",code:`
+# app.py
+@app.get("/courses")
+def courses():
+    data = ["GenAI", "Python", "SQL"]
+    return render_template("courses.html", courses=data)
+
+<!-- templates/courses.html -->
+<ul>
+  {% for c in courses %}
+    <li>{{ c }}</li>
+  {% endfor %}
+</ul>`},
+{name:"SPA / Client-Side Rendering",ico:"CSR",tag:"Single-Page App",one:"Browser downloads JS once, then builds pages itself",
+ what:"The server sends an almost empty HTML file plus a JavaScript bundle. JavaScript fetches JSON from APIs and draws the UI in the browser.",
+ why:"Smooth, app-like experience with no full page reloads, and a clean split between frontend and backend teams.",
+ when:"Dashboards, apps behind a login (where SEO doesn't matter), chat apps, email clients.",
+ where:"Gmail, Trello, Figma, Google Maps, most admin dashboards.",
+ how:"Build with React/Vue/Angular. The backend exposes a JSON REST API only.",
+ pros:["Fast after first load","Rich interactivity"],cons:["Slow first load (big JS)","Weak SEO by default"],
+ exTitle:"What the browser first receives",code:`
+<!doctype html>
+<html>
+  <body>
+    <div id="root"></div>               <!-- empty! -->
+    <script src="/bundle.js"><\/script>  <!-- JS builds the whole UI -->
+  </body>
+</html>`},
+{name:"SSG: Static Site Generation",ico:"SSG",tag:"Build time",one:"HTML pages generated once at build time, served from a CDN",
+ what:"All pages are rendered into plain .html files when you build the project, then hosted as static files.",
+ why:"Fastest possible delivery, very cheap hosting, no server to hack.",
+ when:"Blogs, documentation, portfolios, marketing pages: content that changes rarely.",
+ where:"React docs, Kubernetes docs, GitHub Pages sites, many company blogs.",
+ how:"Use Astro, Hugo, Jekyll, or Next.js static export. Write Markdown and the generator outputs HTML.",
+ pros:["Blazing fast, cheap","Very secure"],cons:["Must rebuild to update content","Not for user-specific data"],
+ exTitle:"Astro page",code:`
+---
+// runs at BUILD time only
+const posts = await fetch("https://api.example.com/posts").then(r => r.json());
+---
+<ul>
+  {posts.map(p => <li>{p.title}</li>)}
+</ul>`},
+{name:"Hybrid SSR + Hydration",ico:"⚡",tag:"Modern default",one:"Server renders HTML, then JS 'wakes it up' in the browser",
+ what:"The server renders the first page as HTML (fast and SEO-friendly). The browser then loads JS that attaches event handlers ('hydration') so the page becomes an interactive SPA.",
+ why:"Combines the best of SSR (fast first paint, SEO) and SPA (smooth navigation).",
+ when:"E-commerce, news sites, SaaS marketing plus app, anything needing both SEO and interactivity.",
+ where:"Next.js (React), Nuxt (Vue), SvelteKit, Remix sites such as Nike, TikTok web and Twitch.",
+ how:"Use a meta-framework. Pages are server components by default; mark interactive parts with 'use client'.",
+ pros:["SEO plus interactivity","Flexible per page"],cons:["More complex","Needs a Node server"],
+ exTitle:"Next.js: a server page with a client island",code:`
+// app/page.jsx  (server)
+import LikeButton from "./LikeButton";
+export default function Page() {
+  return <article><h1>Course</h1><LikeButton /></article>;
+}
+
+// app/LikeButton.jsx  (client)
+"use client";
+import { useState } from "react";
+export default function LikeButton() {
+  const [n, setN] = useState(0);
+  return <button onClick={() => setN(n + 1)}>❤ {n}</button>;
+}`},
+{name:"PWA: Progressive Web App",ico:"PWA",tag:"Installable web",one:"A website that installs like an app and works offline",
+ what:"A web app with a manifest and a service worker, so it can be installed on the home screen, work offline and send push notifications.",
+ why:"App-like experience without app-store distribution, and one codebase for every device.",
+ when:"Apps for users on slow or unreliable networks, news, e-commerce, field apps.",
+ where:"Twitter Lite / X, Starbucks, Flipkart Lite, Pinterest, Uber web.",
+ how:"Add manifest.json and register a service worker that caches files.",
+ pros:["Offline support","No app store needed"],cons:["iOS support is limited","Can't use every native feature"],
+ exTitle:"Register a service worker",code:`
+// main.js
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js");
+}
+
+// sw.js: cache files for offline use
+self.addEventListener("install", e => {
+  e.waitUntil(caches.open("v1").then(c => c.addAll(["/", "/index.html", "/app.css"])));
+});`},
+{name:"Micro-Frontends",ico:"▦",tag:"Large orgs",one:"Split one big UI into independently deployed pieces",
+ what:"The frontend version of microservices: different teams own different parts of a page (header, cart, search) and deploy them separately.",
+ why:"With 100+ frontend developers, one giant codebase slows everyone down.",
+ when:"Very large companies with many teams. It is overkill for small projects.",
+ where:"IKEA, Spotify, Zalando, DAZN, large banks.",
+ how:"Use Module Federation (Webpack/Vite), single-spa, or Web Components to load remote parts at runtime.",
+ pros:["Teams work independently","Can mix frameworks"],cons:["Complex setup","Risk of inconsistent UI"],
+ exTitle:"Module Federation (host app config)",code:`
+// webpack.config.js
+new ModuleFederationPlugin({
+  name: "shell",
+  remotes: {
+    cart:   "cart@https://cart.example.com/remoteEntry.js",
+    search: "search@https://search.example.com/remoteEntry.js"
+  }
+});
+// then: const Cart = React.lazy(() => import("cart/Cart"));`}
+];
+
+/* ---------- 5. BACKEND ---------- */
+const BE = [
+{name:"Flask (Python)",ico:"🧪",color:"#16a34a",tag:"Micro-framework",one:"Minimal, flexible Python web framework",
+ what:"A lightweight Python framework that gives you routing and request handling. Everything else (database, auth) you add as extensions.",
+ why:"Simple to learn and you control every piece. Great for understanding how web backends work.",
+ when:"Learning, small-to-medium APIs, prototypes, ML model serving, server-rendered apps with Jinja.",
+ where:"Netflix (internal tools), Reddit (early), LinkedIn, Pinterest (parts), many ML teams.",
+ how:"<code class='i'>pip install flask</code>, decorate functions with <code class='i'>@app.get(...)</code>, run <code class='i'>flask run</code>.",
+ pros:["Easy, minimal","Huge extension ecosystem"],cons:["Synchronous by default","You assemble the structure yourself"],
+ exTitle:"app.py",code:`
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.get("/api/courses")
+def courses():
+    return jsonify([{"id": 1, "title": "GenAI"},
+                    {"id": 2, "title": "Python"}])
+
+if __name__ == "__main__":
+    app.run(debug=True)`},
+{name:"FastAPI (Python)",ico:"⚡",color:"#059669",tag:"Async · Modern",one:"High-performance async Python API framework with auto docs",
+ what:"A modern Python framework for building APIs using type hints. It validates data automatically (Pydantic) and generates Swagger docs at /docs.",
+ why:"Async support makes it fast for I/O-heavy work such as calling LLM APIs. Type hints catch bugs and produce docs for free.",
+ when:"REST APIs, GenAI/LLM backends, streaming responses, ML model serving, microservices.",
+ where:"Microsoft, Uber, Netflix (Dispatch), and many GenAI startups.",
+ how:"<code class='i'>pip install fastapi uvicorn</code>, then <code class='i'>uvicorn main:app --reload</code>. Open /docs.",
+ pros:["Very fast, async","Auto validation and docs"],cons:["No built-in admin or templates","Async concepts can confuse beginners"],
+ exTitle:"main.py",code:`
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Course(BaseModel):
+    id: int
+    title: str
+
+@app.get("/api/courses", response_model=list[Course])
+async def courses():
+    return [Course(id=1, title="GenAI"), Course(id=2, title="Python")]
+# Swagger UI: http://127.0.0.1:8000/docs`},
+{name:"Django (Python)",ico:"🎸",color:"#0c4b33",tag:"Batteries included",one:"Full-stack Python framework with ORM, admin and auth built in",
+ what:"A 'batteries-included' framework: ORM, admin panel, authentication, forms, migrations and security protections all come built in.",
+ why:"Lets you build complete, secure web apps quickly without choosing and wiring libraries.",
+ when:"Content-heavy sites, e-commerce, CRMs, apps needing an admin panel, and large Python teams.",
+ where:"Instagram, Spotify (parts), Mozilla, Disqus, Pinterest (early).",
+ how:"<code class='i'>pip install django</code>, then <code class='i'>django-admin startproject site</code>. Add Django REST Framework for APIs.",
+ pros:["Everything included","Free admin panel"],cons:["Heavier, more opinionated","Overkill for tiny APIs"],
+ exTitle:"views.py + urls.py",code:`
+# views.py
+from django.http import JsonResponse
+
+def courses(request):
+    return JsonResponse([{"id": 1, "title": "GenAI"}], safe=False)
+
+# urls.py
+from django.urls import path
+from . import views
+urlpatterns = [path("api/courses", views.courses)]`},
+{name:"Node.js + Express (JavaScript)",ico:"⬢",color:"#539e43",tag:"JS on the server",one:"Run JavaScript on the server with a non-blocking event loop",
+ what:"Node.js runs JavaScript outside the browser. Express is the most popular minimal web framework on top of it.",
+ why:"One language (JS/TypeScript) for frontend and backend. The event loop handles many concurrent connections well.",
+ when:"Real-time apps (chat, live updates), JSON APIs, full-stack JS teams (MERN/MEAN stack).",
+ where:"Netflix, PayPal, LinkedIn mobile backend, Uber, Walmart.",
+ how:"<code class='i'>npm init -y</code>, <code class='i'>npm i express</code>, then <code class='i'>node server.js</code>.",
+ pros:["Same language everywhere","Great for real-time"],cons:["CPU-heavy work blocks the event loop","Callback/async complexity"],
+ exTitle:"server.js",code:`
+const express = require("express");
+const app = express();
+
+app.get("/api/courses", (req, res) => {
+  res.json([{ id: 1, title: "GenAI" }, { id: 2, title: "Python" }]);
+});
+
+app.listen(3000, () => console.log("http://localhost:3000"));`},
+{name:"Spring Boot (Java)",ico:"🍃",color:"#6db33f",tag:"Enterprise",one:"The standard for enterprise Java backends",
+ what:"A Java framework that auto-configures Spring apps, with built-in web server, security, data access and monitoring.",
+ why:"Strong typing, mature tooling, and huge enterprise support make it reliable for big, long-lived systems.",
+ when:"Banking, insurance, telecom, large microservice systems, teams with Java skills.",
+ where:"Netflix (most services), Amazon, most Indian banks and IT service companies (TCS, Infosys projects).",
+ how:"Generate a project at start.spring.io, add the 'Spring Web' dependency, run <code class='i'>./mvnw spring-boot:run</code>.",
+ pros:["Rock-solid, scalable","Huge enterprise ecosystem"],cons:["Verbose","Slower startup, more memory"],
+ exTitle:"CourseController.java",code:`
+@RestController
+@RequestMapping("/api")
+public class CourseController {
+
+    record Course(int id, String title) {}
+
+    @GetMapping("/courses")
+    public List<Course> courses() {
+        return List.of(new Course(1, "GenAI"), new Course(2, "Python"));
+    }
+}`},
+{name:"ASP.NET Core (C#)",ico:"#",color:"#512bd4",tag:"Microsoft",one:"Fast, cross-platform C# framework",
+ what:"Microsoft's open-source, cross-platform framework for web APIs and apps in C#. It runs on Windows, Linux and macOS.",
+ why:"Excellent performance, strong typing, first-class Azure and Visual Studio integration.",
+ when:"Microsoft-stack companies, enterprise apps, Azure cloud, game backends.",
+ where:"Stack Overflow, Microsoft Bing, GoDaddy, many enterprise intranets.",
+ how:"<code class='i'>dotnet new web -o api</code>, then <code class='i'>dotnet run</code>.",
+ pros:["Top-tier performance","Great tooling"],cons:["Smaller startup community","Mostly C# only"],
+ exTitle:"Program.cs (Minimal API)",code:`
+var app = WebApplication.CreateBuilder(args).Build();
+
+app.MapGet("/api/courses", () => new[] {
+    new { id = 1, title = "GenAI" },
+    new { id = 2, title = "Python" }
+});
+
+app.Run();`},
+{name:"Go + Gin",ico:"Go",color:"#00add8",tag:"Cloud-native",one:"Compiled, fast, simple: built for cloud services",
+ what:"Go is a compiled language from Google with built-in concurrency (goroutines). Gin is a popular, fast web framework for it.",
+ why:"Tiny memory use, fast startup and easy concurrency make it ideal for microservices and infrastructure.",
+ when:"High-throughput APIs, microservices, DevOps tools, real-time systems.",
+ where:"Docker, Kubernetes, Uber, Twitch, Cloudflare, Dropbox.",
+ how:"<code class='i'>go mod init api</code>, <code class='i'>go get github.com/gin-gonic/gin</code>, then <code class='i'>go run .</code>.",
+ pros:["Very fast, low memory","Single binary deploy"],cons:["More verbose error handling","Smaller web ecosystem than JS/Python"],
+ exTitle:"main.go",code:`
+package main
+
+import "github.com/gin-gonic/gin"
+
+func main() {
+    r := gin.Default()
+    r.GET("/api/courses", func(c *gin.Context) {
+        c.JSON(200, []gin.H{{"id": 1, "title": "GenAI"}})
+    })
+    r.Run(":8080")
+}`},
+{name:"Laravel (PHP)",ico:"L",color:"#ff2d20",tag:"PHP",one:"Elegant, full-featured PHP framework",
+ what:"The most popular modern PHP framework, with routing, the Eloquent ORM, queues, auth and Blade templates.",
+ why:"PHP runs a huge share of the web. Laravel makes PHP development clean and productive.",
+ when:"Business websites, e-commerce, CMS-style apps, and cheap shared hosting.",
+ where:"Many agencies and startups. PHP itself powers WordPress (~40% of websites) and Facebook's origins.",
+ how:"<code class='i'>composer create-project laravel/laravel app</code>, then <code class='i'>php artisan serve</code>.",
+ pros:["Fast development","Cheap hosting everywhere"],cons:["PHP reputation","Less used for AI workloads"],
+ exTitle:"routes/api.php",code:`
+<?php
+use Illuminate\\Support\\Facades\\Route;
+
+Route::get('/courses', function () {
+    return [['id' => 1, 'title' => 'GenAI']];   // auto-converted to JSON
+});`},
+{name:"Ruby on Rails (Ruby)",ico:"💎",color:"#cc0000",tag:"Convention over config",one:"Productive full-stack framework that popularised MVC",
+ what:"A full-stack Ruby framework built on 'convention over configuration'. Follow its naming rules and most code is generated for you.",
+ why:"Extremely fast to build MVPs. One command scaffolds a complete CRUD feature.",
+ when:"Startups building MVPs quickly, SaaS products, marketplaces.",
+ where:"GitHub, Shopify, Airbnb (early), Basecamp, GitLab.",
+ how:"<code class='i'>rails new app</code>, then <code class='i'>rails generate scaffold Course title:string</code>.",
+ pros:["Fastest MVP building","Mature conventions"],cons:["Smaller hiring pool today","Slower than compiled languages"],
+ exTitle:"courses_controller.rb",code:`
+class Api::CoursesController < ApplicationController
+  def index
+    render json: [{ id: 1, title: "GenAI" }]
+  end
+end
+
+# config/routes.rb
+namespace :api do
+  resources :courses, only: [:index]
+end`}
+];
+
+/* ---------- 6. API & ARCHITECTURE ---------- */
+const API = [
+{name:"REST API",ico:"REST",tag:"API style · most common",one:"Resources as URLs, actions as HTTP methods, JSON data",
+ what:"An API style where everything is a resource with a URL (/courses/5) and you act on it with HTTP verbs: GET (read), POST (create), PUT/PATCH (update), DELETE (remove).",
+ why:"Simple, uses plain HTTP, works with every language and tool, and is easy to cache.",
+ when:"The default choice for most web and mobile APIs and CRUD apps.",
+ where:"GitHub API, Stripe, Twitter/X API, OpenAI and Anthropic APIs.",
+ how:"Design nouns as URLs, use the right verb and status code (200, 201, 404, 400…).",
+ pros:["Simple, universal","Cacheable"],cons:["Over-fetching or under-fetching data","Many round trips for related data"],
+ exTitle:"REST endpoints for courses",code:`
+GET    /api/courses        → list all courses        200
+GET    /api/courses/5      → get course 5            200 / 404
+POST   /api/courses        → create a course         201
+PUT    /api/courses/5      → replace course 5        200
+DELETE /api/courses/5      → delete course 5         204
+
+curl -X POST http://localhost:5000/api/courses \\
+     -H "Content-Type: application/json" \\
+     -d '{"title": "GenAI"}'`},
+{name:"GraphQL",ico:"◈",color:"#e10098",tag:"API style · Meta",one:"Client asks for exactly the fields it needs in one query",
+ what:"A query language for APIs with a single endpoint. The client sends a query describing the exact shape of data it wants.",
+ why:"Fixes REST's over-fetching (too much data) and under-fetching (too many calls), which matters a lot for mobile apps.",
+ when:"Complex, nested data (social feeds), many different clients (web, iOS, Android) and fast-changing frontends.",
+ where:"Facebook, GitHub API v4, Shopify, Airbnb, Netflix.",
+ how:"Define a schema (types plus resolvers) on the server with Strawberry/Graphene (Python) or Apollo (Node).",
+ pros:["Exactly the data you need","Strongly typed schema"],cons:["Caching is harder","More complex server"],
+ exTitle:"One query, nested data",code:`
+query {
+  course(id: 5) {
+    title
+    instructor { name }
+    students(first: 3) { name }
+  }
+}
+# Response has exactly these fields, nothing more.`},
+{name:"gRPC",ico:"⇄",color:"#244c5a",tag:"API style · Google",one:"Fast binary calls between services using Protocol Buffers",
+ what:"A high-performance remote procedure call (RPC) framework. Services call each other's functions as if they were local, using compact binary messages over HTTP/2.",
+ why:"Much faster and smaller than JSON. Strict contracts generate client code in many languages.",
+ when:"Service-to-service calls inside microservices, low-latency systems, streaming between services.",
+ where:"Google internal services, Netflix, Square, Kubernetes components.",
+ how:"Write a .proto file, generate code with protoc, then implement the server and call it from clients.",
+ pros:["Very fast, compact","Code generation"],cons:["Not browser-friendly","Not human-readable"],
+ exTitle:"course.proto",code:`
+syntax = "proto3";
+
+service CourseService {
+  rpc GetCourse (CourseRequest) returns (Course);
+}
+
+message CourseRequest { int32 id = 1; }
+message Course { int32 id = 1; string title = 2; }`},
+{name:"WebSockets",ico:"↔",color:"#7c3aed",tag:"Real-time · two-way",one:"A persistent two-way connection between browser and server",
+ what:"A protocol that keeps one connection open so both client and server can send messages at any time.",
+ why:"HTTP is request-response only. For real-time updates, you'd otherwise have to poll repeatedly.",
+ when:"Chat apps, multiplayer games, live dashboards, collaborative editing, stock tickers.",
+ where:"WhatsApp Web, Slack, Discord, Google Docs collaboration, trading platforms.",
+ how:"Browser: <code class='i'>new WebSocket(url)</code>. Server: FastAPI WebSocket, Socket.IO, Django Channels.",
+ pros:["Instant two-way messages","Low overhead per message"],cons:["Harder to scale (stateful)","Needs reconnect logic"],
+ exTitle:"FastAPI + browser",code:`
+# server (FastAPI)
+@app.websocket("/ws")
+async def ws(socket: WebSocket):
+    await socket.accept()
+    while True:
+        msg = await socket.receive_text()
+        await socket.send_text("Echo: " + msg)
+
+// browser
+const ws = new WebSocket("ws://localhost:8000/ws");
+ws.onmessage = e => console.log(e.data);
+ws.onopen = () => ws.send("Hello!");`},
+{name:"Server-Sent Events (SSE) / Streaming",ico:"⇉",color:"#ea580c",tag:"Real-time · one-way",one:"Server pushes a stream of updates. This is how ChatGPT types word by word.",
+ what:"A simple one-way stream from server to browser over plain HTTP. The server keeps sending chunks as they become ready.",
+ why:"LLMs generate text token by token. Streaming shows the answer as it is written, instead of waiting 20 seconds.",
+ when:"LLM chat responses, notifications, live logs, progress bars.",
+ where:"ChatGPT, Claude.ai, the OpenAI and Anthropic APIs (stream=true), GitHub Actions logs.",
+ how:"Return a StreamingResponse with content type text/event-stream. In the browser use EventSource or fetch with a reader.",
+ pros:["Simple, works over HTTP","Auto reconnect"],cons:["One direction only","Text only"],
+ exTitle:"Streaming LLM-style tokens (FastAPI)",code:`
+from fastapi.responses import StreamingResponse
+import asyncio
+
+@app.get("/chat")
+async def chat():
+    async def tokens():
+        for word in "Hello students, welcome to Day 8!".split():
+            yield "data: " + word + "\\n\\n"
+            await asyncio.sleep(0.2)
+    return StreamingResponse(tokens(), media_type="text/event-stream")`},
+{name:"Monolith",ico:"▣",color:"#475569",tag:"Architecture",one:"The whole backend is one deployable application",
+ what:"All features (users, courses, payments) live in one codebase and are deployed as one unit, usually with one database.",
+ why:"Simplest to build, test, debug and deploy. No network calls between features.",
+ when:"Startups, MVPs, small teams, and most projects at the start. Start here!",
+ where:"Early Amazon, Shopify (still a 'modular monolith'), Stack Overflow, Basecamp.",
+ how:"One Flask/Django/Spring project, organised into modules or packages.",
+ pros:["Simple to develop and deploy","Easy debugging"],cons:["Hard to scale parts separately","Large codebase slows big teams"],
+ exTitle:"Monolith folder structure",code:`
+school_app/
+├── app.py
+├── users/       (routes + logic)
+├── courses/     (routes + logic)
+├── payments/    (routes + logic)
+└── models.py    → one database`},
+{name:"Microservices",ico:"⬡",color:"#0891b2",tag:"Architecture",one:"Many small services, each owning one business capability",
+ what:"The backend is split into small, independent services (user service, course service, payment service), each with its own database, talking over APIs or queues.",
+ why:"Teams can deploy and scale independently, and a failure in one service doesn't take down everything.",
+ when:"Large organisations with many teams, very high scale, parts with different load patterns.",
+ where:"Netflix (1000+ services), Amazon, Uber, Swiggy, Zomato.",
+ how:"Containerise each service with Docker, orchestrate with Kubernetes, put an API gateway in front.",
+ pros:["Independent scaling and deploys","Tech freedom per service"],cons:["Complex networking and debugging","Distributed data is hard"],
+ exTitle:"docker-compose.yml",code:`
+services:
+  gateway:  { image: nginx, ports: ["80:80"] }
+  users:    { build: ./users,    environment: [DB=users_db] }
+  courses:  { build: ./courses,  environment: [DB=courses_db] }
+  payments: { build: ./payments, environment: [DB=payments_db] }`},
+{name:"Serverless (FaaS)",ico:"λ",color:"#f59e0b",tag:"Architecture",one:"Write functions and the cloud runs and scales them for you",
+ what:"You deploy individual functions. The cloud provider runs them only when triggered and bills per execution. There are no servers for you to manage.",
+ why:"No server maintenance, automatic scaling to zero or to thousands, and you pay only for what you use.",
+ when:"Event-driven tasks (image resize on upload), low or spiky traffic APIs, scheduled jobs, webhooks.",
+ where:"AWS Lambda, Azure Functions, Google Cloud Functions, Vercel/Netlify functions. Used by Coca-Cola and iRobot.",
+ how:"Write a handler function and deploy it with the AWS console, the Serverless Framework, or Vercel.",
+ pros:["Zero ops, auto scale","Pay per use"],cons:["Cold starts (first call is slow)","Vendor lock-in, time limits"],
+ exTitle:"AWS Lambda handler (Python)",code:`
+import json
+
+def lambda_handler(event, context):
+    courses = [{"id": 1, "title": "GenAI"}]
+    return {
+        "statusCode": 200,
+        "body": json.dumps(courses)
+    }`},
+{name:"Event-Driven (Message Queues)",ico:"✉",color:"#be185d",tag:"Architecture",one:"Services communicate by publishing and consuming events",
+ what:"Instead of calling each other directly, services publish events ('OrderPlaced') to a broker, and interested services consume them asynchronously.",
+ why:"Decouples services, absorbs traffic spikes, and lets slow work (emails, AI processing) happen in the background.",
+ when:"Order processing, notifications, analytics pipelines, long-running AI jobs.",
+ where:"Kafka at LinkedIn (where it was created), Uber, Swiggy order flow. RabbitMQ and Celery in Python apps.",
+ how:"Use a broker (Kafka, RabbitMQ, Redis, AWS SQS) plus a worker (Celery for Python).",
+ pros:["Loose coupling","Handles spikes, retries"],cons:["Harder to trace and debug","Eventual consistency"],
+ exTitle:"Celery background task",code:`
+# tasks.py
+from celery import Celery
+app = Celery("tasks", broker="redis://localhost:6379")
+
+@app.task
+def send_welcome_email(student):
+    print("Emailing", student)        # slow work happens in a worker
+
+# in your Flask route:
+send_welcome_email.delay("Ravi")       # returns immediately`}
+];
+
+/* ---------- 7. PERSISTENCE ---------- */
+const SQL="#6366f1", NOSQL="#16a34a", SPEC="#db2777", FILEC="#64748b";
+const DB = [
+{name:"SQLite",ico:"🪶",color:SQL,tag:"Relational · embedded",one:"A full SQL database in a single file, with no server",
+ what:"A relational database engine stored in one file and built right into Python (the sqlite3 module). There is no separate server process.",
+ why:"Zero setup: perfect for learning SQL, prototypes and apps that run on one device.",
+ when:"Learning, prototypes, mobile apps, desktop apps, small websites, tests. Not for many concurrent writers.",
+ where:"Every Android and iPhone, Chrome and Firefox (history, cookies), WhatsApp local storage.",
+ how:"<code class='i'>import sqlite3</code> and connect to a filename. Nothing to install.",
+ pros:["No install, one file","Fast for reads"],cons:["Limited concurrent writes","Not for multi-server apps"],
+ exTitle:"sqlite3 in Python",code:`
+import sqlite3
+
+con = sqlite3.connect("school.db")
+cur = con.cursor()
+cur.execute("CREATE TABLE IF NOT EXISTS course (id INTEGER PRIMARY KEY, title TEXT)")
+cur.execute("INSERT INTO course (title) VALUES (?)", ("GenAI",))   # ? prevents SQL injection
+con.commit()
+
+print(cur.execute("SELECT * FROM course").fetchall())   # [(1, 'GenAI')]`},
+{name:"PostgreSQL",ico:"🐘",color:SQL,tag:"Relational · advanced",one:"The most advanced open-source relational database",
+ what:"A powerful open-source SQL database with strong ACID transactions, JSON columns, full-text search, and extensions like pgvector for AI.",
+ why:"Reliable, standards-compliant and extensible. One database can handle relational, JSON and vector data.",
+ when:"Most new production apps: SaaS, fintech, GenAI apps (with pgvector), analytics.",
+ where:"Instagram, Apple, Reddit, Spotify, Supabase, Neon. Many AI startups use it as their main database.",
+ how:"Install it or use a managed service (Supabase, AWS RDS, Neon). Connect from Python with psycopg or SQLAlchemy.",
+ pros:["Feature-rich, reliable","JSON + vectors + SQL in one"],cons:["More setup than SQLite","Needs tuning at large scale"],
+ exTitle:"Tables with a relationship (JOIN)",code:`
+CREATE TABLE student (id SERIAL PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE enrollment (
+  id         SERIAL PRIMARY KEY,
+  student_id INT REFERENCES student(id),   -- foreign key
+  course     TEXT,
+  meta       JSONB                          -- flexible JSON column
+);
+
+SELECT s.name, e.course
+FROM student s
+JOIN enrollment e ON e.student_id = s.id;`},
+{name:"MySQL / MariaDB",ico:"🐬",color:SQL,tag:"Relational · popular",one:"The world's most widely deployed open-source SQL database",
+ what:"A popular, fast relational database (owned by Oracle). MariaDB is its community fork.",
+ why:"Simple, fast for reads, and supported by every hosting provider. It is the 'M' in the LAMP stack.",
+ when:"Web apps, WordPress/PHP sites, e-commerce, read-heavy workloads.",
+ where:"Facebook (heavily customised), YouTube, Uber (early), WordPress, Booking.com.",
+ how:"Install MySQL Server or use AWS RDS. Connect with <code class='i'>pip install mysql-connector-python</code> or SQLAlchemy.",
+ pros:["Fast, widely supported","Huge community"],cons:["Fewer advanced features than PostgreSQL","Oracle ownership concerns"],
+ exTitle:"Python + MySQL",code:`
+import mysql.connector
+
+con = mysql.connector.connect(host="localhost", user="root",
+                              password="***", database="school")
+cur = con.cursor()
+cur.execute("SELECT id, title FROM course WHERE title LIKE %s", ("%AI%",))
+for row in cur.fetchall():
+    print(row)`},
+{name:"MongoDB",ico:"🍃",color:NOSQL,tag:"NoSQL · Document",one:"Stores flexible JSON-like documents instead of rows",
+ what:"A document database: each record is a JSON-like document (BSON) that can have nested objects and arrays. No fixed schema is required.",
+ why:"Data that is naturally nested or changes shape often (product catalogs, user profiles) fits more easily than in rigid tables.",
+ when:"Content management, catalogs, user profiles, IoT data, rapid prototyping, the MERN stack.",
+ where:"eBay, Adobe, Forbes, Toyota, Zomato (parts).",
+ how:"Use MongoDB Atlas (free cloud tier) or install locally. Python: <code class='i'>pip install pymongo</code>.",
+ pros:["Flexible schema","Scales horizontally"],cons:["Weak JOINs","Easy to end up with messy data"],
+ exTitle:"pymongo",code:`
+from pymongo import MongoClient
+
+db = MongoClient("mongodb://localhost:27017")["school"]
+
+db.courses.insert_one({
+    "title": "GenAI",
+    "tags": ["llm", "python"],               # arrays allowed
+    "instructor": {"name": "Ravi", "exp": 8}  # nested object
+})
+
+print(db.courses.find_one({"tags": "llm"}))`},
+{name:"Redis",ico:"⚡",color:NOSQL,tag:"NoSQL · Key-Value · In-memory",one:"Ultra-fast in-memory key-value store for caching",
+ what:"A key-value store that keeps data in RAM, so reads and writes take under a millisecond. It supports strings, lists, hashes, sets and pub/sub.",
+ why:"Databases on disk are slow for repeated reads. Redis caches hot data and takes load off the main database.",
+ when:"Caching, sessions, rate limiting, leaderboards, queues, caching LLM responses, real-time pub/sub.",
+ where:"Twitter/X timelines, GitHub, Snapchat, Stack Overflow, Swiggy.",
+ how:"Run <code class='i'>docker run -p 6379:6379 redis</code>. Python: <code class='i'>pip install redis</code>.",
+ pros:["Extremely fast","Simple data structures"],cons:["Limited by RAM size","Not a primary database for most apps"],
+ exTitle:"Cache an expensive LLM answer",code:`
+import redis
+r = redis.Redis()
+
+def ask(question):
+    cached = r.get(question)
+    if cached:
+        return cached.decode()              # instant, free
+    answer = call_llm(question)             # slow and costs money
+    r.setex(question, 3600, answer)         # keep for 1 hour
+    return answer`},
+{name:"Cassandra / DynamoDB",ico:"▥",color:NOSQL,tag:"NoSQL · Wide-column",one:"Massive-scale databases for huge write volumes",
+ what:"Distributed databases that spread data across many machines by partition key. They are designed for enormous scale and no single point of failure.",
+ why:"When you have billions of writes per day across data centres, a single SQL server can't keep up.",
+ when:"Messaging history, IoT, activity feeds, write-heavy global apps. Overkill for small apps.",
+ where:"Cassandra: Netflix, Apple (very large clusters), Instagram, Discord (earlier). DynamoDB: Amazon, Lyft.",
+ how:"Design tables around your queries (partition key + clustering key). Query with CQL (Cassandra) or the AWS SDK (DynamoDB).",
+ pros:["Massive scale, always available","Fast writes"],cons:["Must design around queries","No JOINs, limited ad-hoc queries"],
+ exTitle:"Cassandra CQL",code:`
+CREATE TABLE messages (
+  chat_id   UUID,
+  sent_at   TIMESTAMP,
+  sender    TEXT,
+  body      TEXT,
+  PRIMARY KEY (chat_id, sent_at)      -- partition key, clustering key
+) WITH CLUSTERING ORDER BY (sent_at DESC);
+
+SELECT * FROM messages WHERE chat_id = ? LIMIT 50;`},
+{name:"Neo4j",ico:"🕸",color:NOSQL,tag:"NoSQL · Graph",one:"Stores data as nodes and relationships",
+ what:"A graph database where data is stored as nodes (people, courses) connected by relationships (ENROLLED_IN, FRIEND_OF).",
+ why:"Questions like 'friends of friends who took this course' need many slow JOINs in SQL but are natural in a graph.",
+ when:"Social networks, recommendations, fraud detection, knowledge graphs (including GraphRAG for LLMs).",
+ where:"LinkedIn-style connections, eBay, Walmart recommendations, NASA, fraud teams at banks.",
+ how:"Use Neo4j Aura (free cloud) and query with the Cypher language. Python: <code class='i'>pip install neo4j</code>.",
+ pros:["Relationship queries are fast","Intuitive to model"],cons:["Niche skill","Not for simple tabular data"],
+ exTitle:"Cypher: recommend courses",code:`
+CREATE (a:Student {name:"Ravi"})-[:ENROLLED_IN]->(c:Course {title:"GenAI"})
+
+// Courses taken by students who share a course with Ravi
+MATCH (me:Student {name:"Ravi"})-[:ENROLLED_IN]->(:Course)
+      <-[:ENROLLED_IN]-(other)-[:ENROLLED_IN]->(rec:Course)
+RETURN DISTINCT rec.title`},
+{name:"Elasticsearch / OpenSearch",ico:"🔍",color:SPEC,tag:"Search engine",one:"Full-text search and log analytics at scale",
+ what:"A distributed search engine that builds an inverted index over your text, so keyword search is fast and supports typo tolerance and ranking.",
+ why:"SQL's LIKE '%term%' is slow and can't rank results by relevance.",
+ when:"Site search, e-commerce product search, log analysis (ELK stack), hybrid search in RAG.",
+ where:"Wikipedia search, GitHub code search (earlier), Uber, Netflix logging, Flipkart search.",
+ how:"Run it with Docker, index JSON documents, and query through the REST API or the Python client.",
+ pros:["Fast relevant search","Great for logs"],cons:["Memory hungry","Not a primary database"],
+ exTitle:"Search with typo tolerance",code:`
+from elasticsearch import Elasticsearch
+es = Elasticsearch("http://localhost:9200")
+
+es.index(index="courses", document={"title": "Generative AI Bootcamp"})
+
+es.search(index="courses", query={
+    "match": {"title": {"query": "generativ ai", "fuzziness": "AUTO"}}
+})`},
+{name:"Vector Databases",ico:"🧭",color:SPEC,tag:"AI · GenAI essential",one:"Store embeddings and search by meaning (the heart of RAG)",
+ what:"Databases that store vectors (embeddings: lists of numbers representing meaning) and find the most similar ones quickly.",
+ why:"LLMs don't know your private documents. RAG embeds your documents, stores them here, and retrieves relevant chunks by meaning, not just keywords.",
+ when:"RAG chatbots, semantic search, recommendations, image similarity, LLM long-term memory.",
+ where:"Chroma and FAISS (local), Pinecone, Weaviate, Qdrant, Milvus (hosted), pgvector inside PostgreSQL.",
+ how:"Embed text with an embedding model, store the vectors, then query with an embedded question to get the top-k similar chunks.",
+ pros:["Search by meaning","Core building block of RAG"],cons:["Approximate results","Embeddings cost compute"],
+ exTitle:"ChromaDB in 8 lines",code:`
+import chromadb
+
+client = chromadb.Client()
+col = client.create_collection("notes")
+
+col.add(ids=["1", "2"],
+        documents=["Flask is a Python web framework",
+                   "Redis keeps data in memory"])
+
+print(col.query(query_texts=["fast cache"], n_results=1))
+# → finds "Redis keeps data in memory": matched by meaning`},
+{name:"Time-Series DBs",ico:"📈",color:SPEC,tag:"Specialised",one:"Optimised for timestamped data such as metrics and sensor readings",
+ what:"Databases built for data points indexed by time (CPU usage every second, temperature every minute) with fast range queries and downsampling.",
+ why:"Regular databases get slow with billions of time-stamped rows. Time-series DBs compress and aggregate them efficiently.",
+ when:"Monitoring, IoT sensors, stock prices, application metrics.",
+ where:"InfluxDB, TimescaleDB (a PostgreSQL extension), Prometheus. Used by Tesla, Cisco, and in Grafana dashboards.",
+ how:"Write points with tags and timestamps, then query aggregates over time windows.",
+ pros:["Fast time-range queries","Great compression"],cons:["Single-purpose","Not for general data"],
+ exTitle:"TimescaleDB (SQL)",code:`
+CREATE TABLE readings (time TIMESTAMPTZ, sensor TEXT, temp FLOAT);
+SELECT create_hypertable('readings', 'time');
+
+SELECT time_bucket('1 hour', time) AS hour, avg(temp)
+FROM readings
+WHERE time > now() - interval '1 day'
+GROUP BY hour ORDER BY hour;`},
+{name:"Object Storage (S3, Blob)",ico:"🪣",color:FILEC,tag:"Files at scale",one:"Store images, videos, PDFs and backups as objects",
+ what:"Cloud storage for files of any size, accessed by key (path) over HTTP. Effectively unlimited capacity and very durable.",
+ why:"Databases are the wrong place for large files. Keep the file in S3 and store only its URL in the database.",
+ when:"User uploads, images, videos, PDFs for RAG, backups, ML datasets, static website hosting.",
+ where:"AWS S3, Azure Blob, Google Cloud Storage, Cloudflare R2. Netflix videos, Dropbox, Airbnb photos.",
+ how:"Upload with an SDK (boto3 for Python) and save the returned key or URL in your database.",
+ pros:["Cheap, unlimited, durable","Serve directly through a CDN"],cons:["Not queryable like a database","Whole-file updates only"],
+ exTitle:"Upload with boto3",code:`
+import boto3
+s3 = boto3.client("s3")
+
+s3.upload_file("syllabus.pdf", "my-course-bucket", "docs/syllabus.pdf")
+# then store just "docs/syllabus.pdf" in your SQL table`},
+{name:"Flat Files (CSV, JSON, Parquet)",ico:"📄",color:FILEC,tag:"Simplest persistence",one:"Save data directly into files on disk",
+ what:"Writing data to plain files: JSON for configs and small data, CSV for tables, Parquet for large analytics datasets.",
+ why:"The simplest way to persist data, with no database needed. Easy to share and inspect.",
+ when:"Configs, small scripts, data exchange, ML datasets, logs. Not for multi-user apps (no locking, no queries).",
+ where:"package.json, Kaggle datasets (CSV), data lakes (Parquet on S3), app settings.",
+ how:"Python's json and csv modules, or pandas for CSV/Parquet.",
+ pros:["Zero setup, human-readable","Easy to share"],cons:["No concurrent writes, no queries","Must load everything into memory"],
+ exTitle:"JSON + pandas",code:`
+import json, pandas as pd
+
+# JSON
+with open("courses.json", "w") as f:
+    json.dump([{"id": 1, "title": "GenAI"}], f)
+
+# CSV / Parquet with pandas
+df = pd.DataFrame({"title": ["GenAI", "Python"], "seats": [40, 60]})
+df.to_csv("courses.csv", index=False)
+df.to_parquet("courses.parquet")`},
+{name:"ORM / Data-Access Layer",ico:"🔗",color:FILEC,tag:"How code talks to the DB",one:"Work with database rows as Python objects (SQLAlchemy, Django ORM, Prisma)",
+ what:"An Object-Relational Mapper converts between classes in your code and tables in the database, so you write Python instead of raw SQL.",
+ why:"Less repetitive SQL, protection from SQL injection, and you can switch databases (SQLite → PostgreSQL) by changing one connection string.",
+ when:"Most CRUD applications. For complex reports, raw SQL can still be clearer and faster.",
+ where:"SQLAlchemy (Flask/FastAPI), Django ORM, Hibernate (Java), Entity Framework (.NET), Prisma (Node), Mongoose (MongoDB ODM).",
+ how:"Define model classes, then use session.add(), query() and commit(). Migrations are handled by Alembic or Django migrations.",
+ pros:["Less SQL, safer","Database-independent code"],cons:["Hides what SQL runs (can be slow)","Another tool to learn"],
+ exTitle:"SQLAlchemy 2.0",code:`
+from sqlalchemy import create_engine, String, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+
+class Base(DeclarativeBase): pass
+
+class Course(Base):
+    __tablename__ = "course"
+    id:    Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(100))
+
+engine = create_engine("sqlite:///school.db")   # swap for postgresql://...
+Base.metadata.create_all(engine)
+
+with Session(engine) as s:
+    s.add(Course(title="GenAI")); s.commit()
+    print(s.scalars(select(Course)).all())`}
+];
+
+render("themesList", THEMES, "--fe", "--fe-soft");
+render("uiList", UI, "--fe", "--fe-soft");
+render("renderList", RENDER, "--fe", "--fe-soft");
+render("beList", BE, "--be", "--be-soft");
+render("apiList", API, "--be", "--be-soft");
+render("dbList", DB, "--db", "--db-soft");
+
+/* ---------- tabs ---------- */
+const tabs = document.querySelectorAll("#tabbar button");
+function showTab(id){
+  tabs.forEach(b=>b.classList.toggle("active", b.dataset.tab===id));
+  document.querySelectorAll("section.panel").forEach(s=>s.classList.toggle("active", s.id===id));
+  try{localStorage.setItem("fsl-tab", id);}catch(e){}
+  window.scrollTo({top:0});
+}
+tabs.forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+try{const t=localStorage.getItem("fsl-tab"); if(t && document.getElementById(t)) showTab(t);}catch(e){}
+
+/* ---------- search / expand ---------- */
+document.querySelectorAll("[data-filter]").forEach(inp=>{
+  inp.addEventListener("input",()=>{
+    const q = inp.value.toLowerCase().trim();
+    document.querySelectorAll("#"+inp.dataset.filter+" .card").forEach(c=>{
+      c.style.display = c.dataset.search.includes(q) ? "" : "none";
+    });
+  });
+});
+document.querySelectorAll("[data-expand]").forEach(b=>b.addEventListener("click",()=>document.querySelectorAll("#"+b.dataset.expand+" details").forEach(d=>d.open=true)));
+document.querySelectorAll("[data-collapse]").forEach(b=>b.addEventListener("click",()=>document.querySelectorAll("#"+b.dataset.collapse+" details").forEach(d=>d.open=false)));
+
+/* ---------- copy buttons ---------- */
+document.addEventListener("click", e=>{
+  if(!e.target.classList.contains("copy")) return;
+  const pre = e.target.parentElement.nextElementSibling;
+  const done = ()=>{ e.target.textContent="Copied ✓"; setTimeout(()=>e.target.textContent="Copy",1400); };
+  if(navigator.clipboard){ navigator.clipboard.writeText(pre.innerText).then(done).catch(()=>{}); }
+});
+
+/* ---------- theme toggle ---------- */
+const root = document.documentElement;
+try{const th=localStorage.getItem("fsl-theme"); if(th) root.dataset.theme=th;}catch(e){}
+document.getElementById("themeBtn").addEventListener("click",()=>{
+  const isDark = root.dataset.theme ? root.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = isDark ? "light" : "dark";
+  try{localStorage.setItem("fsl-theme", root.dataset.theme);}catch(e){}
+});
+
+/* ---------- flow animation ---------- */
+document.getElementById("playBtn").addEventListener("click",()=>{
+  const steps=[...document.querySelectorAll("#anim .t")];
+  steps.forEach(s=>s.classList.remove("on"));
+  steps.forEach((s,i)=>setTimeout(()=>s.classList.add("on"), i*650));
+});
+
+/* ---------- quiz ---------- */
+const QUIZ = [
+ {q:"A student wants to demo an LLM chatbot to the class tomorrow using only Python. Best frontend?", o:["Angular","Streamlit / Gradio","Flutter","Micro-frontends"], a:1, e:"Streamlit and Gradio turn a Python script into a web UI in minutes, which is ideal for GenAI demos."},
+ {q:"Which layer should check that a password is correct?", o:["Frontend","Backend","Either one, it doesn't matter","CSS"], a:1, e:"Anything in the frontend can be read and changed by the user. Security rules always belong in the backend."},
+ {q:"Your RAG chatbot needs to find document chunks by meaning. Which storage?", o:["Redis","Vector database (Chroma, pgvector…)","CSV file","Cassandra"], a:1, e:"Vector databases store embeddings and run similarity search, which is the retrieval step of RAG."},
+ {q:"ChatGPT shows its answer word by word. Which technique makes that possible?", o:["GraphQL","Server-Sent Events / streaming","SSG","gRPC"], a:1, e:"The server streams tokens as they are generated, usually over SSE (text/event-stream)."},
+ {q:"Which design theme uses the same color for element and background, with light and dark shadows?", o:["Glassmorphism","Neumorphism","Flat","Brutalism"], a:1, e:"Neumorphism makes elements look extruded from the background using two opposite shadows."},
+ {q:"An e-commerce site needs good Google SEO and an interactive cart. Best rendering pattern?", o:["Pure SPA","Hybrid SSR + hydration (Next.js)","Only static HTML","Desktop app"], a:1, e:"SSR gives search engines ready HTML, and hydration makes the cart interactive."},
+ {q:"You keep paying for the same LLM question asked repeatedly. What should you add?", o:["A Redis cache","Bigger frontend","Neo4j","Another CSS framework"], a:0, e:"Cache answers in Redis keyed by the question, so repeated questions return instantly at no cost."},
+ {q:"Which backend gives automatic Swagger docs at /docs and async support?", o:["Flask","Django","FastAPI","Laravel"], a:2, e:"FastAPI generates OpenAPI/Swagger docs from your type hints and is async-first."},
+ {q:"Where should a 50 MB uploaded PDF be stored?", o:["In a SQL TEXT column","Object storage (S3), with its URL saved in the DB","In localStorage","In Redis"], a:1, e:"Put large files in object storage and keep only the reference in your database."},
+ {q:"A 3-person startup is building its first product. Which backend architecture should they start with?", o:["Microservices with Kubernetes","Monolith","Micro-frontends","100 serverless functions"], a:1, e:"Start simple. A monolith is fastest to build and debug, and you can split it later if needed."},
+ {q:"What does an ORM like SQLAlchemy do?", o:["Styles the UI","Maps Python classes to database tables","Hosts the website","Encrypts passwords"], a:1, e:"An ORM lets you work with rows as objects and generates the SQL for you."},
+ {q:"Banking-grade money transfers need strong ACID transactions. Best choice?", o:["MongoDB","PostgreSQL","Redis","Flat JSON file"], a:1, e:"Relational databases like PostgreSQL provide strong ACID guarantees, which money movement requires."}
+];
+let answered=0, correct=0;
+document.getElementById("quiz").innerHTML = QUIZ.map((x,i)=>
+  '<div class="q" data-i="'+i+'"><p>'+(i+1)+'. '+x.q+'</p><div class="opts">'+
+  x.o.map((o,j)=>'<button data-j="'+j+'">'+o+'</button>').join("")+'</div><div class="explain">💡 '+x.e+'</div></div>'
+).join("");
+document.getElementById("quiz").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-j]"); if(!b) return;
+  const qd=b.closest(".q"); if(qd.dataset.done) return;
+  qd.dataset.done=1;
+  const x=QUIZ[+qd.dataset.i], j=+b.dataset.j;
+  const btns=qd.querySelectorAll("button");
+  btns[x.a].classList.add("right");
+  if(j!==x.a) b.classList.add("wrong"); else correct++;
+  answered++;
+  qd.querySelector(".explain").style.display="block";
+  document.getElementById("score").textContent="Score: "+correct+" / "+answered+(answered===QUIZ.length?(correct>=10?"  🎉 Excellent!":correct>=7?"  👍 Good job!":"  📚 Review the tabs and try again"):"");
+});
+</script>
+</body>
+</html>

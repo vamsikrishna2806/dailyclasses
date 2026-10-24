@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3-Tier Architecture 4W+H Interactive & Tabular Master Guide</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom scrollbar for wide tables */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+      }
+    }
+  </style>
+</head>
+<body id="appBody" class="bg-slate-50 text-slate-900 min-h-screen transition-colors duration-200">
+
+  <!-- Top Sticky Header -->
+  <header id="topHeader" class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm transition-colors duration-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <!-- Brand & Title -->
+        <div class="flex items-start sm:items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-600 via-blue-600 to-emerald-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md shrink-0">
+            4W+H
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900" id="headerTitle">
+                Full-Stack 3-Tier Architecture Master Guide
+              </h1>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
+                Student Reference Edition
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-600" id="headerSubtitle">
+              Frontend (Presentation Themes &amp; UI Tech) &bull; Backend Technologies &bull; Data Persistence Layers in <strong>What, Why, When, Where &amp; How + Examples</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Toolbar (Download / Export / Print) -->
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <button id="btnDownloadHtml" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/></svg>
+            Download .HTML
+          </button>
+          <button id="btnDownloadCsv" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Export .CSV Table
+          </button>
+          <button id="btnPrintPage" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-900 text-white shadow-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Print / Save PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- 3-Tier Visual Architecture Banner + Live Theme Switcher -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <!-- Left: 3-Tier Architecture Mental Model & 4W+H Legend -->
+      <div id="heroCard" class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">
+              How Modern Software Works (3-Tier Architecture)
+            </span>
+            <span class="text-xs text-slate-500">Click any tier below to filter directly</span>
+          </div>
+
+          <!-- Interactive 3-Tier Diagram -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 my-2">
+            <button type="button" id="tierBtnFrontend" class="text-left p-3.5 rounded-xl border-2 border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/70 transition group">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-700">Tier 1 &bull; Client Side</span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-200 text-indigo-900">13 Items</span>
+              </div>
+              <div class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-indigo-700">1. Frontend Layer</div>
+              <p class="text-xs text-slate-600 mt-1">
+                <strong>Presentation Themes</strong> (Design Systems, Dark Mode, Glassmorphism) + <strong>UI Technologies</strong> (React, Angular, Vue, Flutter).
+              </p>
+            </button>
+
+            <button type="button" id="tierBtnBackend" class="text-left p-3.5 rounded-xl border-2 border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/70 transition group">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Tier 2 &bull; Server / Logic</span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900">8 Items</span>
+              </div>
+              <div class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-emerald-700">2. Backend Layer</div>
+              <p class="text-xs text-slate-600 mt-1">
+                <strong>Runtimes, Languages &amp; API Styles</strong> (Node.js, Python FastAPI/Django, Java Spring Boot, Go, GraphQL, Microservices).
+              </p>
+            </button>
+
+            <button type="button" id="tierBtnPersistence" class="text-left p-3.5 rounded-xl border-2 border-amber-200 bg-amber-50/60 hover:bg-amber-100/70 transition group">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Tier 3 &bull; Storage Engine</span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-200 text-amber-900">8 Items</span>
+              </div>
+              <div class="font-bold text-slate-900 text-sm sm:text-base group-hover:text-amber-700">3. Data Persistence Layer</div>
+              <p class="text-xs text-slate-600 mt-1">
+                <strong>Databases &amp; Storage</strong> (RDBMS SQL, Document NoSQL, Key-Value Cache, Wide-Column, Graph, Vector, Object Storage).
+              </p>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4W+H Key Bar -->
+        <div class="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs">
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
+            <span class="font-extrabold text-indigo-700 block">WHAT?</span>
+            <span class="text-slate-600">Definition &amp; Core Concept</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
+            <span class="font-extrabold text-rose-700 block">WHY?</span>
+            <span class="text-slate-600">Problem Solved &amp; Benefits</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
+            <span class="font-extrabold text-amber-700 block">WHEN?</span>
+            <span class="text-slate-600">Ideal Project Scenarios</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
+            <span class="font-extrabold text-emerald-700 block">WHERE?</span>
+            <span class="text-slate-600">Real Industry Products</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
+            <span class="font-extrabold text-cyan-700 block">HOW?</span>
+            <span class="text-slate-600">Working Mechanism</span>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
+            <span class="font-extrabold text-purple-700 block">EXAMPLE</span>
+            <span class="text-slate-600">Concrete Code &amp; Case</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Live Presentation Theme Playground for Students -->
+      <div id="themeSandboxCard" class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md">
+              Live Presentation Theme Sandbox
+            </span>
+            <span id="activeThemeBadge" class="text-xs font-medium text-slate-500">Clean Light</span>
+          </div>
+          <h2 class="text-sm font-bold text-slate-900 mb-1">
+            Experience Presentation Themes Firsthand!
+          </h2>
+          <p class="text-xs text-slate-600 mb-3">
+            Students learn best by seeing how a <strong>Presentation Theme</strong> alters visual tokens (surfaces, contrast, borders) without changing underlying HTML data:
+          </p>
+
+          <!-- Theme Preview Buttons -->
+          <div class="grid grid-cols-2 gap-2 mb-3 no-print">
+            <button type="button" data-theme-mode="light" class="theme-mode-btn px-3 py-2 rounded-lg text-xs font-semibold border-2 border-indigo-600 bg-indigo-50 text-indigo-900 text-left transition">
+              ☀️ Clean Light (Default)
+            </button>
+            <button type="button" data-theme-mode="dark" class="theme-mode-btn px-3 py-2 rounded-lg text-xs font-semibold border border-slate-200 bg-slate-900 text-slate-100 text-left transition">
+              🌙 Dark / OLED Mode
+            </button>
+            <button type="button" data-theme-mode="glass" class="theme-mode-btn px-3 py-2 rounded-lg text-xs font-semibold border border-sky-200 bg-gradient-to-r from-sky-50 to-indigo-50 text-sky-900 text-left transition">
+              🧊 Glassmorphism Tint
+            </button>
+            <button type="button" data-theme-mode="brutal" class="theme-mode-btn px-3 py-2 rounded-lg text-xs font-semibold border-2 border-black bg-yellow-300 text-black text-left shadow-[2px_2px_0px_#000] transition">
+              ⚡ Neo-Brutalism
+            </button>
+          </div>
+        </div>
+
+        <!-- Mini Live Preview Component -->
+        <div id="liveSampleCard" class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 transition-all duration-200">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-bold uppercase tracking-wide text-indigo-600" id="sampleHeader">Sample UI Component</span>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">200 OK</span>
+          </div>
+          <p class="text-xs text-slate-700 mb-2" id="sampleBody">
+            <code>GET /api/v1/student-progress</code> &rarr; Fetched from <strong>PostgreSQL</strong> + cached in <strong>Redis</strong>.
+          </p>
+          <div class="flex items-center justify-between text-[11px] text-slate-500" id="sampleFooter">
+            <span>Theme Token: <code id="tokenPreview">--surface-clean</code></span>
+            <span class="font-semibold text-indigo-600">3-Tier Connected</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation & Filter Bar -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm sticky top-[69px] z-30 no-print">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <!-- Category Filter Pills -->
+        <div class="flex flex-wrap items-center gap-1.5" id="categoryTabs">
+          <button type="button" data-cat="all" class="cat-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm transition">
+            All Layers (29)
+          </button>
+          <button type="button" data-cat="frontend-theme" class="cat-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            1A. Presentation Themes (6)
+          </button>
+          <button type="button" data-cat="frontend-ui" class="cat-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            1B. Frontend UI Tech (7)
+          </button>
+          <button type="button" data-cat="backend" class="cat-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            2. Backend Technologies (8)
+          </button>
+          <button type="button" data-cat="persistence" class="cat-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            3. Data Persistence Layers (8)
+          </button>
+        </div>
+
+        <!-- Search + View Mode Switcher -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative flex-1 sm:w-64">
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Search React, Spring, SQL, Redis, Dark mode..."
+              class="w-full pl-8 pr-7 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <button id="clearSearchBtn" type="button" title="Clear search" class="hidden absolute right-2 top-1.5 text-slate-400 hover:text-slate-600 text-xs font-bold px-1">✕</button>
+          </div>
+
+          <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100">
+            <button type="button" id="viewBtnBoth" class="px-2.5 py-1 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition">
+              Table + Cards
+            </button>
+            <button type="button" id="viewBtnTable" class="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition">
+              Tabular Only
+            </button>
+            <button type="button" id="viewBtnCards" class="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition">
+              4W+H Cards
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Status Summary Counter -->
+    <div class="flex items-center justify-between text-xs sm:text-sm text-slate-600 px-1">
+      <div id="filterStatusText">
+        Showing <strong class="text-slate-900">29</strong> of <strong>29</strong> architecture items across all 3 layers.
+      </div>
+      <div class="hidden sm:block text-xs text-slate-500">
+        Tip: Scroll horizontally on tables or click <strong>Copy Snippet</strong> on any code block.
+      </div>
+    </div>
+
+    <!-- Container for Dynamically Rendered Sections (Tabular Matrix + 4W+H Deep-Dive Cards) -->
+    <div id="contentContainer" class="space-y-10"></div>
+
+    <!-- End-to-End Real-World Full-Stack Walkthrough for Students -->
+    <section class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-3">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Putting All 3 Layers Together</span>
+          <h2 class="text-lg font-extrabold text-slate-900">
+            How a Single User Click Flows Across Frontend, Backend &amp; Data Persistence
+          </h2>
+        </div>
+        <span class="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
+          Real-World Trace Example: E-Commerce "Place Order"
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs sm:text-sm">
+        <div class="p-4 rounded-xl bg-purple-50/70 border border-purple-200">
+          <div class="font-extrabold text-purple-900 mb-1">Step 1: Presentation Theme</div>
+          <p class="text-slate-700">
+            User clicks the <strong>"Pay ₹1,499"</strong> button styled with <em>Material / Tailwind Design Tokens</em> in <strong>Dark Mode</strong>. Button changes to a loading spinner state immediately.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200">
+          <div class="font-extrabold text-indigo-900 mb-1">Step 2: Frontend UI Tech</div>
+          <p class="text-slate-700">
+            <strong>React / Next.js</strong> validates the address form in the browser and sends an asynchronous <code>POST /api/orders</code> JSON request with a JWT auth token.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200">
+          <div class="font-extrabold text-emerald-900 mb-1">Step 3: Backend Technology</div>
+          <p class="text-slate-700">
+            <strong>Java Spring Boot / Node.js</strong> verifies the user's JWT, calculates GST tax, checks inventory, processes payment via Razorpay/Stripe, and starts a DB transaction.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-amber-50/70 border border-amber-200">
+          <div class="font-extrabold text-amber-900 mb-1">Step 4: Data Persistence</div>
+          <p class="text-slate-700">
+            <strong>PostgreSQL (RDBMS)</strong> commits the ACID order row, <strong>Redis</strong> invalidates the cart cache, and <strong>Amazon S3</strong> stores the generated PDF invoice.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toastBox" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs sm:text-sm font-medium items-center gap-2">
+    <span id="toastMessage">Copied!</span>
+  </div>
+
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-xs text-slate-500 border-t border-slate-200 mt-8">
+    Full-Stack 3-Tier Architecture 4W+H Reference Guide &bull; Designed for Computer Science &amp; Software Engineering Students &bull; Self-Contained Downloadable HTML
+  </footer>
+
+  <script>
+    // =========================================================================
+    // MASTER 4W+H DATASET ACROSS ALL 3 ARCHITECTURAL LAYERS (29 ITEMS)
+    // =========================================================================
+    const ARCHITECTURE_DATA = [
+      // -----------------------------------------------------------------------
+      // SECTION 1A: FRONTEND PRESENTATION THEMES & DESIGN SYSTEMS (6 ITEMS)
+      // -----------------------------------------------------------------------
+      {
+        id: "theme-design-systems",
+        sectionId: "frontend-theme",
+        sectionTitle: "1A. Frontend Layer — Presentation Themes & Design Systems",
+        sectionSubtitle: "Visual languages, styling paradigms, and theming methodologies that control aesthetics, usability, and brand consistency.",
+        badgeColor: "purple",
+        name: "Enterprise Design Systems (Material Design 3, Fluent UI, Apple HIG)",
+        categoryTag: "Presentation Theme / Design System",
+        what: "A unified visual language combining reusable design tokens (color palettes, typography scales, elevation shadows, spacing grids) and standardized UI component rules.",
+        why: "Eliminates inconsistent UI across large teams, enforces WCAG accessibility contrast out of the box, and makes apps immediately familiar to users.",
+        when: "Building multi-team enterprise SaaS dashboards, Android/iOS ecosystem apps, or large consumer portals requiring predictable UX.",
+        where: "Google Workspace (Gmail, Drive use Material 3), Microsoft 365 & Teams (Fluent UI), iOS/macOS Native Apps (Apple HIG).",
+        how: "Defines global CSS Custom Properties (Design Tokens) for primary/secondary surfaces and maps them to pre-tested component states (hover, focus, disabled).",
+        exampleScenario: "A student portal uses Material 3 tonal palettes so buttons, cards, and modals automatically match the university brand color.",
+        exampleCode: `:root {\n  --md-sys-color-primary: #4f46e5;\n  --md-sys-color-surface: #f8fafc;\n  --md-sys-radius-card: 16px;\n}\n.btn-primary {\n  background: var(--md-sys-color-primary);\n  border-radius: var(--md-sys-radius-card);\n}`
+      },
+      {
+        id: "theme-dark-light-hc",
+        sectionId: "frontend-theme",
+        sectionTitle: "1A. Frontend Layer — Presentation Themes & Design Systems",
+        sectionSubtitle: "Visual languages, styling paradigms, and theming methodologies that control aesthetics, usability, and brand consistency.",
+        badgeColor: "purple",
+        name: "Adaptive Color Themes (Light, Dark / OLED & High-Contrast Modes)",
+        categoryTag: "Color & Accessibility Theme",
+        what: "Dynamic color-scheme switching that adapts background surfaces, text contrast ratios, and accent saturation based on user preference or ambient lighting.",
+        why: "Reduces eye strain in low-light environments, saves up to 40%+ battery on OLED screens, and supports visually impaired users via High-Contrast mode.",
+        when: "Developer IDEs, media streaming apps, night-time reading platforms, and any modern web or mobile app meeting WCAG 2.1 AA/AAA accessibility.",
+        where: "VS Code, GitHub, YouTube, Netflix, Discord, X (Twitter), and Windows/macOS system-wide appearance settings.",
+        how: "Detects OS preference via @media (prefers-color-scheme: dark) or toggles a root data-theme='dark' attribute that swaps semantic CSS variables.",
+        exampleScenario: "A coding platform automatically switches to a slate-900 dark theme at night while keeping syntax-highlighted code readable.",
+        exampleCode: `[data-theme="dark"] {\n  --bg-surface: #0f172a;\n  --text-main: #f8fafc;\n}\n@media (prefers-color-scheme: dark) {\n  body { background: var(--bg-surface); color: var(--text-main); }\n}`
+      },
+      {
+        id: "theme-glass-neumorphism",
+        sectionId: "frontend-theme",
+        sectionTitle: "1A. Frontend Layer — Presentation Themes & Design Systems",
+        sectionSubtitle: "Visual languages, styling paradigms, and theming methodologies that control aesthetics, usability, and brand consistency.",
+        badgeColor: "purple",
+        name: "Glassmorphism & Spatial Translucent UI",
+        categoryTag: "Visual Depth Theme",
+        what: "A presentation style using frosted-glass translucency (backdrop blur), subtle 1px semi-transparent borders, and layered floating cards over vibrant backgrounds.",
+        why: "Creates a clear sense of spatial hierarchy and depth so users understand which floating panel or HUD sits in front of the background canvas.",
+        when: "Operating system overlays, fintech credit-card showcases, modern music players, AR/VR spatial interfaces, and weather dashboards.",
+        where: "Apple visionOS, macOS Sonoma sidebars, Windows 11 Mica/Acrylic effects, Stripe product hero cards.",
+        how: "Combines semi-transparent rgba() backgrounds with CSS backdrop-filter: blur(16px) and a crisp rgba(255,255,255,0.25) border.",
+        exampleScenario: "A floating music player bar blurs the album art scrolling underneath it while keeping play controls sharp.",
+        exampleCode: `.glass-panel {\n  background: rgba(255, 255, 255, 0.18);\n  backdrop-filter: blur(14px);\n  -webkit-backdrop-filter: blur(14px);\n  border: 1px solid rgba(255, 255, 255, 0.3);\n}`
+      },
+      {
+        id: "theme-minimal-brutal",
+        sectionId: "frontend-theme",
+        sectionTitle: "1A. Frontend Layer — Presentation Themes & Design Systems",
+        sectionSubtitle: "Visual languages, styling paradigms, and theming methodologies that control aesthetics, usability, and brand consistency.",
+        badgeColor: "purple",
+        name: "Minimalism / Swiss Grid vs. Neo-Brutalism",
+        categoryTag: "Editorial & Brand Theme",
+        what: "Minimalism uses generous whitespace, strict grid alignment, and typography; Neo-Brutalism uses bold black outlines, unblurred hard offset shadows, and high-saturation fills.",
+        why: "Minimalism maximizes reading focus and cognitive clarity; Neo-Brutalism creates unmistakable visual personality and high conversion clicks.",
+        when: "Minimalism for documentation, productivity notes, and finance; Neo-Brutalism for creator marketplaces, design tools, and youth brands.",
+        where: "Minimalism: Notion, Linear, Medium, Stripe Docs; Neo-Brutalism: Gumroad, Figma promotional pages, PostHog.",
+        how: "Minimalism strips decorative borders in favor of typographic hierarchy; Neo-Brutalism applies 2px-3px solid #000 borders and hard box-shadow offsets.",
+        exampleScenario: "A student hackathon site uses Neo-Brutalist yellow cards with hard black shadows for 'Register Now' call-to-action buttons.",
+        exampleCode: `.neo-brutal-card {\n  background: #fde047;\n  border: 3px solid #000000;\n  box-shadow: 5px 5px 0px #000000;\n  font-weight: 800;\n}`
+      },
+      {
+        id: "theme-utility-atomic",
+        sectionId: "frontend-theme",
+        sectionTitle: "1A. Frontend Layer — Presentation Themes & Design Systems",
+        sectionSubtitle: "Visual languages, styling paradigms, and theming methodologies that control aesthetics, usability, and brand consistency.",
+        badgeColor: "purple",
+        name: "Utility-First & Atomic CSS Architecture (Tailwind CSS, UnoCSS)",
+        categoryTag: "Styling Methodology",
+        what: "Composing presentation directly in markup using small, single-purpose utility classes (e.g., flex, p-4, rounded-xl, bg-indigo-600) backed by a theme config.",
+        why: "Prevents dead CSS bloat, stops naming wars over arbitrary class names, and guarantees spacing/color consistency from a single theme file.",
+        when: "Rapid product prototyping, component-based SPAs (React/Vue/Next.js), and design systems requiring fast iteration.",
+        where: "Vercel, OpenAI ChatGPT web UI, GitHub Next, Shopify Hydrogen storefronts.",
+        how: "A build-time JIT scanner reads HTML/JSX files and generates only the exact CSS rules used in the project.",
+        exampleScenario: "Building a responsive course card in 1 line of HTML without switching between separate .html and .css files.",
+        exampleCode: `<div class="p-4 bg-white dark:bg-slate-800 rounded-xl shadow-md hover:scale-105 transition">\n  <h3 class="text-lg font-bold text-indigo-600">CS101 Module</h3>\n</div>`
+      },
+      {
+        id: "theme-responsive-fluid",
+        sectionId: "frontend-theme",
+        sectionTitle: "1A. Frontend Layer — Presentation Themes & Design Systems",
+        sectionSubtitle: "Visual languages, styling paradigms, and theming methodologies that control aesthetics, usability, and brand consistency.",
+        badgeColor: "purple",
+        name: "Responsive, Mobile-First & Fluid Layout Themes (CSS Grid, Flexbox, Container Queries)",
+        categoryTag: "Layout & Viewport Theme",
+        what: "Adaptive layout architecture where UI grids, navigation bars, and typography scale fluidly from 320px smartphones to 4K monitors.",
+        why: "Over 60% of global web traffic is mobile; a single responsive codebase serves phones, tablets, foldables, and desktops seamlessly.",
+        when: "Every public website, e-commerce store, news publication, and progressive web application.",
+        where: "Amazon, BBC News, Airbnb, Flipkart, Coursera.",
+        how: "Combines 2D CSS Grid (auto-fit, minmax()), 1D Flexbox, fluid clamp() typography, and @container or @media breakpoints.",
+        exampleScenario: "A product grid shows 1 column on a phone, 2 on an iPad, and 4 on a desktop monitor automatically.",
+        exampleCode: `.course-grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));\n  gap: 1.25rem;\n}`
+      },
+
+      // -----------------------------------------------------------------------
+      // SECTION 1B: FRONTEND UI TECHNOLOGIES & FRAMEWORKS (7 ITEMS)
+      // -----------------------------------------------------------------------
+      {
+        id: "ui-core-web",
+        sectionId: "frontend-ui",
+        sectionTitle: "1B. Frontend Layer — UI Technologies & Client Frameworks",
+        sectionSubtitle: "Languages, component libraries, rendering engines, and cross-platform toolkits that power user interactivity.",
+        badgeColor: "indigo",
+        name: "Core Web Standards (Semantic HTML5, Modern CSS3, ES6+ JavaScript & TypeScript)",
+        categoryTag: "Foundational Web Tech",
+        what: "The native browser triad: HTML5 structures semantic content, CSS3 handles layout/visuals, and JavaScript/TypeScript drives DOM events, fetch calls, and type safety.",
+        why: "Every browser executes HTML/CSS/JS natively with zero framework overhead; TypeScript catches 80%+ of null/type bugs at compile time before code runs.",
+        when: "Every web application on Earth—either written directly (Vanilla JS) or compiled down to from React, Angular, Vue, or Svelte.",
+        where: "All 1.9+ billion websites, browser extensions, Wikipedia, Google Search results page.",
+        how: "The browser parses HTML into the DOM tree, CSS into the CSSOM, combines them into the Render Tree, and runs JS in the V8/SpiderMonkey engine.",
+        exampleScenario: "Fetching live exam results from a backend API using async/await and updating the DOM list.",
+        exampleCode: `async function loadScores(studentId: string) {\n  const res = await fetch(\`/api/scores/\${studentId}\`);\n  const data = await res.json();\n  document.querySelector('.score-badge').textContent = data.grade;\n}`
+      },
+      {
+        id: "ui-react",
+        sectionId: "frontend-ui",
+        sectionTitle: "1B. Frontend Layer — UI Technologies & Client Frameworks",
+        sectionSubtitle: "Languages, component libraries, rendering engines, and cross-platform toolkits that power user interactivity.",
+        badgeColor: "indigo",
+        name: "React.js (Component-Based Declarative UI Library)",
+        categoryTag: "SPA UI Library",
+        what: "A declarative JavaScript/TypeScript library created by Meta for building interactive interfaces from composable components using JSX and Hooks.",
+        why: "Developers describe 'what' the UI should look like for a given state (`UI = f(state)`), and React efficiently updates only the changed DOM nodes.",
+        when: "Highly interactive Single-Page Applications (SPAs), social feeds, real-time analytics dashboards, and collaborative editors.",
+        where: "Instagram, Facebook, Netflix TV UI, WhatsApp Web, Airbnb, Uber Eats, Discord.",
+        how: "Maintains a lightweight Virtual DOM in memory, diffs state changes (Reconciliation / Fiber), and batches minimal patches to the real browser DOM.",
+        exampleScenario: "A live seat-booking component where clicking a seat toggles its selection count and total price instantaneously.",
+        exampleCode: `function SeatCounter() {\n  const [seats, setSeats] = useState(1);\n  return (\n    <button onClick={() => setSeats(seats + 1)}>\n      Selected: {seats} (₹{seats * 250})\n    </button>\n  );\n}`
+      },
+      {
+        id: "ui-angular",
+        sectionId: "frontend-ui",
+        sectionTitle: "1B. Frontend Layer — UI Technologies & Client Frameworks",
+        sectionSubtitle: "Languages, component libraries, rendering engines, and cross-platform toolkits that power user interactivity.",
+        badgeColor: "indigo",
+        name: "Angular (Batteries-Included Enterprise MVC/MVVM Framework)",
+        categoryTag: "Full Enterprise Framework",
+        what: "A comprehensive, TypeScript-first framework maintained by Google featuring built-in routing, reactive forms, dependency injection, Signals, and HTTP client.",
+        why: "Provides strict architectural conventions out of the box so 100+ developers across global teams write code in the exact same structure.",
+        when: "Large-scale banking portals, airline reservation systems, healthcare ERP platforms, and complex multi-step form workflows.",
+        where: "Google Cloud Console, Microsoft Office 365 Web, Deutsche Bank, Samsung, PayPal checkout.",
+        how: "Compiles HTML templates Ahead-of-Time (AoT) into optimized JS instructions and uses Signals/RxJS Observables to propagate reactive state.",
+        exampleScenario: "A banking wire-transfer form with strict reactive validation, currency pipes, and role-based route guards.",
+        exampleCode: `@Component({\n  selector: 'app-balance',\n  template: \`<p>Balance: ₹{{ amount() }}</p>\`\n})\nexport class BalanceComponent {\n  amount = signal(15000);\n}`
+      },
+      {
+        id: "ui-vue-svelte",
+        sectionId: "frontend-ui",
+        sectionTitle: "1B. Frontend Layer — UI Technologies & Client Frameworks",
+        sectionSubtitle: "Languages, component libraries, rendering engines, and cross-platform toolkits that power user interactivity.",
+        badgeColor: "indigo",
+        name: "Vue.js & Svelte (Progressive & Compiler-Driven Reactive UI)",
+        categoryTag: "Reactive UI Frameworks",
+        what: "Vue is an approachable Single-File Component (.vue) framework with fine-grained reactivity; Svelte is a compiler that turns components into tiny, surgical DOM updates with zero Virtual DOM.",
+        why: "Gentler learning curve than Angular/React, cleaner separation of `<template>`, `<script>`, and `<style>`, and smaller bundle sizes for fast mobile loads.",
+        when: "E-commerce storefronts, interactive data journalism, embedded widgets, and fast-moving startup web apps.",
+        where: "Vue: Alibaba, GitLab, Xiaomi, Grammarly; Svelte: The New York Times interactive graphics, Apple Music Web, IKEA.",
+        how: "Vue tracks reactive dependencies via ES6 Proxies (`ref`, `computed`); Svelte analyzes variable assignments at build time and emits direct `element.textContent = x` code.",
+        exampleScenario: "An instant search filter bar that updates product results as the student types each character.",
+        exampleCode: `<script setup>\nimport { ref } from 'vue';\nconst query = ref('');\n<\/script>\n<template>\n  <input v-model="query" placeholder="Search courses..." />\n  <p>Searching for: {{ query }}</p>\n</template>`
+      },
+      {
+        id: "ui-meta-ssr",
+        sectionId: "frontend-ui",
+        sectionTitle: "1B. Frontend Layer — UI Technologies & Client Frameworks",
+        sectionSubtitle: "Languages, component libraries, rendering engines, and cross-platform toolkits that power user interactivity.",
+        badgeColor: "indigo",
+        name: "Full-Stack Meta-Frameworks: SSR, SSG & ISR (Next.js, Nuxt, Astro, Remix)",
+        categoryTag: "SSR / Hybrid Rendering",
+        what: "Frameworks that render UI components on the server (SSR) or at build time (SSG) to send ready-to-read HTML to the browser, then hydrate into an interactive app.",
+        why: "Plain client-side SPAs send an empty `<div>` which hurts Google SEO and slow 3G load times; SSR/SSG delivers instant First Contentful Paint and top SEO rankings.",
+        when: "Public e-commerce catalogs, news sites, marketing pages, blogs, and AI web apps needing fast initial page load.",
+        where: "TikTok Web, Twitch, Nike, Target, Hulu, Hashnode, Notion marketing pages.",
+        how: "Server fetches database/API data, renders HTML string on the edge/server, streams it to the browser, and attaches client event listeners (Hydration / Islands).",
+        exampleScenario: "An online course catalog page pre-rendered on the server so Google indexes every course title and syllabus.",
+        exampleCode: `// Next.js Server Component (runs on server, 0 KB client JS)\nexport default async function CoursePage({ params }) {\n  const course = await db.getCourse(params.id);\n  return <h1>{course.title}</h1>;\n}`
+      },
+      {
+        id: "ui-cross-platform",
+        sectionId: "frontend-ui",
+        sectionTitle: "1B. Frontend Layer — UI Technologies & Client Frameworks",
+        sectionSubtitle: "Languages, component libraries, rendering engines, and cross-platform toolkits that power user interactivity.",
+        badgeColor: "indigo",
+        name: "Cross-Platform Mobile & Desktop UI (Flutter, React Native, SwiftUI, Jetpack Compose)",
+        categoryTag: "Mobile & Native UI",
+        what: "Declarative UI toolkits that build iOS, Android, Windows, and macOS applications from a single shared codebase (Flutter/React Native) or modern native code (SwiftUI/Compose).",
+        why: "Cuts engineering cost and time in half by sharing 90%+ of UI and business logic across Android and iOS while maintaining 60–120 FPS animations.",
+        when: "Consumer mobile apps needing camera, GPS, push notifications, biometrics, and offline storage.",
+        where: "Flutter: Google Pay, BMW, Nubank, Dream11; React Native: Shopify, Coinbase, Microsoft Outlook Mobile.",
+        how: "Flutter draws every pixel directly onto a high-speed Impeller/Skia GPU canvas using Dart; React Native bridges JS components to real OEM native views.",
+        exampleScenario: "A campus attendance app scanning QR codes and working across both Android phones and iPhones.",
+        exampleCode: `// Flutter Dart Widget\nElevatedButton(\n  onPressed: () => markAttendance(studentId),\n  child: const Text('Scan Campus QR'),\n)`
+      },
+      {
+        id: "ui-wasm-webgl",
+        sectionId: "frontend-ui",
+        sectionTitle: "1B. Frontend Layer — UI Technologies & Client Frameworks",
+        sectionSubtitle: "Languages, component libraries, rendering engines, and cross-platform toolkits that power user interactivity.",
+        badgeColor: "indigo",
+        name: "High-Performance Canvas, 3D WebGL/WebGPU & WebAssembly (Three.js, Wasm)",
+        categoryTag: "Graphics & Near-Native UI",
+        what: "WebAssembly (Wasm) runs compiled C++/Rust/Go code at near-native speed in the browser; WebGL/Three.js renders hardware-accelerated 2D/3D graphics on the GPU.",
+        why: "Standard DOM elements lag when rendering 100,000+ objects or running heavy video/CAD math; Wasm + GPU Canvas brings desktop-class software into a URL.",
+        when: "In-browser graphic design suites, 3D product configurators, video editors, medical imaging viewers, and browser games.",
+        where: "Figma (C++ compiled to Wasm + WebGL), Adobe Photoshop Web, Google Earth, AutoCAD Web, Canva.",
+        how: "Compiles Rust/C++ into binary `.wasm` bytecode executed by the browser VM and issues direct shader draw calls to the device GPU.",
+        exampleScenario: "A 3D human anatomy viewer in a medical student portal that rotates organs smoothly at 60 FPS.",
+        exampleCode: `const scene = new THREE.Scene();\nconst mesh = new THREE.Mesh(geometry, material);\nscene.add(mesh);\nrenderer.render(scene, camera);`
+      },
+
+      // -----------------------------------------------------------------------
+      // SECTION 2: BACKEND TECHNOLOGIES, RUNTIMES & API ARCHITECTURES (8 ITEMS)
+      // -----------------------------------------------------------------------
+      {
+        id: "be-node-ts",
+        sectionId: "backend",
+        sectionTitle: "2. Backend Layer — Server Runtimes, Frameworks & API Architectures",
+        sectionSubtitle: "The 'Brain' of the system: processes business rules, enforces security/authentication, orchestrates APIs, and talks to databases.",
+        badgeColor: "emerald",
+        name: "Node.js / Bun / Deno (Express, NestJS, Fastify — Event-Driven JS/TS)",
+        categoryTag: "Async I/O Runtime",
+        what: "An asynchronous, non-blocking, event-driven JavaScript/TypeScript runtime built on Chrome's V8 engine for building fast network servers.",
+        why: "Allows full-stack teams to use a single language (TypeScript) across both Frontend and Backend while handling tens of thousands of concurrent I/O connections.",
+        when: "Real-time chat apps, collaborative whiteboards, streaming APIs, BFF (Backend-for-Frontend) layers, and microservices.",
+        where: "Netflix API gateway, Uber dispatch, LinkedIn, PayPal, Trello, Slack, Notion.",
+        how: "Uses a single-threaded Event Loop (`libuv`) that delegates slow database/network I/O to OS kernel threads and invokes callbacks/promises when complete.",
+        exampleScenario: "A REST API endpoint that verifies a student's login token and returns their enrolled courses in JSON.",
+        exampleCode: `app.get('/api/courses/:id', async (req, res) => {\n  const course = await db.findCourse(req.params.id);\n  if (!course) return res.status(404).json({ error: 'Not found' });\n  res.json(course);\n});`
+      },
+      {
+        id: "be-python",
+        sectionId: "backend",
+        sectionTitle: "2. Backend Layer — Server Runtimes, Frameworks & API Architectures",
+        sectionSubtitle: "The 'Brain' of the system: processes business rules, enforces security/authentication, orchestrates APIs, and talks to databases.",
+        badgeColor: "emerald",
+        name: "Python Backend Ecosystems (FastAPI, Django, Flask)",
+        categoryTag: "AI-Ready & Rapid Backend",
+        what: "Django is a 'batteries-included' MVT framework (ORM, Admin panel, Auth built-in); FastAPI is a modern, high-speed async framework with automatic OpenAPI/Swagger docs.",
+        why: "Unmatched developer productivity and direct native integration with Python's Data Science, Machine Learning, and LLM ecosystem (PyTorch, LangChain, Pandas).",
+        when: "AI/LLM-powered backends, fintech analytics APIs, rapid MVP launches, healthcare portals, and content-heavy platforms.",
+        where: "Instagram (Django), Spotify, OpenAI API (FastAPI), Pinterest, Dropbox, YouTube, Reddit.",
+        how: "FastAPI uses Python Type Hints + Pydantic to validate incoming JSON automatically and runs asynchronously on an ASGI server (`Uvicorn`).",
+        exampleScenario: "An AI homework tutor endpoint that validates student input with Pydantic and calls an LLM model.",
+        exampleCode: `@app.post("/api/grade-essay")\nasync def grade_essay(sub: EssaySubmission):\n    score = ai_model.evaluate(sub.text)\n    return {"student_id": sub.student_id, "score": score}`
+      },
+      {
+        id: "be-java-jvm",
+        sectionId: "backend",
+        sectionTitle: "2. Backend Layer — Server Runtimes, Frameworks & API Architectures",
+        sectionSubtitle: "The 'Brain' of the system: processes business rules, enforces security/authentication, orchestrates APIs, and talks to databases.",
+        badgeColor: "emerald",
+        name: "Enterprise JVM Stack (Java & Kotlin with Spring Boot, Quarkus)",
+        categoryTag: "Mission-Critical Enterprise",
+        what: "A strongly typed, multi-threaded, battle-tested enterprise ecosystem powered by the Java Virtual Machine (JVM) and Spring Boot's inversion-of-control container.",
+        why: "Delivers rock-solid compile-time safety, mature transaction management, Virtual Threads (Project Loom), and decades of security compliance for banking/telecom.",
+        when: "Core banking ledgers, UPI/credit-card payment switches, high-volume e-commerce order engines, and insurance claims platforms.",
+        where: "Amazon retail backend, Netflix core microservices, JPMorgan Chase, HDFC/ICICI banking cores, Flipkart, LinkedIn.",
+        how: "Spring Boot auto-configures embedded Tomcat/Netty servers, injects dependencies via `@Autowired`, and manages database transactions via `@Transactional`.",
+        exampleScenario: "A payment service method where `@Transactional` guarantees that if money deduction fails, the order is automatically rolled back.",
+        exampleCode: `@RestController\n@RequestMapping("/api/payments")\npublic class PaymentController {\n  @PostMapping\n  @Transactional\n  public ResponseEntity<Receipt> pay(@RequestBody OrderDto dto) {\n    return ResponseEntity.ok(paymentService.process(dto));\n  }\n}`
+      },
+      {
+        id: "be-dotnet",
+        sectionId: "backend",
+        sectionTitle: "2. Backend Layer — Server Runtimes, Frameworks & API Architectures",
+        sectionSubtitle: "The 'Brain' of the system: processes business rules, enforces security/authentication, orchestrates APIs, and talks to databases.",
+        badgeColor: "emerald",
+        name: "C# & ASP.NET Core (.NET 8/9 Cross-Platform Cloud Backend)",
+        categoryTag: "High-Throughput Enterprise",
+        what: "Microsoft's open-source, cross-platform (Linux, Docker, Windows) compiled backend framework featuring Minimal APIs, LINQ, and the ultra-fast Kestrel web server.",
+        why: "Combines the developer ergonomics of modern strongly-typed C# with top-tier TechEmpower benchmark throughput and seamless Azure/Active Directory integration.",
+        when: "Enterprise SaaS platforms, healthcare hospital systems, game backend servers (Unity), and high-throughput financial trading APIs.",
+        where: "Stack Overflow, Microsoft Azure & Xbox Live, UPS, Siemens, GoDaddy.",
+        how: "Compiles C# to Intermediate Language (IL), JIT/AoT-compiles it to native machine code via CoreCLR, and processes requests through a lightweight middleware pipeline.",
+        exampleScenario: "A 4-line Minimal API in .NET 8 that queries active student enrollments using asynchronous Entity Framework LINQ.",
+        exampleCode: `var app = WebApplication.CreateBuilder(args).Build();\napp.MapGet("/api/students/{id}", async (int id, AppDb db) =>\n    await db.Students.FindAsync(id) is Student s ? Results.Ok(s) : Results.NotFound());\napp.Run();`
+      },
+      {
+        id: "be-go-rust",
+        sectionId: "backend",
+        sectionTitle: "2. Backend Layer — Server Runtimes, Frameworks & API Architectures",
+        sectionSubtitle: "The 'Brain' of the system: processes business rules, enforces security/authentication, orchestrates APIs, and talks to databases.",
+        badgeColor: "emerald",
+        name: "Cloud-Native & Systems Backends: Go (Golang) & Rust (Gin, Axum, Actix)",
+        categoryTag: "Ultra-Low Latency & Concurrency",
+        what: "Compiled languages that produce tiny standalone native binaries with no heavy VM: Go excels at massive concurrency via Goroutines; Rust guarantees memory safety with zero garbage collector.",
+        why: "Uses 5–10x less RAM than interpreted/VM languages, starts in milliseconds inside Docker containers, and eliminates garbage-collection latency spikes.",
+        when: "Cloud infrastructure (Kubernetes/Docker), payment gateways, high-frequency trading, chat message routers, and API gateways.",
+        where: "Go: Google, Uber geofencing, Twitch video chat, Razorpay, Zerodha (Kite), Cloudflare; Rust: Discord Read States, AWS Firecracker, Figma multiplayer.",
+        how: "Go multiplexes millions of lightweight 2KB `goroutines` onto OS threads via channels; Rust enforces ownership/borrowing rules at compile time with zero runtime overhead.",
+        exampleScenario: "A Go microservice handling 50,000 concurrent live stock-ticker requests with minimal memory.",
+        exampleCode: `func main() {\n  r := gin.Default()\n  r.GET("/api/health", func(c *gin.Context) {\n    c.JSON(200, gin.H{"status": "healthy", "latency_ms": 1})\n  })\n  r.Run(":8080")\n}`
+      },
+      {
+        id: "be-php-ruby",
+        sectionId: "backend",
+        sectionTitle: "2. Backend Layer — Server Runtimes, Frameworks & API Architectures",
+        sectionSubtitle: "The 'Brain' of the system: processes business rules, enforces security/authentication, orchestrates APIs, and talks to databases.",
+        badgeColor: "emerald",
+        name: "Product-Velocity Web Frameworks (PHP Laravel & Ruby on Rails)",
+        categoryTag: "Convention-over-Configuration",
+        what: "Full-stack web frameworks designed around 'Convention over Configuration' with integrated ORM (Eloquent/ActiveRecord), queues, mailers, billing, and auth.",
+        why: "Lets a single student or small startup team build and ship a complete, production-ready SaaS product in days instead of months.",
+        when: "E-commerce stores, SaaS subscription businesses, content management systems (CMS), and rapid startup launches.",
+        where: "Ruby on Rails: Shopify, GitHub, Airbnb, Basecamp, Razorpay (early core); PHP/Laravel: WordPress (43% of web), Wikipedia, Slack (legacy web), Pfizer.",
+        how: "Provides expressive CLI generators (`artisan` / `rails g`) and ActiveRecord models that map database tables directly to rich domain objects.",
+        exampleScenario: "Fetching paid invoices for a user and queuing a receipt email in just 3 expressive lines of Laravel code.",
+        exampleCode: `Route::post('/checkout', function (Request $req) {\n  $order = Order::create($req->validated());\n  Mail::to($req->user())->queue(new OrderReceipt($order));\n  return response()->json($order, 201);\n});`
+      },
+      {
+        id: "be-api-protocols",
+        sectionId: "backend",
+        sectionTitle: "2. Backend Layer — Server Runtimes, Frameworks & API Architectures",
+        sectionSubtitle: "The 'Brain' of the system: processes business rules, enforces security/authentication, orchestrates APIs, and talks to databases.",
+        badgeColor: "emerald",
+        name: "API Communication Styles (REST, GraphQL, gRPC, WebSockets)",
+        categoryTag: "API & Transport Layer",
+        what: "Protocols defining how Frontend and Backend exchange data: REST (JSON over HTTP verbs), GraphQL (client-specified queries), gRPC (binary Protobuf over HTTP/2), and WebSockets (full-duplex live streams).",
+        why: "REST is simple and cacheable; GraphQL prevents over-fetching on mobile; gRPC is 7x faster for microservice-to-microservice calls; WebSockets enable instant two-way push.",
+        when: "REST for public CRUD APIs; GraphQL for complex mobile screens; gRPC for internal microservices; WebSockets for live chat, gaming, and sports scores.",
+        where: "REST: Stripe, Twilio; GraphQL: Meta, GitHub API v4, Shopify; gRPC: Google internal, Netflix; WebSockets: WhatsApp, TradingView, Cricbuzz.",
+        how: "Client and server agree on a contract (OpenAPI spec, `.graphql` schema, or `.proto` file) to serialize and validate structured messages.",
+        exampleScenario: "A mobile app uses GraphQL to ask for ONLY a student's name and GPA in a single round-trip without downloading heavy unused fields.",
+        exampleCode: `# GraphQL Query (Client requests exact fields)\nquery GetStudentCard {\n  student(id: "STU-104") {\n    fullName\n    cgpa\n  }\n}`
+      },
+      {
+        id: "be-arch-patterns",
+        sectionId: "backend",
+        sectionTitle: "2. Backend Layer — Server Runtimes, Frameworks & API Architectures",
+        sectionSubtitle: "The 'Brain' of the system: processes business rules, enforces security/authentication, orchestrates APIs, and talks to databases.",
+        badgeColor: "emerald",
+        name: "Backend Deployment Topologies (Modular Monolith, Microservices, Serverless & Event-Driven)",
+        categoryTag: "System Architecture Pattern",
+        what: "Structural patterns for organizing backend code: Monolith (one deployable unit), Microservices (independent services per domain), Serverless FaaS (on-demand functions), and Event-Driven (Kafka/RabbitMQ).",
+        why: "Monoliths are simple to debug and deploy early on; Microservices let 50 teams deploy independently; Serverless scales to $0 when idle; Event queues prevent cascading crashes during traffic spikes.",
+        when: "Modular Monolith for 90% of startups/projects; Microservices + Kafka for hyper-scale enterprises; Serverless (AWS Lambda/Cloudflare Workers) for spiky workloads.",
+        where: "Modular Monolith: Shopify, Stack Overflow; Microservices + Kafka: Netflix, Uber, Swiggy, Zomato; Serverless: Coca-Cola vending, Vercel Edge.",
+        how: "An API Gateway routes incoming requests to domain services, which publish asynchronous domain events (`OrderPlaced`) to a Kafka broker for downstream workers.",
+        exampleScenario: "When a user orders food on Swiggy/Zomato, the Order Service emits an event to Kafka so Billing, Kitchen, and Delivery Rider services react in parallel.",
+        exampleCode: `// Producer emits event to Kafka topic (non-blocking)\nawait kafkaProducer.send({\n  topic: 'order-events',\n  messages: [{ key: order.id, value: JSON.stringify(order) }]\n});`
+      },
+
+      // -----------------------------------------------------------------------
+      // SECTION 3: DATA PERSISTENCE LAYERS & STORAGE ENGINES (8 ITEMS)
+      // -----------------------------------------------------------------------
+      {
+        id: "db-relational",
+        sectionId: "persistence",
+        sectionTitle: "3. Data Persistence Layer — Databases, Caches & Storage Engines",
+        sectionSubtitle: "The 'Memory Vault' of the system: durably stores, indexes, queries, and protects application state across restarts and crashes.",
+        badgeColor: "amber",
+        name: "Relational Databases / RDBMS (PostgreSQL, MySQL, Oracle, SQL Server, SQLite)",
+        categoryTag: "Structured SQL & ACID",
+        what: "Tabular databases that store structured data in rows and columns with strict schemas, foreign-key relationships, SQL querying, and ACID transactions.",
+        why: "Guarantees 100% data integrity (Atomicity, Consistency, Isolation, Durability) so money is never double-spent and relationships remain valid.",
+        when: "Financial ledgers, user accounts, e-commerce orders, inventory management, hospital records, and university ERP systems.",
+        where: "PostgreSQL: Instagram, Supabase, Notion, Zerodha; MySQL: YouTube, Booking.com, GitHub; SQLite: Embedded inside every Android/iOS phone & browser.",
+        how: "Parses declarative SQL queries, uses B-Tree indexes for O(log N) lookups, writes changes to a Write-Ahead Log (WAL) for crash recovery, and locks rows during transactions.",
+        exampleScenario: "Transferring ₹500 between two bank accounts inside an atomic SQL transaction where both updates succeed or both roll back.",
+        exampleCode: `BEGIN TRANSACTION;\nUPDATE accounts SET balance = balance - 500 WHERE user_id = 101;\nUPDATE accounts SET balance = balance + 500 WHERE user_id = 202;\nCOMMIT;`
+      },
+      {
+        id: "db-document",
+        sectionId: "persistence",
+        sectionTitle: "3. Data Persistence Layer — Databases, Caches & Storage Engines",
+        sectionSubtitle: "The 'Memory Vault' of the system: durably stores, indexes, queries, and protects application state across restarts and crashes.",
+        badgeColor: "amber",
+        name: "Document NoSQL Databases (MongoDB, AWS DocumentDB, Firebase Firestore, Couchbase)",
+        categoryTag: "Flexible JSON / BSON Store",
+        what: "Schema-flexible databases that store self-contained, nested JSON-like documents (BSON) inside collections instead of rigid relational tables and joins.",
+        why: "Maps 1:1 to objects in JavaScript/Python/Java code, allows different products (e.g., laptops vs. shirts) to have completely different attributes, and scales horizontally via sharding.",
+        when: "Product catalogs with varied specs, content management systems (CMS), user profile stores, gaming player inventories, and real-time mobile sync.",
+        where: "Forbes, The Weather Channel, Uber, EA Sports FIFA, Adobe, Duolingo.",
+        how: "Stores each entity along with its nested sub-arrays in a single contiguous binary BSON document so reading a complete record requires zero SQL JOINs.",
+        exampleScenario: "Storing an e-commerce product document where a 'Smartphone' has RAM/Battery fields while a 'T-Shirt' has Size/Fabric fields in the same collection.",
+        exampleCode: `db.products.insertOne({\n  sku: "PHN-99",\n  title: "Pixel 9",\n  specs: { ram: "12GB", battery: "4700mAh" },\n  tags: ["5G", "OLED"]\n});`
+      },
+      {
+        id: "db-key-value",
+        sectionId: "persistence",
+        sectionTitle: "3. Data Persistence Layer — Databases, Caches & Storage Engines",
+        sectionSubtitle: "The 'Memory Vault' of the system: durably stores, indexes, queries, and protects application state across restarts and crashes.",
+        badgeColor: "amber",
+        name: "In-Memory Key-Value Stores & Caches (Redis, Valkey, Memcached, DynamoDB)",
+        categoryTag: "Sub-Millisecond Speed",
+        what: "Ultra-fast storage engines that map a unique key to a value (string, hash, sorted set) primarily in RAM (Redis/Valkey) or distributed SSDs (DynamoDB).",
+        why: "Disk databases take 5–50 milliseconds per query; RAM key-value stores respond in under 0.5 milliseconds (<500 microseconds), shielding primary SQL databases from overload.",
+        when: "User login sessions, OTP codes with auto-expiry (TTL), live gaming leaderboards, API rate-limiting, and shopping carts.",
+        where: "GitHub, X (Twitter) timeline cache, Snapchat, Stack Overflow, Amazon Prime Day cart (DynamoDB), Dream11 live leaderboards.",
+        how: "Maintains an in-memory hash table with O(1) lookup complexity, optional TTL expiration timers, and AOF/RDB snapshots for persistence.",
+        exampleScenario: "Storing a 6-digit SMS OTP code in Redis that automatically self-destructs after 300 seconds (5 minutes).",
+        exampleCode: `# Store OTP with 300-second automatic expiration (TTL)\nSET otp:user_9848 "492817" EX 300\n# Retrieve in <0.5ms\nGET otp:user_9848`
+      },
+      {
+        id: "db-wide-column",
+        sectionId: "persistence",
+        sectionTitle: "3. Data Persistence Layer — Databases, Caches & Storage Engines",
+        sectionSubtitle: "The 'Memory Vault' of the system: durably stores, indexes, queries, and protects application state across restarts and crashes.",
+        badgeColor: "amber",
+        name: "Wide-Column & Time-Series Databases (Apache Cassandra, ScyllaDB, InfluxDB, TimescaleDB)",
+        categoryTag: "Petabyte Write-Heavy Scale",
+        what: "Distributed masterless column-family stores and timestamp-indexed engines engineered for massive, continuous write throughput across global data centers.",
+        why: "Traditional databases choke when millions of IoT sensors or chat users write millions of rows per second; Wide-Column rings scale linearly by adding nodes with zero single point of failure.",
+        when: "Chat message history (billions of messages), IoT sensor telemetry, stock market tick data, server CPU/memory monitoring, and Netflix viewing progress.",
+        where: "Discord (ScyllaDB for trillions of messages), Netflix (Cassandra), Apple (iCloud uses 100,000+ Cassandra nodes), Uber trip GPS logs.",
+        how: "Uses a Partition Key (consistent hashing ring) to route writes to nodes and appends sequentially to an in-memory Memtable + immutable disk SSTables (LSM-Tree).",
+        exampleScenario: "Storing every chat message sent in a university Discord server partitioned by channel_id and sorted by timestamp.",
+        exampleCode: `CREATE TABLE channel_messages (\n  channel_id uuid,\n  sent_at timestamp,\n  sender text,\n  body text,\n  PRIMARY KEY ((channel_id), sent_at)\n) WITH CLUSTERING ORDER BY (sent_at DESC);`
+      },
+      {
+        id: "db-graph",
+        sectionId: "persistence",
+        sectionTitle: "3. Data Persistence Layer — Databases, Caches & Storage Engines",
+        sectionSubtitle: "The 'Memory Vault' of the system: durably stores, indexes, queries, and protects application state across restarts and crashes.",
+        badgeColor: "amber",
+        name: "Graph Databases (Neo4j, Amazon Neptune, ArangoDB)",
+        categoryTag: "Relationship & Network Engine",
+        what: "Databases that store data as Nodes (entities like Person, Company) and directed Edges (relationships like `:FOLLOWS`, `:PAID`, `:BOUGHT`) with properties.",
+        why: "Finding 'friends of friends of friends' (4+ hops) in SQL requires expensive multi-table JOINs that grind to a halt; Graph DBs traverse millions of connections in milliseconds.",
+        when: "Social network connections ('People You May Know'), real-time banking fraud ring detection, supply chain routing, and Netflix/Amazon recommendation engines.",
+        where: "LinkedIn (1st/2nd/3rd degree connections), PayPal & JPMorgan fraud detection, Walmart product recommendations, NASA knowledge graph.",
+        how: "Uses Index-Free Adjacency—each node stores direct physical memory pointers to its neighboring nodes, making relationship hops O(1).",
+        exampleScenario: "Suggesting study partners who took the same course as a student's friend using Neo4j's Cypher query language.",
+        exampleCode: `// Cypher Query: Find study partners via shared courses\nMATCH (me:Student {name: "Aarav"})-[:ENROLLED_IN]->(c:Course)<-[:ENROLLED_IN]-(peer:Student)\nWHERE me <> peer\nRETURN peer.name, c.title;`
+      },
+      {
+        id: "db-search-vector",
+        sectionId: "persistence",
+        sectionTitle: "3. Data Persistence Layer — Databases, Caches & Storage Engines",
+        sectionSubtitle: "The 'Memory Vault' of the system: durably stores, indexes, queries, and protects application state across restarts and crashes.",
+        badgeColor: "amber",
+        name: "Full-Text Search & AI Vector Databases (Elasticsearch, Meilisearch, Pinecone, Milvus, pgvector)",
+        categoryTag: "Keyword & AI Semantic Search",
+        what: "Search engines build Inverted Indexes for instant typo-tolerant text search; Vector DBs store high-dimensional numerical embeddings (e.g., 1536 floats) for AI semantic similarity.",
+        why: "SQL `LIKE '%term%'` scans every row slowly and fails on typos or synonyms; Inverted Indexes find keywords in milliseconds, and Vector DBs power RAG (Retrieval-Augmented Generation) for LLMs.",
+        when: "E-commerce search bars with faceted filters, log analytics (ELK stack), semantic Q&A over PDF textbooks, and AI recommendation chatbots.",
+        where: "Wikipedia search, Swiggy/Zomato dish search, ChatGPT memory/file retrieval, Spotify song similarity, GitHub code search.",
+        how: "Full-text tokenizes words into an Inverted Index scored by BM25; Vector DBs index embedding vectors using HNSW graphs to compute Cosine Similarity.",
+        exampleScenario: "A student asks 'How do databases prevent crashes?' and pgvector finds textbook paragraphs about 'WAL and ACID durability' even if the exact words differ.",
+        exampleCode: `-- pgvector: Find top 3 semantically closest textbook chunks\nSELECT chapter, content\nFROM textbook_chunks\nORDER BY embedding <=> '[0.021, -0.044, 0.118, ...]'::vector\nLIMIT 3;`
+      },
+      {
+        id: "db-object-blob",
+        sectionId: "persistence",
+        sectionTitle: "3. Data Persistence Layer — Databases, Caches & Storage Engines",
+        sectionSubtitle: "The 'Memory Vault' of the system: durably stores, indexes, queries, and protects application state across restarts and crashes.",
+        badgeColor: "amber",
+        name: "Object / Blob Storage & CDN (Amazon S3, Cloudflare R2, Google Cloud Storage, MinIO)",
+        categoryTag: "Unstructured File & Media Vault",
+        what: "Massively scalable cloud storage for unstructured binary files ('blobs' like images, 4K videos, PDFs, database backups, ML model weights) organized in buckets with HTTP URLs.",
+        why: "Storing 50MB video files inside PostgreSQL bloats RAM and ruins database performance; Object Storage costs pennies per GB, offers 99.999999999% (11 nines) durability, and pairs with global CDNs.",
+        when: "User profile photos, YouTube/OTT video streaming segments, PDF invoices, student assignment uploads, and Data Lakehouse Parquet files.",
+        where: "Netflix video masters, Spotify audio tracks, Instagram photos, Canva user assets, Coursera lecture videos.",
+        how: "Database stores only the lightweight string URL (e.g., `https://cdn.uni.edu/lectures/cs101.mp4`), while the actual binary file sits in S3 replicated across multiple availability zones.",
+        exampleScenario: "Backend generates a secure, 15-minute Pre-Signed S3 URL so a student's browser uploads a 25MB project ZIP directly to cloud storage.",
+        exampleCode: `// Store only the S3 URL in SQL; binary file lives in S3 bucket\nconst uploadUrl = await s3.getSignedUrlPromise('putObject', {\n  Bucket: 'student-submissions',\n  Key: 'cs101/project_42.pdf',\n  Expires: 900\n});`
+      },
+      {
+        id: "db-newsql-warehouse",
+        sectionId: "persistence",
+        sectionTitle: "3. Data Persistence Layer — Databases, Caches & Storage Engines",
+        sectionSubtitle: "The 'Memory Vault' of the system: durably stores, indexes, queries, and protects application state across restarts and crashes.",
+        badgeColor: "amber",
+        name: "Distributed NewSQL & Cloud Data Warehouses (CockroachDB, TiDB, Google Spanner, Snowflake, BigQuery)",
+        categoryTag: "Global SQL & OLAP Analytics",
+        what: "NewSQL (Spanner/CockroachDB) delivers horizontal NoSQL scale WITH strict SQL ACID transactions across continents; Data Warehouses (Snowflake/BigQuery) use columnar storage for petabyte BI analytics (OLAP).",
+        why: "NewSQL eliminates manual sharding headaches for global apps; Columnar Warehouses aggregate 10 billion historical sales rows in seconds without slowing down live customer checkout (OLTP).",
+        when: "Global multi-region banking/gaming ledgers (NewSQL) and company-wide business intelligence, ML feature stores, and annual revenue reporting (Data Warehouses).",
+        where: "Google Play & Gmail (Spanner), DoorDash & Netflix (CockroachDB/Snowflake), Airtel & Flipkart analytics (BigQuery).",
+        how: "NewSQL uses Raft/Paxos consensus protocols across nodes; OLAP Warehouses store data by column rather than row so summing `SUM(price)` reads only the price column compressed on disk.",
+        exampleScenario: "Running an end-of-year university analytics query across 50 million historical exam records in BigQuery in 1.8 seconds.",
+        exampleCode: `-- OLAP Columnar Query scanning millions of rows in BigQuery\nSELECT department, AVG(score) AS avg_score, COUNT(*) AS exams_taken\nFROM \`university_warehouse.exam_history_2020_2026\`\nGROUP BY department\nORDER BY avg_score DESC;`
+      }
+    ];
+
+    // =========================================================================
+    // STATE & RENDER LOGIC
+    // =========================================================================
+    let currentCategory = "all";
+    let currentSearch = "";
+    let currentViewMode = "both"; // 'both' | 'table' | 'cards'
+
+    const sectionsOrder = [
+      { id: "frontend-theme", color: "purple", step: "Layer 1A" },
+      { id: "frontend-ui", color: "indigo", step: "Layer 1B" },
+      { id: "backend", color: "emerald", step: "Layer 2" },
+      { id: "persistence", color: "amber", step: "Layer 3" }
+    ];
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById("toastBox");
+      const text = document.getElementById("toastMessage");
+      if (!box || !text) return;
+      text.textContent = msg;
+      box.classList.remove("hidden");
+      box.classList.add("flex");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        box.classList.add("hidden");
+        box.classList.remove("flex");
+      }, 2400);
+    }
+
+    function copyTextToClipboard(text, label) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast("Copied " + label + " to clipboard!");
+          }).catch(() => fallbackCopy(text, label));
+        } else {
+          fallbackCopy(text, label);
+        }
+      } catch (e) {
+        fallbackCopy(text, label);
+      }
+    }
+
+    function fallbackCopy(text, label) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        showToast("Copied " + label + " to clipboard!");
+      } catch (err) {
+        showToast("Copy failed — please select and copy manually.");
+      }
+      document.body.removeChild(ta);
+    }
+
+    function getBadgeClasses(color) {
+      const map = {
+        purple: {
+          headerBg: "bg-gradient-to-r from-purple-700 to-indigo-700",
+          pill: "bg-purple-100 text-purple-800 border-purple-200",
+          border: "border-purple-200",
+          lightBg: "bg-purple-50/50"
+        },
+        indigo: {
+          headerBg: "bg-gradient-to-r from-indigo-700 to-blue-700",
+          pill: "bg-indigo-100 text-indigo-800 border-indigo-200",
+          border: "border-indigo-200",
+          lightBg: "bg-indigo-50/50"
+        },
+        emerald: {
+          headerBg: "bg-gradient-to-r from-emerald-700 to-teal-700",
+          pill: "bg-emerald-100 text-emerald-800 border-emerald-200",
+          border: "border-emerald-200",
+          lightBg: "bg-emerald-50/50"
+        },
+        amber: {
+          headerBg: "bg-gradient-to-r from-amber-600 to-orange-600",
+          pill: "bg-amber-100 text-amber-900 border-amber-200",
+          border: "border-amber-200",
+          lightBg: "bg-amber-50/50"
+        }
+      };
+      return map[color] || map.indigo;
+    }
+
+    function filterItems() {
+      const q = currentSearch.trim().toLowerCase();
+      return ARCHITECTURE_DATA.filter(item => {
+        const matchesCat =
+          currentCategory === "all" ||
+          item.sectionId === currentCategory ||
+          (currentCategory === "frontend-all" && (item.sectionId === "frontend-theme" || item.sectionId === "frontend-ui"));
+        if (!matchesCat) return false;
+        if (!q) return true;
+        const haystack = [
+          item.name,
+          item.categoryTag,
+          item.what,
+          item.why,
+          item.when,
+          item.where,
+          item.how,
+          item.exampleScenario,
+          item.exampleCode
+        ].join(" ").toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+
+    function renderAll() {
+      const container = document.getElementById("contentContainer");
+      const statusEl = document.getElementById("filterStatusText");
+      const filtered = filterItems();
+
+      statusEl.innerHTML = `Showing <strong class="text-slate-900">${filtered.length}</strong> of <strong>${ARCHITECTURE_DATA.length}</strong> architecture items across the 4W+H matrix.`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-3">
+            <div class="text-base font-bold text-slate-800">No matching technologies or themes found for "${escapeHtml(currentSearch)}"</div>
+            <p class="text-xs text-slate-500">Try clearing your search filter or switching to "All Layers (29)".</p>
+            <button type="button" id="resetFiltersEmptyBtn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700">
+              Reset Filters
+            </button>
+          </div>
+        `;
+        const resetBtn = document.getElementById("resetFiltersEmptyBtn");
+        if (resetBtn) {
+          resetBtn.addEventListener("click", () => {
+            currentCategory = "all";
+            currentSearch = "";
+            document.getElementById("searchInput").value = "";
+            document.getElementById("clearSearchBtn").classList.add("hidden");
+            updateActiveCategoryTab();
+            renderAll();
+          });
+        }
+        return;
+      }
+
+      let htmlParts = [];
+
+      sectionsOrder.forEach(sec => {
+        const secItems = filtered.filter(i => i.sectionId === sec.id);
+        if (secItems.length === 0) return;
+
+        const first = secItems[0];
+        const styles = getBadgeClasses(first.badgeColor);
+
+        // Section Header Banner
+        let secHtml = `
+          <section class="space-y-5" id="section-${sec.id}">
+            <div class="${styles.headerBg} rounded-2xl p-5 text-white shadow-md">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <span class="inline-block text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-white/20 text-white mb-1">
+                    ${sec.step} &bull; ${secItems.length} Technologies Covered
+                  </span>
+                  <h2 class="text-lg sm:text-xl font-extrabold">${escapeHtml(first.sectionTitle)}</h2>
+                  <p class="text-xs sm:text-sm text-white/90 mt-0.5">${escapeHtml(first.sectionSubtitle)}</p>
+                </div>
+              </div>
+            </div>
+        `;
+
+        // 1. TABULAR 4W+H MATRIX VIEW
+        if (currentViewMode === "both" || currentViewMode === "table") {
+          secHtml += `
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                  <h3 class="text-xs sm:text-sm font-bold text-slate-800">
+                    Tabular 4W+H Comparison Matrix — ${escapeHtml(first.sectionTitle)}
+                  </h3>
+                </div>
+                <span class="text-[11px] font-medium text-slate-500">
+                  Columns: Technology &bull; WHAT &bull; WHY &bull; WHEN &bull; WHERE &bull; HOW &bull; EXAMPLE
+                </span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[1150px]">
+                  <thead>
+                    <tr class="bg-slate-100/90 text-slate-700 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200">
+                      <th class="py-3 px-3.5 w-[15%]">Theme / Technology</th>
+                      <th class="py-3 px-3.5 w-[14%] text-indigo-800">1. WHAT (Definition)</th>
+                      <th class="py-3 px-3.5 w-[14%] text-rose-800">2. WHY (Purpose &amp; Value)</th>
+                      <th class="py-3 px-3.5 w-[13%] text-amber-800">3. WHEN (Use Cases)</th>
+                      <th class="py-3 px-3.5 w-[12%] text-emerald-800">4. WHERE (Industry Apps)</th>
+                      <th class="py-3 px-3.5 w-[14%] text-cyan-800">5. HOW (Mechanism)</th>
+                      <th class="py-3 px-3.5 w-[18%] text-purple-800">6. EXAMPLE (Scenario &amp; Code)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 text-xs align-top">
+          `;
+
+          secItems.forEach((item, idx) => {
+            const rowBg = idx % 2 === 0 ? "bg-white" : "bg-slate-50/50";
+            secHtml += `
+              <tr class="${rowBg} hover:bg-indigo-50/30 transition">
+                <td class="py-3.5 px-3.5 font-bold text-slate-900">
+                  <div class="text-xs sm:text-sm font-extrabold text-slate-900 mb-1">${escapeHtml(item.name)}</div>
+                  <span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded border ${styles.pill}">
+                    ${escapeHtml(item.categoryTag)}
+                  </span>
+                </td>
+                <td class="py-3.5 px-3.5 text-slate-700 leading-relaxed">${escapeHtml(item.what)}</td>
+                <td class="py-3.5 px-3.5 text-slate-700 leading-relaxed">${escapeHtml(item.why)}</td>
+                <td class="py-3.5 px-3.5 text-slate-700 leading-relaxed">${escapeHtml(item.when)}</td>
+                <td class="py-3.5 px-3.5 text-slate-700 leading-relaxed font-medium">${escapeHtml(item.where)}</td>
+                <td class="py-3.5 px-3.5 text-slate-700 leading-relaxed">${escapeHtml(item.how)}</td>
+                <td class="py-3.5 px-3.5 text-slate-700">
+                  <div class="mb-1.5 text-[11px] font-medium text-slate-800">${escapeHtml(item.exampleScenario)}</div>
+                  <pre class="bg-slate-900 text-slate-100 p-2 rounded-lg text-[10px] overflow-x-auto leading-snug"><code>${escapeHtml(item.exampleCode)}</code></pre>
+                </td>
+              </tr>
+            `;
+          });
+
+          secHtml += `
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+
+        // 2. STUDENT STUDY CARDS VIEW (4W+H + COPYABLE CODE)
+        if (currentViewMode === "both" || currentViewMode === "cards") {
+          secHtml += `
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          `;
+
+          secItems.forEach(item => {
+            secHtml += `
+              <article class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between hover:border-indigo-300 transition">
+                <div>
+                  <div class="flex items-start justify-between gap-2 mb-3">
+                    <div>
+                      <span class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded border ${styles.pill} mb-1">
+                        ${escapeHtml(item.categoryTag)}
+                      </span>
+                      <h3 class="text-base font-extrabold text-slate-900">${escapeHtml(item.name)}</h3>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs mb-3">
+                    <div class="p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-100">
+                      <span class="font-extrabold text-indigo-800 block mb-0.5">WHAT IS IT?</span>
+                      <p class="text-slate-700 leading-relaxed">${escapeHtml(item.what)}</p>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-rose-50/50 border border-rose-100">
+                      <span class="font-extrabold text-rose-800 block mb-0.5">WHY USE IT?</span>
+                      <p class="text-slate-700 leading-relaxed">${escapeHtml(item.why)}</p>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-amber-50/50 border border-amber-100">
+                      <span class="font-extrabold text-amber-900 block mb-0.5">WHEN TO CHOOSE?</span>
+                      <p class="text-slate-700 leading-relaxed">${escapeHtml(item.when)}</p>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                      <span class="font-extrabold text-emerald-800 block mb-0.5">WHERE IS IT USED?</span>
+                      <p class="text-slate-700 leading-relaxed font-medium">${escapeHtml(item.where)}</p>
+                    </div>
+                  </div>
+
+                  <div class="p-2.5 rounded-xl bg-cyan-50/50 border border-cyan-100 text-xs mb-3">
+                    <span class="font-extrabold text-cyan-900 block mb-0.5">HOW DOES IT WORK UNDER THE HOOD?</span>
+                    <p class="text-slate-700 leading-relaxed">${escapeHtml(item.how)}</p>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100">
+                  <div class="flex items-center justify-between gap-2 mb-1.5">
+                    <span class="text-xs font-extrabold text-purple-800">
+                      REAL EXAMPLE: <span class="font-medium text-slate-700">${escapeHtml(item.exampleScenario)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      data-copy-id="${escapeHtml(item.id)}"
+                      class="copy-code-btn shrink-0 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 transition no-print"
+                    >
+                      Copy Snippet
+                    </button>
+                  </div>
+                  <pre class="bg-slate-900 text-slate-100 p-3 rounded-xl text-xs overflow-x-auto leading-relaxed"><code>${escapeHtml(item.exampleCode)}</code></pre>
+                </div>
+              </article>
+            `;
+          });
+
+          secHtml += `</div>`;
+        }
+
+        secHtml += `</section>`;
+        htmlParts.push(secHtml);
+      });
+
+      container.innerHTML = htmlParts.join("");
+
+      // Attach listeners to dynamically rendered Copy Snippet buttons
+      document.querySelectorAll(".copy-code-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const itemId = btn.getAttribute("data-copy-id");
+          const found = ARCHITECTURE_DATA.find(x => x.id === itemId);
+          if (found) {
+            copyTextToClipboard(found.exampleCode, found.name + " snippet");
+          }
+        });
+      });
+    }
+
+    function updateActiveCategoryTab() {
+      document.querySelectorAll(".cat-tab").forEach(tab => {
+        const cat = tab.getAttribute("data-cat");
+        if (cat === currentCategory) {
+          tab.className = "cat-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm transition";
+        } else {
+          tab.className = "cat-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition";
+        }
+      });
+    }
+
+    function updateViewButtons() {
+      const map = {
+        both: document.getElementById("viewBtnBoth"),
+        table: document.getElementById("viewBtnTable"),
+        cards: document.getElementById("viewBtnCards")
+      };
+      Object.keys(map).forEach(mode => {
+        const btn = map[mode];
+        if (!btn) return;
+        if (mode === currentViewMode) {
+          btn.className = "px-2.5 py-1 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition";
+        }
+      });
+    }
+
+    // =========================================================================
+    // LIVE PRESENTATION THEME SANDBOX DEMO
+    // =========================================================================
+    function applyLiveThemeDemo(mode) {
+      const sampleCard = document.getElementById("liveSampleCard");
+      const sampleHeader = document.getElementById("sampleHeader");
+      const sampleBody = document.getElementById("sampleBody");
+      const sampleFooter = document.getElementById("sampleFooter");
+      const tokenPreview = document.getElementById("tokenPreview");
+      const activeBadge = document.getElementById("activeThemeBadge");
+      const appBody = document.getElementById("appBody");
+
+      if (mode === "light") {
+        appBody.className = "bg-slate-50 text-slate-900 min-h-screen transition-colors duration-200";
+        sampleCard.className = "p-3.5 rounded-xl border border-slate-200 bg-slate-50 transition-all duration-200";
+        sampleHeader.className = "text-xs font-bold uppercase tracking-wide text-indigo-600";
+        sampleBody.className = "text-xs text-slate-700 mb-2";
+        sampleFooter.className = "flex items-center justify-between text-[11px] text-slate-500";
+        tokenPreview.textContent = "--surface-clean-light";
+        activeBadge.textContent = "Clean Light";
+      } else if (mode === "dark") {
+        appBody.className = "bg-slate-900 text-slate-100 min-h-screen transition-colors duration-200";
+        sampleCard.className = "p-3.5 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 shadow-inner transition-all duration-200";
+        sampleHeader.className = "text-xs font-bold uppercase tracking-wide text-indigo-400";
+        sampleBody.className = "text-xs text-slate-300 mb-2";
+        sampleFooter.className = "flex items-center justify-between text-[11px] text-slate-400";
+        tokenPreview.textContent = "--surface-oled-dark";
+        activeBadge.textContent = "Dark / OLED Mode";
+      } else if (mode === "glass") {
+        appBody.className = "bg-gradient-to-br from-indigo-100 via-sky-100 to-purple-100 text-slate-900 min-h-screen transition-colors duration-200";
+        sampleCard.className = "p-3.5 rounded-xl border border-white/60 bg-white/40 backdrop-blur-md shadow-lg transition-all duration-200";
+        sampleHeader.className = "text-xs font-bold uppercase tracking-wide text-sky-800";
+        sampleBody.className = "text-xs text-slate-800 mb-2";
+        sampleFooter.className = "flex items-center justify-between text-[11px] text-slate-700";
+        tokenPreview.textContent = "backdrop-filter: blur(14px)";
+        activeBadge.textContent = "Glassmorphism";
+      } else if (mode === "brutal") {
+        appBody.className = "bg-amber-50 text-black min-h-screen transition-colors duration-200";
+        sampleCard.className = "p-3.5 rounded-none border-2 border-black bg-yellow-300 text-black shadow-[4px_4px_0px_#000] transition-all duration-200";
+        sampleHeader.className = "text-xs font-extrabold uppercase tracking-wide text-black underline";
+        sampleBody.className = "text-xs text-black font-semibold mb-2";
+        sampleFooter.className = "flex items-center justify-between text-[11px] text-black font-bold";
+        tokenPreview.textContent = "box-shadow: 4px 4px 0 #000";
+        activeBadge.textContent = "Neo-Brutalism";
+      }
+    }
+
+    // =========================================================================
+    // DOWNLOAD HANDLERS (.HTML AND .CSV)
+    // =========================================================================
+    function downloadSelfContainedHtml() {
+      const htmlString = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlString], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "fullstack_3tier_4w1h_guide.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Downloaded fullstack_3tier_4w1h_guide.html!");
+    }
+
+    function downloadCsvTable() {
+      const headers = [
+        "Architectural Layer",
+        "Category Tag",
+        "Theme / Technology Name",
+        "WHAT (Definition)",
+        "WHY (Purpose & Benefits)",
+        "WHEN (Ideal Use Cases)",
+        "WHERE (Real-World Examples)",
+        "HOW (Working Mechanism)",
+        "Example Scenario",
+        "Example Code Snippet"
+      ];
+      const escapeCsv = val => `"${String(val).replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+      const rows = ARCHITECTURE_DATA.map(item => [
+        item.sectionTitle,
+        item.categoryTag,
+        item.name,
+        item.what,
+        item.why,
+        item.when,
+        item.where,
+        item.how,
+        item.exampleScenario,
+        item.exampleCode
+      ].map(escapeCsv).join(","));
+
+      const csvContent = "\uFEFF" + [headers.map(escapeCsv).join(","), ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "fullstack_3tier_4w1h_matrix.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Exported fullstack_3tier_4w1h_matrix.csv!");
+    }
+
+    // =========================================================================
+    // INITIALIZE EVENT LISTENERS
+    // =========================================================================
+    window.addEventListener("DOMContentLoaded", () => {
+      renderAll();
+
+      // Category tabs
+      document.querySelectorAll(".cat-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          currentCategory = tab.getAttribute("data-cat") || "all";
+          updateActiveCategoryTab();
+          renderAll();
+        });
+      });
+
+      // Tier quick-jump cards
+      document.getElementById("tierBtnFrontend").addEventListener("click", () => {
+        currentCategory = "frontend-theme";
+        updateActiveCategoryTab();
+        renderAll();
+      });
+      document.getElementById("tierBtnBackend").addEventListener("click", () => {
+        currentCategory = "backend";
+        updateActiveCategoryTab();
+        renderAll();
+      });
+      document.getElementById("tierBtnPersistence").addEventListener("click", () => {
+        currentCategory = "persistence";
+        updateActiveCategoryTab();
+        renderAll();
+      });
+
+      // Search box
+      const searchInput = document.getElementById("searchInput");
+      const clearBtn = document.getElementById("clearSearchBtn");
+      searchInput.addEventListener("input", () => {
+        currentSearch = searchInput.value;
+        if (currentSearch.trim().length > 0) {
+          clearBtn.classList.remove("hidden");
+        } else {
+          clearBtn.classList.add("hidden");
+        }
+        renderAll();
+      });
+
+      clearBtn.addEventListener("click", () => {
+        currentSearch = "";
+        searchInput.value = "";
+        clearBtn.classList.add("hidden");
+        renderAll();
+      });
+
+      // View mode buttons
+      document.getElementById("viewBtnBoth").addEventListener("click", () => {
+        currentViewMode = "both";
+        updateViewButtons();
+        renderAll();
+      });
+      document.getElementById("viewBtnTable").addEventListener("click", () => {
+        currentViewMode = "table";
+        updateViewButtons();
+        renderAll();
+      });
+      document.getElementById("viewBtnCards").addEventListener("click", () => {
+        currentViewMode = "cards";
+        updateViewButtons();
+        renderAll();
+      });
+
+      // Theme sandbox buttons
+      document.querySelectorAll(".theme-mode-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const mode = btn.getAttribute("data-theme-mode");
+          applyLiveThemeDemo(mode);
+        });
+      });
+
+      // Download & Print buttons
+      document.getElementById("btnDownloadHtml").addEventListener("click", downloadSelfContainedHtml);
+      document.getElementById("btnDownloadCsv").addEventListener("click", downloadCsvTable);
+      document.getElementById("btnPrintPage").addEventListener("click", () => window.print());
+    });
+  </script>
+</body>
+</html>

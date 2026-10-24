@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini Project Prompts</title>
+<style>
+:root{
+  --bg:#f6f7fb; --surface:#fff; --surface-2:#f0f2f8; --text:#1c2033; --muted:#5d6480; --border:#dde1ec;
+  --accent:#4f46e5; --fe:#0369a1; --fe-soft:#e0f4fd; --be:#15803d; --be-soft:#e3f6ea; --db:#b45309; --db-soft:#fdf1df;
+  --code-bg:#1e2235; --code-text:#e4e7f5; --shadow:0 1px 3px rgba(20,24,50,.08),0 4px 14px rgba(20,24,50,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11131c; --surface:#1a1d29; --surface-2:#232737; --text:#e7e9f3; --muted:#9aa1bd; --border:#2e3346;
+    --accent:#8b85ff; --fe:#38bdf8; --fe-soft:#12303f; --be:#4ade80; --be-soft:#123222; --db:#fbbf24; --db-soft:#3a2c10;
+    --code-bg:#0b0d14; --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11131c; --surface:#1a1d29; --surface-2:#232737; --text:#e7e9f3; --muted:#9aa1bd; --border:#2e3346;
+  --accent:#8b85ff; --fe:#38bdf8; --fe-soft:#12303f; --be:#4ade80; --be-soft:#123222; --db:#fbbf24; --db-soft:#3a2c10;
+  --code-bg:#0b0d14; --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+header{background:var(--surface);border-bottom:1px solid var(--border)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-top:22px;padding-bottom:18px}
+h1{margin:0;font-size:1.6rem;line-height:1.25}
+.sub{margin:4px 0 0;color:var(--muted)}
+.btn{border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit;font-size:.88rem}
+main{padding:22px 0 60px}
+.howto{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:18px}
+.howto ol{margin:6px 0 0;padding-left:20px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;align-items:center}
+.filters .lbl{font-size:.82rem;color:var(--muted);margin-right:4px;min-width:84px}
+.chip{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:99px;padding:4px 12px;font:inherit;font-size:.83rem;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.count{color:var(--muted);font-size:.9rem;margin:10px 0 14px}
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:22px}
+table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:640px}
+th,td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left}
+th{background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+.p{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.p-h{padding:16px 18px 10px;display:flex;gap:14px;align-items:flex-start}
+.num{flex:0 0 40px;height:40px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:1.25rem}
+.p-h h2{margin:0;font-size:1.12rem}
+.p-h .desc{color:var(--muted);font-size:.92rem;margin:2px 0 8px}
+.stack{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:.78rem;font-weight:600;padding:3px 10px;border-radius:99px}
+.fe{background:var(--fe-soft);color:var(--fe)}.be{background:var(--be-soft);color:var(--be)}.db{background:var(--db-soft);color:var(--db)}
+.lvl{font-size:.75rem;padding:2px 8px;border-radius:99px;border:1px solid var(--border);color:var(--muted);margin-left:6px;vertical-align:middle;font-weight:500}
+.learn{padding:0 18px 10px;font-size:.88rem;color:var(--muted)}
+.learn b{color:var(--text)}
+details.pr{border-top:1px solid var(--border)}
+details.pr summary{cursor:pointer;padding:10px 18px;font-weight:600;font-size:.9rem;display:flex;justify-content:space-between;align-items:center;gap:8px;list-style:none}
+details.pr summary::-webkit-details-marker{display:none}
+details.pr summary .tg::before{content:"▶ ";font-size:.75rem;color:var(--muted)}
+details.pr[open] summary .tg::before{content:"▼ "}
+pre{background:var(--code-bg);color:var(--code-text);margin:0 18px 18px;padding:14px;border-radius:10px;font:13px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-wrap:break-word}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:10px 16px 40px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Mini Project Prompts: Mix &amp; Match the Stack</h1>
+      <p class="sub">12 small, beginner-friendly apps. Each one combines a different frontend, backend and database from the <a href="fullstack_layers_guide.html">Full-Stack Layers Guide</a>.</p>
+    </div>
+    <button class="btn" id="themeBtn">◐ Theme</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="howto">
+    <b>How to use these prompts</b>
+    <ol>
+      <li>Pick a project (use the filters to find a technology you want to practise).</li>
+      <li>Click <b>Copy prompt</b> and paste it into Claude, ChatGPT or any AI coding assistant, or use it as a written brief to build it yourself.</li>
+      <li>Run the app, then <b>read every file</b> and find which layer each line belongs to: frontend, backend or persistence.</li>
+      <li>Try the "Stretch goal" at the end of each prompt once the basic version works.</li>
+    </ol>
+  </div>
+
+  <h2 style="font-size:1.1rem;margin:0 0 8px">Stack overview</h2>
+  <div class="tw"><table id="overview"><tr><th>#</th><th>App</th><th>Frontend</th><th>Backend</th><th>Persistence</th><th>Level</th></tr></table></div>
+
+  <div class="filters" id="fFe"><span class="lbl">Frontend</span></div>
+  <div class="filters" id="fBe"><span class="lbl">Backend</span></div>
+  <div class="filters" id="fDb"><span class="lbl">Persistence</span></div>
+  <div class="count" id="count"></div>
+
+  <div id="list"></div>
+</main>
+<footer>Day 8 · Mini Project Prompts · Every app is small: single user, no login, runs on a laptop.</footer>
+
+<script>
+const COMMON = `
+General rules:
+- Keep it simple and beginner-friendly: no login/authentication, single user, runs locally on a laptop.
+- Keep the three layers clearly separated (frontend folder/files, backend API, database code) and add a short comment at the top of every file saying which layer it belongs to.
+- Add helpful comments explaining each important line.
+- Validate input on the backend and return proper HTTP status codes (200, 201, 400, 404).
+- Seed the database with 3-5 sample records on first run.
+- Include a README.md with: prerequisites, install commands, how to run each part, and the URL to open.
+- Use only free, open-source tools. Pin library versions in the requirements/package file.`;
+
+const P = [
+{t:"To-Do List",ico:"✅",lvl:"Beginner",fe:"HTML + CSS + Vanilla JS",be:"Flask (Python)",db:"SQLite",
+ d:"Add, complete and delete daily tasks.",
+ learn:"fetch() calls, REST CRUD, raw SQL with Python's sqlite3 module.",
+ p:`Build a simple To-Do List web app.
+
+Tech stack:
+- Frontend: plain HTML, CSS and vanilla JavaScript (no frameworks), served from Flask's static/templates folder
+- Backend: Flask (Python) REST API
+- Persistence: SQLite using Python's built-in sqlite3 module (no ORM, write the SQL by hand)
+
+Features:
+1. Show all tasks in a list.
+2. Add a new task with a text box and an "Add" button.
+3. Mark a task as done (strike-through style) by clicking a checkbox.
+4. Delete a task.
+5. Show a counter: "3 of 5 tasks done".
+
+Data model: tasks(id INTEGER PRIMARY KEY, title TEXT NOT NULL, done INTEGER DEFAULT 0, created_at TEXT)
+
+API endpoints:
+- GET    /api/tasks
+- POST   /api/tasks        body: {"title": "..."}
+- PATCH  /api/tasks/<id>   body: {"done": true}
+- DELETE /api/tasks/<id>
+
+Folder structure:
+todo_app/
+  app.py, db.py, templates/index.html, static/style.css, static/script.js, requirements.txt, README.md
+${COMMON}
+
+Stretch goal: add a filter (All / Active / Done) and a due date for each task.`},
+
+{t:"Personal Notes",ico:"📝",lvl:"Beginner",fe:"React (Vite)",be:"FastAPI (Python)",db:"SQLite + SQLAlchemy",
+ d:"Write, edit and search short notes.",
+ learn:"React state and components, FastAPI with Pydantic, an ORM, CORS.",
+ p:`Build a simple Personal Notes app.
+
+Tech stack:
+- Frontend: React created with Vite (JavaScript, functional components and hooks, no UI library)
+- Backend: FastAPI (Python) with Pydantic models
+- Persistence: SQLite through SQLAlchemy 2.0 ORM
+
+Features:
+1. Left side: list of note titles. Right side: the selected note.
+2. Create a note (title + content).
+3. Edit and save a note.
+4. Delete a note with a confirm dialog.
+5. Search box that filters notes by title or content.
+
+Data model: Note(id, title: str, content: str, updated_at: datetime)
+
+API endpoints:
+- GET /api/notes?search=   - POST /api/notes   - PUT /api/notes/{id}   - DELETE /api/notes/{id}
+
+Folder structure:
+notes_app/
+  backend/ (main.py, database.py, models.py, schemas.py, requirements.txt)
+  frontend/ (Vite React app: src/App.jsx, src/components/NoteList.jsx, src/components/NoteEditor.jsx, src/api.js)
+  README.md
+
+Enable CORS in FastAPI for http://localhost:5173. Explain in the README that FastAPI auto-generates docs at /docs.
+${COMMON}
+
+Stretch goal: add color tags for notes and a "pinned" flag that keeps notes at the top.`},
+
+{t:"Student Marks Dashboard",ico:"📊",lvl:"Beginner",fe:"Streamlit",be:"Streamlit (built in)",db:"CSV file + pandas",
+ d:"Enter marks, see averages, grades and a chart.",
+ learn:"How a Python UI framework merges frontend and backend; file-based persistence.",
+ p:`Build a simple Student Marks Dashboard.
+
+Tech stack:
+- Frontend + backend: Streamlit (single Python app)
+- Persistence: a CSV file (students.csv) read and written with pandas
+
+Features:
+1. A form in the sidebar to add a student: name, roll number, marks in Maths, Science and English (0-100).
+2. Save each new student to students.csv (create the file with headers if it does not exist).
+3. Show all students in a table with Total, Average and Grade columns (A >= 90, B >= 75, C >= 60, D >= 40, F < 40).
+4. Show a bar chart of the average marks per subject.
+5. Show the class topper in a highlighted metric box.
+6. A button to download the table as CSV.
+
+Folder structure:
+marks_dashboard/
+  app.py, data_store.py (all CSV read/write functions), students.csv (created on first run), requirements.txt, README.md
+
+In data_store.py, add a comment explaining that this file is the "persistence layer" and that it could later be swapped for SQLite without changing app.py.
+${COMMON}
+
+Stretch goal: add a delete-student option and a subject-wise pass/fail pie chart.`},
+
+{t:"URL Shortener",ico:"🔗",lvl:"Beginner",fe:"HTML + Bootstrap 5",be:"Node.js + Express",db:"Redis",
+ d:"Turn a long link into a short code and count clicks.",
+ learn:"Key-value storage, HTTP redirects, a Node.js backend.",
+ p:`Build a simple URL Shortener.
+
+Tech stack:
+- Frontend: a single HTML page styled with Bootstrap 5 (from the CDN) and a small vanilla JS script
+- Backend: Node.js with Express
+- Persistence: Redis (key-value store) using the official "redis" npm package. Run Redis locally with: docker run -p 6379:6379 redis
+
+Features:
+1. A text box to paste a long URL and a "Shorten" button.
+2. Backend validates the URL, generates a random 6-character code and stores it in Redis (key: "url:<code>", value: the long URL).
+3. Show the short link (http://localhost:3000/<code>) with a "Copy" button.
+4. Visiting the short link redirects (HTTP 302) to the original URL and increments a click counter in Redis (key: "clicks:<code>").
+5. A "Recent links" table showing the last 10 links and their click counts (use a Redis list).
+
+API endpoints:
+- POST /api/shorten   body: {"url": "..."}  -> {"code": "...", "short": "..."}
+- GET  /api/recent
+- GET  /:code         -> redirect
+
+Folder structure:
+url_shortener/
+  server.js, redisClient.js, public/index.html, public/app.js, package.json, README.md
+
+In the README, explain why Redis (in-memory, very fast key-value lookups) suits this app.
+${COMMON}
+
+Stretch goal: let the user choose a custom code and add an expiry time (Redis EX option).`},
+
+{t:"Expense Tracker",ico:"💰",lvl:"Intermediate",fe:"Vue 3 (Vite)",be:"Node.js + Express",db:"MongoDB",
+ d:"Log daily expenses by category and see a monthly total.",
+ learn:"Document database, flexible schemas, Vue reactivity.",
+ p:`Build a simple Expense Tracker.
+
+Tech stack:
+- Frontend: Vue 3 with Vite (Composition API, <script setup>)
+- Backend: Node.js + Express
+- Persistence: MongoDB (local install or a free MongoDB Atlas cluster) using Mongoose
+
+Features:
+1. A form: amount, category (Food, Travel, Bills, Shopping, Other), note, date.
+2. A list of expenses for the selected month, newest first.
+3. Delete an expense.
+4. Summary cards: total for the month and total per category.
+5. A month picker to switch months.
+
+Data model (Mongoose schema): Expense { amount: Number (required, > 0), category: String (enum), note: String, date: Date }
+
+API endpoints:
+- GET    /api/expenses?month=2026-10
+- POST   /api/expenses
+- DELETE /api/expenses/:id
+- GET    /api/summary?month=2026-10   (use a MongoDB aggregation pipeline with $match and $group)
+
+Folder structure:
+expense_tracker/
+  server/ (index.js, models/Expense.js, routes/expenses.js, .env.example with MONGO_URL, package.json)
+  client/ (Vite Vue app: src/App.vue, src/components/ExpenseForm.vue, src/components/ExpenseList.vue)
+  README.md
+${COMMON}
+
+Stretch goal: add an optional "tags" array to some expenses to show how MongoDB allows a flexible schema.`},
+
+{t:"Library Book Manager",ico:"📚",lvl:"Intermediate",fe:"Django Templates (server-rendered)",be:"Django (Python)",db:"SQLite + Django ORM",
+ d:"Manage books and track who borrowed what.",
+ learn:"Server-side rendering (MPA), the Django admin, model relationships.",
+ p:`Build a simple Library Book Manager.
+
+Tech stack:
+- Frontend: Django templates (server-side rendering, no JavaScript framework), basic CSS
+- Backend: Django (Python)
+- Persistence: SQLite with the Django ORM and migrations
+
+Features:
+1. Book list page with title, author, year, and status (Available / Borrowed).
+2. Add and edit books using a Django ModelForm.
+3. "Borrow" a book: enter the member's name; the book becomes Borrowed with today's date.
+4. "Return" a book.
+5. A borrow history page for each book.
+6. Enable the Django admin so the librarian can manage all data.
+
+Data models:
+- Book(title, author, year, is_available)
+- Borrow(book -> ForeignKey(Book), member_name, borrowed_on, returned_on nullable)
+
+Folder structure: a Django project "library_site" with one app "books" (models.py, views.py, urls.py, forms.py, templates/books/*.html), requirements.txt, README.md
+
+In the README, explain: makemigrations / migrate, createsuperuser, runserver, and that this is a server-rendered multi-page app (the server sends complete HTML pages).
+${COMMON}
+
+Stretch goal: add a search bar and highlight books borrowed for more than 14 days.`},
+
+{t:"Quiz App",ico:"❓",lvl:"Beginner",fe:"Svelte (Vite)",be:"FastAPI (Python)",db:"JSON file",
+ d:"Multiple-choice quiz with a score and a leaderboard.",
+ learn:"Svelte's simple reactivity, file-based persistence and its limits.",
+ p:`Build a simple Quiz App.
+
+Tech stack:
+- Frontend: Svelte 5 with Vite
+- Backend: FastAPI (Python)
+- Persistence: two JSON files: questions.json (10 multiple-choice questions about web development) and scores.json (leaderboard)
+
+Features:
+1. Start screen: enter your name and click "Start".
+2. Show one question at a time with 4 options and a "Next" button.
+3. The backend checks answers (the correct answers must NOT be sent to the browser).
+4. Result screen: score out of 10 and which answers were wrong.
+5. Leaderboard: top 5 scores read from scores.json.
+
+API endpoints:
+- GET  /api/questions          (returns questions without the answer field)
+- POST /api/submit             body: {"name": "...", "answers": [0,2,1,...]}  -> score + corrections, and saves to scores.json
+- GET  /api/leaderboard
+
+Folder structure:
+quiz_app/
+  backend/ (main.py, storage.py, questions.json, scores.json, requirements.txt)
+  frontend/ (Vite Svelte app: src/App.svelte, src/lib/Question.svelte, src/lib/Result.svelte)
+  README.md
+
+In the README, explain why answers are checked on the backend (security) and why a JSON file is fine for a small app but not for many users writing at once.
+${COMMON}
+
+Stretch goal: add a 15-second timer per question and question categories.`},
+
+{t:"Live Chat Room",ico:"💬",lvl:"Intermediate",fe:"HTML + CSS + Vanilla JS",be:"FastAPI + WebSockets",db:"SQLite",
+ d:"A single chat room where messages appear instantly for everyone.",
+ learn:"WebSockets (real-time two-way communication), storing message history.",
+ p:`Build a simple Live Chat Room.
+
+Tech stack:
+- Frontend: one HTML page with CSS and vanilla JavaScript using the browser WebSocket API
+- Backend: FastAPI with a WebSocket endpoint (run with uvicorn)
+- Persistence: SQLite (Python's sqlite3 module) to save message history
+
+Features:
+1. Ask for a display name when the page loads.
+2. Show the last 50 messages from the database when someone joins.
+3. Messages sent by anyone appear instantly in every open browser tab.
+4. Show "<name> joined" / "<name> left" system messages.
+5. Show the number of people online.
+6. Your own messages are aligned right, others' aligned left, each with a timestamp.
+
+Data model: messages(id, sender TEXT, text TEXT, sent_at TEXT)
+
+Endpoints:
+- GET /                   -> serves index.html
+- GET /api/history        -> last 50 messages
+- WS  /ws/{name}          -> real-time chat
+
+Folder structure:
+chat_room/
+  main.py, connection_manager.py (keeps the list of connected sockets and broadcasts), db.py, static/index.html, static/chat.js, static/style.css, requirements.txt, README.md
+
+In the README, explain how WebSockets differ from normal HTTP requests. Tell the user to open two browser tabs to test.
+${COMMON}
+
+Stretch goal: add a "typing…" indicator and multiple rooms.`},
+
+{t:"Contact Book",ico:"📇",lvl:"Intermediate",fe:"Angular",be:"Spring Boot (Java)",db:"MySQL",
+ d:"Save, edit and search contacts.",
+ learn:"Enterprise-style stack, TypeScript, JPA/Hibernate, a relational DB server.",
+ p:`Build a simple Contact Book.
+
+Tech stack:
+- Frontend: Angular (latest, standalone components, HttpClient, reactive forms)
+- Backend: Spring Boot 3 (Java 17+) with Spring Web and Spring Data JPA
+- Persistence: MySQL 8 (local install or: docker run -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=contacts -p 3306:3306 mysql:8)
+
+Features:
+1. Contact list in a table: name, phone, email, city.
+2. Add and edit contacts using a reactive form with validation (name required, valid email, 10-digit phone).
+3. Delete a contact.
+4. Search by name or city.
+5. Show a "favorite" star you can toggle.
+
+Data model: Contact entity (id Long auto-generated, name, phone, email, city, favorite boolean)
+
+API endpoints (one @RestController):
+- GET /api/contacts?q=   - GET /api/contacts/{id}   - POST /api/contacts   - PUT /api/contacts/{id}   - DELETE /api/contacts/{id}
+
+Folder structure:
+contact_book/
+  backend/ (Spring Boot Maven project: Contact.java, ContactRepository.java, ContactController.java, application.properties)
+  frontend/ (Angular app: contact-list component, contact-form component, contact.service.ts)
+  README.md
+
+Configure CORS for http://localhost:4200. Use spring.jpa.hibernate.ddl-auto=update so the table is created automatically, and explain this in the README.
+${COMMON}
+
+Stretch goal: add server-side pagination and sort by name.`},
+
+{t:"Feedback Wall",ico:"🗳️",lvl:"Beginner",fe:"HTMX + Pico CSS",be:"Flask (Python)",db:"PostgreSQL",
+ d:"Students post anonymous feedback and upvote others' posts.",
+ learn:"HTMX (dynamic pages without a JS framework), a real SQL database server.",
+ p:`Build a simple Feedback Wall.
+
+Tech stack:
+- Frontend: HTML with HTMX (from the CDN) and Pico CSS for clean default styling; no custom JavaScript
+- Backend: Flask with Jinja2 templates that return HTML fragments
+- Persistence: PostgreSQL (local, Docker: docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16, or a free Supabase/Neon database) using psycopg
+
+Features:
+1. A textarea to post feedback (max 280 characters) and an optional category (Course, Trainer, Lab, Other).
+2. New posts appear at the top without a page reload (hx-post + hx-swap).
+3. Each post has an "👍 Upvote" button that updates the count in place (hx-post returns just the updated count).
+4. Sort toggle: Newest / Most upvoted (hx-get).
+5. Show the relative time, e.g. "5 minutes ago".
+
+Data model: feedback(id SERIAL PRIMARY KEY, text TEXT NOT NULL, category TEXT, upvotes INT DEFAULT 0, created_at TIMESTAMPTZ DEFAULT now())
+
+Routes (return HTML, not JSON):
+- GET  /                     -> full page
+- POST /feedback             -> returns one <article> fragment
+- POST /feedback/<id>/upvote -> returns the updated count fragment
+- GET  /feedback?sort=top    -> returns the list fragment
+
+Folder structure:
+feedback_wall/
+  app.py, db.py, schema.sql, templates/index.html, templates/_post.html, templates/_list.html, .env.example (DATABASE_URL), requirements.txt, README.md
+
+In the README, explain how HTMX differs from a React SPA (the server sends HTML instead of JSON).
+${COMMON}
+
+Stretch goal: use an UPDATE ... RETURNING query and add a "most popular category" stat.`},
+
+{t:"Recipe Book",ico:"🍲",lvl:"Intermediate",fe:"Next.js + Tailwind CSS",be:"Next.js API routes",db:"MongoDB",
+ d:"Browse recipes, filter by tag and add your own.",
+ learn:"Full-stack framework (frontend and backend in one project), server-side rendering.",
+ p:`Build a simple Recipe Book.
+
+Tech stack:
+- Frontend: Next.js (App Router) with Tailwind CSS
+- Backend: Next.js Route Handlers (app/api/.../route.js) in the same project
+- Persistence: MongoDB (free Atlas cluster or local) using the official "mongodb" driver
+
+Features:
+1. Home page: grid of recipe cards (title, cooking time, veg/non-veg badge, tags). Render it on the server.
+2. Recipe detail page /recipes/[id] with ingredients list and steps.
+3. "Add recipe" page with a form: title, time in minutes, veg (yes/no), tags (comma-separated), ingredients (one per line), steps (one per line).
+4. Filter by tag and a "Veg only" toggle on the home page.
+5. Seed 5 sample Indian recipes on first run.
+
+Data model (document): { title, minutes, veg: boolean, tags: [String], ingredients: [String], steps: [String], createdAt }
+
+API:
+- GET  /api/recipes?tag=&veg=
+- POST /api/recipes
+- GET  /api/recipes/[id]
+
+Folder structure: standard create-next-app layout with lib/mongodb.js (reusable connection), app/page.jsx, app/recipes/[id]/page.jsx, app/add/page.jsx, app/api/recipes/route.js, .env.local.example (MONGODB_URI), README.md
+
+In the README, explain which code runs on the server vs in the browser.
+${COMMON}
+
+Stretch goal: add a "Surprise me" button that opens a random recipe using MongoDB's $sample.`},
+
+{t:"Course Notes Semantic Search",ico:"🧭",lvl:"Intermediate",fe:"Gradio",be:"Python (Gradio built in)",db:"ChromaDB (vector DB)",
+ d:"Search your class notes by meaning, not just keywords. A first step towards RAG.",
+ learn:"Embeddings, vector databases, semantic search (the retrieval step in RAG).",
+ p:`Build a simple Semantic Search app for course notes.
+
+Tech stack:
+- Frontend + backend: Gradio (Python) using gr.Blocks
+- Persistence: ChromaDB as a persistent local vector database (chromadb.PersistentClient(path="./chroma_db")), using Chroma's default embedding function (no API key needed)
+
+Features:
+1. Tab "Add notes": paste a paragraph of notes with a topic label (e.g. "Flask", "Redis") and click "Save". Split long text into chunks of about 300 characters before storing.
+2. Tab "Search": type a question (e.g. "which database is fastest for caching?") and show the top 3 matching chunks with their topic and similarity distance.
+3. Tab "All notes": show how many chunks are stored and a table of topics.
+4. Seed the database with 8 short notes about the technologies from the Full-Stack Layers Guide on first run.
+
+Folder structure:
+notes_search/
+  app.py (Gradio UI), vector_store.py (all ChromaDB code: add_note, search, count), seed_notes.py, requirements.txt, README.md
+
+In the README, explain in simple words: what an embedding is, why "fast cache" can find a note about Redis even though the words differ, and how adding an LLM after the search step would turn this into a RAG chatbot.
+${COMMON}
+
+Stretch goal: add an optional step that sends the top 3 chunks plus the question to an LLM API (read the key from an environment variable) and shows a generated answer.`}
+];
+
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const uniq = k => [...new Set(P.map(x=>x[k]))];
+const sel = {fe:null, be:null, db:null};
+
+document.getElementById("overview").insertAdjacentHTML("beforeend",
+  P.map((x,i)=>`<tr><td>${i+1}</td><td>${x.ico} ${x.t}</td><td><span class="pill fe">${x.fe}</span></td><td><span class="pill be">${x.be}</span></td><td><span class="pill db">${x.db}</span></td><td>${x.lvl}</td></tr>`).join(""));
+
+function chips(id,k){
+  const el=document.getElementById(id);
+  el.insertAdjacentHTML("beforeend",
+    `<button class="chip on" data-k="${k}" data-v="">All</button>`+
+    uniq(k).map(v=>`<button class="chip" data-k="${k}" data-v="${esc(v)}">${esc(v)}</button>`).join(""));
+}
+chips("fFe","fe"); chips("fBe","be"); chips("fDb","db");
+
+function draw(){
+  const shown = P.map((x,i)=>({x,i})).filter(({x})=>(!sel.fe||x.fe===sel.fe)&&(!sel.be||x.be===sel.be)&&(!sel.db||x.db===sel.db));
+  document.getElementById("count").textContent = "Showing "+shown.length+" of "+P.length+" projects";
+  document.getElementById("list").innerHTML = shown.map(({x,i})=>`
+    <article class="p">
+      <div class="p-h">
+        <div class="num">${x.ico}</div>
+        <div>
+          <h2>${i+1}. ${x.t}<span class="lvl">${x.lvl}</span></h2>
+          <div class="desc">${x.d}</div>
+          <div class="stack"><span class="pill fe">Frontend: ${x.fe}</span><span class="pill be">Backend: ${x.be}</span><span class="pill db">Persistence: ${x.db}</span></div>
+        </div>
+      </div>
+      <div class="learn"><b>Students learn:</b> ${x.learn}</div>
+      <details class="pr">
+        <summary><span class="tg">View full prompt</span><button class="btn copy" data-i="${i}">Copy prompt</button></summary>
+        <pre>${esc(x.p.trim())}</pre>
+      </details>
+    </article>`).join("");
+}
+draw();
+
+document.addEventListener("click",e=>{
+  const c=e.target.closest(".chip");
+  if(c){
+    sel[c.dataset.k]=c.dataset.v||null;
+    c.parentElement.querySelectorAll(".chip").forEach(b=>b.classList.toggle("on",b===c));
+    draw(); return;
+  }
+  const cp=e.target.closest(".copy");
+  if(cp){
+    e.preventDefault();
+    const txt=P[+cp.dataset.i].p.trim();
+    const ok=()=>{cp.textContent="Copied ✓";setTimeout(()=>cp.textContent="Copy prompt",1400);};
+    if(navigator.clipboard) navigator.clipboard.writeText(txt).then(ok).catch(()=>{});
+  }
+});
+
+const root=document.documentElement;
+try{const th=localStorage.getItem("fsl-theme"); if(th) root.dataset.theme=th;}catch(e){}
+document.getElementById("themeBtn").addEventListener("click",()=>{
+  const dark = root.dataset.theme ? root.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  try{localStorage.setItem("fsl-theme",root.dataset.theme);}catch(e){}
+});
+</script>
+</body>
+</html>
