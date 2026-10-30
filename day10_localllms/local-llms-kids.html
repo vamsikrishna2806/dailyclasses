@@ -1,0 +1,1251 @@
+<title>AI on Your Laptop</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a comic-book field trip. Sticker cards with thick outlines and offset shadows, a laptop robot guide, sky-blue paper by day and night sky in dark mode. */
+:root{
+  --bg:#EAF5FF; --surface:#FFFFFF; --ink:#1D2547; --muted:#4F5A7D; --line:#C3D3EA;
+  --edge:#1D2547; --shadow:#1D2547;
+  --accent:#2E7BE0; --accent-soft:#D8EAFF; --hit:#E8573A; --hit-soft:#FFE1D8;
+  --sun:#FFC83D; --sun-soft:#FFF1C7; --grass:#23995F; --grass-soft:#D6F3E3;
+  --grape:#7A5AD8; --grape-soft:#ECE5FF; --berry:#E2468B; --berry-soft:#FFE0EE;
+  --code-bg:#1D2547; --code-ink:#F2F5FF; --code-k:#FFD45C; --code-s:#FF9FC4; --code-c:#9EAAD0;
+  --warn:#C2412D; --warn-soft:#FFE4DC;
+  --f-display:"Fredoka", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121A36; --surface:#1C2650; --ink:#F2F5FF; --muted:#B3BCDD; --line:#34417C;
+    --edge:#6573B8; --shadow:#080C1F;
+    --accent:#72B2FF; --accent-soft:#22356B; --hit:#FF8D6E; --hit-soft:#47282A;
+    --sun:#FFD45C; --sun-soft:#3E3720; --grass:#5DD39E; --grass-soft:#1C3D33;
+    --grape:#AE96FF; --grape-soft:#2E2762; --berry:#FF7AB6; --berry-soft:#45213A;
+    --code-bg:#0B1130; --code-ink:#EEF2FF; --code-k:#FFD45C; --code-s:#FF9FC4; --code-c:#8E9AC4;
+    --warn:#FF9C85; --warn-soft:#452621; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121A36; --surface:#1C2650; --ink:#F2F5FF; --muted:#B3BCDD; --line:#34417C;
+  --edge:#6573B8; --shadow:#080C1F;
+  --accent:#72B2FF; --accent-soft:#22356B; --hit:#FF8D6E; --hit-soft:#47282A;
+  --sun:#FFD45C; --sun-soft:#3E3720; --grass:#5DD39E; --grass-soft:#1C3D33;
+  --grape:#AE96FF; --grape-soft:#2E2762; --berry:#FF7AB6; --berry-soft:#45213A;
+  --code-bg:#0B1130; --code-ink:#EEF2FF; --code-k:#FFD45C; --code-s:#FF9FC4; --code-c:#8E9AC4;
+  --warn:#FF9C85; --warn-soft:#452621; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17.5px;line-height:1.7;overflow-x:hidden}
+a{color:var(--accent);font-weight:700}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,li:focus-visible{outline:3px solid var(--berry);outline-offset:3px;border-radius:8px}
+
+/* Floating sky shapes */
+.sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.sky span{position:absolute;display:block;opacity:.55;animation:drift 18s ease-in-out infinite}
+.sky span:nth-child(1){left:4%;top:12%;width:34px;height:34px;border-radius:50%;background:var(--sun)}
+.sky span:nth-child(2){left:88%;top:18%;width:22px;height:22px;background:var(--berry);border-radius:6px;animation-duration:22s;animation-delay:-4s}
+.sky span:nth-child(3){left:76%;top:62%;width:40px;height:40px;border-radius:50%;border:5px solid var(--grape);animation-duration:26s}
+.sky span:nth-child(4){left:10%;top:72%;width:26px;height:26px;background:var(--grass);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);animation-duration:20s;animation-delay:-8s}
+.sky span:nth-child(5){left:50%;top:88%;width:18px;height:18px;border-radius:50%;background:var(--accent);animation-duration:16s}
+.sky span:nth-child(6){left:62%;top:6%;width:30px;height:30px;background:var(--sun);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);animation-duration:24s;animation-delay:-12s}
+.sky span:nth-child(7){left:30%;top:40%;width:14px;height:14px;border-radius:50%;background:var(--berry);animation-duration:19s;animation-delay:-6s}
+.sky span:nth-child(8){left:94%;top:84%;width:28px;height:28px;border-radius:8px;border:4px solid var(--accent);animation-duration:28s}
+@keyframes drift{0%,100%{transform:translate(0,0) rotate(0)}33%{transform:translate(18px,-26px) rotate(40deg)}66%{transform:translate(-14px,16px) rotate(-30deg)}}
+
+/* Reading progress rocket bar */
+.progress{position:fixed;left:0;right:0;top:env(safe-area-inset-top, 0px);height:10px;background:var(--accent-soft);z-index:20;border-bottom:2px solid var(--edge)}
+.progress i{position:absolute;left:0;top:0;bottom:0;width:0;background:repeating-linear-gradient(45deg,var(--sun) 0 12px,var(--berry) 12px 24px);transition:width .15s linear}
+.progress i::after{content:"";position:absolute;right:-12px;top:-7px;width:20px;height:20px;border-radius:50%;background:var(--accent);border:3px solid var(--edge);box-shadow:inset -4px -3px 0 rgba(0,0,0,.18)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:21;background:var(--accent-soft)}
+
+.wrap{position:relative;z-index:1;display:grid;grid-template-columns:260px minmax(0,1fr);gap:44px;max-width:1200px;margin:0 auto;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:44px 90px}
+@media (max-width:960px){.wrap{grid-template-columns:minmax(0,1fr);gap:24px;padding-block:30px 60px}}
+
+/* Chapter map */
+.toc{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 26px);align-self:start;max-height:calc(100vh - 50px);overflow:auto;font-size:15px;padding:4px 8px 8px 4px}
+.toc details{border:3px solid var(--edge);border-radius:18px;background:var(--surface);padding:12px 14px;box-shadow:5px 5px 0 var(--shadow)}
+.toc summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:17px;list-style:none}
+.toc summary::-webkit-details-marker{display:none}
+.toc ol{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:3px}
+.toc a{display:grid;grid-template-columns:30px 1fr 18px;align-items:center;text-decoration:none;color:var(--ink);font-weight:600;padding:4px 6px;border-radius:10px;transition:transform .15s, background .15s}
+.toc a:hover{background:var(--sun-soft);transform:translateX(4px)}
+.toc a span{font-family:var(--f-display);font-size:13px;color:var(--surface);background:var(--accent);width:24px;height:24px;border-radius:50%;display:grid;place-items:center}
+.toc a::after{content:"";width:14px;height:14px;border-radius:50%;border:2px solid var(--line)}
+.toc a.seen::after{background:var(--grass);border-color:var(--grass);animation:pop .4s}
+.toc .xp{margin-top:10px;font-family:var(--f-display);font-size:14px;color:var(--muted)}
+.toc .xp b{color:var(--grass)}
+@media (max-width:960px){.toc{position:static;max-height:none}}
+
+main{min-width:0;max-width:820px}
+
+/* Hero */
+header.hero{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:20px;align-items:center;padding-bottom:30px;margin-bottom:8px;border-bottom:3px dashed var(--line)}
+@media (max-width:700px){header.hero{grid-template-columns:minmax(0,1fr)}.mascot{justify-self:center}}
+.eyebrow{display:inline-block;font-family:var(--f-display);font-weight:500;font-size:14px;letter-spacing:.04em;color:var(--ink);background:var(--sun);border:2.5px solid var(--edge);border-radius:999px;padding:3px 12px;box-shadow:3px 3px 0 var(--shadow);transform:rotate(-2deg)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2.4rem,6vw,4rem);line-height:1.02;margin:16px 0 14px;text-wrap:balance}
+h1 em{font-style:normal;color:var(--berry);display:inline-block;animation:bounce 2.4s ease-in-out infinite}
+.lede{font-size:1.15rem;color:var(--muted);max-width:60ch;margin:0}
+.formula{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--f-display);font-size:15px}
+.formula b{background:var(--surface);border:2.5px solid var(--edge);padding:5px 12px;border-radius:12px;font-weight:500;box-shadow:3px 3px 0 var(--shadow);animation:hop 3s ease-in-out infinite}
+.formula b:nth-of-type(2){animation-delay:.3s;background:var(--hit-soft)}
+.formula b:nth-of-type(3){animation-delay:.6s;background:var(--accent-soft)}
+.formula b:nth-of-type(4){animation-delay:.9s;background:var(--grass-soft)}
+.formula b.r{color:var(--hit)} .formula b.a{color:var(--accent)}
+
+/* Mascot */
+.mascot{position:relative;width:230px;max-width:100%;cursor:pointer;border:0;background:none;padding:0;color:inherit;font:inherit}
+.mascot svg{width:100%;height:auto;display:block}
+.mascot .bot{animation:float 3.2s ease-in-out infinite;transform-origin:center}
+.mascot .arm{transform-box:fill-box;transform-origin:10% 90%;animation:wave 1.6s ease-in-out infinite}
+.mascot .eye{transform-box:fill-box;transform-origin:center;animation:blink 4s infinite}
+.mascot .bulb{animation:glow 1.4s ease-in-out infinite}
+.mascot .fb{transform-box:fill-box;animation:float 4s ease-in-out infinite}
+.mascot .fb.b2{animation-delay:-1.3s}.mascot .fb.b3{animation-delay:-2.6s}
+.mascot.jump .bot{animation:jump .6s ease-out}
+.say{position:absolute;left:-30px;top:-14px;max-width:190px;background:var(--surface);border:2.5px solid var(--edge);border-radius:16px;padding:6px 10px;font-family:var(--f-display);font-size:13.5px;line-height:1.3;box-shadow:3px 3px 0 var(--shadow);text-align:left}
+.say::after{content:"";position:absolute;right:26px;bottom:-10px;width:14px;height:14px;background:var(--surface);border-right:2.5px solid var(--edge);border-bottom:2.5px solid var(--edge);transform:rotate(45deg)}
+@media (max-width:700px){.say{left:auto;right:-10px}}
+
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-28deg)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes jump{0%{transform:translateY(0)}40%{transform:translateY(-30px) rotate(-6deg)}100%{transform:translateY(0)}}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+@keyframes hop{0%,80%,100%{transform:translateY(0)}88%{transform:translateY(-6px)}}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes popIn{0%{transform:translateY(14px) scale(.97) rotate(-.6deg)}100%{transform:none}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* Sections */
+section.level{padding-top:48px}
+.lvl{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:600;font-size:14px;color:var(--surface);background:var(--grape);border:2.5px solid var(--edge);border-radius:999px;padding:2px 14px;box-shadow:3px 3px 0 var(--shadow)}
+section.level:nth-of-type(4n+2) .lvl{background:var(--accent)}
+section.level:nth-of-type(4n+3) .lvl{background:var(--grass)}
+section.level:nth-of-type(4n) .lvl{background:var(--berry)}
+.lvl.pop{animation:pop .5s}
+h2{font-family:var(--f-display);font-weight:700;font-size:clamp(1.8rem,4vw,2.5rem);line-height:1.12;margin:10px 0 14px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:1.35rem;margin:32px 0 8px;text-wrap:balance}
+h3::before{content:"";display:inline-block;width:12px;height:12px;border-radius:4px;background:var(--sun);border:2px solid var(--edge);margin-right:10px;transform:rotate(45deg) translateY(-2px)}
+h4{font-family:var(--f-display);font-weight:600;font-size:1.1rem;margin:20px 0 6px}
+p,li{max-width:66ch}
+ul,ol{padding-left:1.3em}
+li{margin:5px 0}
+li::marker{color:var(--berry);font-weight:700}
+strong{font-weight:800}
+code{font-family:var(--f-mono);font-size:.84em;background:var(--sun-soft);color:var(--ink);padding:1px 6px;border-radius:6px;border:1px solid var(--line)}
+
+/* Kid explainer bubble */
+.kid{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:start;margin:14px 0 18px}
+.kid svg{width:64px;height:64px;animation:float 3s ease-in-out infinite}
+.kid .bub{position:relative;background:var(--sun-soft);border:3px solid var(--edge);border-radius:18px;padding:10px 16px;box-shadow:4px 4px 0 var(--shadow)}
+.kid .bub::before{content:"";position:absolute;left:-11px;top:18px;width:16px;height:16px;background:var(--sun-soft);border-left:3px solid var(--edge);border-bottom:3px solid var(--edge);transform:rotate(45deg)}
+.kid .bub b{display:block;font-family:var(--f-display);font-weight:600;color:var(--berry);font-size:14px;letter-spacing:.03em}
+.kid .bub p{margin:2px 0 0}
+
+/* Cards */
+.note,.tbl,.flow,.demo,.game,pre,details.q{border:3px solid var(--edge);box-shadow:5px 5px 0 var(--shadow)}
+.note{background:var(--surface);border-radius:18px;padding:14px 18px;margin:20px 0}
+.note.key{background:var(--grass-soft)}
+.note.warn{background:var(--warn-soft)}
+.note .tag{font-family:var(--f-display);font-size:13px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:2px;color:var(--grass)}
+.note.warn .tag{color:var(--warn)}
+.note p{margin:4px 0}
+.note:hover{animation:wiggle .5s}
+.reveal.pop{animation:popIn .55s cubic-bezier(.3,1.5,.6,1)}
+
+.tbl{overflow-x:auto;margin:18px 0;border-radius:16px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:560px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:2px dashed var(--line)}
+th{font-family:var(--f-display);font-size:14px;font-weight:600;color:var(--ink);background:var(--accent-soft)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:800;color:var(--grape)}
+tbody tr,table tr{transition:background .15s}
+table tr:hover td{background:var(--sun-soft)}
+
+pre{position:relative;background:var(--code-bg);color:var(--code-ink);border-radius:16px;padding:18px 18px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:13.5px;line-height:1.6;margin:16px 0}
+pre code{background:none;border:0;padding:0;font-size:inherit;color:inherit}
+pre .c{color:var(--code-c)} pre .k{color:var(--code-k)} pre .s{color:var(--code-s)}
+.copy{position:absolute;top:8px;right:8px;font:600 12px var(--f-display);background:var(--sun);color:var(--ink);border:2px solid var(--edge);border-radius:999px;padding:2px 10px;cursor:pointer}
+.copy:hover{transform:scale(1.08)}
+
+/* Pipeline */
+.flow{margin:20px 0;border-radius:18px;background:var(--surface);padding:18px 16px 16px;overflow-x:auto}
+.flow h5{margin:0 0 14px;font-family:var(--f-display);font-size:15px;font-weight:600}
+.steps{position:relative;display:flex;align-items:stretch;gap:6px;min-width:660px;padding-top:12px}
+.steps::before{content:"";position:absolute;top:-4px;left:0;width:16px;height:16px;border-radius:50%;background:var(--berry);border:2.5px solid var(--edge);animation:travel 6s ease-in-out infinite}
+@keyframes travel{0%{left:0}90%,100%{left:calc(100% - 16px)}}
+.step{flex:1;border:2.5px solid var(--edge);border-radius:12px;padding:8px 10px;font-size:13.5px;line-height:1.35;background:var(--bg);animation:litup 6s ease-in-out infinite;animation-delay:calc(var(--i, 0) * .9s)}
+@keyframes litup{0%,14%{transform:translateY(-5px);background:var(--sun-soft)}22%,100%{transform:none}}
+.step b{display:block;font-family:var(--f-display);font-weight:600;font-size:15px;margin-bottom:2px}
+.step.r{background:var(--hit-soft)} .step.g{background:var(--grass-soft)}
+.arrow{align-self:center;color:var(--berry);font-weight:800;animation:nudge 1s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+
+.space{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:center;margin:16px 0}
+.space svg{width:100%;height:auto;border:3px solid var(--edge);border-radius:16px;background:var(--surface);box-shadow:5px 5px 0 var(--shadow)}
+.space svg polygon{animation:float 2.5s ease-in-out infinite;transform-box:fill-box}
+.space svg circle{transform-box:fill-box;transform-origin:center;animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@media (max-width:640px){.space{grid-template-columns:minmax(0,1fr)}}
+
+/* Demos and games */
+.demo,.game{border-radius:20px;background:var(--surface);padding:18px;margin:24px 0}
+.game{background:var(--grape-soft)}
+.demo .tag,.game .tag{display:inline-block;font-family:var(--f-display);font-size:13px;font-weight:600;color:var(--surface);background:var(--berry);border:2px solid var(--edge);border-radius:999px;padding:1px 12px;transform:rotate(-2deg)}
+.demo h4,.game h4{margin:8px 0 10px;font-family:var(--f-display);font-size:1.3rem}
+.game p.how{margin:0 0 12px;color:var(--muted);font-size:15.5px}
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-bottom:12px;font-size:15px;font-weight:700}
+.controls label{display:flex;align-items:center;gap:8px}
+.controls output{font-family:var(--f-display);font-variant-numeric:tabular-nums;min-width:3ch;color:var(--berry)}
+input[type=range]{accent-color:var(--berry)}
+input[type=text]{flex:1;min-width:0;font:inherit;padding:9px 14px;border:3px solid var(--edge);border-radius:14px;background:var(--bg);color:var(--ink)}
+select{font:inherit;padding:7px 10px;border:3px solid var(--edge);border-radius:12px;background:var(--bg);color:var(--ink);max-width:100%}
+.qrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.qrow input{flex:1 1 260px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip,.btn{font:600 14px var(--f-display);border:2.5px solid var(--edge);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--shadow);transition:transform .12s, box-shadow .12s}
+.chip:hover,.btn:hover{transform:translate(-1px,-2px);box-shadow:4px 5px 0 var(--shadow)}
+.chip:active,.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+.btn.main{background:var(--sun)}
+.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chunks{display:grid;gap:8px;font-family:var(--f-mono);font-size:12.5px;line-height:1.5}
+.chunk{border:2.5px solid var(--edge);border-radius:12px;padding:7px 9px;background:var(--bg);overflow-wrap:anywhere;animation:popIn .45s cubic-bezier(.3,1.5,.6,1) both}
+.chunk:nth-child(2){animation-delay:.06s}.chunk:nth-child(3){animation-delay:.12s}.chunk:nth-child(4){animation-delay:.18s}.chunk:nth-child(5){animation-delay:.24s}.chunk:nth-child(n+6){animation-delay:.3s}
+.chunk .n{display:inline-grid;place-items:center;min-width:26px;height:22px;border-radius:999px;background:var(--accent);color:var(--surface);font-family:var(--f-display);font-weight:600;margin-right:6px}
+.chunk mark{background:var(--berry-soft);color:var(--berry);border-radius:3px;font-weight:600}
+.hits{display:grid;gap:8px}
+.hitrow{display:grid;grid-template-columns:60px minmax(0,1fr);gap:10px;align-items:start;border:2.5px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--bg);font-size:15px;animation:popIn .4s both}
+.hitrow.top{border-color:var(--edge);background:var(--hit-soft)}
+.score{font-family:var(--f-display);font-variant-numeric:tabular-nums;font-size:14px;font-weight:600}
+.bar{height:8px;border-radius:4px;background:var(--line);margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--hit);border-radius:4px;transform-origin:left;animation:grow .7s ease-out}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.src{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.prompt-out{white-space:pre-wrap;font-family:var(--f-mono);font-size:12.5px;background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:12px;margin-top:12px;max-height:300px;overflow:auto;border:3px solid var(--edge)}
+
+/* Pipeline player */
+.track{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:14px 0 8px}
+.stn{text-align:center;font-family:var(--f-display);font-size:12.5px;font-weight:600;padding:8px 2px;border:2.5px solid var(--edge);border-radius:12px;background:var(--surface);transition:background .3s, transform .3s}
+.stn.on{background:var(--sun);transform:translateY(-6px)}
+.stn.done{background:var(--grass-soft)}
+.runner{height:48px;position:relative;margin-top:4px}
+.runner svg{position:absolute;top:0;width:46px;height:46px;transition:left .6s cubic-bezier(.4,1.6,.5,1);left:0}
+.caption{min-height:86px;background:var(--surface);border:3px solid var(--edge);border-radius:14px;padding:10px 14px;margin:6px 0 12px}
+.caption b{font-family:var(--f-display);font-weight:600;color:var(--grape)}
+.caption code{white-space:normal}
+@media (max-width:560px){.track{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Similarity game */
+.simgrid{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:16px;align-items:center}
+@media (max-width:640px){.simgrid{grid-template-columns:minmax(0,1fr)}}
+.simgrid label{display:block;font-weight:700;font-size:14.5px;margin:6px 0 2px}
+.simgrid select{width:100%}
+.simsvg{width:100%;max-width:220px;height:auto;justify-self:center}
+.simsvg line{transition:transform .7s cubic-bezier(.3,1.4,.5,1);transform-origin:20px 180px}
+.meter{font-family:var(--f-display);font-size:1.4rem;font-weight:700;margin-top:8px}
+.meter small{display:block;font-size:14px;font-weight:500;color:var(--muted)}
+
+/* Closed vs open book */
+.versus{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px}
+@media (max-width:640px){.versus{grid-template-columns:minmax(0,1fr)}}
+.side{border:3px solid var(--edge);border-radius:16px;padding:12px 14px;background:var(--surface);min-height:120px}
+.side h5{margin:0 0 6px;font-family:var(--f-display);font-size:16px}
+.side.bad{background:var(--warn-soft)} .side.good{background:var(--grass-soft)}
+.side .typing::after{content:"▌";animation:glow .8s infinite;margin-left:2px}
+.side.shake{animation:shake .4s 2}
+
+/* Order game */
+.pool,.slots{display:flex;flex-wrap:wrap;gap:8px;min-height:46px;margin:8px 0}
+.slots{border:3px dashed var(--edge);border-radius:14px;padding:8px;background:var(--surface)}
+.slots .chip{background:var(--grass-soft)}
+.slots .chip.wrong{background:var(--warn-soft);animation:shake .4s}
+.msg{font-family:var(--f-display);font-weight:600;min-height:1.6em}
+.msg.win{color:var(--grass)} .msg.lose{color:var(--warn)}
+
+/* MC quiz */
+.mcq{display:grid;gap:10px}
+.mcq .qtext{font-family:var(--f-display);font-size:1.15rem;font-weight:600}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;font:600 15.5px var(--f-body);border:2.5px solid var(--edge);background:var(--surface);color:var(--ink);border-radius:14px;padding:9px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--shadow);transition:transform .12s}
+.opt:hover{transform:translateX(4px)}
+.opt.right{background:var(--grass-soft);animation:pop .4s}
+.opt.no{background:var(--warn-soft);animation:shake .4s}
+.scorebox{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-family:var(--f-display);font-weight:600}
+.stars{color:var(--sun);letter-spacing:2px;font-size:1.2rem;-webkit-text-stroke:1px var(--edge)}
+
+/* Confetti */
+.confetti{position:fixed;width:10px;height:14px;border-radius:2px;pointer-events:none;z-index:30;animation:boom 1.1s ease-out forwards}
+@keyframes boom{0%{transform:translate(0,0) rotate(0)}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
+
+/* Glossary + quiz + checklist */
+dl.gloss{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:8px 18px;font-size:15.5px;background:var(--surface);border:3px solid var(--edge);border-radius:18px;padding:16px;box-shadow:5px 5px 0 var(--shadow)}
+dl.gloss dt{font-weight:800;font-family:var(--f-display);color:var(--accent);padding-top:1px}
+dl.gloss dd{margin:0;color:var(--muted)}
+@media (max-width:560px){dl.gloss{grid-template-columns:minmax(0,1fr)}dl.gloss dd{margin-bottom:8px}}
+details.q{border-radius:14px;background:var(--surface);padding:10px 14px;margin:10px 0}
+details.q summary{cursor:pointer;font-weight:700}
+details.q[open]{background:var(--grass-soft)}
+details.q p{margin:8px 0 2px;color:var(--ink)}
+.check{list-style:none;padding:0}
+.check li{padding:4px 6px 4px 36px;position:relative;cursor:pointer;border-radius:10px;transition:background .15s}
+.check li:hover{background:var(--sun-soft)}
+.check li::before{content:"";position:absolute;left:6px;top:8px;width:20px;height:20px;border:3px solid var(--edge);border-radius:6px;background:var(--surface)}
+.check li.done{text-decoration:line-through;color:var(--muted)}
+.check li.done::before{background:var(--grass);animation:pop .35s}
+.check li.done::after{content:"";position:absolute;left:13px;top:11px;width:6px;height:11px;border:solid var(--surface);border-width:0 3px 3px 0;transform:rotate(45deg)}
+.checkmeter{font-family:var(--f-display);font-weight:600;color:var(--grass)}
+footer{margin-top:56px;padding-top:18px;border-top:3px dashed var(--line);color:var(--muted);font-size:14.5px}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+</style>
+<style>
+/* Extra pieces for the local LLM page: laptop hero, cloud-vs-home lanes, flip cards, hardware checker, model cards, OS tabs, terminal. */
+.hero-art{position:relative;width:250px;max-width:100%;justify-self:center}
+.hero-art svg{width:100%;height:auto;display:block}
+.hero-art .cloud{animation:float 4s ease-in-out infinite;transform-box:fill-box}
+.hero-art .packet{animation:fly 3.2s ease-in-out infinite;transform-box:fill-box}
+@keyframes fly{0%{transform:translate(0,0) scale(1)}60%{transform:translate(78px,96px) scale(.8)}61%,100%{transform:translate(78px,96px) scale(0)}}
+.hero-art .screenface{animation:blink 4s infinite;transform-box:fill-box;transform-origin:center}
+.hero-art .wifi{animation:glow 1.6s ease-in-out infinite}
+
+.lanes{display:grid;gap:12px;margin-top:10px}
+.lane{display:grid;grid-template-columns:110px minmax(0,1fr) 110px;align-items:center;gap:8px;border:3px solid var(--edge);border-radius:16px;padding:10px 12px;background:var(--surface)}
+.lane .end{font-family:var(--f-display);font-weight:600;font-size:14px;text-align:center;border:2.5px solid var(--edge);border-radius:12px;padding:6px 4px;background:var(--bg)}
+.lane .road{position:relative;height:16px;border-bottom:3px dashed var(--line)}
+.lane .road i{position:absolute;top:0;left:0;width:16px;height:16px;border-radius:50%;background:var(--accent);border:2.5px solid var(--edge);animation:roll 2.4s ease-in-out infinite alternate}
+.lane.local .road i{background:var(--grass);animation-duration:.9s}
+@keyframes roll{from{left:0}to{left:calc(100% - 16px)}}
+.lane.broken{background:var(--warn-soft)}
+.lane.broken .road{border-bottom-color:var(--warn)}
+.lane.broken .road i{animation:shake .4s infinite;left:45%;background:var(--warn)}
+.lane .why{grid-column:1 / -1;font-size:14.5px;color:var(--muted)}
+@media (max-width:560px){.lane{grid-template-columns:80px minmax(0,1fr) 80px}.lane .end{font-size:12.5px}}
+
+.flips{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin:14px 0}
+.flip{perspective:800px;border:0;padding:0;background:none;cursor:pointer;min-height:150px;font:inherit;color:inherit;text-align:left}
+.flip .in{position:relative;display:block;width:100%;height:100%;min-height:150px;transition:transform .6s cubic-bezier(.3,1.3,.5,1);transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .f,.flip .b{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:4px;border:3px solid var(--edge);border-radius:16px;padding:12px 14px;box-shadow:4px 4px 0 var(--shadow);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flip .f{background:var(--surface)}
+.flip .f b{font-family:var(--f-display);font-size:1.15rem;font-weight:600}
+.flip .f small{color:var(--muted);font-size:13px}
+.flip .b{transform:rotateY(180deg);font-size:14.5px;line-height:1.45}
+.flip.pro .b{background:var(--grass-soft)} .flip.con .b{background:var(--warn-soft)}
+.flip.pro .f b{color:var(--grass)} .flip.con .f b{color:var(--warn)}
+.flip .ico{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--edge);display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:18px;line-height:1}
+.flip.pro .ico{background:var(--grass);color:var(--surface)} .flip.con .ico{background:var(--hit);color:var(--surface)}
+
+.scen{border:3px solid var(--edge);border-radius:16px;background:var(--surface);padding:14px 16px;min-height:96px;font-size:1.05rem;font-weight:700}
+.scen small{display:block;font-weight:400;color:var(--muted);margin-top:4px;font-size:14.5px}
+
+.hw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px}
+@media (max-width:700px){.hw{grid-template-columns:minmax(0,1fr)}}
+.hw label{display:block;font-weight:800;font-size:14.5px;margin:8px 0 4px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg .chip[aria-pressed="true"]{background:var(--sun)}
+.fits{display:grid;gap:7px}
+.fit{display:grid;grid-template-columns:62px minmax(0,1fr) 92px;gap:8px;align-items:center;font-size:14px}
+.fit b{font-family:var(--f-display);font-weight:600}
+.fit .mbar{height:14px;border:2px solid var(--edge);border-radius:8px;background:var(--bg);overflow:hidden}
+.fit .mbar i{display:block;height:100%;border-radius:6px;transform-origin:left;animation:grow .7s ease-out}
+.fit .tag2{font-family:var(--f-display);font-size:12.5px;font-weight:600;text-align:center;border:2px solid var(--edge);border-radius:999px;padding:1px 4px}
+.fit.fast .mbar i{background:var(--grass)} .fit.fast .tag2{background:var(--grass-soft)}
+.fit.slow .mbar i{background:var(--sun)} .fit.slow .tag2{background:var(--sun-soft)}
+.fit.no .mbar i{background:var(--hit)} .fit.no .tag2{background:var(--hit-soft)}
+.hwpick{margin-top:12px;border:3px dashed var(--edge);border-radius:14px;padding:10px 12px;background:var(--surface);font-size:15px}
+
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:12px}
+.mcard{border:3px solid var(--edge);border-radius:16px;background:var(--surface);padding:12px 14px;box-shadow:4px 4px 0 var(--shadow);display:flex;flex-direction:column;gap:6px;animation:popIn .45s cubic-bezier(.3,1.5,.6,1) both;min-width:0}
+.mcard h5{margin:0;font-family:var(--f-display);font-size:1.15rem;font-weight:600}
+.mcard .by{font-size:13px;color:var(--muted)}
+.mcard .sizes{display:flex;flex-wrap:wrap;gap:4px}
+.mcard .sizes span{font-family:var(--f-display);font-size:12px;font-weight:600;background:var(--accent-soft);border:2px solid var(--edge);border-radius:999px;padding:0 8px}
+.mcard p{margin:0;font-size:14.5px}
+.mcard .cmd{display:flex;gap:6px;align-items:center;background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:5px 6px 5px 10px;font-family:var(--f-mono);font-size:12.5px;margin-top:auto;min-width:0}
+.mcard .cmd code{background:none;border:0;color:inherit;padding:0;overflow-x:auto;white-space:nowrap;flex:1;min-width:0}
+.mcard .cmd button{font:600 11.5px var(--f-display);background:var(--sun);color:var(--ink);border:2px solid var(--edge);border-radius:999px;padding:1px 8px;cursor:pointer;flex:none}
+.mcard .lic{font-size:12px;color:var(--muted)}
+
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.tabs .chip[aria-selected="true"]{background:var(--sun)}
+.term{border:3px solid var(--edge);border-radius:16px;background:var(--code-bg);color:var(--code-ink);box-shadow:5px 5px 0 var(--shadow);overflow:hidden;margin:12px 0}
+.term .top{display:flex;gap:6px;align-items:center;padding:8px 12px;border-bottom:2px solid var(--edge);font-family:var(--f-display);font-size:13px;color:var(--code-c)}
+.term .top span{width:12px;height:12px;border-radius:50%;background:var(--hit);display:inline-block}
+.term .top span:nth-child(2){background:var(--sun)} .term .top span:nth-child(3){background:var(--grass)}
+.term .top em{font-style:normal;margin-left:6px}
+.term .screen{font-family:var(--f-mono);font-size:13px;line-height:1.6;padding:12px 14px;min-height:190px;white-space:pre-wrap;overflow-x:auto}
+.term .screen .p{color:var(--code-k)} .term .screen .o{color:var(--code-c)} .term .screen .ok{color:var(--grass)}
+.term .screen .cur::after{content:"▌";animation:glow .8s infinite}
+.steps-list{counter-reset:s;list-style:none;padding:0;display:grid;gap:10px}
+.steps-list li{counter-increment:s;position:relative;padding:10px 14px 10px 56px;border:3px solid var(--edge);border-radius:14px;background:var(--surface);max-width:none}
+.steps-list li::before{content:counter(s);position:absolute;left:12px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--surface);border:2.5px solid var(--edge);display:grid;place-items:center;font-family:var(--f-display);font-weight:700}
+.toolcard{border:3px solid var(--edge);border-radius:20px;background:var(--surface);padding:16px 18px;box-shadow:5px 5px 0 var(--shadow);margin:12px 0 20px}
+.toolcard.pop{animation:popIn .5s cubic-bezier(.3,1.5,.6,1)}
+.tc-head{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.tc-head h4{margin:0;font-family:var(--f-display);font-size:1.5rem}
+.tc-kind{font-family:var(--f-display);font-size:13px;font-weight:600;background:var(--grass-soft);border:2px solid var(--edge);border-radius:999px;padding:1px 10px}
+.tc-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.tc-cols h5{font-family:var(--f-display);font-size:1.05rem;margin:4px 0 8px}
+.tc-cols .steps-list li{font-size:15px;padding-block:8px;overflow-wrap:anywhere}
+@media (max-width:760px){.tc-cols{grid-template-columns:minmax(0,1fr)}}
+.catbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.catbar input{flex:1 1 260px}
+.tbl.cat{max-height:640px;overflow:auto}
+.tbl.cat table{min-width:920px}
+.tbl.cat thead th{position:sticky;top:0;z-index:1}
+.tbl.cat td:first-child{color:var(--ink);font-weight:400;min-width:180px}
+.tbl.cat td:first-child b{font-family:var(--f-mono);font-size:14px;color:var(--grape)}
+.cdesc{font-size:13.5px;color:var(--muted);line-height:1.4}
+.csizes,.ctags{display:flex;flex-wrap:wrap;gap:4px}
+.sz{font:600 12px var(--f-display);border:2px solid var(--edge);background:var(--bg);color:var(--ink);border-radius:999px;padding:0 8px;cursor:pointer}
+.sz.on{background:var(--sun)}
+.pill{font-size:11.5px;font-weight:700;background:var(--accent-soft);border-radius:999px;padding:0 8px}
+.pill.warnp{background:var(--warn-soft);color:var(--warn)}
+.cmem{font-family:var(--f-display);font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ccmd{display:flex;gap:6px;align-items:center;background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:4px 6px 4px 10px;min-width:230px}
+.ccmd code{background:none;border:0;color:inherit;padding:0;font-size:12px;white-space:nowrap;overflow-x:auto;flex:1;min-width:0}
+.cc{font:600 11.5px var(--f-display);background:var(--sun);color:var(--ink);border:2px solid var(--edge);border-radius:999px;padding:1px 8px;cursor:pointer;flex:none}
+</style>
+
+<div class="sky" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+<div class="progress" aria-hidden="true"><i id="prog"></i></div>
+<div class="wrap">
+<nav class="toc" aria-label="Chapters">
+  <details id="tocBox" open>
+    <summary>Chapters · 10 stops</summary>
+    <ol>
+      <li><a href="#what"><span>1</span>What is a local LLM?</a></li>
+      <li><a href="#words"><span>2</span>Magic words</a></li>
+      <li><a href="#pros"><span>3</span>Pros and cons</a></li>
+      <li><a href="#when"><span>4</span>When to use them</a></li>
+      <li><a href="#hardware"><span>5</span>Will it run on my PC?</a></li>
+      <li><a href="#models"><span>6</span>Every local LLM</a></li>
+      <li><a href="#tools"><span>7</span>Windows apps</a></li>
+      <li><a href="#install"><span>8</span>Install on Windows</a></li>
+      <li><a href="#use"><span>9</span>Use them in code</a></li>
+      <li><a href="#quiz"><span>10</span>Tips and quiz</a></li>
+    </ol>
+    <div class="xp" id="xp">Stops visited: <b>0</b> / 10</div>
+  </details>
+</nav>
+
+<main>
+<header class="hero">
+  <div>
+    <div class="eyebrow">Day 9 · Kids edition · Windows</div>
+    <h1>AI that lives on <em>your</em> computer</h1>
+    <p class="lede">A local LLM is a chatbot brain you download and run on your own Windows PC. No internet needed, nothing sent to anyone. This page shows what it is, when to use it, every model you can download, and how to install and use 11 Windows apps that run them.</p>
+    <div class="formula" aria-label="Local LLM formula">
+      <b>Download a model</b><span>+</span><b class="r">Free app (Ollama)</b><span>→</span><b class="a">Chat offline</b><span>→</span><b>Private and free</b>
+    </div>
+  </div>
+  <div class="hero-art" aria-hidden="true">
+    <svg viewBox="0 0 250 230">
+      <g class="cloud">
+        <ellipse cx="62" cy="48" rx="46" ry="26" fill="var(--surface)" stroke="var(--edge)" stroke-width="3"/>
+        <ellipse cx="44" cy="40" rx="22" ry="20" fill="var(--surface)" stroke="var(--edge)" stroke-width="3"/>
+        <ellipse cx="80" cy="36" rx="24" ry="22" fill="var(--surface)" stroke="var(--edge)" stroke-width="3"/>
+        <rect x="26" y="44" width="76" height="26" fill="var(--surface)"/>
+        <text x="62" y="58" text-anchor="middle" font-size="13" font-family="Fredoka, sans-serif" font-weight="600" fill="var(--muted)">cloud AI</text>
+      </g>
+      <g class="packet"><rect x="90" y="70" width="26" height="20" rx="5" fill="var(--sun)" stroke="var(--edge)" stroke-width="3"/><text x="103" y="85" text-anchor="middle" font-size="11" font-family="Fredoka, sans-serif" font-weight="700" fill="var(--ink)">AI</text></g>
+      <rect x="60" y="110" width="160" height="96" rx="12" fill="var(--accent)" stroke="var(--edge)" stroke-width="4"/>
+      <rect x="72" y="122" width="136" height="72" rx="8" fill="var(--surface)" stroke="var(--edge)" stroke-width="3"/>
+      <g class="screenface"><ellipse cx="122" cy="152" rx="7" ry="9" fill="var(--ink)"/><ellipse cx="158" cy="152" rx="7" ry="9" fill="var(--ink)"/></g>
+      <path d="M128 172 Q140 182 152 172" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="112" cy="170" r="5" fill="var(--berry)" opacity=".5"/><circle cx="168" cy="170" r="5" fill="var(--berry)" opacity=".5"/>
+      <path d="M40 206 H240 L226 222 H54 Z" fill="var(--sun)" stroke="var(--edge)" stroke-width="4" stroke-linejoin="round"/>
+      <g class="wifi"><circle cx="222" cy="92" r="16" fill="var(--hit-soft)" stroke="var(--edge)" stroke-width="3"/><path d="M214 90 Q222 82 230 90 M217 94 Q222 89 227 94" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/><line x1="211" y1="81" x2="233" y2="103" stroke="var(--hit)" stroke-width="3.5" stroke-linecap="round"/></g>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section class="level" id="what">
+  <div class="lvl">Stop 1</div>
+  <h2>What is a local LLM?</h2>
+  <p>An <strong>LLM</strong> (Large Language Model) is the brain behind chatbots like ChatGPT, Claude and Gemini. Usually that brain lives in a giant data centre: your question travels over the internet, gets answered there, and travels back. That is <strong>cloud AI</strong>.</p>
+  <p>A <strong>local LLM</strong> is a model whose files you <strong>download to your own computer</strong> and run there. Your question never leaves your machine. It works on a plane, in a village with no signal, and inside a hospital where data must stay private.</p>
+  <p>This is possible because companies like Meta, Google, Alibaba, Mistral, Microsoft, DeepSeek and OpenAI publish <strong>open-weight models</strong>: the trained "brain file" is free to download. Clever compression (quantization) makes them small enough for a normal laptop.</p>
+
+  <div class="game" id="gLane">
+    <span class="tag">Play</span>
+    <h4>Cut the internet and see who still works</h4>
+    <p class="how">Both robots are answering questions. Press the button to switch the Wi-Fi off.</p>
+    <div class="lanes">
+      <div class="lane" id="laneCloud"><span class="end">Your laptop</span><span class="road"><i></i></span><span class="end">Cloud data centre</span><span class="why" id="whyCloud">Your question travels over the internet to a company's servers and back.</span></div>
+      <div class="lane local"><span class="end">Your laptop</span><span class="road"><i></i></span><span class="end">Model on your laptop</span><span class="why">Your question goes from the app to the model file on the same computer. Very short trip!</span></div>
+    </div>
+    <div class="btns" style="margin-top:12px"><button class="btn main" type="button" id="wifiBtn">Turn Wi-Fi off</button></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="level" id="words">
+  <div class="lvl">Stop 2</div>
+  <h2>Magic words you will hear</h2>
+  <div class="tbl"><table>
+    <tr><th>Word</th><th>Simple meaning</th><th>Example</th></tr>
+    <tr><td>Parameters (B)</td><td>The number of tiny "knobs" inside the brain. More knobs usually means smarter but heavier.</td><td><code>8B</code> = 8 billion knobs</td></tr>
+    <tr><td>Open weights</td><td>The trained brain file is free to download and run yourself.</td><td>Llama, Gemma, Qwen, gpt-oss</td></tr>
+    <tr><td>Quantization</td><td>Shrinking the brain by storing each knob with fewer bits, like compressing a photo. Slightly less sharp, much smaller.</td><td><code>Q4</code> is about 4× smaller than full size</td></tr>
+    <tr><td>GGUF</td><td>The most common file format for local models (used by llama.cpp, Ollama, LM Studio).</td><td><code>gemma-3-4b-it-Q4_K_M.gguf</code></td></tr>
+    <tr><td>RAM / VRAM</td><td>Computer memory / graphics-card memory. The model must fit inside to run. VRAM is much faster.</td><td>16 GB RAM, 8 GB VRAM</td></tr>
+    <tr><td>Tokens per second</td><td>How fast words appear. 10+ feels comfortable to read.</td><td>35 tok/s on a gaming GPU</td></tr>
+    <tr><td>Context window</td><td>How much text the model can remember in one chat.</td><td>8K, 32K, 128K tokens</td></tr>
+    <tr><td>Inference engine</td><td>The program that actually runs the model.</td><td>llama.cpp, Ollama, vLLM, MLX</td></tr>
+    <tr><td>Instruct / chat model</td><td>A version trained to follow instructions and chat (the one you usually want).</td><td><code>-instruct</code>, <code>-it</code></td></tr>
+    <tr><td>MoE</td><td>Mixture of Experts: a big model where only a few "expert" parts wake up for each word, so it runs faster than its size suggests.</td><td>gpt-oss, Qwen3-30B-A3B, Llama 4</td></tr>
+    <tr><td>License</td><td>The rules for using the model. Some allow anything, some limit commercial use.</td><td>Apache 2.0, MIT, Llama license, Gemma terms</td></tr>
+  </table></div>
+  <div class="note key"><span class="tag">Handy rule</span><p>At Q4 compression, a model needs roughly <strong>0.6 GB of memory per billion parameters</strong>, plus about 1 GB extra. So an 8B model needs about 6 GB, and a 70B model needs about 43 GB.</p></div>
+</section>
+
+<!-- 3 -->
+<section class="level" id="pros">
+  <div class="lvl">Stop 3</div>
+  <h2>Pros and cons</h2>
+  <p>Tap a card to flip it and read the details.</p>
+  <h3>Pros</h3>
+  <div class="flips" id="proCards"></div>
+  <h3>Cons</h3>
+  <div class="flips" id="conCards"></div>
+  <div class="tbl"><table>
+    <tr><th></th><th>Local LLM</th><th>Cloud LLM</th></tr>
+    <tr><td>Privacy</td><td>Data never leaves your machine</td><td>Data goes to the provider</td></tr>
+    <tr><td>Internet</td><td>Not needed</td><td>Required</td></tr>
+    <tr><td>Cost</td><td>Free per message; you pay for hardware and electricity</td><td>Pay per token or subscription</td></tr>
+    <tr><td>Smartness</td><td>Good to very good (depends on size)</td><td>The strongest frontier models</td></tr>
+    <tr><td>Speed</td><td>Depends on your hardware</td><td>Fast, big servers</td></tr>
+    <tr><td>Setup</td><td>Install and manage yourself</td><td>Just sign in</td></tr>
+    <tr><td>Control</td><td>Full: choose, tune and freeze the model</td><td>Provider can change or retire models</td></tr>
+  </table></div>
+</section>
+
+<!-- 4 -->
+<section class="level" id="when">
+  <div class="lvl">Stop 4</div>
+  <h2>When should you use a local LLM?</h2>
+  <h3>Great times to go local</h3>
+  <ul>
+    <li><strong>Private or secret data:</strong> medical notes, legal files, company code, personal diaries.</li>
+    <li><strong>No or bad internet:</strong> flights, remote areas, factories, ships, air-gapped labs.</li>
+    <li><strong>Learning and experimenting:</strong> try many models for free, no API key, no bill.</li>
+    <li><strong>High volume, simple tasks:</strong> tagging, summarising or classifying thousands of documents.</li>
+    <li><strong>Local RAG:</strong> a private "chat with my PDFs" (see the RAG guides in this folder).</li>
+    <li><strong>Building products</strong> that must work offline, or edge devices like robots and kiosks.</li>
+    <li><strong>Rules and compliance</strong> that say data must stay in your country or building.</li>
+  </ul>
+  <h3>Better to use the cloud when</h3>
+  <ul>
+    <li>You need the <strong>smartest possible answers</strong> (hard reasoning, long complex coding, research).</li>
+    <li>Your computer is <strong>weak</strong> (old laptop, 8 GB RAM or less, no GPU) and you need speed.</li>
+    <li>You serve <strong>many users at once</strong> and don't want to run GPU servers.</li>
+    <li>You need very long context, top-quality vision, voice or tools out of the box.</li>
+  </ul>
+  <p>Many teams use <strong>both</strong>: local for private and simple jobs, cloud for the hardest ones.</p>
+
+  <div class="game" id="gWhen">
+    <span class="tag">Play</span>
+    <h4>Local or cloud? You decide</h4>
+    <p class="how">Read each situation and pick the better choice.</p>
+    <div class="scorebox"><span id="wNum"></span><span class="stars" id="wStars"></span></div>
+    <div class="scen" id="wText" style="margin:10px 0"></div>
+    <div class="btns"><button class="btn main" type="button" id="wLocal">Local LLM</button><button class="btn" type="button" id="wCloud">Cloud LLM</button><button class="btn" type="button" id="wNext" disabled>Next situation</button></div>
+    <div class="msg" id="wMsg" aria-live="polite" style="margin-top:8px"></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="level" id="hardware">
+  <div class="lvl">Stop 5</div>
+  <h2>Will it run on my computer?</h2>
+  <p>The model must fit in memory. A graphics card (GPU) with its own memory (VRAM) makes it fast. Without a GPU it still runs on the CPU, just slower. On Windows, an NVIDIA RTX card is the easiest fast option; recent AMD Radeon and Intel Arc cards also work with Ollama and LM Studio.</p>
+  <div class="game" id="gHw">
+    <span class="tag">Try it</span>
+    <h4>Model size checker</h4>
+    <div class="hw">
+      <div>
+        <label id="ramL">Computer memory (RAM)</label>
+        <div class="seg" id="ramSeg" role="group" aria-labelledby="ramL"></div>
+        <label id="gpuL">Graphics card memory (VRAM)</label>
+        <div class="seg" id="gpuSeg" role="group" aria-labelledby="gpuL"></div>
+        <div class="hwpick" id="hwPick"></div>
+      </div>
+      <div class="fits" id="fits" aria-live="polite"></div>
+    </div>
+    <p class="src" style="margin-top:12px">Estimates use Q4 compression with a small chat context. Real speed depends on your exact CPU, GPU and settings.</p>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Your machine</th><th>Comfortable model size</th><th>Try</th></tr>
+    <tr><td>8 GB RAM, no GPU</td><td>1B – 4B</td><td>Llama 3.2 3B, Gemma 3 4B (slow-ish), Qwen3 1.7B</td></tr>
+    <tr><td>16 GB RAM or 8 GB GPU (RTX 3060 / 4060)</td><td>7B – 9B</td><td>Llama 3.1 8B, Qwen3 8B, Gemma 3 4B</td></tr>
+    <tr><td>32 GB RAM or 12–16 GB GPU</td><td>12B – 24B</td><td>Gemma 3 12B, Phi-4 14B, gpt-oss 20B, Mistral Small</td></tr>
+    <tr><td>24 GB GPU (RTX 3090 / 4090) or 64 GB RAM</td><td>27B – 35B</td><td>Gemma 3 27B, Qwen3 32B, Qwen2.5-Coder 32B</td></tr>
+    <tr><td>48 GB+ GPU or 128 GB RAM (slow)</td><td>70B and big MoE</td><td>Llama 3.3 70B, gpt-oss 120B</td></tr>
+  </table></div>
+</section>
+
+<!-- 6 -->
+<section class="level" id="models">
+  <div class="lvl">Stop 6</div>
+  <h2>Every local LLM you can download</h2>
+  <h3>Best picks to start with</h3>
+  <p>Tap a filter. Each card shows who made the model, its sizes, what it is good at, and the one command to paste into PowerShell after installing Ollama (Stop 8).</p>
+  <div class="chips" id="mFilter"></div>
+  <div class="mgrid" id="mGrid"></div>
+  <h3>The full list: every model in the Ollama library</h3>
+  <p>All <strong>264</strong> model families in the Ollama library. Search by name or job, filter by type, tap a size to update the command, then copy it into PowerShell. "Cloud-only" models are too big to download; Ollama runs them on its servers with an ollama.com account, so they are not local.</p>
+  <div class="catbar"><input id="catSearch" type="text" placeholder="Search: qwen, code, vision, medical…" aria-label="Search models"><span class="src" id="catCount"></span></div>
+  <div class="chips" id="catFilter"></div>
+  <div class="tbl cat"><table><thead><tr><th>Model</th><th>Sizes (tap one)</th><th>Memory needed</th><th>Can do</th><th>Command for PowerShell</th></tr></thead><tbody id="catBody"></tbody></table></div>
+  <p class="src">List taken from ollama.com/library on 29 October 2026. Memory is a Q4 estimate for the chosen size. "e2b" and "e4b" mean about 2B or 4B effective parameters; "8x7b" means a mixture of experts.</p>
+  <div class="note"><span class="tag">New models every month</span><p>Local AI moves fast. For the newest models and exact tags, check the Ollama library at <a href="https://ollama.com/library" target="_blank" rel="noopener">ollama.com/library</a> or Hugging Face at <a href="https://huggingface.co/models" target="_blank" rel="noopener">huggingface.co/models</a>. Always read a model's license before using it in a product.</p></div>
+</section>
+
+<!-- 7 -->
+<section class="level" id="tools">
+  <div class="lvl">Stop 7</div>
+  <h2>Windows apps that run local models</h2>
+  <p>The model is the brain file. You also need an app (an <strong>inference engine</strong>) to load and run it. All of these work on Windows 10 and 11 (64-bit).</p>
+  <div class="tbl"><table>
+    <tr><th>App</th><th>Type</th><th>Best for</th><th>Local address</th></tr>
+    <tr><td>Ollama</td><td>Tray app + command line + chat window</td><td>Easiest start, most models, developers</td><td><code>localhost:11434</code></td></tr>
+    <tr><td>LM Studio</td><td>Desktop app with buttons</td><td>Beginners who prefer clicking; finds Hugging Face models for you</td><td><code>localhost:1234</code></td></tr>
+    <tr><td>Jan</td><td>Open-source desktop app</td><td>ChatGPT-style app that runs fully offline</td><td><code>localhost:1337</code></td></tr>
+    <tr><td>GPT4All</td><td>Desktop app</td><td>Simple chat plus LocalDocs (chat with your files)</td><td><code>localhost:4891</code></td></tr>
+    <tr><td>AnythingLLM</td><td>Desktop app</td><td>Ready-made private RAG: drop in PDFs and chat with them</td><td>built in</td></tr>
+    <tr><td>Open WebUI</td><td>Website in your browser</td><td>A ChatGPT-like interface on top of Ollama, for you or your class</td><td><code>localhost:8080</code></td></tr>
+    <tr><td>llama.cpp</td><td>Command-line engine</td><td>Maximum control; runs any GGUF file</td><td><code>localhost:8080</code></td></tr>
+    <tr><td>KoboldCpp</td><td>Single .exe</td><td>No install at all; story writing and role-play</td><td><code>localhost:5001</code></td></tr>
+    <tr><td>Foundry Local</td><td>Microsoft command line</td><td>Microsoft's local runner; uses GPU or NPU on Copilot+ PCs</td><td>shown by <code>foundry service status</code></td></tr>
+    <tr><td>LocalAI</td><td>Docker container</td><td>Drop-in OpenAI-style API server</td><td><code>localhost:8080</code></td></tr>
+    <tr><td>vLLM</td><td>Server engine (needs WSL2)</td><td>Serving many users on an NVIDIA GPU</td><td><code>localhost:8000</code></td></tr>
+  </table></div>
+</section>
+
+<!-- 8 -->
+<section class="level" id="install">
+  <div class="lvl">Stop 8</div>
+  <h2>Install and use on Windows</h2>
+
+  <h3>Before you start: check your PC</h3>
+  <p>Open <strong>PowerShell</strong>: press the Windows key, type <code>PowerShell</code>, press Enter. Then paste these one at a time.</p>
+<pre><code><span class="c"># How much memory (RAM) do I have, in GB?</span>
+[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)
+
+<span class="c"># Which graphics card do I have?</span>
+Get-CimInstance Win32_VideoController | Select-Object Name
+
+<span class="c"># NVIDIA cards only: exact graphics memory (VRAM) and driver</span>
+nvidia-smi
+
+<span class="c"># How much free space is on drive C:, in GB?</span>
+[math]::Round((Get-PSDrive C).Free / 1GB)</code></pre>
+  <ul>
+    <li>No PowerShell? Use <strong>Settings → System → About</strong> for RAM and <strong>Task Manager → Performance → GPU</strong> for graphics memory.</li>
+    <li>Update your graphics driver first (NVIDIA app, AMD Adrenalin or Intel Arc control). An old driver is the top reason the GPU is not used.</li>
+    <li>Keep at least <strong>20 GB free</strong>. Each model is 1 to 40+ GB.</li>
+    <li><strong>winget</strong> (the Windows package manager) comes with Windows 11 and recent Windows 10. Check with <code>winget --version</code>.</li>
+  </ul>
+
+  <h3>Pick an app</h3>
+  <p>Tap an app to see how to install it, how to use it, and an animated terminal for the typing parts. Terminal output is an example of what you will see.</p>
+  <div class="tabs" id="toolTabs" role="tablist" aria-label="Windows apps"></div>
+  <div class="toolcard" id="toolCard">
+    <div class="tc-head"><h4 id="tcName"></h4><span class="tc-kind" id="tcKind"></span></div>
+    <p id="tcWhat"></p>
+    <div class="tc-cols">
+      <div><h5>Install</h5><ol class="steps-list" id="tcInstall"></ol></div>
+      <div><h5>Use it</h5><ol class="steps-list" id="tcUse"></ol></div>
+    </div>
+    <div class="term" aria-label="Animated terminal">
+      <div class="top"><span></span><span></span><span></span><em id="termTitle">PowerShell</em></div>
+      <div class="screen" id="termScreen"></div>
+    </div>
+    <div class="btns"><button class="btn main" type="button" id="termPlay">Play</button><button class="btn" type="button" id="termCopy">Copy commands</button><span class="src" id="tcUninstall"></span></div>
+  </div>
+
+  <h3>Run any model from Hugging Face</h3>
+  <p>Hugging Face has thousands more models in GGUF format. Ollama can pull them directly:</p>
+<pre><code><span class="c"># pattern:  ollama run hf.co/{user}/{repository}:{quantization}</span>
+ollama run hf.co/bartowski/Llama-3.2-3B-Instruct-GGUF:Q4_K_M</code></pre>
+  <p>In LM Studio, Jan and GPT4All you can search Hugging Face models inside the app and click Download.</p>
+
+  <h3>Windows settings for Ollama</h3>
+  <div class="tbl"><table>
+    <tr><th>Want to…</th><th>Do this in PowerShell</th></tr>
+    <tr><td>Store models on drive D:</td><td><code>setx OLLAMA_MODELS "D:\AI\ollama-models"</code> then quit Ollama from the tray icon and start it again</td></tr>
+    <tr><td>Find where models are saved</td><td>Default folder: <code>C:\Users\&lt;you&gt;\.ollama\models</code></td></tr>
+    <tr><td>Bigger default memory (context)</td><td><code>setx OLLAMA_CONTEXT_LENGTH 8192</code> then restart Ollama</td></tr>
+    <tr><td>Keep a model loaded longer</td><td><code>setx OLLAMA_KEEP_ALIVE 30m</code> then restart Ollama</td></tr>
+    <tr><td>Let other PCs on your Wi-Fi use it</td><td><code>setx OLLAMA_HOST 0.0.0.0</code>, restart, and allow it in Windows Firewall. Only do this on a trusted home or school network.</td></tr>
+    <tr><td>See logs when something breaks</td><td><code>explorer $env:LOCALAPPDATA\Ollama</code> and open <code>server.log</code></td></tr>
+    <tr><td>Uninstall</td><td>Settings → Apps → Installed apps → Ollama → Uninstall, then delete the <code>.ollama</code> folder to free space</td></tr>
+  </table></div>
+  <div class="note"><span class="tag">Snapdragon / ARM laptops</span><p>Ollama, LM Studio and Foundry Local offer Windows on ARM builds. Foundry Local can also use the NPU on Copilot+ PCs.</p></div>
+</section>
+
+<!-- 9 -->
+<section class="level" id="use">
+  <div class="lvl">Stop 9</div>
+  <h2>Use local models from code</h2>
+  <h3>Ollama cheat sheet</h3>
+  <div class="tbl"><table>
+    <tr><th>Command</th><th>What it does</th></tr>
+    <tr><td><code>ollama run llama3.2</code></td><td>Download (first time) and start chatting</td></tr>
+    <tr><td><code>ollama pull qwen3:8b</code></td><td>Download a model without chatting</td></tr>
+    <tr><td><code>ollama list</code></td><td>Show models on your computer</td></tr>
+    <tr><td><code>ollama ps</code></td><td>Show models loaded in memory right now (and whether they use GPU or CPU)</td></tr>
+    <tr><td><code>ollama stop llama3.2</code></td><td>Unload a model from memory</td></tr>
+    <tr><td><code>ollama rm llama3.2</code></td><td>Delete a model to free disk space</td></tr>
+    <tr><td><code>ollama show llama3.2</code></td><td>See model details (size, context, license)</td></tr>
+    <tr><td><code>ollama run gemma3:4b "Summarise this: ..."</code></td><td>Ask one question without opening a chat</td></tr>
+    <tr><td><code>/bye</code></td><td>Leave the chat</td></tr>
+    <tr><td><code>/set parameter num_ctx 8192</code></td><td>Give the model a bigger memory for this chat</td></tr>
+  </table></div>
+
+  <h3>From PowerShell (no extra installs)</h3>
+<pre><code>$body = @{
+  model    = <span class="s">"llama3.2"</span>
+  messages = @(@{ role = <span class="s">"user"</span>; content = <span class="s">"Explain a local LLM to a 10 year old"</span> })
+  stream   = $false
+} | ConvertTo-Json -Depth 5
+
+$r = Invoke-RestMethod -Uri http://localhost:11434/api/chat -Method Post -Body $body -ContentType <span class="s">"application/json"</span>
+$r.message.content</code></pre>
+
+  <h3>From Python</h3>
+<pre><code><span class="c"># Install Python once:  winget install Python.Python.3.12
+# Then:                 py -m pip install ollama</span>
+<span class="k">import</span> ollama
+
+reply = ollama.chat(
+    model=<span class="s">"llama3.2"</span>,
+    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Give me 3 fun facts about space"</span>}],
+)
+print(reply[<span class="s">"message"</span>][<span class="s">"content"</span>])</code></pre>
+
+  <h3>One code for every app (OpenAI format)</h3>
+  <p>Most Windows apps speak the OpenAI API format. Change only <code>base_url</code> to switch apps.</p>
+<pre><code><span class="c"># py -m pip install openai</span>
+<span class="k">from</span> openai <span class="k">import</span> OpenAI
+
+BASE = {
+    <span class="s">"ollama"</span>:    <span class="s">"http://localhost:11434/v1"</span>,
+    <span class="s">"lmstudio"</span>:  <span class="s">"http://localhost:1234/v1"</span>,
+    <span class="s">"jan"</span>:       <span class="s">"http://localhost:1337/v1"</span>,
+    <span class="s">"gpt4all"</span>:   <span class="s">"http://localhost:4891/v1"</span>,
+    <span class="s">"llamacpp"</span>:  <span class="s">"http://localhost:8080/v1"</span>,
+    <span class="s">"koboldcpp"</span>: <span class="s">"http://localhost:5001/v1"</span>,
+}
+
+client = OpenAI(base_url=BASE[<span class="s">"ollama"</span>], api_key=<span class="s">"not-needed"</span>)   <span class="c"># local apps ignore the key</span>
+r = client.chat.completions.create(
+    model=<span class="s">"qwen3:8b"</span>,          <span class="c"># use the model name your app shows</span>
+    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Hello from Windows!"</span>}],
+)
+print(r.choices[0].message.content)</code></pre>
+
+  <h3>Bonus: a 100% local RAG on Windows</h3>
+  <p>Combine this with the RAG guide: local embeddings + local chat model, so your documents never leave your PC.</p>
+<pre><code><span class="c"># ollama pull nomic-embed-text ; ollama pull llama3.2 ; py -m pip install ollama numpy</span>
+<span class="k">import</span> ollama, numpy <span class="k">as</span> np
+
+docs = [<span class="s">"Employees get 24 days of paid leave per year."</span>,
+        <span class="s">"Reset your password from the self-service portal."</span>]
+vecs = np.array(ollama.embed(model=<span class="s">"nomic-embed-text"</span>, input=docs)[<span class="s">"embeddings"</span>])
+
+question = <span class="s">"How many leave days do I get?"</span>
+q = np.array(ollama.embed(model=<span class="s">"nomic-embed-text"</span>, input=[question])[<span class="s">"embeddings"</span>][0])
+scores = vecs @ q / (np.linalg.norm(vecs, axis=1) * np.linalg.norm(q))
+best = docs[int(scores.argmax())]
+
+answer = ollama.chat(model=<span class="s">"llama3.2"</span>, messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>,
+    <span class="s">"content"</span>: f<span class="s">"Answer only from this context:\n{best}\n\nQuestion: {question}"</span>}])
+print(answer[<span class="s">"message"</span>][<span class="s">"content"</span>])</code></pre>
+</section>
+
+<!-- 10 -->
+<section class="level" id="quiz">
+  <div class="lvl">Stop 10</div>
+  <h2>Tips, fixes and a quiz</h2>
+  <div class="tbl"><table>
+    <tr><th>Problem</th><th>Fix</th></tr>
+    <tr><td>Very slow answers</td><td>Use a smaller model (3B or 4B) or a smaller quantization; close heavy apps; update GPU drivers so the GPU is used.</td></tr>
+    <tr><td>Out of memory / crash</td><td>The model is too big. Pick fewer parameters, or lower <code>num_ctx</code>.</td></tr>
+    <tr><td>Disk is full</td><td>Models are 1–40+ GB each. Run <code>ollama list</code> and <code>ollama rm</code> the ones you don't use, or move storage with the <code>OLLAMA_MODELS</code> setting.</td></tr>
+    <tr><td>Forgets long chats</td><td>Increase context with <code>/set parameter num_ctx 8192</code> (uses more memory).</td></tr>
+    <tr><td>Wrong or made-up facts</td><td>Small models hallucinate more. Use a bigger model or add RAG with your documents.</td></tr>
+    <tr><td>Can't connect from code</td><td>Make sure Ollama is running (<code>ollama serve</code> or the tray app) and use <code>http://localhost:11434</code>.</td></tr>
+  </table></div>
+  <div class="note warn"><span class="tag">Stay safe</span><p>Download models only from trusted places (Ollama library, official Hugging Face pages). Don't expose port 11434 to the internet: by default Ollama listens only on your own computer, so keep it that way unless you add a login in front of it.</p></div>
+
+  <div class="game" id="gQuiz">
+    <span class="tag">Quiz game</span>
+    <h4>Earn your local AI stars</h4>
+    <div class="mcq">
+      <div class="scorebox"><span id="qNum"></span><span class="stars" id="qStars"></span></div>
+      <div class="qtext" id="qText"></div>
+      <div class="opts" id="qOpts"></div>
+      <div class="msg" id="qMsg" aria-live="polite"></div>
+      <div class="btns"><button class="btn main" type="button" id="qNext" disabled>Next question</button></div>
+    </div>
+  </div>
+</section>
+
+<footer>Day 9 · Local LLMs on Windows, kids edition. Model list from ollama.com/library on 29 October 2026; models and commands change often, so check there for the latest.</footer>
+</main>
+</div>
+
+<script>
+(function(){
+  var reduce = false;
+  try{ reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){}
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function store(k, v){ try{ if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
+  function copyText(text, btn, label){
+    var done = function(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = label; }, 1400); };
+    try{ navigator.clipboard.writeText(text).then(done, function(){ btn.textContent = "Select it"; }); }catch(e){ btn.textContent = "Select it"; }
+  }
+  try{ if (window.matchMedia("(max-width:960px)").matches) $("tocBox").open = false; }catch(e){}
+
+  // fix TOC hrefs to anchors
+  document.querySelectorAll(".toc a").forEach(function(a){ a.setAttribute("href", "#" + a.getAttribute("href").replace(/^#/, "")); });
+
+  var miniBot = '<svg viewBox="0 0 64 64" aria-hidden="true"><line x1="32" y1="6" x2="32" y2="14" stroke="var(--edge)" stroke-width="3"/><circle cx="32" cy="6" r="4" fill="var(--sun)" stroke="var(--edge)" stroke-width="2"/><rect x="8" y="14" width="48" height="40" rx="14" fill="var(--accent)" stroke="var(--edge)" stroke-width="3"/><rect x="15" y="21" width="34" height="25" rx="9" fill="var(--surface)" stroke="var(--edge)" stroke-width="2"/><circle cx="25" cy="31" r="3.5" fill="var(--ink)"/><circle cx="39" cy="31" r="3.5" fill="var(--ink)"/><path d="M27 38 Q32 42 37 38" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  var kid = {
+    what: "Cloud AI is like ordering food from a restaurant: it's tasty, but you need a phone line and you pay each time. A local LLM is like cooking at home: you need a kitchen (a good computer), but it's free every time and nobody sees what you cook.",
+    words: "A model with 8B parameters has 8 billion tiny knobs, like a giant mixing desk. Quantization is like saving a photo as a smaller JPEG: a little less sharp, but it fits on your phone.",
+    pros: "Good things: it's private, free, and works offline. Not-so-good things: you need a strong enough computer, and small brains are not as clever as the giant cloud brains.",
+    when: "Use local when your secrets must stay home or there's no internet. Use the cloud when you need the very smartest brain or your computer is too small.",
+    hardware: "A model must fit in your computer's memory, like a toy must fit in its box. Too big a toy, and the lid won't close!",
+    models: "These are the most famous free brains you can download. Small ones are quick like a bicycle, big ones are powerful like a truck.",
+    tools: "The model is the brain. The app is the body that lets the brain talk. On Windows, Ollama and LM Studio are the most popular bodies.",
+    install: "First check your PC is strong enough. Then three steps: install the app, download a brain, start chatting. That's it!",
+    use: "Your own programs can talk to the local brain too, just like they talk to ChatGPT, but the address is your own computer: localhost.",
+    quiz: "Last stop! Fix common problems, stay safe, and win your stars."
+  };
+  Object.keys(kid).forEach(function(id){
+    var h2 = $(id).querySelector("h2"), el = document.createElement("div");
+    el.className = "kid reveal";
+    el.innerHTML = miniBot + '<div class="bub"><b>Explain like I\'m 8</b><p>' + esc(kid[id]) + '</p></div>';
+    h2.insertAdjacentElement("afterend", el);
+  });
+
+  // copy buttons
+  document.querySelectorAll("pre").forEach(function(pre){
+    var b = document.createElement("button"); b.className = "copy"; b.type = "button"; b.textContent = "Copy";
+    b.addEventListener("click", function(){ copyText(pre.querySelector("code").innerText, b, "Copy"); });
+    pre.appendChild(b);
+  });
+
+  // reveal + seen tracking
+  document.querySelectorAll(".note,.tbl,.game,pre,.term").forEach(function(el){ el.classList.add("reveal"); });
+  var links = {}; document.querySelectorAll(".toc a").forEach(function(a){ links[a.getAttribute("href").slice(1)] = a; });
+  var seen = {};
+  try{ JSON.parse(store("localllm-seen") || "[]").forEach(function(id){ seen[id] = 1; if (links[id]) links[id].classList.add("seen"); }); }catch(e){}
+  function xp(){ var n = Object.keys(seen).length; $("xp").innerHTML = "Stops visited: <b>" + n + "</b> / 10" + (n === 10 ? " · Explorer!" : ""); }
+  xp();
+  if ("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add("pop"); io.unobserve(e.target); } }); }, {threshold:.12});
+    document.querySelectorAll(".reveal,.lvl").forEach(function(el){ io.observe(el); });
+    var so = new IntersectionObserver(function(es){ es.forEach(function(e){ var id = e.target.id; if (e.isIntersecting && !seen[id]){ seen[id] = 1; links[id].classList.add("seen"); store("localllm-seen", JSON.stringify(Object.keys(seen))); xp(); } }); }, {rootMargin:"0px 0px -60% 0px"});
+    document.querySelectorAll("section.level").forEach(function(s){ so.observe(s); });
+  }
+  function prog(){ var h = document.documentElement.scrollHeight - innerHeight; $("prog").style.width = (h > 0 ? Math.min(100, scrollY / h * 100) : 0) + "%"; }
+  addEventListener("scroll", prog, {passive:true}); prog();
+
+  // confetti
+  var colors = ["var(--sun)","var(--berry)","var(--accent)","var(--grass)","var(--grape)"];
+  function confettiAt(el){
+    if (reduce) return;
+    var r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    for (var i = 0; i < 22; i++){
+      var c = document.createElement("span"); c.className = "confetti";
+      c.style.left = x + "px"; c.style.top = y + "px"; c.style.background = colors[i % colors.length];
+      var a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 110;
+      c.style.setProperty("--dx", Math.cos(a) * d + "px"); c.style.setProperty("--dy", (Math.sin(a) * d + 60) + "px"); c.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
+      document.body.appendChild(c);
+      setTimeout((function(el){ return function(){ el.remove(); }; })(c), 1200);
+    }
+  }
+
+  // Game: wifi lanes
+  var off = false;
+  $("wifiBtn").addEventListener("click", function(){
+    off = !off;
+    $("laneCloud").classList.toggle("broken", off);
+    $("whyCloud").textContent = off ? "No internet! The cloud robot can't reach its brain, so it stops answering." : "Your question travels over the internet to a company's servers and back.";
+    this.textContent = off ? "Turn Wi-Fi back on" : "Turn Wi-Fi off";
+    if (off) confettiAt(document.querySelector(".lane.local"));
+  });
+
+  // Flip cards
+  var pros = [
+    ["Private", "Your data stays home", "Nothing is sent to any company. Perfect for medical, legal, school or business secrets."],
+    ["Works offline", "No internet needed", "Use it on a plane, in the mountains, or in a locked-down office network."],
+    ["Free to use", "No per-message bill", "After you have the computer, you can chat a million times for only the electricity cost."],
+    ["No waiting in line", "No rate limits", "No 'too many requests' errors and no network delay. Fast on a good GPU."],
+    ["You are the boss", "Full control", "Pick any model, change settings, fine-tune it, and keep the exact same version forever."],
+    ["Learn by doing", "Great for students", "Try dozens of models, see how they really work, and build projects without an API key."]
+  ];
+  var cons = [
+    ["Needs a strong PC", "Memory and GPU", "Big models need lots of RAM or VRAM. Old laptops can only run small models."],
+    ["Less clever", "Smaller brains", "Local models are good, but the biggest cloud models are still smarter at hard reasoning and coding."],
+    ["Can be slow", "Without a GPU", "On a CPU only, words may appear slowly, especially with bigger models."],
+    ["You do the setup", "Install and update", "You download, configure, update and troubleshoot everything yourself."],
+    ["Big downloads", "Disk space", "Each model is 1 to 40+ GB. A few models can fill a small drive."],
+    ["Heat and power", "Fans spin up", "Running a model works the computer hard: more heat, noise and battery use."],
+    ["Safety is on you", "Fewer guardrails", "You are responsible for filtering content and keeping the setup secure."]
+  ];
+  function flips(list, box, kind){
+    list.forEach(function(p){
+      var b = document.createElement("button"); b.type = "button"; b.className = "flip " + kind; b.setAttribute("aria-pressed", "false");
+      b.innerHTML = '<span class="in"><span class="f"><span class="ico">' + (kind === "pro" ? "+" : "−") + '</span><b>' + esc(p[0]) + '</b><small>' + esc(p[1]) + ' · tap to flip</small></span><span class="b">' + esc(p[2]) + '</span></span>';
+      b.addEventListener("click", function(){ var on = b.classList.toggle("on"); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+      box.appendChild(b);
+    });
+  }
+  flips(pros, $("proCards"), "pro"); flips(cons, $("conCards"), "con");
+
+  // Game: local or cloud
+  var scen = [
+    ["A doctor wants AI to summarise private patient notes.", "local", "Patient data is very private, so keeping it on the hospital's own computers is safest."],
+    ["You want to code with AI help on a 10-hour flight with no Wi-Fi.", "local", "No internet means the cloud can't help. A local coding model works in the air."],
+    ["A scientist needs the smartest possible AI to solve a very hard math proof.", "cloud", "The biggest frontier models in the cloud are still the strongest at very hard reasoning."],
+    ["A student wants to try 10 different AI models for free to learn how they work.", "local", "Downloading open models is free and great for learning."],
+    ["An old laptop with 4 GB of RAM needs fast answers from a big 70B model.", "cloud", "A 70B model needs about 43 GB of memory. That laptop can't fit it, so use the cloud."],
+    ["A company wants a chatbot over its secret product designs.", "local", "Secret files plus a local model plus RAG means nothing leaves the company."],
+    ["An app must instantly serve a million users without buying any servers.", "cloud", "Cloud providers handle huge traffic for you. Running that locally would need many GPU servers."]
+  ];
+  var wi = 0, ws = 0, wAns = false;
+  function wRender(){
+    wAns = false;
+    $("wNum").textContent = "Situation " + (wi + 1) + " of " + scen.length;
+    $("wStars").textContent = "★".repeat(ws) + "☆".repeat(scen.length - ws);
+    $("wText").textContent = scen[wi][0];
+    $("wMsg").textContent = ""; $("wMsg").className = "msg"; $("wNext").disabled = true;
+    $("wNext").textContent = wi === scen.length - 1 ? "See my score" : "Next situation";
+  }
+  function wPick(choice, btn){
+    if (wAns) return; wAns = true;
+    var ok = choice === scen[wi][1];
+    if (ok){ ws++; confettiAt(btn); }
+    else { btn.style.animation = "shake .4s"; setTimeout(function(){ btn.style.animation = ""; }, 420); }
+    $("wMsg").className = "msg " + (ok ? "win" : "lose");
+    $("wMsg").textContent = (ok ? "Yes! " : "Hmm, better: " + (scen[wi][1] === "local" ? "Local. " : "Cloud. ")) + scen[wi][2];
+    $("wStars").textContent = "★".repeat(ws) + "☆".repeat(scen.length - ws);
+    $("wNext").disabled = false;
+  }
+  $("wLocal").addEventListener("click", function(){ wPick("local", this); });
+  $("wCloud").addEventListener("click", function(){ wPick("cloud", this); });
+  $("wNext").addEventListener("click", function(){
+    if (wi === -1){ wi = 0; ws = 0; wRender(); return; }
+    if (wi < scen.length - 1){ wi++; wRender(); return; }
+    $("wText").textContent = "You got " + ws + " of " + scen.length + " right. " + (ws >= 6 ? "Decision master!" : ws >= 4 ? "Nice thinking!" : "Read Stop 4 again and retry!");
+    $("wMsg").textContent = ""; $("wNext").textContent = "Play again"; wi = -1; wAns = true;
+    confettiAt($("wText"));
+  });
+  wRender();
+
+  // Hardware checker
+  var rams = [8, 16, 32, 64, 128], gpus = [["None", 0], ["4–6 GB", 6], ["8 GB", 8], ["12–16 GB", 16], ["24 GB", 24], ["48 GB+", 48]];
+  var ram = 16, gpu = 0;
+  function seg(box, items, get, set){
+    items.forEach(function(it){
+      var val = Array.isArray(it) ? it[1] : it, label = Array.isArray(it) ? it[0] : it + " GB";
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = label;
+      b.setAttribute("aria-pressed", val === get() ? "true" : "false");
+      b.addEventListener("click", function(){ set(val); box.querySelectorAll(".chip").forEach(function(c){ c.setAttribute("aria-pressed", "false"); }); b.setAttribute("aria-pressed", "true"); hw(); });
+      box.appendChild(b);
+    });
+  }
+  seg($("ramSeg"), rams, function(){ return ram; }, function(v){ ram = v; });
+  seg($("gpuSeg"), gpus, function(){ return gpu; }, function(v){ gpu = v; });
+  var sizes = [[1, "Llama 3.2 1B, Gemma 3 1B"], [3, "Llama 3.2 3B, Phi-4-mini"], [4, "Gemma 3 4B, Qwen3 4B"], [8, "Llama 3.1 8B, Qwen3 8B"], [14, "Phi-4 14B, Qwen3 14B"], [20, "gpt-oss 20B (MoE)"], [27, "Gemma 3 27B"], [32, "Qwen3 32B, Qwen2.5-Coder 32B"], [70, "Llama 3.3 70B"], [120, "gpt-oss 120B (MoE)"]];
+  function need(b){ return b === 20 ? 14 : b === 120 ? 65 : Math.round((b * 0.6 + 1) * 10) / 10; }
+  function hw(){
+    var mac = gpu === -1, fastMem = mac ? ram * 0.7 : gpu, slowMem = mac ? ram * 0.7 : ram * 0.75 + gpu;
+    var html = "", bestFast = null, bestSlow = null, scale = Math.max(slowMem, 8);
+    sizes.forEach(function(s){
+      var n = need(s[0]), cls, tag;
+      if (n <= fastMem){ cls = "fast"; tag = "Fast"; bestFast = s; }
+      else if (n <= slowMem){ cls = "slow"; tag = gpu ? "Runs, slower" : "Runs on CPU"; bestSlow = s; }
+      else { cls = "no"; tag = "Too big"; }
+      var w = Math.min(100, n / scale * 100);
+      html += '<div class="fit ' + cls + '"><b>' + s[0] + 'B</b><div><div class="mbar"><i style="width:' + w + '%"></i></div><span class="src">~' + n + ' GB · ' + esc(s[1]) + '</span></div><span class="tag2">' + tag + '</span></div>';
+    });
+    $("fits").innerHTML = html;
+    var best = bestFast || bestSlow;
+    $("hwPick").innerHTML = best ? (gpu === 0 ? "Biggest that fits: <strong>" + best[0] + "B</strong> (" + esc(best[1]) + "). With no graphics card it will be slow, so start with a <strong>3B–4B</strong> model for comfortable speed." : "Best pick for you: <strong>" + best[0] + "B</strong> models, like " + esc(best[1]) + ".") : "This machine is very small. Try a tiny 1B model or use cloud AI.";
+  }
+  hw();
+
+  // Models
+  var models = [
+    {n:"Llama 3.2", by:"Meta", s:["1B","3B"], tags:["small"], good:"Tiny and fast. Great first model for any laptop.", cmd:"ollama run llama3.2", lic:"Llama community license"},
+    {n:"Llama 3.1 / 3.3", by:"Meta", s:["8B","70B"], tags:["general"], good:"Strong all-rounder for chat, writing and summaries.", cmd:"ollama run llama3.1:8b", lic:"Llama community license"},
+    {n:"Llama 4 Scout", by:"Meta", s:["109B MoE"], tags:["general","vision"], good:"Big MoE model with image understanding and long context. Needs a workstation.", cmd:"ollama run llama4:scout", lic:"Llama 4 community license"},
+    {n:"Qwen3", by:"Alibaba", s:["0.6B","1.7B","4B","8B","14B","32B","30B-A3B MoE"], tags:["general","reasoning","small"], good:"Excellent all-rounder, many languages, optional 'thinking' mode.", cmd:"ollama run qwen3:8b", lic:"Apache 2.0"},
+    {n:"Qwen2.5-Coder", by:"Alibaba", s:["1.5B","7B","14B","32B"], tags:["coding"], good:"Writes, explains and fixes code. Popular for local coding assistants.", cmd:"ollama run qwen2.5-coder:7b", lic:"Apache 2.0 (most sizes)"},
+    {n:"Gemma 3", by:"Google", s:["1B","4B","12B","27B"], tags:["general","vision","small"], good:"Friendly writer, 140+ languages; 4B and up can read images.", cmd:"ollama run gemma3:4b", lic:"Gemma terms of use"},
+    {n:"gpt-oss", by:"OpenAI", s:["20B MoE","120B MoE"], tags:["reasoning","general"], good:"OpenAI's open-weight reasoning models. 20B runs on a 16 GB machine.", cmd:"ollama run gpt-oss:20b", lic:"Apache 2.0"},
+    {n:"DeepSeek-R1 (distilled)", by:"DeepSeek", s:["1.5B","7B","8B","14B","32B","70B"], tags:["reasoning"], good:"Shows its step-by-step thinking. Good for math and logic puzzles.", cmd:"ollama run deepseek-r1:8b", lic:"MIT"},
+    {n:"Phi-4 / Phi-4-mini", by:"Microsoft", s:["3.8B","14B"], tags:["reasoning","small"], good:"Small but smart at reasoning and math for its size.", cmd:"ollama run phi4", lic:"MIT"},
+    {n:"Mistral / Mistral Small", by:"Mistral AI", s:["7B","24B"], tags:["general"], good:"Fast, efficient European models; Small is great at following instructions.", cmd:"ollama run mistral-small", lic:"Apache 2.0"},
+    {n:"Llama 3.2 Vision", by:"Meta", s:["11B","90B"], tags:["vision"], good:"Looks at pictures: describe photos, read charts and screenshots.", cmd:"ollama run llama3.2-vision", lic:"Llama community license"},
+    {n:"SmolLM2", by:"Hugging Face", s:["135M","360M","1.7B"], tags:["small"], good:"Super tiny models for weak computers, phones and experiments.", cmd:"ollama run smollm2", lic:"Apache 2.0"},
+    {n:"Gemma 4", by:"Google", s:["e2b","e4b","12b","26b","31b"], tags:["general","vision","reasoning","small"], good:"Google's newer family for reasoning and agents; understands images and audio.", cmd:"ollama run gemma4:e4b", lic:"Gemma terms of use"},
+    {n:"Qwen3.5", by:"Alibaba", s:["0.8b","2b","4b","9b","27b","35b","122b"], tags:["general","vision","reasoning","small"], good:"Open multimodal Qwen family with thinking mode and tool use.", cmd:"ollama run qwen3.5:4b", lic:"Check model page"},
+    {n:"Qwen3-Coder", by:"Alibaba", s:["30b","480b"], tags:["coding"], good:"Long-context coding agent model. The 30B MoE runs on a 24 GB GPU or 32 GB RAM.", cmd:"ollama run qwen3-coder:30b", lic:"Apache 2.0"},
+    {n:"Granite 4", by:"IBM", s:["350m","1b","3b"], tags:["small","general"], good:"Tiny, efficient business models with good tool calling. Great on old PCs.", cmd:"ollama run granite4:3b", lic:"Apache 2.0"},
+    {n:"Ministral 3", by:"Mistral AI", s:["3b","8b","14b"], tags:["small","general","vision"], good:"Edge-friendly Mistral models that also read images.", cmd:"ollama run ministral-3:8b", lic:"Apache 2.0"},
+    {n:"nomic-embed-text", by:"Nomic AI", s:["137M"], tags:["embedding"], good:"Not a chat model: turns text into embeddings for local RAG search.", cmd:"ollama pull nomic-embed-text", lic:"Apache 2.0"}
+  ];
+  var filters = [["all","All"],["small","Small & fast"],["general","All-rounders"],["coding","Coding"],["reasoning","Reasoning"],["vision","Sees images"],["embedding","For RAG"]];
+  var cur = store("localllm-filter") || "all";
+  function renderModels(){
+    $("mGrid").innerHTML = "";
+    models.filter(function(m){ return cur === "all" || m.tags.indexOf(cur) > -1; }).forEach(function(m, i){
+      var c = document.createElement("div"); c.className = "mcard"; c.style.animationDelay = (i * 0.05) + "s";
+      c.innerHTML = '<h5>' + esc(m.n) + '</h5><span class="by">by ' + esc(m.by) + '</span><div class="sizes">' + m.s.map(function(x){ return '<span>' + esc(x) + '</span>'; }).join("") + '</div><p>' + esc(m.good) + '</p><span class="lic">License: ' + esc(m.lic) + '</span><div class="cmd"><code>' + esc(m.cmd) + '</code><button type="button">Copy</button></div>';
+      c.querySelector("button").addEventListener("click", function(){ copyText(m.cmd, this, "Copy"); });
+      $("mGrid").appendChild(c);
+    });
+  }
+  filters.forEach(function(f){
+    var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = f[1];
+    b.setAttribute("aria-pressed", f[0] === cur ? "true" : "false");
+    b.addEventListener("click", function(){ cur = f[0]; store("localllm-filter", cur); $("mFilter").querySelectorAll(".chip").forEach(function(x){ x.setAttribute("aria-pressed", "false"); x.style.background = ""; }); b.setAttribute("aria-pressed", "true"); b.style.background = "var(--sun)"; renderModels(); });
+    if (f[0] === cur) b.style.background = "var(--sun)";
+    $("mFilter").appendChild(b);
+  });
+  renderModels();
+
+  // Windows apps: tabs + animated terminal
+  var tools = [
+    {k:"ollama", name:"Ollama", kind:"Recommended · free · open source",
+     what:"The easiest way to run local models on Windows. It installs a small tray app, a command called ollama, a simple chat window, and a local API at http://localhost:11434.",
+     install:["Go to ollama.com/download/windows and run OllamaSetup.exe, or type the winget command shown in the terminal below.","Wait for the llama icon to appear in the system tray (bottom right, near the clock). Ollama now runs in the background.","Open a new PowerShell window and check it with: ollama --version"],
+     use:["Run a first model: ollama run llama3.2 (about 2 GB the first time).","Type a question and press Enter. Type /bye to leave.","Or open the Ollama app from the Start menu, pick a model in the box at the bottom, and chat with buttons.","See your models with ollama list and remove one with ollama rm name."],
+     lines:[["p","winget install Ollama.Ollama"],["o","Found Ollama [Ollama.Ollama]\nDownloading ...  ██████████████ 100%\nSuccessfully installed"],["p","ollama --version"],["o","ollama version is 0.x.x"],["p","ollama run llama3.2"],["o","pulling manifest\npulling 2.0 GB ██████████████ 100%\nsuccess"],["o",">>> Why is the sky blue?"],["ok","Sunlight bounces off tiny air molecules, and blue light bounces the most..."]],
+     un:"Uninstall: Settings → Apps → Ollama"},
+    {k:"lmstudio", name:"LM Studio", kind:"Free · point and click",
+     what:"A friendly desktop app. It searches Hugging Face for you, tells you which versions fit your PC, and has a ChatGPT-like chat screen.",
+     install:["Go to lmstudio.ai and click Download for Windows (or type the winget command below).","Run the installer and open LM Studio.","Skip or finish the welcome tour. It may suggest a first model for you."],
+     use:["Open the Discover tab (magnifying glass) and search, for example: gemma 3 4b or qwen3 8b.","Pick a file marked as a good fit for your machine and click Download.","Open the Chat tab, choose the model at the top, and type.","For code: open the Developer tab and switch on the server. It listens at http://localhost:1234/v1."],
+     lines:[["p","winget install ElementLabs.LMStudio"],["o","Found LM Studio [ElementLabs.LMStudio]\nSuccessfully installed"],["p","lms server start"],["ok","Success! Server is now running on port 1234"],["p","lms ls"],["o","You have 1 model: google/gemma-3-4b"]],
+     un:"The lms command appears after you open LM Studio once."},
+    {k:"jan", name:"Jan", kind:"Free · open source · offline",
+     what:"An open-source ChatGPT-style app that runs 100% offline. Good for privacy-first classrooms.",
+     install:["Go to jan.ai and download the Windows installer (.exe).","Run it and open Jan from the Start menu."],
+     use:["Open the Hub, pick a model such as a Qwen3 or Gemma 3 version sized for your PC, and click Download.","Start a new chat and choose the model.","For code: Settings → Local API Server → Start. It listens at http://localhost:1337/v1."],
+     lines:[["o","No typing needed: Jan is installed with a normal Windows installer."],["ok","Tip: the Hub shows a hint if a model is too big for your RAM."]],
+     un:"Uninstall: Settings → Apps → Jan"},
+    {k:"gpt4all", name:"GPT4All", kind:"Free · open source",
+     what:"A simple chat app from Nomic. Its LocalDocs feature lets you chat with folders of your own files, no setup needed.",
+     install:["Go to nomic.ai/gpt4all and download the Windows installer.","Run it and open GPT4All."],
+     use:["Click Models → + Add Model and download a recommended model.","Chat in the Chats tab.","LocalDocs: add a folder of PDFs or notes, then turn it on in a chat to get answers with sources.","For code: Settings → Enable Local API Server (port 4891)."],
+     lines:[["o","No typing needed: GPT4All uses a normal Windows installer."],["ok","LocalDocs builds a private RAG index on your PC."]],
+     un:"Uninstall: Settings → Apps → GPT4All"},
+    {k:"anythingllm", name:"AnythingLLM", kind:"Free · private RAG",
+     what:"A desktop app built for chatting with your documents. It has its own built-in model runner, or it can use Ollama or LM Studio.",
+     install:["Go to anythingllm.com and download AnythingLLM Desktop for Windows.","Run the installer and open the app."],
+     use:["Choose an LLM provider: the built-in one, or Ollama (http://localhost:11434) if you installed it.","Create a workspace and drag in PDFs, Word files or web links.","Ask questions. Answers come with citations from your files."],
+     lines:[["o","No typing needed: AnythingLLM uses a normal Windows installer."],["ok","Pick Ollama as the provider to reuse models you already downloaded."]],
+     un:"Uninstall: Settings → Apps → AnythingLLM"},
+    {k:"openwebui", name:"Open WebUI", kind:"Free · open source · browser interface",
+     what:"A ChatGPT-like website that runs on your PC and talks to Ollama. Great for a family or classroom: everyone opens it in a browser.",
+     install:["Install Ollama first (first tab).","Install Python 3.11 with winget (Open WebUI needs 3.11).","Install Open WebUI with pip, as in the terminal below."],
+     use:["Start it with: open-webui serve","Open http://localhost:8080 in your browser and create the first account (that account becomes the admin, stored only on your PC).","Pick an Ollama model at the top and chat. You can also upload documents for RAG.","With Docker Desktop instead: docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main then open http://localhost:3000"],
+     lines:[["p","winget install Python.Python.3.11"],["o","Successfully installed"],["p","py -3.11 -m pip install open-webui"],["o","Successfully installed open-webui"],["p","py -3.11 -m open_webui serve"],["ok","Uvicorn running on http://0.0.0.0:8080"]],
+     un:"If open-webui serve is not found, use: py -3.11 -m open_webui serve"},
+    {k:"llamacpp", name:"llama.cpp", kind:"Free · open source · for tinkerers",
+     what:"The fast engine inside many other apps. Use it directly for full control over any GGUF model file.",
+     install:["Install with winget as shown below, or download a Windows zip from github.com/ggml-org/llama.cpp/releases (pick the CUDA build for NVIDIA, Vulkan for AMD/Intel, CPU otherwise).","Open a new PowerShell window so the commands are found."],
+     use:["Chat in the terminal: llama-cli -hf ggml-org/gemma-3-1b-it-GGUF","Or start a web chat and API: llama-server -hf ggml-org/gemma-3-1b-it-GGUF then open http://localhost:8080","Use your own file: llama-server -m D:\\models\\model.gguf"],
+     lines:[["p","winget install llama.cpp"],["o","Successfully installed"],["p","llama-server -hf ggml-org/gemma-3-1b-it-GGUF"],["o","downloading model ... done\nloading model ... done"],["ok","server is listening on http://127.0.0.1:8080"]],
+     un:"The -hf option downloads the model from Hugging Face the first time."},
+    {k:"koboldcpp", name:"KoboldCpp", kind:"Free · no install",
+     what:"One single .exe file. Double-click, choose a GGUF model, and chat. Popular for stories and role-play.",
+     install:["Go to github.com/LostRuins/koboldcpp/releases and download koboldcpp.exe (use the 'nocuda' version if you have no NVIDIA GPU).","Download a GGUF model file from Hugging Face, for example a Q4_K_M file of Llama 3.2 3B Instruct."],
+     use:["Double-click koboldcpp.exe.","Click Browse, choose your .gguf file, then click Launch.","Your browser opens http://localhost:5001 with the chat screen."],
+     lines:[["p",".\\koboldcpp.exe --model .\\Llama-3.2-3B-Instruct-Q4_K_M.gguf"],["o","Loading model ... done"],["ok","Please connect to custom endpoint at http://localhost:5001"]],
+     un:"Windows SmartScreen may warn about an unknown app. Download only from the official GitHub page."},
+    {k:"foundry", name:"Foundry Local", kind:"Free · from Microsoft",
+     what:"Microsoft's local model runner for Windows. It picks the best version for your hardware, including NPU on Copilot+ PCs.",
+     install:["Install with winget as shown below.","Open a new PowerShell window."],
+     use:["See available models: foundry model list","Run one and chat: foundry model run qwen2.5-0.5b","Check the local API address: foundry service status"],
+     lines:[["p","winget install Microsoft.FoundryLocal"],["o","Successfully installed"],["p","foundry model run qwen2.5-0.5b"],["o","Downloading model ... done\nLoading model ... done"],["ok","Interactive Chat. Enter /? or /help for help."]],
+     un:"Model names in Foundry Local differ from Ollama names. Use foundry model list."},
+    {k:"localai", name:"LocalAI", kind:"Free · open source · Docker",
+     what:"An all-in-one server that copies the OpenAI API: chat, embeddings, images and speech. Runs in Docker Desktop.",
+     install:["Install Docker Desktop: winget install Docker.DockerDesktop, then restart and open Docker Desktop once.","Start LocalAI with the docker command below (CPU version)."],
+     use:["Open http://localhost:8080 to see the web interface and install models from its gallery.","Point any OpenAI-style code at http://localhost:8080/v1"],
+     lines:[["p","docker run -d -p 8080:8080 --name local-ai localai/localai:latest-aio-cpu"],["o","Pulling image ... done"],["ok","LocalAI API is listening on http://0.0.0.0:8080"]],
+     un:"NVIDIA users can use the latest-aio-gpu-nvidia-cuda-12 image instead."},
+    {k:"vllm", name:"vLLM", kind:"Free · advanced · needs WSL2",
+     what:"A high-speed server for many users at once. It does not run natively on Windows, so you run it inside WSL2 (Linux inside Windows) with an NVIDIA GPU.",
+     install:["Install WSL2 with Ubuntu: wsl --install (then restart).","Open Ubuntu from the Start menu and install vLLM with pip."],
+     use:["Start a server: vllm serve Qwen/Qwen3-0.6B","Use http://localhost:8000/v1 from Windows code."],
+     lines:[["p","wsl --install"],["o","Installing: Ubuntu ... restart required"],["p","wsl -e bash -c \"pip install vllm && vllm serve Qwen/Qwen3-0.6B\""],["ok","Uvicorn running on http://0.0.0.0:8000"]],
+     un:"For learning, Ollama or LM Studio are much simpler."}
+  ];
+  var curTool = 0, tTimer = null;
+  function showTool(i){
+    curTool = i; clearTimeout(tTimer);
+    var t = tools[i];
+    $("toolTabs").querySelectorAll(".chip").forEach(function(c, k){ c.setAttribute("aria-selected", k === i ? "true" : "false"); });
+    $("tcName").textContent = t.name; $("tcKind").textContent = t.kind; $("tcWhat").textContent = t.what;
+    $("tcInstall").innerHTML = t.install.map(function(s){ return "<li>" + esc(s) + "</li>"; }).join("");
+    $("tcUse").innerHTML = t.use.map(function(s){ return "<li>" + esc(s) + "</li>"; }).join("");
+    $("termTitle").textContent = "PowerShell · " + t.name;
+    $("termScreen").innerHTML = t.lines.map(function(l){ return '<span class="' + l[0] + '">' + (l[0] === "p" ? "PS C:\\&gt; " : "") + esc(l[1]) + '</span>'; }).join("\n");
+    $("tcUninstall").textContent = t.un || "";
+    $("termCopy").hidden = !t.lines.some(function(l){ return l[0] === "p"; });
+    var card = $("toolCard"); card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop");
+  }
+  tools.forEach(function(t, i){
+    var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.setAttribute("role", "tab"); b.textContent = t.name;
+    b.addEventListener("click", function(){ showTool(i); });
+    $("toolTabs").appendChild(b);
+  });
+  $("toolCard").classList.add("reveal");
+  showTool(0);
+  $("termPlay").addEventListener("click", function(){
+    clearTimeout(tTimer);
+    var lines = tools[curTool].lines, scr = $("termScreen"), li = 0, ci = 0, span = null;
+    if (reduce){ showTool(curTool); return; }
+    scr.innerHTML = "";
+    function tick(){
+      if (li >= lines.length){ confettiAt(scr); return; }
+      var l = lines[li];
+      if (!span){ span = document.createElement("span"); span.className = l[0] + " cur"; scr.appendChild(span); if (l[0] === "p") span.textContent = "PS C:\\> "; }
+      if (l[0] === "p"){
+        span.textContent += l[1].charAt(ci++);
+        if (ci >= l[1].length){ span.classList.remove("cur"); scr.appendChild(document.createTextNode("\n")); li++; ci = 0; span = null; tTimer = setTimeout(tick, 350); return; }
+        tTimer = setTimeout(tick, 32);
+      } else {
+        span.textContent = l[1]; span.classList.remove("cur"); scr.appendChild(document.createTextNode("\n")); li++; span = null; tTimer = setTimeout(tick, 700);
+      }
+      scr.scrollTop = scr.scrollHeight;
+    }
+    tick();
+  });
+  $("termCopy").addEventListener("click", function(){
+    copyText(tools[curTool].lines.filter(function(l){ return l[0] === "p"; }).map(function(l){ return l[1]; }).join("\n"), this, "Copy commands");
+  });
+
+  // Full catalog
+  var RAW = "llama3.1|Meta's 2024 general-purpose models|8b,70b,405b|tools\ndeepseek-r1|Open reasoning models close to top proprietary ones|1.5b,7b,8b,14b,32b,70b,671b|tools,thinking\nnomic-embed-text|Embedding model with a large context window||embedding\nllama3.2|Small Llama 3.2 models for lightweight use|1b,3b|tools\nqwen2.5|Alibaba's multilingual model|0.5b,1.5b,3b,7b,14b,32b,72b|tools\nqwen3|Dense and mixture-of-experts Qwen series|0.6b,1.7b,4b,8b,14b,30b,32b,235b|tools,thinking\ngemma3|Google's most capable model for a single GPU|270m,1b,4b,12b,27b|vision\ngemma2|Efficient Google Gemma 2 models|2b,9b,27b|\nmistral|Mistral AI's 7B model, v0.3|7b|tools\ngemma4|Google models with strong performance per size, for reasoning and agents|e2b,e4b,12b,26b,31b|vision,tools,thinking,audio,cloud\nllama3|Meta's earlier open LLM|8b,70b|\nqwen3.5|Open multimodal Qwen family|0.8b,2b,4b,9b,27b,35b,122b|vision,tools,thinking\nqwen2.5-coder|Code-focused Qwen models for writing and fixing code|0.5b,1.5b,3b,7b,14b,32b|tools\nphi3|Microsoft's lightweight open models|3.8b,14b|\nmxbai-embed-large|Large embedding model from mixedbread.ai|335m|embedding\nllava|Vision-language model (encoder + Vicuna)|7b,13b,34b|vision\ngpt-oss|OpenAI's open-weight reasoning and agent models|20b,120b|tools,thinking,cloud\nqwen3-coder|Long-context Qwen models for agentic coding|30b,480b|tools\nglm-ocr|Multimodal OCR model for complex documents||vision,tools\ngemma|Google DeepMind's first lightweight open models|2b,7b|\nqwen|Qwen 1.5 series from Alibaba Cloud|0.5b,1.8b,4b,7b,14b,32b,72b,110b|\nbge-m3|BAAI multilingual, multi-function embedding model|567m|embedding\nphi4|14B open model from Microsoft|14b|\nllama2|Meta's Llama 2 foundation models|7b,13b,70b|\ncodellama|Text-to-code and code discussion model|7b,13b,34b,70b|\nqwen3.6|Upgraded agentic coding and reasoning Qwen models|27b,35b|vision,tools,thinking\nqwen3-vl|Qwen's strongest vision-language models|2b,4b,8b,30b,32b,235b|vision,tools,thinking\ntinyllama|Compact 1.1B Llama trained on 3 trillion tokens|1.1b|\nqwen2|Alibaba's Qwen2 series|0.5b,1.5b,7b,72b|tools\nmistral-nemo|12B model with 128k context, built with NVIDIA|12b|tools\nqwen2.5vl|Flagship Qwen 2.5 vision-language model|3b,7b,32b,72b|vision\nminicpm-v|Multimodal model for vision-language tasks|8b|vision\nllama3.2-vision|Llama image reasoning models|11b,90b|vision\nqwen3.8|Gains in coding, research and long agentic tasks|27b|vision,tools,thinking\ndeepseek-coder|Code model trained on code and natural language|1.3b,6.7b,33b|\nqwen3-embedding|Text embedding models built on Qwen3|0.6b,4b,8b|embedding\nllama3.3|70B model rivaling much larger Llama 3.1|70b|tools\ndolphin3|General-purpose instruct model on Llama 3.1 8B|8b|\nsmollm2|Compact language models|135m,360m,1.7b|tools\ndeepseek-v3|Large mixture-of-experts model, 37B active per token|671b|\nall-minilm|Sentence embedding models|22m,33m|embedding\nolmo2|Fully open 7B and 13B models|7b,13b|\ndeepseek-coder-v2|Open MoE code model|16b,236b|\ncodegemma|Lightweight coding models for completion|2b,7b|\nsnowflake-arctic-embed|Snowflake's text embedding suite|22m,33m,110m,137m,335m|embedding\nmistral-small|Mistral's small-category model|22b,24b|tools\norca-mini|General model for entry-level hardware|3b,7b,13b,70b|\ngranite3.1-moe|IBM low-latency MoE models with long context|1b,3b|tools\nstarcoder2|Transparently trained open code models|3b,7b,15b|\nnemotron-3-super|NVIDIA 120B MoE with 12B active|120b|tools,thinking,cloud\nmixtral|Mistral AI's mixture-of-experts models|8x7b,8x22b|tools\ntranslategemma|Gemma 3-based translation models|4b,12b,27b|vision\nllama2-uncensored|Uncensored Llama 2 variant|7b,70b|\nembeddinggemma|300M embedding model from Google|300m|embedding\nfalcon3|Efficient sub-10B models for science, math and code|1b,3b,7b,10b|\nmistral-small3.2|Better function calling and instruction following|24b|vision,tools\ngemma3n|Gemma models for laptops, tablets and phones|e2b,e4b|vision\nminimax-m2.7|MiniMax model for coding and agent workflows||tools,thinking,cloud\ndevstral-small-2|24B model for codebase exploration and agents|24b|vision,tools\nllava-llama3|LLaVA fine-tuned from Llama 3|8b|vision\nqwq|Qwen reasoning model|32b|tools\nsmollm|Small models trained on a curated dataset|135m,360m,1.7b|\nsqlcoder|Code model tuned for SQL generation|7b,15b|\ndolphin-llama3|Llama 3-based instruct model|8b,70b|\ncogito|Hybrid reasoning models from Deep Cogito|3b,8b,14b,32b,70b|tools\nglm-4.7-flash|Strong 30B-class model for lightweight deployment||tools,thinking\nmoondream|Small vision model for edge devices|1.8b|vision\nqwen3-coder-next|Coding model for agentic workflows||tools\ndolphin-mixtral|Uncensored Mixtral-based coding models|8x7b,8x22b|\nllama4|Meta's multimodal model collection|16x17b,128x17b|vision,tools\ndolphin-mistral|Uncensored Mistral-based model|7b|\nstarcoder|Code generation across 80+ languages|1b,3b,7b,15b|\nhermes3|Nous Research's flagship Hermes series|3b,8b,70b,405b|tools\nphi4-reasoning|Reasoning model rivaling much larger ones|14b|\nwizardcoder|Code generation model|33b|\ngranite-code|IBM foundation models for code|3b,8b,20b,34b|\ndolphin-phi|Uncensored model based on Phi|2.7b|\nopenhermes|7B Mistral fine-tune on open datasets||\nphi4-mini|Phi-4 mini with function calling|3.8b|tools\ncommand-r|Conversational model for long-context tasks|35b|tools\ngranite4|IBM models with better tool calling|350m,1b,3b|tools\nphi|Microsoft Research's 2.7B model|2.7b|\nyi|Bilingual (English/Chinese) model|6b,9b,34b|\nministral-3|Edge-friendly Mistral family|3b,8b,14b|vision,tools\nmagistral|Small efficient reasoning model|24b|tools,thinking\nopenchat|Open-source model strong on benchmarks|7b|\ncodestral|Mistral AI's first code model|22b|\nmistral-large|Mistral's flagship with 128k context|123b|tools\nwizard-vicuna-uncensored|Uncensored Llama 2 derivative|7b,13b,30b|\nvicuna|Chat model based on Llama|7b,13b,33b|\nzephyr|Fine-tuned Mistral and Mixtral assistants|7b,141b|\nlfm2.5-thinking|On-device hybrid reasoning model|1.2b|tools,thinking\ndeepseek-llm|Bilingual model trained on 2T tokens|7b,67b|\nglm4|Multilingual general model|9b|\ndeepscaler|Math-tuned DeepSeek-R1 distillation|1.5b|\nnous-hermes|General-use Llama-based models|7b,13b|\ndeepseek-v2|Economical mixture-of-experts model|16b,236b|\nwizardlm2|Microsoft AI's chat and reasoning model|7b,8x22b|\nneural-chat|Mistral fine-tune for broad topics|7b|\nfalcon|TII's large language model|7b,40b,180b|\nopenthinker|Reasoning models distilled from DeepSeek-R1|7b,32b|\nnomic-embed-text-v2-moe|Multilingual MoE embedding model||embedding\nllama2-chinese|Llama 2 tuned for Chinese dialogue|7b,13b|\nmistral-openorca|Mistral 7B tuned on OpenOrca|7b|\nqwen2-math|Math-specialised Qwen2 models|1.5b,7b,72b|\ncodeqwen|Code-pretrained CodeQwen1.5|7b|\nstablelm2|Multilingual Stability AI models|1.6b,12b|\nlfm2|On-device hybrid model family|24b|tools\ngranite3.3|IBM models with reasoning and instruction tuning|2b,8b|tools\nyi-coder|Code models under 10B parameters|1.5b,9b|\naya|Cohere multilingual models for 23 languages|8b,35b|\nnous-hermes2|Nous Research models for science and code|10.7b,34b|\nstable-code|Small coding model|3b|\nwizard-math|Math and logic model|7b,13b,70b|\nllama-guard3|Content safety classifiers|1b,8b|\ninternlm2|Practical reasoning model|1.8b,7b,20b|\ndevstral|Open model for coding agents|24b|tools\ngranite3.1-dense|Text-only IBM dense models|2b,8b|tools\nllama3-chatqa|NVIDIA model for QA and RAG|8b,70b|\naya-expanse|Cohere models for 23 languages|8b,32b|tools\nxwinlm|Llama 2 conversational model|7b,13b|\nphi3.5|Lightweight 3.8B model|3.8b|\ngranite3-dense|IBM models for tools and RAG|2b,8b|tools\ndolphincoder|Uncensored coding model on StarCoder2|7b,15b|\nsamantha-mistral|Companion assistant on Mistral|7b|\nyarn-llama2|Llama 2 with 128k context|7b,13b|\nllama3-groq-tool-use|Groq models for function calling|8b,70b|tools\nllama3-gradient|Llama 3 with much longer context|8b,70b|\ngranite3.2-vision|Compact document-understanding vision model|2b|vision,tools\nstarling-lm|RLAIF-trained chat model|7b|\nphind-codellama|Code generation on Code Llama|34b|\nsolar|Compact 10.7B model|10.7b|\ngranite3-moe|IBM mixture-of-experts models|1b,3b|tools\nstable-beluga|Llama 2 tuned on Orca-style data|7b,13b,70b|\nshieldgemma|Safety evaluation models|2b,9b,27b|\norca2|Microsoft reasoning model on Llama 2|7b,13b|\ndeepcoder|Open coding model|1.5b,14b|\nwizardlm|General model on Llama 2||\nreader-lm|HTML-to-Markdown conversion models|0.5b,1.5b|\nnemotron-3-nano|Efficient NVIDIA agentic models|4b,30b|tools,thinking,cloud\nparaphrase-multilingual|Multilingual sentence embeddings|278m|embedding\nllama-pro|Llama 2 expansion for code and math||\nyarn-mistral|Mistral with 64K or 128K context|7b|\nnexusraven|Function-calling model|13b|\nmeditron|Medical model from Llama 2|7b,70b|\nbakllava|Mistral with LLaVA architecture|7b|vision\nllava-phi3|Small LLaVA from Phi 3 Mini|3.8b|vision\ncommand-r-plus|Enterprise-focused Cohere model|104b|tools\nmistral-small3.1|Adds vision and 128k context to Small 3|24b|vision,tools\nexaone-deep|Reasoning models from LG AI Research|2.4b,7.8b,32b|\ntinydolphin|Experimental 1.1B model|1.1b|\nmedllama2|Llama 2 tuned for medical questions|7b|\ndeepseek-v3.1|Hybrid thinking and non-thinking model|671b|tools,thinking\nnemotron-mini|Small NVIDIA model for roleplay and RAG|4b|tools\ncodegeex4|Versatile coding model|9b|\nnemotron3|NVIDIA multimodal model for video, audio, image and text|33b|vision,tools,thinking,audio\nornith|Self-improving agentic coding models|9b,35b|tools,thinking\nopencoder|Open reproducible code models|1.5b,8b|\nwizardlm-uncensored|Uncensored WizardLM|13b|\nnemotron|NVIDIA-tuned Llama 3.1 70B|70b|tools\nreflection|Model trained to correct its own reasoning|70b|\ncodeup|Code generation on Llama 2|13b|\nathene-v2|72B model for code and extraction|72b|tools\nnous-hermes2-mixtral|Nous Hermes 2 trained on Mixtral|8x7b|\nqwen3-next|First Qwen3-Next model|80b|tools,thinking\ndeepseek-ocr|Token-efficient OCR vision model|3b|vision\nexaone3.5|Bilingual English-Korean models|2.4b,7.8b,32b|\nmegadolphin|120B model built from Dolphin 70B|120b|\ngranite4.1|IBM enterprise models with tools and JSON output|3b,8b,30b|tools\neverythinglm|Uncensored Llama 2 with 16K context|13b|\nsolar-pro|22B model for a single GPU|22b|\nnuextract|Information extraction model from Phi-3|3.8b|\nmagicoder|Code models trained on synthetic instructions|7b|\nmathstral|Mistral math reasoning model|7b|\nnotus|Chat model based on Zephyr|7b|\nfalcon2|TII's 11B model|11b|\nnotux|Mixture-of-experts model|8x7b|\nstablelm-zephyr|Lightweight chat model|3b|\nbespoke-minicheck|Fact-checking model|7b|\nduckdb-nsql|Text-to-SQL model|7b|\nfirefunction-v2|Function-calling model on Llama 3|70b|tools\nmistrallite|Mistral tuned for long contexts|7b|\nwizard-vicuna|Llama 2-based 13B model|13b|\nminimax-m3|Coding and agent model with 1M context||vision,tools,thinking,cloud\nopen-orca-platypus2|Merge for chat and code|13b|\ncodebooga|Merged code instruct model|34b|\nrnj-1|Code and STEM model from Essential AI|8b|tools\nkimi-k2.6|Open multimodal agentic model||vision,tools,thinking,cloud\ngoliath|Two Llama 2 70B models merged||\nsnowflake-arctic-embed2|Multilingual embedding model|568m|embedding\nolmo-3|Fully open models from the Dolma 3 dataset|7b,32b|tools,thinking\ndeepseek-v4-pro|Frontier MoE with three reasoning modes||tools,thinking,cloud\ngranite3.2|Long-context IBM models with thinking|2b,8b|tools\nmedgemma|Gemma 3 variants for medical text and images|4b,27b|vision\nornith-1.5|Self-improving foundation models|9b,35b,122b,397b|vision,tools,thinking\nmistral-medium-3.5|128B model for instructions, reasoning and code|128b|vision,tools,thinking\nr1-1776|DeepSeek-R1 post-trained for factual answers|70b,671b|\nsailor2|Multilingual models for Southeast Asia|1b,8b,20b|\ntulu3|Open instruction-following models from AI2|8b,70b|\ngranite-embedding|IBM embedding models|30m,278m|embedding\nglm-5.2|Z.ai flagship for long-horizon tasks||tools,thinking,cloud\ndbrx|Databricks' open general-purpose model|132b|\ndevstral-2|Tool-using coding agent model|123b|tools\ngranite3-guardian|Risk detection for prompts and answers|2b,8b|\nmuse-glimmer|Meta model for always-on local agents|30b|vision,tools,thinking\ncommand-r7b|Small, efficient Cohere R-series model|7b|tools\nphi4-mini-reasoning|Lightweight reasoning model|3.8b|\nalfred|Conversational chat and instruct model|40b|\nolmo-3.1|Fully open models from the Dolma 3 dataset|32b|tools,thinking\ndeepseek-v2.5|Merged chat and coder DeepSeek-V2|236b|\nbge-large|BAAI text embedding model|335m|embedding\nlfm2.5|Edge model for tool calling on consumer hardware|8b,24b|tools,thinking\nnemotron-3.5-lightning|Always-on agent MoE with 3B active|30b|tools,thinking\nsmallthinker|Reasoning model from Qwen 2.5 3B|3b|\nkimi-k2.7-code|Coding-focused agentic model||vision,tools,thinking,cloud\ncommand-a|Cohere enterprise model with 111B parameters|111b|tools\ncogito-2.1|MIT-licensed instruct models|671b|\nqwen3.8-flash-next|Experimental Qwen architecture preview||vision,tools,thinking\nmarco-o1|Open reasoning model from Alibaba AIDC|7b|\nmedgemma1.5|Updated MedGemma 4B|4b|vision\ncommand-r7b-arabic|Arabic-focused Command R7B|7b|tools\nfunctiongemma|Gemma 3 270M for function calling|270m|tools\nglm-5.3-flash|First natively multimodal Z.ai model||vision,tools,thinking,cloud\ngranite4.2|IBM enterprise models with thinking|3b,8b,30b|\ndeepseek-v4.1-flash|Faster, higher-throughput DeepSeek model||vision,tools,thinking,cloud\nlaguna-s-2.1|Long-horizon work model (118B, 8B active)||tools,thinking\ngpt-oss-safeguard|Safety reasoning models built on gpt-oss|20b,120b|tools,thinking\nnemotron-cascade-2|Open 30B MoE with 3B active|30b|tools,thinking\nglm-5.3|Z.ai's most capable open-weights coding model||tools,thinking,cloud\nmistral-large-3|Multimodal MoE for enterprise work||vision,tools,cloud\nlaguna-xs-2.1|33B MoE with 3B active for local agentic coding||tools,thinking\nnemotron-3-ultra|High-throughput reasoning model||tools,thinking,cloud\ntev1|Together AI decision model for classification|0.8b,4b|tools,decision,thinking\nkimi-k3|Open-weight multimodal agentic model||vision,tools,thinking,cloud\nembeddinggemma-2|Multimodal embedding model on Gemma 4|270m,440m,570m,740m|vision,embedding,audio\nnorth-mini-code-1.0|Cohere coding MoE with 3B active||tools,thinking\nminicpm-v4.6|Pocket-sized image and video model|1b|vision\nbonsai-2|Ternary-weight vision models from Prism ML|2b,4b,9b,27b|vision,tools,thinking\nminicpm-v4.5|Multimodal model for images and video|8b|vision\nnimble|Bespoke Labs decision model|9b|tools,decision,thinking\nbeam|Reflection's token-efficient open model||tools,thinking,cloud\nclef|Cloudflare multimodal decision model|27b|vision,decision,cloud\nclef-flash|Smaller multimodal decision model|9b|vision,decision\ngranite4.1-guardian|IBM safety and judging model|8b|tools,thinking\nminimax-m3.1-flash|Faster next-gen MiniMax Flash model||vision,tools,thinking,cloud\nlaguna-xs.2|33B MoE with 3B active for local coding||tools,thinking\nflint|Recursive's 39.8B MoE for coding agents|40b|tools,thinking\nnemotron-3.5-bolt|Compact NVIDIA vision-language model|e4b|vision,tools,thinking,audio\nd1|Liquid AI decision model on LFM2.5-VL|2b,3b|vision,decision\nd3|Scores and rates text, data and images|2b,4b,9b,27b|vision,decision\nphonon|Gradium text-to-speech family||\nnimble-v3|Bespoke Labs decision model|9b|tools,decision,thinking\nmistral-large-4|Open-weight multimodal MoE||vision,tools,thinking,cloud\nnemotron-3.5-super|NVIDIA vision-language model for code and documents|120b|vision,tools,thinking\nlaya|Convai decision model from ModernBERT|421m|embedding,decision\nmuse-spark-open|Natively multimodal agentic model||vision,tools,thinking,cloud\nkev|Scores answers to structured questions||decision\nd1-omni|Multimodal Liquid AI decision model|600m,2b|vision,decision,audio\npplx-decider|Perplexity decision model from Qwen3.8|27b|vision,decision\nstrands-decider|Strands Agents decision model|2b|decision\nlfm3|Tri-hybrid model for local agents|1.7b|tools,thinking\nlfm3-omni|One model for text, image, video and audio|2b|vision,tools,audio\nlfm3-vl|On-device vision-language model|2b|vision,tools,thinking\nlfm3-audio|Compact audio model|2b|vision,tools,audio\n";
+  var CODE = /code|coder|devstral|starcoder|sql|codestral|wizardcoder|magicoder|codegeex|codeup|codebooga|flint|laguna|rnj-1|ornith|deepcoder|opencoder|stable-code|dolphincoder|phind/;
+  var SAFE = /guard|shield|safeguard|minicheck/;
+  function gb(size){
+    var m = size.match(/^(\d+)x(\d+(?:\.\d+)?)b$/); if (m) return +m[1] * +m[2] * 0.55;
+    m = size.match(/^e?(\d+(?:\.\d+)?)([bm])$/); if (!m) return null;
+    return m[2] === "m" ? +m[1] / 1000 : +m[1];
+  }
+  function memFor(b){ return b === null ? null : Math.max(0.5, Math.round((b * 0.6 + 1) * 10) / 10); }
+  var cat = RAW.trim().split("\n").map(function(line){
+    var p = line.split("|"), sizes = p[2] ? p[2].split(",") : [], tags = p[3] ? p[3].split(",") : [];
+    var cloudOnly = tags.indexOf("cloud") > -1 && sizes.length === 0;
+    var smallest = sizes.length ? sizes.map(gb).filter(function(x){ return x !== null; }).sort(function(a, b){ return a - b; })[0] : null;
+    var groups = [];
+    if (tags.indexOf("embedding") > -1) groups.push("embedding");
+    if (tags.indexOf("vision") > -1) groups.push("vision");
+    if (tags.indexOf("thinking") > -1 || /r1|reason|qwq|think|math|o1/.test(p[0])) groups.push("reasoning");
+    if (CODE.test(p[0])) groups.push("coding");
+    if (SAFE.test(p[0])) groups.push("safety");
+    if (smallest !== null && smallest <= 4 && groups.indexOf("embedding") < 0) groups.push("small");
+    if (cloudOnly) groups.push("cloud");
+    return {n:p[0], d:p[1], s:sizes, t:tags, cloud:cloudOnly, min:memFor(smallest), g:groups};
+  });
+  var catFilters = [["all","All"],["small","Small (runs on most PCs)"],["coding","Coding"],["reasoning","Reasoning"],["vision","Sees images"],["embedding","Embeddings for RAG"],["safety","Safety"],["cloud","Cloud-only"]];
+  var catF = "all", catQ = "";
+  function catRender(){
+    var q = catQ.toLowerCase();
+    var rows = cat.filter(function(m){ return (catF === "all" || m.g.indexOf(catF) > -1) && (!q || (m.n + " " + m.d).toLowerCase().indexOf(q) > -1); });
+    $("catCount").textContent = rows.length + " of " + cat.length + " models";
+    $("catBody").innerHTML = rows.map(function(m, i){
+      var first = m.s.length ? m.s.slice().sort(function(a, b){ return (gb(a) || 0) - (gb(b) || 0); })[0] : "";
+      var cmd = m.cloud ? "see ollama.com/library/" + m.n : (m.t.indexOf("embedding") > -1 ? "ollama pull " : "ollama run ") + m.n + (first ? ":" + first : "");
+      return '<tr data-i="' + cat.indexOf(m) + '"><td><b>' + esc(m.n) + '</b><div class="cdesc">' + esc(m.d) + '</div></td>' +
+        '<td><div class="csizes">' + (m.s.length ? m.s.map(function(s){ return '<button type="button" class="sz' + (s === first ? ' on' : '') + '" data-s="' + esc(s) + '">' + esc(s) + '</button>'; }).join("") : '<span class="src">' + (m.cloud ? "cloud" : "one size") + '</span>') + '</div></td>' +
+        '<td class="cmem">' + (m.cloud ? '<span class="pill warnp">Not local</span>' : m.min ? "~" + m.min + " GB" : "small") + '</td>' +
+        '<td><div class="ctags">' + m.t.map(function(t){ return '<span class="pill">' + esc(t) + '</span>'; }).join("") + '</div></td>' +
+        '<td><div class="ccmd"><code>' + esc(cmd) + '</code><button type="button" class="cc">Copy</button></div></td></tr>';
+    }).join("") || '<tr><td colspan="5">No model matches. Try another word.</td></tr>';
+  }
+  $("catBody").addEventListener("click", function(e){
+    var tr = e.target.closest("tr"); if (!tr || tr.dataset.i === undefined) return;
+    var m = cat[+tr.dataset.i], code = tr.querySelector(".ccmd code");
+    if (e.target.classList.contains("sz")){
+      tr.querySelectorAll(".sz").forEach(function(x){ x.classList.remove("on"); }); e.target.classList.add("on");
+      var s = e.target.dataset.s, mem = memFor(gb(s));
+      code.textContent = (m.t.indexOf("embedding") > -1 ? "ollama pull " : "ollama run ") + m.n + ":" + s;
+      tr.querySelector(".cmem").textContent = mem ? "~" + mem + " GB" : "small";
+    }
+    if (e.target.classList.contains("cc")) copyText(code.textContent, e.target, "Copy");
+  });
+  catFilters.forEach(function(f){
+    var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = f[1];
+    b.setAttribute("aria-pressed", f[0] === catF ? "true" : "false");
+    b.addEventListener("click", function(){ catF = f[0]; $("catFilter").querySelectorAll(".chip").forEach(function(x){ x.setAttribute("aria-pressed", "false"); }); b.setAttribute("aria-pressed", "true"); catRender(); });
+    $("catFilter").appendChild(b);
+  });
+  $("catSearch").addEventListener("input", function(){ catQ = this.value; catRender(); });
+  catRender();
+
+  // Quiz
+  var quiz = [
+    {q:"What makes an LLM 'local'?", o:["It only speaks your local language","It runs on your own computer","It lives in a nearby data centre","It is made by a local company"], a:1, why:"A local LLM's files are downloaded and run on your own machine."},
+    {q:"What does 8B mean in 'Llama 3.1 8B'?", o:["8 bytes","8 billion parameters","Version 8","8 GB download"], a:1, why:"B means billions of parameters, the knobs inside the model."},
+    {q:"About how much memory does an 8B model need at Q4?", o:["0.5 GB","About 6 GB","About 60 GB","1 TB"], a:1, why:"0.6 GB per billion plus about 1 GB: roughly 6 GB."},
+    {q:"Which command downloads and starts a model in Ollama?", o:["ollama start llama3.2","ollama run llama3.2","pip install llama3.2","ollama open llama3.2"], a:1, why:"ollama run downloads the model the first time and opens a chat."},
+    {q:"What is quantization?", o:["Making a model smaller by storing numbers with fewer bits","Adding more parameters","Connecting to the cloud","A type of GPU"], a:0, why:"Like a smaller JPEG: a little less precise, much lighter."},
+    {q:"Which is the BEST reason to use a local LLM?", o:["You need the smartest model in the world","Your data is private and must not leave your computer","Your laptop has 2 GB of RAM","You want someone else to manage servers"], a:1, why:"Privacy and offline use are the biggest strengths of local models."},
+    {q:"Where does Ollama's API listen by default?", o:["http://localhost:11434","https://ollama.com/api","http://localhost:3000","Port 80 on the internet"], a:0, why:"Ollama serves its API on your own computer at port 11434."}
+  ];
+  var qi = 0, stars = 0, answered = false;
+  function renderQ(){
+    answered = false; var it = quiz[qi];
+    $("qNum").textContent = "Question " + (qi + 1) + " of " + quiz.length;
+    $("qStars").textContent = "★".repeat(stars) + "☆".repeat(quiz.length - stars);
+    $("qText").textContent = it.q; $("qMsg").textContent = ""; $("qMsg").className = "msg";
+    $("qNext").disabled = true; $("qNext").textContent = qi === quiz.length - 1 ? "See my score" : "Next question";
+    var box = $("qOpts"); box.innerHTML = "";
+    it.o.forEach(function(text, k){
+      var b = document.createElement("button"); b.type = "button"; b.className = "opt"; b.textContent = text;
+      b.addEventListener("click", function(){
+        if (answered) return; answered = true;
+        if (k === it.a){ b.classList.add("right"); stars++; $("qMsg").className = "msg win"; $("qMsg").textContent = "Yes! " + it.why; confettiAt(b); }
+        else { b.classList.add("no"); box.children[it.a].classList.add("right"); $("qMsg").className = "msg lose"; $("qMsg").textContent = "Almost. " + it.why; }
+        $("qStars").textContent = "★".repeat(stars) + "☆".repeat(quiz.length - stars);
+        $("qNext").disabled = false;
+      });
+      box.appendChild(b);
+    });
+  }
+  $("qNext").addEventListener("click", function(){
+    if (qi < quiz.length - 1){ qi++; renderQ(); return; }
+    var t = stars === quiz.length ? "Local AI Hero!" : stars >= 5 ? "Local AI Explorer!" : "Keep practising!";
+    $("qText").textContent = "You earned " + stars + " of " + quiz.length + " stars: " + t;
+    $("qOpts").innerHTML = ""; $("qMsg").textContent = ""; $("qNext").textContent = "Play again";
+    confettiAt($("qText")); qi = -1; stars = 0;
+  });
+  renderQ();
+})();
+</script>

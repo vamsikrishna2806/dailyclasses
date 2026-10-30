@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ollama Student Guide</title>
+<style>
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-2: #f0f2f5;
+  --text: #1c2330;
+  --muted: #5b6473;
+  --border: #dde1e7;
+  --accent: #2563eb;
+  --accent-soft: #e6eefc;
+  --ok: #15803d;
+  --ok-soft: #e7f6ec;
+  --warn: #b45309;
+  --warn-soft: #fdf3e3;
+  --danger: #b91c1c;
+  --danger-soft: #fdecec;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --code-dim: #94a3b8;
+  --code-cmd: #7dd3fc;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1116; --surface: #161b22; --surface-2: #1d232c; --text: #e6e9ee; --muted: #9aa4b2;
+    --border: #2b323c; --accent: #60a5fa; --accent-soft: #172338; --ok: #4ade80; --ok-soft: #122619;
+    --warn: #fbbf24; --warn-soft: #2a2010; --danger: #f87171; --danger-soft: #2c1515; --code-bg: #0a0d12;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1116; --surface: #161b22; --surface-2: #1d232c; --text: #e6e9ee; --muted: #9aa4b2;
+  --border: #2b323c; --accent: #60a5fa; --accent-soft: #172338; --ok: #4ade80; --ok-soft: #122619;
+  --warn: #fbbf24; --warn-soft: #2a2010; --danger: #f87171; --danger-soft: #2c1515; --code-bg: #0a0d12;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--accent); }
+code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .9em; }
+:not(pre) > code { background: var(--surface-2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; }
+
+/* Layout */
+.topbar {
+  position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; gap: 12px;
+}
+.topbar .brand { font-weight: 700; }
+.topbar button {
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 14px;
+}
+.wrap { display: grid; grid-template-columns: 250px minmax(0, 1fr); max-width: 1200px; margin: 0 auto; gap: 32px; padding: 0 20px; }
+nav.toc { position: sticky; top: 60px; align-self: start; max-height: calc(100vh - 70px); overflow: auto; padding: 24px 0; font-size: 14px; }
+nav.toc p { margin: 0 0 8px; font-weight: 700; color: var(--muted); text-transform: uppercase; font-size: 12px; letter-spacing: .05em; }
+nav.toc a { display: block; padding: 4px 10px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+nav.toc a:hover, nav.toc a.active { color: var(--accent); border-left-color: var(--accent); }
+nav.toc a.sub { padding-left: 22px; font-size: 13px; }
+main { padding: 24px 0 80px; min-width: 0; }
+header.hero { padding: 24px 0 8px; }
+header.hero h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 8px; }
+header.hero p { color: var(--muted); margin: 0; font-size: 1.05rem; max-width: 70ch; }
+section { padding-top: 28px; }
+h2 { font-size: 1.55rem; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1.15rem; margin: 22px 0 8px; }
+p, li { max-width: 78ch; }
+
+/* Components */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin: 14px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.grid .card { margin: 0; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 14px 0; }
+.note.ok { border-color: var(--ok); background: var(--ok-soft); }
+.note.warn { border-color: var(--warn); background: var(--warn-soft); }
+.note.danger { border-color: var(--danger); background: var(--danger-soft); }
+.note strong:first-child { display: block; margin-bottom: 2px; }
+
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps > li { counter-increment: step; position: relative; padding: 0 0 18px 46px; }
+.steps > li::before {
+  content: counter(step); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 700; display: grid; place-items: center; font-size: 14px;
+}
+.steps > li::after { content: ""; position: absolute; left: 14px; top: 34px; bottom: 4px; width: 2px; background: var(--border); }
+.steps > li:last-child::after { display: none; }
+
+.code { position: relative; margin: 10px 0 14px; }
+.code pre {
+  margin: 0; background: var(--code-bg); color: var(--code-text); padding: 14px 16px; border-radius: 8px;
+  overflow-x: auto; font-size: 14px; line-height: 1.55;
+}
+.code .label { position: absolute; top: 0; left: 12px; transform: translateY(-50%); background: var(--surface); color: var(--muted); border: 1px solid var(--border); font-size: 11px; padding: 0 8px; border-radius: 10px; }
+.code button.copy {
+  position: absolute; top: 8px; right: 8px; background: #1e293b; color: #cbd5e1; border: 1px solid #334155;
+  border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+}
+.code button.copy:hover { background: #334155; }
+.c { color: var(--code-dim); }       /* comment / output */
+.k { color: var(--code-cmd); }       /* command */
+
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.tabs button {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 14px;
+  border-radius: 8px 8px 0 0; cursor: pointer; font: inherit; font-size: 14px; border-bottom: none;
+}
+.tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tabpanel { display: none; border: 1px solid var(--border); background: var(--surface); padding: 6px 20px 14px; border-radius: 0 8px 8px 8px; }
+.tabpanel.active { display: block; }
+
+.table-wrap { overflow-x: auto; margin: 12px 0; border: 1px solid var(--border); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+
+.cmd-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 20px 12px; margin: 18px 0; }
+.cmd-card h3 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cmd-card h3 code { font-size: 1rem; background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.cmd-card .what { color: var(--muted); margin-top: -4px; }
+.pill { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); font-weight: 600; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.chips button {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 5px 12px;
+  border-radius: 20px; cursor: pointer; font: inherit; font-size: 13px;
+}
+.chips button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.cat-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.cat-controls .search { flex: 1 1 240px; }
+.cat-controls label { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.badge { display: inline-block; font-size: 11px; padding: 0 7px; border-radius: 10px; margin: 1px 2px 1px 0; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); }
+.badge.tools { color: var(--accent); border-color: var(--accent); }
+.badge.vision { color: var(--ok); border-color: var(--ok); }
+.badge.thinking { color: var(--warn); border-color: var(--warn); }
+.badge.embedding { color: var(--danger); border-color: var(--danger); }
+.size { display: inline-block; font-family: ui-monospace, Consolas, monospace; font-size: 12px; padding: 0 5px; margin: 1px; border-radius: 4px; background: var(--surface-2); }
+#catCount { color: var(--muted); font-size: 14px; margin: 6px 0; }
+#catalogTable td:nth-child(1) { white-space: nowrap; }
+.search { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; }
+
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0; }
+.flow span.box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+.flow span.arrow { color: var(--muted); }
+
+details { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin: 10px 0; }
+details summary { cursor: pointer; font-weight: 600; }
+
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); margin-top: 40px; padding-top: 16px; }
+
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); padding: 0 16px; }
+  nav.toc { display: none; }
+  header.hero h1 { font-size: 1.6rem; }
+  .topbar { padding: 10px 16px; }
+}
+@media print {
+  .topbar, nav.toc, button.copy { display: none; }
+  .tabpanel { display: block; }
+  .wrap { display: block; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">🦙 Ollama Student Guide</span>
+  <button id="themeBtn" type="button">Toggle theme</button>
+</div>
+
+<div class="wrap">
+<nav class="toc" id="toc">
+  <p>Contents</p>
+  <a href="#what">1. What is Ollama?</a>
+  <a href="#requirements">2. System requirements</a>
+  <a href="#install">3. Installation</a>
+  <a class="sub" href="#install-win">Windows (.exe)</a>
+  <a class="sub" href="#install-zip">Windows (manual zip)</a>
+  <a class="sub" href="#install-mac">macOS</a>
+  <a class="sub" href="#install-linux">Linux</a>
+  <a href="#verify">4. Verify the install</a>
+  <a href="#first">5. Your first model</a>
+  <a href="#commands">6. All commands explained</a>
+  <a href="#interactive">7. Chat-mode slash commands</a>
+  <a href="#models">8. Free local models</a>
+  <a class="sub" href="#find-models">How to find all models</a>
+  <a class="sub" href="#read-model-page">Reading a model page</a>
+  <a class="sub" href="#catalog">Full model catalog</a>
+  <a class="sub" href="#hf-models">Models from Hugging Face</a>
+  <a href="#modelfile">9. Build a custom model</a>
+  <a href="#api">10. Use from code (API)</a>
+  <a href="#env">11. Settings &amp; storage</a>
+  <a href="#trouble">12. Troubleshooting</a>
+  <a href="#cheatsheet">13. Cheat sheet</a>
+  <a href="#practice">14. Practice tasks</a>
+</nav>
+
+<main>
+<header class="hero">
+  <h1>Run AI models on your own computer with Ollama</h1>
+  <p>A step-by-step guide: download and install Ollama, learn every <code>ollama</code> command, and run free open models like Llama, Gemma, Qwen, Phi and DeepSeek offline on your laptop.</p>
+</header>
+
+<!-- 1 -->
+<section id="what">
+<h2>1. What is Ollama?</h2>
+<p><strong>Ollama</strong> is a free, open-source tool that downloads large language models (LLMs) and runs them <em>locally</em> on your machine. No API key, no internet once the model is downloaded, and your data never leaves your computer.</p>
+
+<div class="flow">
+  <span class="box">You type <code>ollama run llama3.2</code></span><span class="arrow">→</span>
+  <span class="box">Ollama CLI</span><span class="arrow">→</span>
+  <span class="box">Ollama server<br><small>localhost:11434</small></span><span class="arrow">→</span>
+  <span class="box">Model file on disk<br><small>loaded into RAM / GPU</small></span><span class="arrow">→</span>
+  <span class="box">Answer streams back</span>
+</div>
+
+<div class="grid">
+  <div class="card"><strong>🔒 Private</strong><br>Prompts and documents stay on your laptop.</div>
+  <div class="card"><strong>💸 Free</strong><br>No per-token billing. The models are open-weight.</div>
+  <div class="card"><strong>✈️ Offline</strong><br>After <code>pull</code>, works with Wi-Fi off.</div>
+  <div class="card"><strong>🧩 Developer-friendly</strong><br>REST API on port 11434, plus Python and JS libraries.</div>
+</div>
+
+<div class="note">
+  <strong>Two parts to know</strong>
+  The <b>server</b> runs in the background and does the work. The <b>CLI</b> (<code>ollama ...</code> commands) talks to that server. On Windows and macOS, the desktop app starts the server for you automatically.
+</div>
+</section>
+
+<!-- 2 -->
+<section id="requirements">
+<h2>2. System requirements</h2>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Minimum</th><th>Recommended</th></tr>
+<tr><td>OS</td><td>Windows 10 22H2+, macOS 12+ (Monterey), or a modern 64-bit Linux</td><td>Windows 11 / latest macOS</td></tr>
+<tr><td>RAM</td><td>8 GB (small 1B–3B models)</td><td>16 GB or more (7B–8B models)</td></tr>
+<tr><td>Disk</td><td>~5 GB free (app + one small model)</td><td>30 GB+ if you want to try several models</td></tr>
+<tr><td>GPU</td><td>Not required: runs on CPU</td><td>NVIDIA (CUDA), AMD (ROCm) or Apple Silicon (M1–M4) for much faster replies</td></tr>
+</table></div>
+
+<h3>Which model size fits my laptop?</h3>
+<div class="table-wrap"><table>
+<tr><th>Your RAM</th><th>Model size to pick</th><th>Examples</th></tr>
+<tr><td>8 GB</td><td>0.5B – 3B parameters</td><td><code>llama3.2:1b</code>, <code>gemma3:1b</code>, <code>qwen3:1.7b</code>, <code>llama3.2</code> (3B)</td></tr>
+<tr><td>16 GB</td><td>up to 7B – 8B</td><td><code>mistral</code>, <code>llama3.1:8b</code>, <code>qwen3:8b</code>, <code>gemma3:4b</code></td></tr>
+<tr><td>32 GB+</td><td>12B – 14B (or 20B)</td><td><code>gemma3:12b</code>, <code>phi4</code> (14B), <code>gpt-oss:20b</code></td></tr>
+</table></div>
+<div class="note warn"><strong>Rule of thumb</strong>A model needs roughly its download size in free RAM, plus 1–2 GB extra. If replies are very slow, switch to a smaller model.</div>
+
+<p><b>Check your RAM on Windows:</b> press <code>Ctrl + Shift + Esc</code> → <i>Performance</i> → <i>Memory</i>. Or in PowerShell:</p>
+<div class="code"><span class="label">PowerShell</span><pre><span class="k">(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB</span></pre></div>
+</section>
+
+<!-- 3 -->
+<section id="install">
+<h2>3. Installation</h2>
+<p>Pick your operating system:</p>
+
+<div class="tabs" role="tablist">
+  <button class="active" data-tab="install-win" type="button">Windows (.exe)</button>
+  <button data-tab="install-zip" type="button">Windows (manual zip)</button>
+  <button data-tab="install-mac" type="button">macOS</button>
+  <button data-tab="install-linux" type="button">Linux</button>
+</div>
+
+<div class="tabpanel active" id="install-win">
+<h3>Windows: download and run the installer</h3>
+<ol class="steps">
+  <li><b>Open the download page</b><br>Go to <a href="https://ollama.com/download" target="_blank" rel="noopener">https://ollama.com/download</a> and choose <b>Windows</b>. Click <b>Download for Windows</b>.</li>
+  <li><b>Find the file</b><br>The file <code>OllamaSetup.exe</code> (around 1 GB) lands in your <code>Downloads</code> folder.</li>
+  <li><b>Run the installer</b><br>Double-click <code>OllamaSetup.exe</code> → click <b>Install</b>. It installs only for your user, so admin rights are not needed. Default location:<br><code>C:\Users\&lt;you&gt;\AppData\Local\Programs\Ollama</code></li>
+  <li><b>Look for the llama icon</b><br>When it finishes, Ollama starts and a 🦙 icon appears in the system tray (bottom-right, near the clock). That means the server is running.</li>
+  <li><b>Open a NEW terminal</b><br>Press <code>Win</code>, type <b>PowerShell</b> or <b>cmd</b>, and open it. Open a fresh window so it picks up the new PATH.</li>
+  <li><b>Check it works</b>
+    <div class="code"><span class="label">PowerShell / cmd</span><pre><span class="k">ollama --version</span>
+<span class="c">ollama version is 0.x.x</span></pre></div>
+  </li>
+</ol>
+<div class="note warn"><strong>“ollama is not recognized…”?</strong>Close <i>all</i> terminal windows (including the one inside VS Code) and open a new one. If it still fails, sign out of Windows and back in. Also see <a href="#trouble">Troubleshooting</a>.</div>
+<div class="note"><strong>Windows also has a desktop chat app</strong>The newer Ollama for Windows includes a simple chat window (open it from the Start menu). This guide focuses on the terminal commands because they work the same on every OS.</div>
+</div>
+
+<div class="tabpanel" id="install-zip">
+<h3>Windows: manual (portable) install without the installer</h3>
+<p>Use this if your lab PC blocks installers, or you want Ollama on another drive such as <code>D:</code>.</p>
+<ol class="steps">
+  <li><b>Download the zip</b><br>Open <a href="https://github.com/ollama/ollama/releases/latest" target="_blank" rel="noopener">github.com/ollama/ollama/releases/latest</a> and download <code>ollama-windows-amd64.zip</code> (use <code>ollama-windows-arm64.zip</code> on ARM laptops such as Snapdragon).</li>
+  <li><b>Extract it</b><br>Right-click → <i>Extract All…</i> → for example <code>D:\tools\ollama</code>. You should see <code>ollama.exe</code> in that folder.</li>
+  <li><b>Add the folder to PATH</b><br>Press <code>Win</code> → search <b>“Edit environment variables for your account”</b> → select <b>Path</b> → <b>Edit</b> → <b>New</b> → paste <code>D:\tools\ollama</code> → OK. Or use PowerShell:
+    <div class="code"><span class="label">PowerShell</span><pre><span class="k">[Environment]::SetEnvironmentVariable("Path", $env:Path + ";D:\tools\ollama", "User")</span></pre></div>
+  </li>
+  <li><b>(Optional) Keep models on D: too</b>
+    <div class="code"><span class="label">PowerShell</span><pre><span class="k">[Environment]::SetEnvironmentVariable("OLLAMA_MODELS", "D:\ollama-models", "User")</span></pre></div>
+  </li>
+  <li><b>Start the server yourself</b><br>The zip has no tray app, so open a new terminal and keep it running:
+    <div class="code"><span class="label">Terminal 1: leave open</span><pre><span class="k">ollama serve</span>
+<span class="c">... Listening on 127.0.0.1:11434</span></pre></div>
+  </li>
+  <li><b>Use Ollama in a second terminal</b>
+    <div class="code"><span class="label">Terminal 2</span><pre><span class="k">ollama --version</span>
+<span class="k">ollama run llama3.2:1b</span></pre></div>
+  </li>
+</ol>
+</div>
+
+<div class="tabpanel" id="install-mac">
+<h3>macOS</h3>
+<ol class="steps">
+  <li>Go to <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> → <b>macOS</b> → download <code>Ollama.dmg</code>.</li>
+  <li>Open the <code>.dmg</code> and drag <b>Ollama</b> into <b>Applications</b>.</li>
+  <li>Open Ollama from Applications. Allow it to install the command-line tool when asked. A 🦙 icon appears in the menu bar.</li>
+  <li>Open <b>Terminal</b> and run <code>ollama --version</code>.</li>
+</ol>
+<div class="code"><span class="label">Alternative: Homebrew</span><pre><span class="k">brew install ollama</span>
+<span class="k">ollama serve</span>   <span class="c"># run in its own Terminal tab</span></pre></div>
+</div>
+
+<div class="tabpanel" id="install-linux">
+<h3>Linux</h3>
+<p>One command installs Ollama and sets it up as a background service (systemd):</p>
+<div class="code"><span class="label">bash</span><pre><span class="k">curl -fsSL https://ollama.com/install.sh | sh</span></pre></div>
+<p>Check and manage the service:</p>
+<div class="code"><span class="label">bash</span><pre><span class="k">ollama --version</span>
+<span class="k">systemctl status ollama</span>      <span class="c"># is it running?</span>
+<span class="k">sudo systemctl restart ollama</span> <span class="c"># restart after changing settings</span>
+<span class="k">journalctl -u ollama -f</span>       <span class="c"># live logs</span></pre></div>
+</div>
+</section>
+
+<!-- 4 -->
+<section id="verify">
+<h2>4. Verify the install</h2>
+<p>Run these three checks. If all pass, you are ready.</p>
+<div class="code"><span class="label">Terminal</span><pre><span class="c"># 1. CLI is on PATH</span>
+<span class="k">ollama --version</span>
+
+<span class="c"># 2. Server is running (should print "Ollama is running")</span>
+<span class="k">curl http://localhost:11434</span>
+
+<span class="c"># 3. List models (empty the first time; that's fine)</span>
+<span class="k">ollama list</span></pre></div>
+<p>You can also open <a href="http://localhost:11434" target="_blank" rel="noopener">http://localhost:11434</a> in your browser. It should say <i>“Ollama is running”</i>.</p>
+<div class="note warn"><strong>PowerShell note</strong>In Windows PowerShell, <code>curl</code> is an alias for <code>Invoke-WebRequest</code>. Use <code>curl.exe http://localhost:11434</code> to call the real curl.</div>
+</section>
+
+<!-- 5 -->
+<section id="first">
+<h2>5. Your first model in 60 seconds</h2>
+<div class="code"><span class="label">Terminal</span><pre><span class="k">ollama run llama3.2:1b</span>
+<span class="c">pulling manifest
+pulling 74701a8c35f6... 100% ▕████████████████▏ 1.3 GB
+success
+&gt;&gt;&gt; </span>Explain what an API is in 2 lines.
+<span class="c">An API (Application Programming Interface) is a set of rules that lets
+two programs talk to each other...</span>
+<span class="c">&gt;&gt;&gt; </span>/bye</pre></div>
+<p>The first <code>run</code> downloads the model (one time only). After that it starts in seconds. Type <code>/bye</code> or press <code>Ctrl + D</code> to exit.</p>
+</section>
+
+<!-- 6 -->
+<section id="commands">
+<h2>6. All Ollama commands explained</h2>
+<p>Running <code>ollama</code> or <code>ollama help</code> prints this list:</p>
+<div class="code"><span class="label">ollama --help</span><pre>Usage:
+  ollama [flags]
+  ollama [command]
+
+Available Commands:
+  serve       Start Ollama
+  create      Create a model
+  show        Show information for a model
+  run         Run a model
+  stop        Stop a running model
+  pull        Pull a model from a registry
+  push        Push a model to a registry
+  signin      Sign in to ollama.com
+  signout     Sign out from ollama.com
+  list        List models
+  ps          List running models
+  cp          Copy a model
+  rm          Remove a model
+  launch      Launch the Ollama menu or an integration
+  help        Help about any command
+
+Flags:
+  -h, --help      help for ollama
+  -v, --version   Show version information</pre></div>
+
+<input class="search" id="cmdSearch" type="search" placeholder="Filter commands… (e.g. run, pull, rm)">
+
+<div id="cmdList">
+
+<div class="cmd-card" data-cmd="serve">
+<h3><code>ollama serve</code> <span class="pill">server</span></h3>
+<p class="what">Starts the Ollama server (the engine) on <code>http://127.0.0.1:11434</code>.</p>
+<p><b>When do I need it?</b> Only if the server is not already running: the manual zip install, Linux without systemd, or Docker. On Windows and macOS the tray/menu-bar app runs it for you.</p>
+<div class="code"><pre><span class="k">ollama serve</span>                       <span class="c"># start (keep this window open)</span>
+
+<span class="c"># Windows PowerShell: make it reachable from other devices on your network</span>
+<span class="k">$env:OLLAMA_HOST="0.0.0.0:11434"; ollama serve</span>
+
+<span class="c"># Linux / macOS</span>
+<span class="k">OLLAMA_HOST=0.0.0.0:11434 ollama serve</span></pre></div>
+<div class="note danger"><strong>Error: “bind: Only one usage of each socket address…”</strong>The server is already running (usually the tray app). You don't need <code>serve</code>, so use the other commands. To run it yourself, first quit Ollama from the tray icon.</div>
+</div>
+
+<div class="cmd-card" data-cmd="run">
+<h3><code>ollama run &lt;model&gt;</code> <span class="pill">most used</span></h3>
+<p class="what">Runs a model and opens an interactive chat. It downloads the model first if you don't have it.</p>
+<div class="code"><pre><span class="c"># interactive chat</span>
+<span class="k">ollama run llama3.2</span>
+
+<span class="c"># a specific size or version (tag)</span>
+<span class="k">ollama run qwen3:1.7b</span>
+
+<span class="c"># one-shot: ask a question, print the answer, exit</span>
+<span class="k">ollama run llama3.2 "Write a Python function to reverse a string"</span>
+
+<span class="c"># show speed stats (tokens/sec) after each answer</span>
+<span class="k">ollama run llama3.2 --verbose</span>
+
+<span class="c"># feed a file into the prompt (PowerShell)</span>
+<span class="k">Get-Content notes.txt | ollama run llama3.2 "Summarize this:"</span>
+<span class="c"># (bash / cmd)</span>
+<span class="k">ollama run llama3.2 "Summarize this:" &lt; notes.txt</span>
+
+<span class="c"># image input with a vision model</span>
+<span class="k">ollama run gemma3:4b "What is in this picture? ./photo.jpg"</span>
+
+<span class="c"># reasoning models: hide or show the thinking</span>
+<span class="k">ollama run deepseek-r1:1.5b --think=false</span>
+
+<span class="c"># keep the model in memory for 30 minutes after exit</span>
+<span class="k">ollama run llama3.2 --keepalive 30m</span>
+
+<span class="c"># ask for JSON output</span>
+<span class="k">ollama run llama3.2 --format json "List 3 fruits with colors as JSON"</span></pre></div>
+<p><b>Model names</b> follow <code>name:tag</code>. With no tag, Ollama uses <code>:latest</code> (the default size). Example: <code>llama3.2</code> = <code>llama3.2:latest</code> = the 3B version.</p>
+</div>
+
+<div class="cmd-card" data-cmd="pull">
+<h3><code>ollama pull &lt;model&gt;</code> <span class="pill">download</span></h3>
+<p class="what">Downloads a model from the Ollama library without starting a chat. Running it again on a model you have updates it.</p>
+<div class="code"><pre><span class="k">ollama pull llama3.2</span>
+<span class="k">ollama pull gemma3:1b</span>
+<span class="k">ollama pull nomic-embed-text</span>      <span class="c"># embedding model, for RAG projects</span></pre></div>
+<p>Browse every available model at <a href="https://ollama.com/library" target="_blank" rel="noopener">ollama.com/library</a>. Downloads resume if your internet drops: just run the same command again.</p>
+</div>
+
+<div class="cmd-card" data-cmd="list ls">
+<h3><code>ollama list</code> <span class="pill">alias: ls</span></h3>
+<p class="what">Shows every model downloaded on your machine, with size and when it was last changed.</p>
+<div class="code"><pre><span class="k">ollama list</span>
+<span class="c">NAME               ID              SIZE      MODIFIED
+llama3.2:latest    a80c4f17acd5    2.0 GB    2 hours ago
+gemma3:1b          8648f39daa8f    815 MB    3 days ago
+mistral:latest     f974a74358d6    4.1 GB    1 week ago</span></pre></div>
+</div>
+
+<div class="cmd-card" data-cmd="ps">
+<h3><code>ollama ps</code> <span class="pill">monitor</span></h3>
+<p class="what">Lists models that are loaded in memory right now, and whether they use the GPU or CPU.</p>
+<div class="code"><pre><span class="k">ollama ps</span>
+<span class="c">NAME               ID              SIZE      PROCESSOR    CONTEXT    UNTIL
+llama3.2:latest    a80c4f17acd5    3.1 GB    100% GPU     4096       4 minutes from now</span></pre></div>
+<p><b>PROCESSOR</b> tells you where it runs: <code>100% GPU</code> is fast; <code>100% CPU</code> is slower; a split like <code>48%/52% CPU/GPU</code> means the model didn't fit in GPU memory. <b>UNTIL</b> is when it will be unloaded automatically (5 minutes idle by default).</p>
+</div>
+
+<div class="cmd-card" data-cmd="stop">
+<h3><code>ollama stop &lt;model&gt;</code> <span class="pill">free memory</span></h3>
+<p class="what">Unloads a running model from RAM/GPU straight away. The model stays on disk.</p>
+<div class="code"><pre><span class="k">ollama ps</span>              <span class="c"># see what's loaded</span>
+<span class="k">ollama stop llama3.2</span>   <span class="c"># unload it</span></pre></div>
+<p>Handy before switching to a big model, or when your laptop feels slow.</p>
+</div>
+
+<div class="cmd-card" data-cmd="show">
+<h3><code>ollama show &lt;model&gt;</code> <span class="pill">inspect</span></h3>
+<p class="what">Shows details about a model: architecture, parameter count, context length, quantization, capabilities and license.</p>
+<div class="code"><pre><span class="k">ollama show llama3.2</span>
+<span class="c">  Model
+    architecture        llama
+    parameters          3.2B
+    context length      131072
+    embedding length    3072
+    quantization        Q4_K_M
+  Capabilities
+    completion
+    tools</span>
+
+<span class="k">ollama show llama3.2 --modelfile</span>    <span class="c"># the Modelfile it was built from</span>
+<span class="k">ollama show llama3.2 --parameters</span>   <span class="c"># default settings (temperature, stop words)</span>
+<span class="k">ollama show llama3.2 --template</span>     <span class="c"># the prompt template</span>
+<span class="k">ollama show llama3.2 --system</span>       <span class="c"># the system prompt, if any</span>
+<span class="k">ollama show llama3.2 --license</span>     <span class="c"># license text</span></pre></div>
+<p>Tip: <code>--modelfile</code> output is a good starting point for your own <a href="#modelfile">custom model</a>.</p>
+</div>
+
+<div class="cmd-card" data-cmd="create">
+<h3><code>ollama create &lt;name&gt; -f Modelfile</code> <span class="pill">customize</span></h3>
+<p class="what">Builds a new model from a <b>Modelfile</b>, a small text recipe that sets a base model, a system prompt and parameters.</p>
+<div class="code"><pre><span class="k">ollama create python-tutor -f Modelfile</span>
+<span class="c">gathering model components
+using existing layer sha256:...
+writing manifest
+success</span>
+<span class="k">ollama run python-tutor</span></pre></div>
+<p>Full walkthrough in <a href="#modelfile">section 9</a>. You can also import a downloaded <code>.gguf</code> file with <code>FROM ./model.gguf</code>.</p>
+</div>
+
+<div class="cmd-card" data-cmd="cp copy">
+<h3><code>ollama cp &lt;source&gt; &lt;destination&gt;</code> <span class="pill">copy</span></h3>
+<p class="what">Copies (or renames) a model under a new name. It's instant and uses almost no disk space, because the data is shared.</p>
+<div class="code"><pre><span class="k">ollama cp llama3.2 my-llama</span>
+<span class="k">ollama cp python-tutor yourusername/python-tutor</span>   <span class="c"># rename before push</span></pre></div>
+</div>
+
+<div class="cmd-card" data-cmd="rm remove delete">
+<h3><code>ollama rm &lt;model&gt;</code> <span class="pill">delete</span></h3>
+<p class="what">Deletes a model from disk to free space.</p>
+<div class="code"><pre><span class="k">ollama rm mistral</span>
+<span class="c">deleted 'mistral'</span>
+<span class="k">ollama rm gemma3:1b qwen3:1.7b</span>   <span class="c"># several at once</span></pre></div>
+<div class="note warn"><strong>Careful</strong>There is no recycle bin. You'd need to <code>pull</code> the model again (re-download) to get it back.</div>
+</div>
+
+<div class="cmd-card" data-cmd="signin signout account">
+<h3><code>ollama signin</code> / <code>ollama signout</code> <span class="pill">account</span></h3>
+<p class="what">Connects your terminal to your free account on ollama.com, or disconnects it.</p>
+<div class="code"><pre><span class="k">ollama signin</span>     <span class="c"># prints a link; open it in your browser and approve</span>
+<span class="k">ollama signout</span></pre></div>
+<p><b>Do I need an account?</b> <u>No</u> for running local models. You only need to sign in to <code>push</code> your own models, or to use Ollama's optional cloud models (names ending in <code>-cloud</code>), which run on Ollama's servers instead of your laptop.</p>
+</div>
+
+<div class="cmd-card" data-cmd="push upload share">
+<h3><code>ollama push &lt;username/model&gt;</code> <span class="pill">share</span></h3>
+<p class="what">Uploads your custom model to ollama.com so classmates can <code>pull</code> it.</p>
+<div class="code"><pre><span class="k">ollama signin</span>
+<span class="k">ollama cp python-tutor yourusername/python-tutor</span>   <span class="c"># name must start with your username</span>
+<span class="k">ollama push yourusername/python-tutor</span>
+
+<span class="c"># a classmate can now run:</span>
+<span class="k">ollama run yourusername/python-tutor</span></pre></div>
+</div>
+
+<div class="cmd-card" data-cmd="launch integration menu">
+<h3><code>ollama launch</code> <span class="pill">integrations</span></h3>
+<p class="what">Opens the Ollama menu, or starts a supported tool (for example a coding assistant) already set up to use your local Ollama models.</p>
+<div class="code"><pre><span class="k">ollama launch</span>                 <span class="c"># interactive menu: pick an integration</span>
+<span class="k">ollama launch --help</span>          <span class="c"># see which integrations your version supports</span>
+<span class="k">ollama launch &lt;integration&gt;</span>   <span class="c"># start one directly</span></pre></div>
+<p>This is a newer command and the list of integrations changes between versions, so check <code>ollama launch --help</code> on your machine. If your version doesn't have it, update Ollama.</p>
+</div>
+
+<div class="cmd-card" data-cmd="help version flags">
+<h3><code>ollama help</code> &amp; flags <span class="pill">help</span></h3>
+<p class="what">Shows help for Ollama or for one command.</p>
+<div class="code"><pre><span class="k">ollama help</span>             <span class="c"># all commands</span>
+<span class="k">ollama help run</span>         <span class="c"># all flags for "run"</span>
+<span class="k">ollama run --help</span>       <span class="c"># same thing</span>
+<span class="k">ollama -v</span>               <span class="c"># version (same as --version)</span></pre></div>
+</div>
+
+</div>
+<p id="noMatch" style="display:none;color:var(--muted)">No command matches that filter.</p>
+</section>
+
+<!-- 7 -->
+<section id="interactive">
+<h2>7. Slash commands inside the chat</h2>
+<p>When you're inside <code>ollama run</code> (you see the <code>&gt;&gt;&gt;</code> prompt), these special commands work:</p>
+<div class="table-wrap"><table>
+<tr><th>Command</th><th>What it does</th></tr>
+<tr><td><code>/?</code> or <code>/help</code></td><td>Show all slash commands</td></tr>
+<tr><td><code>/bye</code></td><td>Exit the chat (also <code>Ctrl + D</code>)</td></tr>
+<tr><td><code>/clear</code></td><td>Clear the conversation history (start fresh)</td></tr>
+<tr><td><code>/show info</code></td><td>Model details (same as <code>ollama show</code>)</td></tr>
+<tr><td><code>/set system "You are a strict math teacher."</code></td><td>Change the system prompt for this session</td></tr>
+<tr><td><code>/set parameter temperature 0.2</code></td><td>Lower = focused and repeatable; higher (e.g. 1.0) = more creative</td></tr>
+<tr><td><code>/set parameter num_ctx 8192</code></td><td>Bigger context window (remembers more, uses more RAM)</td></tr>
+<tr><td><code>/set verbose</code></td><td>Show tokens/sec after each reply</td></tr>
+<tr><td><code>/set think</code> / <code>/set nothink</code></td><td>Turn visible reasoning on/off (thinking models like deepseek-r1, qwen3)</td></tr>
+<tr><td><code>/set format json</code></td><td>Force JSON replies</td></tr>
+<tr><td><code>/save my-session</code></td><td>Save the current chat + settings as a new model</td></tr>
+<tr><td><code>/load llama3.2</code></td><td>Switch to another model without leaving</td></tr>
+<tr><td><code>"""</code> … <code>"""</code></td><td>Type a multi-line message (paste code between the triple quotes)</td></tr>
+<tr><td><code>Ctrl + C</code></td><td>Stop a long answer mid-way</td></tr>
+</table></div>
+<div class="code"><span class="label">Example session</span><pre><span class="c">&gt;&gt;&gt; </span>/set system "Answer like a friendly teacher for 10th grade students."
+<span class="c">Set system message.</span>
+<span class="c">&gt;&gt;&gt; </span>/set parameter temperature 0.3
+<span class="c">&gt;&gt;&gt; </span>"""
+Explain this code:
+for i in range(3):
+    print(i)
+"""
+<span class="c">This loop runs 3 times and prints 0, 1 and 2 ...</span>
+<span class="c">&gt;&gt;&gt; </span>/bye</pre></div>
+</section>
+
+<!-- 8 -->
+<section id="models">
+<h2>8. Free local models to try</h2>
+<p>All models below are free to download. Start with a small one, then move up if your laptop handles it.</p>
+<div class="table-wrap"><table>
+<tr><th>Model</th><th>By</th><th>Download</th><th>Good for</th><th>Command</th></tr>
+<tr><td><b>Llama 3.2</b> 1B / 3B</td><td>Meta</td><td>1.3 / 2.0 GB</td><td>General chat, beginners, low-RAM laptops</td><td><code>ollama run llama3.2:1b</code><br><code>ollama run llama3.2</code></td></tr>
+<tr><td><b>Gemma 3</b> 1B / 4B / 12B</td><td>Google</td><td>0.8 / 3.3 / 8.1 GB</td><td>Chat, summaries; 4B+ can read images</td><td><code>ollama run gemma3:1b</code><br><code>ollama run gemma3:4b</code></td></tr>
+<tr><td><b>Qwen 3</b> 0.6B – 8B</td><td>Alibaba</td><td>0.5 – 5.2 GB</td><td>Multilingual, reasoning (can “think”), tool calls</td><td><code>ollama run qwen3:1.7b</code><br><code>ollama run qwen3:8b</code></td></tr>
+<tr><td><b>Phi-4 mini</b> 3.8B</td><td>Microsoft</td><td>2.5 GB</td><td>Math and logic on small hardware</td><td><code>ollama run phi4-mini</code></td></tr>
+<tr><td><b>Mistral</b> 7B</td><td>Mistral AI</td><td>4.1 GB</td><td>Solid all-rounder, fast for its size</td><td><code>ollama run mistral</code></td></tr>
+<tr><td><b>DeepSeek-R1</b> 1.5B / 7B / 8B</td><td>DeepSeek</td><td>1.1 / 4.7 / 5.2 GB</td><td>Step-by-step reasoning (shows its thinking)</td><td><code>ollama run deepseek-r1:1.5b</code></td></tr>
+<tr><td><b>Qwen2.5-Coder</b> 1.5B / 7B</td><td>Alibaba</td><td>1.0 / 4.7 GB</td><td>Writing and explaining code</td><td><code>ollama run qwen2.5-coder:1.5b</code></td></tr>
+<tr><td><b>LLaVA</b> 7B</td><td>Open source</td><td>4.7 GB</td><td>Describe images (vision)</td><td><code>ollama run llava</code></td></tr>
+<tr><td><b>gpt-oss</b> 20B</td><td>OpenAI</td><td>~14 GB</td><td>Strong reasoning; needs 16 GB+ RAM/VRAM</td><td><code>ollama run gpt-oss:20b</code></td></tr>
+<tr><td><b>nomic-embed-text</b></td><td>Nomic</td><td>274 MB</td><td>Embeddings for search / RAG (not chat)</td><td><code>ollama pull nomic-embed-text</code></td></tr>
+</table></div>
+<p style="color:var(--muted);font-size:14px">Sizes are approximate for the default 4-bit version and change as models are updated. Check <a href="https://ollama.com/library" target="_blank" rel="noopener">ollama.com/library</a> for current tags.</p>
+
+<h3>Suggested starter path</h3>
+<div class="grid">
+  <div class="card"><b>8 GB laptop</b><div class="code"><pre><span class="k">ollama run llama3.2:1b</span>
+<span class="k">ollama run gemma3:1b</span>
+<span class="k">ollama run qwen2.5-coder:1.5b</span></pre></div></div>
+  <div class="card"><b>16 GB laptop</b><div class="code"><pre><span class="k">ollama run llama3.2</span>
+<span class="k">ollama run gemma3:4b</span>
+<span class="k">ollama run mistral</span></pre></div></div>
+  <div class="card"><b>Gaming GPU / 32 GB</b><div class="code"><pre><span class="k">ollama run qwen3:8b</span>
+<span class="k">ollama run gemma3:12b</span>
+<span class="k">ollama run gpt-oss:20b</span></pre></div></div>
+</div>
+
+<h3>Compare two models on the same question</h3>
+<div class="code"><span class="label">Terminal</span><pre><span class="k">ollama run llama3.2:1b "What is recursion? Answer in 3 lines." --verbose</span>
+<span class="k">ollama run gemma3:1b  "What is recursion? Answer in 3 lines." --verbose</span>
+<span class="c"># compare answer quality AND the "eval rate" (tokens/s) line</span></pre></div>
+
+<h3 id="find-models">How do I find ALL the free models available?</h3>
+<p>The table above is only a starting point. The <b>Ollama Library</b> lists 200+ free models, with new ones added every week. Here's how to explore it.</p>
+
+<ol class="steps">
+  <li><b>Open the official library</b><br>
+    <a href="https://ollama.com/library" target="_blank" rel="noopener">https://ollama.com/library</a> shows every official model. Use <b>Sort by → Popular</b> to see what most people use, or <b>Newest</b> to see the latest releases.</li>
+  <li><b>Search by name or task</b><br>
+    Use the search box at <a href="https://ollama.com/search" target="_blank" rel="noopener">ollama.com/search</a>. Try words like <code>coder</code>, <code>vision</code>, <code>embed</code>, <code>math</code>, <code>ocr</code>.</li>
+  <li><b>Filter by capability</b><br>
+    These links show only models with that skill:
+    <a href="https://ollama.com/search?c=tools" target="_blank" rel="noopener">tools</a> ·
+    <a href="https://ollama.com/search?c=vision" target="_blank" rel="noopener">vision</a> ·
+    <a href="https://ollama.com/search?c=thinking" target="_blank" rel="noopener">thinking</a> ·
+    <a href="https://ollama.com/search?c=embedding" target="_blank" rel="noopener">embedding</a> ·
+    <a href="https://ollama.com/search?c=cloud" target="_blank" rel="noopener">cloud</a></li>
+  <li><b>Open the model page and pick a size</b><br>
+    Click a model, open the <b>Tags</b> tab, and pick a size that fits your RAM (see <a href="#read-model-page">reading a model page</a>). Copy the command shown, e.g. <code>ollama run gemma3:1b</code>.</li>
+  <li><b>Check what you already have</b>
+    <div class="code"><pre><span class="k">ollama list</span>              <span class="c"># models on YOUR computer</span>
+<span class="k">ollama show gemma3:1b</span>    <span class="c"># details + capabilities of one model</span></pre></div>
+  </li>
+</ol>
+
+<div class="note"><strong>There is no “ollama search” command</strong>The CLI can only list models you've already downloaded (<code>ollama list</code>). To browse what's <i>available</i>, use the website.</div>
+
+<h3>What do the badges mean?</h3>
+<div class="table-wrap"><table>
+<tr><th>Badge</th><th>Meaning</th><th>Example use</th></tr>
+<tr><td><span class="badge tools">tools</span></td><td>Can call functions/tools you define (function calling)</td><td>Agents, a chatbot that checks the weather via your Python function</td></tr>
+<tr><td><span class="badge thinking">thinking</span></td><td>Reasons step by step before answering; you can turn it on or off</td><td>Math, logic puzzles, debugging</td></tr>
+<tr><td><span class="badge vision">vision</span></td><td>Understands images as well as text</td><td>“What's in this photo?”, reading charts and screenshots</td></tr>
+<tr><td><span class="badge embedding">embedding</span></td><td>Turns text into number vectors. It doesn't chat</td><td>Semantic search, RAG over your PDFs</td></tr>
+<tr><td><span class="badge">audio</span></td><td>Accepts audio input</td><td>Transcribe or understand speech</td></tr>
+<tr><td><span class="badge">cloud</span></td><td>A version that runs on Ollama's servers, not your laptop</td><td>Huge models your PC can't run</td></tr>
+</table></div>
+<div class="note warn"><strong>“cloud” models are not local</strong>Tags ending in <code>-cloud</code> (for example <code>gpt-oss:120b-cloud</code>) send your prompts to Ollama's servers, need <code>ollama signin</code>, and have usage limits on the free plan. For fully free, offline and private use, choose tags <b>without</b> <code>-cloud</code>.</div>
+
+<h3 id="read-model-page">Reading a model page: tags, sizes, quantization</h3>
+<p>Every model has several <b>tags</b> (versions). The tag is the part after the colon:</p>
+<div class="code"><span class="label">Anatomy of a model name</span><pre>  gemma3 : 4b - it - q4_K_M
+  └─┬──┘   └┬┘   └┬┘  └──┬──┘
+  model   size  type  quantization (compression)</pre></div>
+<div class="table-wrap"><table>
+<tr><th>Part</th><th>What it means</th><th>How to choose</th></tr>
+<tr><td><b>Size</b><br><code>270m, 1b, 4b, 8b, 70b</code></td><td>Number of parameters (m = million, b = billion). Bigger = smarter but slower and needs more RAM.</td><td>8 GB RAM → ≤ 3–4b · 16 GB → ≤ 8b · 32 GB → ≤ 14b</td></tr>
+<tr><td><b>e2b / e4b</b></td><td>“Effective” size: models built for phones and laptops (Gemma 3n, Gemma 4)</td><td>Great for low-end hardware</td></tr>
+<tr><td><b>8x7b, 16x17b</b></td><td>Mixture of Experts (MoE): many expert blocks, only some used per word</td><td>Total size is still large, so check the GB number</td></tr>
+<tr><td><b>Quantization</b><br><code>q4_K_M, q8_0, fp16</code></td><td>How compressed the weights are. q4 is about ¼ the size of fp16 with small quality loss.</td><td>Use the default (<code>q4_K_M</code>). Use <code>q8_0</code> only if you have spare RAM.</td></tr>
+<tr><td><b>instruct / it / chat</b></td><td>Tuned to follow instructions and chat</td><td>Pick this for normal use</td></tr>
+<tr><td><b>text / base</b></td><td>Raw model that only continues text</td><td>Usually not what students want</td></tr>
+<tr><td><b>latest</b></td><td>The default tag used when you leave it out</td><td><code>ollama run gemma3</code> = <code>gemma3:latest</code></td></tr>
+</table></div>
+<div class="note ok"><strong>Quick size estimate</strong>At the default 4-bit quantization, the download is roughly <b>0.6 × billions of parameters</b> GB. So a 7B model is about 4–5 GB, a 3B model about 2 GB, and a 1B model about 0.8 GB. The exact size is listed next to each tag on the model's Tags page.</div>
+
+<h3>Are they really free? Check the license</h3>
+<p>All library models are free to download and use for learning. If you build something <b>commercial</b>, read the license first:</p>
+<div class="code"><pre><span class="k">ollama show llama3.2 --license</span></pre></div>
+<div class="table-wrap"><table>
+<tr><th>License type</th><th>Examples</th><th>In short</th></tr>
+<tr><td>Apache 2.0 / MIT</td><td>Qwen, Mistral 7B, Granite, DeepSeek-R1, Phi-4, gpt-oss, OLMo</td><td>Very permissive: commercial use OK</td></tr>
+<tr><td>Custom “community” licenses</td><td>Llama (Meta), Gemma (Google)</td><td>Free for most uses, but has extra rules: read them</td></tr>
+<tr><td>Research / non-commercial</td><td>Some fine-tunes and older models</td><td>Learning only, no commercial use</td></tr>
+</table></div>
+
+<h3 id="catalog">Full catalog of free local models</h3>
+<p>A curated list of models from the Ollama Library (snapshot from October 2026). Filter by category, search, or show only models that fit an 8 GB laptop. The command shown uses the <b>smallest</b> size; swap the tag for a bigger one if your machine can handle it.</p>
+
+<div class="cat-controls">
+  <input class="search" id="catSearch" type="search" placeholder="Search models… (e.g. qwen, code, google)">
+  <label><input type="checkbox" id="smallOnly"> Fits 8 GB RAM (≤ 4B)</label>
+</div>
+<div class="chips" id="catChips"></div>
+<p id="catCount"></p>
+<div class="table-wrap"><table id="catalogTable">
+<thead><tr><th>Model</th><th>By</th><th>Sizes</th><th>Capabilities</th><th>Best for</th><th>Try it</th></tr></thead>
+<tbody></tbody>
+</table></div>
+<p style="color:var(--muted);font-size:14px">The library changes weekly. For the latest list always check <a href="https://ollama.com/library" target="_blank" rel="noopener">ollama.com/library</a>. Very large sizes (70b+) need workstation or server hardware.</p>
+
+<h3 id="hf-models">Even more: GGUF models from Hugging Face</h3>
+<p><a href="https://huggingface.co/models?library=gguf" target="_blank" rel="noopener">Hugging Face</a> hosts tens of thousands of community models in <b>GGUF</b> format. Ollama can run them directly:</p>
+<div class="code"><span class="label">Terminal</span><pre><span class="c"># format: ollama run hf.co/&lt;user&gt;/&lt;repo&gt;:&lt;quantization&gt;</span>
+<span class="k">ollama run hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF</span>
+<span class="k">ollama run hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF:Q4_K_M</span></pre></div>
+<ol class="steps">
+  <li>Go to <a href="https://huggingface.co/models?library=gguf" target="_blank" rel="noopener">huggingface.co/models?library=gguf</a> and search for a model.</li>
+  <li>On the model page, click <b>Use this model → Ollama</b> to copy the exact command.</li>
+  <li>Paste it into your terminal. It downloads and runs just like a library model.</li>
+</ol>
+<div class="note warn"><strong>Be careful with community models</strong>Anyone can upload to Hugging Face. Prefer well-known uploaders and models with many downloads, and check the license on the model card.</div>
+
+<h3>Which model should I pick? Quick decision guide</h3>
+<div class="table-wrap"><table>
+<tr><th>I want to…</th><th>Low-RAM laptop (8 GB)</th><th>16 GB+ laptop</th></tr>
+<tr><td>Chat / ask general questions</td><td><code>llama3.2:1b</code>, <code>gemma3:1b</code>, <code>qwen3.5:2b</code></td><td><code>gemma4:e4b</code>, <code>qwen3:8b</code>, <code>llama3.1:8b</code></td></tr>
+<tr><td>Write and explain code</td><td><code>qwen2.5-coder:1.5b</code></td><td><code>qwen2.5-coder:7b</code>, <code>deepseek-coder:6.7b</code></td></tr>
+<tr><td>Solve math / logic step by step</td><td><code>deepseek-r1:1.5b</code>, <code>deepscaler</code></td><td><code>deepseek-r1:8b</code>, <code>qwen3:8b</code></td></tr>
+<tr><td>Understand images</td><td><code>moondream</code>, <code>gemma3:4b</code></td><td><code>qwen2.5vl:7b</code>, <code>llava:7b</code></td></tr>
+<tr><td>Read scanned documents (OCR)</td><td><code>deepseek-ocr</code></td><td><code>glm-ocr</code>, <code>qwen3-vl:8b</code></td></tr>
+<tr><td>Build RAG / semantic search</td><td><code>nomic-embed-text</code>, <code>all-minilm</code></td><td><code>bge-m3</code>, <code>qwen3-embedding:4b</code></td></tr>
+<tr><td>Translate between languages</td><td><code>qwen3.5:2b</code></td><td><code>translategemma:4b</code>, <code>aya-expanse:8b</code></td></tr>
+<tr><td>Build an agent with tool calling</td><td><code>llama3.2:3b</code>, <code>granite4:3b</code></td><td><code>qwen3:8b</code>, <code>mistral</code></td></tr>
+</table></div>
+</section>
+
+<!-- 9 -->
+<section id="modelfile">
+<h2>9. Build your own custom model (Modelfile)</h2>
+<p>A <b>Modelfile</b> is like a recipe: start from a base model, then add your own personality and settings.</p>
+<ol class="steps">
+  <li><b>Make a folder and a file named <code>Modelfile</code></b> (no extension):
+    <div class="code"><span class="label">Modelfile</span><pre><span class="c"># base model (must be pulled, or Ollama pulls it)</span>
+FROM llama3.2
+
+<span class="c"># settings</span>
+PARAMETER temperature 0.4
+PARAMETER num_ctx 4096
+
+<span class="c"># personality</span>
+SYSTEM """
+You are PyBuddy, a patient Python tutor for college students.
+Always explain with a short example, then ask one practice question.
+Keep answers under 150 words.
+"""</pre></div>
+  </li>
+  <li><b>Build it</b>
+    <div class="code"><pre><span class="k">ollama create pybuddy -f Modelfile</span></pre></div>
+  </li>
+  <li><b>Run it</b>
+    <div class="code"><pre><span class="k">ollama run pybuddy "What is a list comprehension?"</span></pre></div>
+  </li>
+  <li><b>Check, copy, remove</b>
+    <div class="code"><pre><span class="k">ollama list</span>                 <span class="c"># pybuddy appears here</span>
+<span class="k">ollama show pybuddy --modelfile</span>
+<span class="k">ollama rm pybuddy</span></pre></div>
+  </li>
+</ol>
+
+<div class="table-wrap"><table>
+<tr><th>Instruction</th><th>Meaning</th></tr>
+<tr><td><code>FROM</code></td><td>Base model name, or a path to a <code>.gguf</code> file (<code>FROM ./my-model.gguf</code>)</td></tr>
+<tr><td><code>SYSTEM</code></td><td>The system prompt: role, rules, tone</td></tr>
+<tr><td><code>PARAMETER</code></td><td><code>temperature</code>, <code>num_ctx</code>, <code>top_p</code>, <code>top_k</code>, <code>repeat_penalty</code>, <code>stop</code>, <code>seed</code></td></tr>
+<tr><td><code>TEMPLATE</code></td><td>The prompt format (advanced: usually keep the base model's)</td></tr>
+<tr><td><code>MESSAGE</code></td><td>Example conversation turns: <code>MESSAGE user Hi</code> / <code>MESSAGE assistant Hello!</code></td></tr>
+<tr><td><code>ADAPTER</code></td><td>Apply a LoRA fine-tune adapter</td></tr>
+<tr><td><code>LICENSE</code></td><td>License text for your model</td></tr>
+</table></div>
+</section>
+
+<!-- 10 -->
+<section id="api">
+<h2>10. Use Ollama from your code (REST API)</h2>
+<p>While Ollama runs, it serves an HTTP API at <code>http://localhost:11434</code>. Any language can call it.</p>
+
+<div class="tabs" role="tablist">
+  <button class="active" data-tab="api-python" type="button">Python</button>
+  <button data-tab="api-openai" type="button">OpenAI-compatible</button>
+  <button data-tab="api-curl" type="button">curl</button>
+  <button data-tab="api-ps" type="button">PowerShell</button>
+  <button data-tab="api-js" type="button">JavaScript</button>
+</div>
+
+<div class="tabpanel active" id="api-python">
+<h3>Official Python library</h3>
+<div class="code"><span class="label">Terminal</span><pre><span class="k">pip install ollama</span></pre></div>
+<div class="code"><span class="label">chat.py</span><pre>import ollama
+
+response = ollama.chat(
+    model="llama3.2",
+    messages=[
+        {"role": "system", "content": "You are a helpful tutor."},
+        {"role": "user", "content": "Explain Python dictionaries in 3 lines."},
+    ],
+)
+print(response["message"]["content"])
+
+<span class="c"># Streaming: print words as they arrive</span>
+for chunk in ollama.chat(model="llama3.2",
+                         messages=[{"role": "user", "content": "Tell me a short joke"}],
+                         stream=True):
+    print(chunk["message"]["content"], end="", flush=True)</pre></div>
+<div class="code"><span class="label">Simple chatbot with memory</span><pre>import ollama
+
+history = []
+while True:
+    user = input("You: ")
+    if user.lower() in ("exit", "quit"):
+        break
+    history.append({"role": "user", "content": user})
+    reply = ollama.chat(model="llama3.2", messages=history)["message"]["content"]
+    history.append({"role": "assistant", "content": reply})
+    print("Bot:", reply)</pre></div>
+</div>
+
+<div class="tabpanel" id="api-openai">
+<h3>Reuse OpenAI code: just change the URL</h3>
+<p>Ollama provides an OpenAI-compatible endpoint at <code>/v1</code>, so code written for ChatGPT can run on a local model.</p>
+<div class="code"><span class="label">Terminal</span><pre><span class="k">pip install openai</span></pre></div>
+<div class="code"><span class="label">openai_local.py</span><pre>from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")  <span class="c"># key is ignored</span>
+
+resp = client.chat.completions.create(
+    model="llama3.2",
+    messages=[{"role": "user", "content": "Give me 3 project ideas using Flask."}],
+)
+print(resp.choices[0].message.content)</pre></div>
+</div>
+
+<div class="tabpanel" id="api-curl">
+<h3>curl (Git Bash, macOS, Linux)</h3>
+<div class="code"><pre><span class="c"># one-shot generate</span>
+<span class="k">curl http://localhost:11434/api/generate -d '{
+  "model": "llama3.2",
+  "prompt": "Why is the sky blue?",
+  "stream": false
+}'</span>
+
+<span class="c"># chat with messages</span>
+<span class="k">curl http://localhost:11434/api/chat -d '{
+  "model": "llama3.2",
+  "messages": [{"role": "user", "content": "Hello!"}],
+  "stream": false
+}'</span>
+
+<span class="c"># list local models</span>
+<span class="k">curl http://localhost:11434/api/tags</span>
+
+<span class="c"># embeddings</span>
+<span class="k">curl http://localhost:11434/api/embed -d '{"model":"nomic-embed-text","input":"hello world"}'</span></pre></div>
+</div>
+
+<div class="tabpanel" id="api-ps">
+<h3>Windows PowerShell</h3>
+<div class="code"><pre><span class="k">$body = @{
+  model  = "llama3.2"
+  prompt = "Give 3 tips to learn Python"
+  stream = $false
+} | ConvertTo-Json
+
+(Invoke-RestMethod -Uri "http://localhost:11434/api/generate" -Method Post -Body $body -ContentType "application/json").response</span></pre></div>
+</div>
+
+<div class="tabpanel" id="api-js">
+<h3>JavaScript (browser or Node 18+)</h3>
+<div class="code"><pre>const res = await fetch("http://localhost:11434/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    model: "llama3.2",
+    messages: [{ role: "user", content: "What is JSON?" }],
+    stream: false,
+  }),
+});
+const data = await res.json();
+console.log(data.message.content);</pre></div>
+<p>Or install the library: <code>npm install ollama</code>.</p>
+</div>
+
+<h3>Main API endpoints</h3>
+<div class="table-wrap"><table>
+<tr><th>Endpoint</th><th>Method</th><th>Same as CLI</th><th>Use</th></tr>
+<tr><td><code>/api/generate</code></td><td>POST</td><td><code>ollama run m "prompt"</code></td><td>Single prompt → completion</td></tr>
+<tr><td><code>/api/chat</code></td><td>POST</td><td><code>ollama run m</code></td><td>Multi-turn chat with roles</td></tr>
+<tr><td><code>/api/tags</code></td><td>GET</td><td><code>ollama list</code></td><td>Local models</td></tr>
+<tr><td><code>/api/ps</code></td><td>GET</td><td><code>ollama ps</code></td><td>Loaded models</td></tr>
+<tr><td><code>/api/show</code></td><td>POST</td><td><code>ollama show</code></td><td>Model info</td></tr>
+<tr><td><code>/api/pull</code></td><td>POST</td><td><code>ollama pull</code></td><td>Download model</td></tr>
+<tr><td><code>/api/delete</code></td><td>DELETE</td><td><code>ollama rm</code></td><td>Remove model</td></tr>
+<tr><td><code>/api/embed</code></td><td>POST</td><td>n/a</td><td>Vector embeddings</td></tr>
+<tr><td><code>/v1/chat/completions</code></td><td>POST</td><td>n/a</td><td>OpenAI-compatible chat</td></tr>
+</table></div>
+</section>
+
+<!-- 11 -->
+<section id="env">
+<h2>11. Settings &amp; where files are stored</h2>
+<div class="table-wrap"><table>
+<tr><th>What</th><th>Windows</th><th>macOS</th><th>Linux</th></tr>
+<tr><td>Models</td><td><code>C:\Users\&lt;you&gt;\.ollama\models</code></td><td><code>~/.ollama/models</code></td><td><code>/usr/share/ollama/.ollama/models</code></td></tr>
+<tr><td>Logs</td><td><code>%LOCALAPPDATA%\Ollama</code> (<code>server.log</code>)</td><td><code>~/.ollama/logs/server.log</code></td><td><code>journalctl -u ollama</code></td></tr>
+<tr><td>Program</td><td><code>%LOCALAPPDATA%\Programs\Ollama</code></td><td><code>/Applications/Ollama.app</code></td><td><code>/usr/local/bin/ollama</code></td></tr>
+</table></div>
+
+<h3>Useful environment variables</h3>
+<div class="table-wrap"><table>
+<tr><th>Variable</th><th>Example</th><th>What it does</th></tr>
+<tr><td><code>OLLAMA_MODELS</code></td><td><code>D:\ollama-models</code></td><td>Store models on another drive (saves space on C:)</td></tr>
+<tr><td><code>OLLAMA_HOST</code></td><td><code>0.0.0.0:11434</code></td><td>Address/port the server listens on</td></tr>
+<tr><td><code>OLLAMA_KEEP_ALIVE</code></td><td><code>30m</code> or <code>-1</code></td><td>How long models stay loaded after use (<code>-1</code> = forever)</td></tr>
+<tr><td><code>OLLAMA_CONTEXT_LENGTH</code></td><td><code>8192</code></td><td>Default context window for all models</td></tr>
+<tr><td><code>OLLAMA_NUM_PARALLEL</code></td><td><code>2</code></td><td>How many requests one model handles at once</td></tr>
+<tr><td><code>OLLAMA_MAX_LOADED_MODELS</code></td><td><code>2</code></td><td>How many models can be loaded together</td></tr>
+<tr><td><code>OLLAMA_ORIGINS</code></td><td><code>*</code></td><td>Allow browser apps from other origins to call the API</td></tr>
+</table></div>
+
+<h3>Move models to the D: drive (Windows)</h3>
+<ol class="steps">
+  <li>Quit Ollama: right-click the 🦙 tray icon → <b>Quit Ollama</b>.</li>
+  <li>Set the variable:
+    <div class="code"><span class="label">PowerShell</span><pre><span class="k">[Environment]::SetEnvironmentVariable("OLLAMA_MODELS", "D:\ollama-models", "User")</span></pre></div>
+  </li>
+  <li>(Optional) Move your existing <code>C:\Users\&lt;you&gt;\.ollama\models</code> folder to <code>D:\ollama-models</code>.</li>
+  <li>Start Ollama again from the Start menu, and open a new terminal. Run <code>ollama list</code> to confirm.</li>
+</ol>
+</section>
+
+<!-- 12 -->
+<section id="trouble">
+<h2>12. Troubleshooting</h2>
+
+<details><summary>“ollama is not recognized as an internal or external command”</summary>
+<p>The terminal doesn't know where <code>ollama.exe</code> is.</p>
+<ul>
+  <li>Close every terminal and VS Code, then open a new one.</li>
+  <li>Check the file exists: <code>dir $env:LOCALAPPDATA\Programs\Ollama</code></li>
+  <li>For the zip install, make sure the folder is in your user <b>Path</b> (see the manual install tab).</li>
+  <li>Still stuck? Sign out of Windows and back in, or reinstall.</li>
+</ul></details>
+
+<details><summary>“Error: could not connect to ollama app, is it running?”</summary>
+<p>The server isn't running. Start the Ollama app from the Start menu (look for the tray icon), or run <code>ollama serve</code> in a separate terminal.</p></details>
+
+<details><summary>“listen tcp 127.0.0.1:11434: bind: Only one usage of each socket address…”</summary>
+<p>The server is <i>already</i> running, which is fine. Skip <code>ollama serve</code> and use <code>ollama run</code> directly. To see what is using the port:</p>
+<div class="code"><pre><span class="k">netstat -ano | findstr 11434</span></pre></div></details>
+
+<details><summary>Replies are extremely slow / laptop freezes</summary>
+<ul>
+  <li>Use a smaller model: <code>llama3.2:1b</code>, <code>gemma3:1b</code>, <code>qwen3:0.6b</code>.</li>
+  <li>Close Chrome tabs and other heavy apps to free RAM.</li>
+  <li>Run <code>ollama ps</code>. If it says <code>100% CPU</code> on a GPU laptop, update your NVIDIA/AMD drivers.</li>
+  <li>Unload models you're not using: <code>ollama stop &lt;model&gt;</code>.</li>
+</ul></details>
+
+<details><summary>“model requires more system memory than is available”</summary>
+<p>The model is too big for your RAM. Choose a smaller tag (for example <code>:1b</code> or <code>:3b</code>), or close other programs.</p></details>
+
+<details><summary>Download stuck or failed</summary>
+<p>Press <code>Ctrl + C</code> and run the same <code>ollama pull</code> again. It resumes where it stopped. On college Wi-Fi with a proxy, set <code>HTTPS_PROXY</code> before starting Ollama.</p></details>
+
+<details><summary>C: drive is full</summary>
+<p>Run <code>ollama list</code> and <code>ollama rm</code> the models you don't need, or move models to another drive with <code>OLLAMA_MODELS</code> (section 11).</p></details>
+
+<details><summary>How do I update or uninstall Ollama?</summary>
+<ul>
+  <li><b>Update (Windows/macOS):</b> the app updates itself. Click the tray icon → <i>Restart to update</i> when it offers. Or download and run the newest installer over the old one.</li>
+  <li><b>Update (Linux):</b> run the install script again.</li>
+  <li><b>Uninstall (Windows):</b> Settings → Apps → Installed apps → Ollama → Uninstall. Then delete <code>C:\Users\&lt;you&gt;\.ollama</code> to remove downloaded models.</li>
+</ul></details>
+</section>
+
+<!-- 13 -->
+<section id="cheatsheet">
+<h2>13. Cheat sheet</h2>
+<div class="code"><span class="label">Copy and keep this</span><pre><span class="c"># ---------- setup ----------</span>
+<span class="k">ollama --version</span>                     <span class="c"># check install</span>
+<span class="k">ollama serve</span>                         <span class="c"># start server (if not running)</span>
+
+<span class="c"># ---------- models ----------</span>
+<span class="k">ollama pull llama3.2</span>                 <span class="c"># download</span>
+<span class="k">ollama list</span>                          <span class="c"># downloaded models</span>
+<span class="k">ollama show llama3.2</span>                 <span class="c"># details</span>
+<span class="k">ollama cp llama3.2 my-llama</span>          <span class="c"># copy / rename</span>
+<span class="k">ollama rm my-llama</span>                   <span class="c"># delete</span>
+
+<span class="c"># ---------- running ----------</span>
+<span class="k">ollama run llama3.2</span>                  <span class="c"># chat</span>
+<span class="k">ollama run llama3.2 "question"</span>       <span class="c"># one-shot answer</span>
+<span class="k">ollama run llama3.2 --verbose</span>        <span class="c"># show speed</span>
+<span class="k">ollama ps</span>                            <span class="c"># loaded models (GPU/CPU)</span>
+<span class="k">ollama stop llama3.2</span>                 <span class="c"># unload from memory</span>
+
+<span class="c"># ---------- custom & sharing ----------</span>
+<span class="k">ollama create pybuddy -f Modelfile</span>   <span class="c"># build custom model</span>
+<span class="k">ollama signin</span>                        <span class="c"># log in to ollama.com</span>
+<span class="k">ollama push user/pybuddy</span>             <span class="c"># share it</span>
+<span class="k">ollama signout</span>
+
+<span class="c"># ---------- other ----------</span>
+<span class="k">ollama launch</span>                        <span class="c"># integrations menu</span>
+<span class="k">ollama help run</span>                      <span class="c"># help for a command</span>
+
+<span class="c"># ---------- inside chat (&gt;&gt;&gt;) ----------</span>
+/?   /bye   /clear   /show info   /set system "..."   /set parameter temperature 0.3
+/set verbose   /set think   /save name   /load model   """ multi-line """</pre></div>
+</section>
+
+<!-- 14 -->
+<section id="practice">
+<h2>14. Practice tasks for students</h2>
+<div class="grid">
+  <div class="card"><b>Task 1: Install &amp; verify</b><br>Install Ollama, then take a screenshot of <code>ollama --version</code> and <code>ollama list</code>.</div>
+  <div class="card"><b>Task 2: First chat</b><br>Run <code>llama3.2:1b</code>, ask 3 questions from your syllabus, exit with <code>/bye</code>.</div>
+  <div class="card"><b>Task 3: Compare models</b><br>Ask two models the same question with <code>--verbose</code>. Record tokens/sec and which answer was better.</div>
+  <div class="card"><b>Task 4: Monitor</b><br>While a model is chatting, open a second terminal and run <code>ollama ps</code>. Is it on GPU or CPU? Then <code>ollama stop</code> it.</div>
+  <div class="card"><b>Task 5: Custom model</b><br>Write a Modelfile for a “Resume Reviewer” or “SQL Tutor”, <code>create</code> it, and test it.</div>
+  <div class="card"><b>Task 6: Code it</b><br>Write a Python chatbot with the <code>ollama</code> library that remembers history. Bonus: wrap it in a Flask or FastAPI route.</div>
+  <div class="card"><b>Task 7: Clean up</b><br>Use <code>ollama cp</code> to make a copy, then <code>ollama rm</code> both the copy and one unused model. Check free space.</div>
+</div>
+</section>
+
+<footer>
+  Official links: <a href="https://ollama.com" target="_blank" rel="noopener">ollama.com</a> ·
+  <a href="https://ollama.com/library" target="_blank" rel="noopener">Model library</a> ·
+  <a href="https://github.com/ollama/ollama" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://github.com/ollama/ollama/blob/main/docs/api.md" target="_blank" rel="noopener">API docs</a>
+  <br>Commands and model sizes change as Ollama updates. When in doubt, run <code>ollama help &lt;command&gt;</code>.
+</footer>
+</main>
+</div>
+
+<script>
+// Copy buttons on every code block
+document.querySelectorAll('.code').forEach(function (block) {
+  var btn = document.createElement('button');
+  btn.className = 'copy'; btn.type = 'button'; btn.textContent = 'Copy';
+  btn.addEventListener('click', function () {
+    var text = block.querySelector('pre').innerText;
+    var done = function () { btn.textContent = 'Copied!'; setTimeout(function () { btn.textContent = 'Copy'; }, 1400); };
+    if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done, done); }
+    else { var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (e) {} t.remove(); done(); }
+  });
+  block.appendChild(btn);
+});
+
+// Tabs (each .tabs group controls the panels that follow it)
+document.querySelectorAll('.tabs').forEach(function (group) {
+  var buttons = group.querySelectorAll('button');
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      buttons.forEach(function (x) {
+        x.classList.remove('active');
+        var p = document.getElementById(x.dataset.tab); if (p) p.classList.remove('active');
+      });
+      b.classList.add('active');
+      document.getElementById(b.dataset.tab).classList.add('active');
+    });
+  });
+});
+
+// Sidebar links to install sub-tabs open the right tab
+document.querySelectorAll('nav.toc a.sub').forEach(function (a) {
+  a.addEventListener('click', function () {
+    var id = a.getAttribute('href').slice(1);
+    var btn = document.querySelector('.tabs button[data-tab="' + id + '"]');
+    if (btn) btn.click();
+  });
+});
+
+// Command filter
+var search = document.getElementById('cmdSearch');
+search.addEventListener('input', function () {
+  var q = search.value.trim().toLowerCase(); var shown = 0;
+  document.querySelectorAll('#cmdList .cmd-card').forEach(function (card) {
+    var match = !q || card.dataset.cmd.indexOf(q) !== -1 || card.innerText.toLowerCase().indexOf(q) !== -1;
+    card.style.display = match ? '' : 'none'; if (match) shown++;
+  });
+  document.getElementById('noMatch').style.display = shown ? 'none' : 'block';
+});
+
+// ---------- Model catalog ----------
+// [name, maker, sizes (comma list, "" = single default), category, capabilities, best for]
+var MODELS = [
+  // General chat
+  ["llama3.2","Meta","1b,3b","General","tools","Beginners, low-RAM laptops, quick chat"],
+  ["llama3.1","Meta","8b,70b,405b","General","tools","Strong all-round 8B model"],
+  ["llama3.3","Meta","70b","General","tools","High quality, needs a big GPU"],
+  ["llama4","Meta","16x17b,128x17b","General","vision,tools","Multimodal, server-class hardware"],
+  ["gemma4","Google","e2b,e4b,12b,26b,31b","General","vision,tools,thinking,audio","Newest Gemma: reasoning, coding, images, audio"],
+  ["gemma3","Google","270m,1b,4b,12b,27b","General","vision","Popular all-rounder; 4B+ read images"],
+  ["gemma3n","Google","e2b,e4b","General","vision","Built for laptops, tablets and phones"],
+  ["gemma2","Google","2b,9b,27b","General","","Older but solid Gemma"],
+  ["qwen3.5","Alibaba","0.8b,2b,4b,9b,27b,35b,122b","General","vision,tools,thinking","Multilingual, multimodal, many sizes"],
+  ["qwen3","Alibaba","0.6b,1.7b,4b,8b,14b,30b,32b,235b","General","tools,thinking","Reasoning + tool use, very popular"],
+  ["qwen2.5","Alibaba","0.5b,1.5b,3b,7b,14b,32b,72b","General","tools","Multilingual, 128K context"],
+  ["qwen3.6","Alibaba","27b,35b","General","vision,tools,thinking","Agentic coding and thinking"],
+  ["mistral","Mistral AI","7b","General","tools","Fast, reliable 7B all-rounder"],
+  ["mistral-nemo","Mistral AI","12b","General","tools","128K context, made with NVIDIA"],
+  ["mistral-small3.2","Mistral AI","24b","General","vision,tools","Strong mid-size model"],
+  ["ministral-3","Mistral AI","3b,8b,14b","General","vision,tools","Edge devices and laptops"],
+  ["phi4-mini","Microsoft","3.8b","General","tools","Math and reasoning on small hardware"],
+  ["phi4","Microsoft","14b","General","","Very capable 14B model"],
+  ["phi3.5","Microsoft","3.8b","General","","Lightweight, good quality"],
+  ["granite4","IBM","350m,1b,3b","Small","tools","Tiny, good instruction following and tools"],
+  ["granite3.3","IBM","2b,8b","General","tools","128K context, enterprise tasks"],
+  ["smollm2","Hugging Face","135m,360m,1.7b","Small","tools","Extremely small, runs on anything"],
+  ["tinyllama","TinyLlama","1.1b","Small","","Tiny model for experiments"],
+  ["lfm2.5-thinking","Liquid AI","1.2b","Small","tools,thinking","On-device reasoning"],
+  ["falcon3","TII","1b,3b,7b,10b","General","","Science, math and coding under 10B"],
+  ["olmo2","AI2","7b,13b","General","","Fully open (data + code + weights)"],
+  ["nemotron-3-nano","NVIDIA","4b,30b","General","tools,thinking","Efficient agentic model"],
+  ["hermes3","Nous Research","3b,8b,70b","General","tools","Role-play and function calling"],
+  ["cogito","Deep Cogito","3b,8b,14b,32b,70b","General","tools","Hybrid reasoning"],
+  ["gpt-oss","OpenAI","20b,120b","General","tools,thinking","OpenAI open-weight reasoning model"],
+  ["command-r","Cohere","35b","General","tools","Long documents, RAG"],
+  ["aya-expanse","Cohere","8b,32b","Multilingual","tools","23 languages"],
+  ["translategemma","Google","4b,12b,27b","Multilingual","vision","Translation across 55 languages"],
+  // Reasoning
+  ["deepseek-r1","DeepSeek","1.5b,7b,8b,14b,32b,70b,671b","Reasoning","tools,thinking","Shows step-by-step thinking"],
+  ["qwq","Alibaba","32b","Reasoning","tools","Qwen reasoning model"],
+  ["phi4-reasoning","Microsoft","14b","Reasoning","","Complex reasoning at 14B"],
+  ["magistral","Mistral AI","24b","Reasoning","tools,thinking","Efficient reasoning"],
+  ["openthinker","Open source","7b,32b","Reasoning","","Fully open reasoning models"],
+  ["exaone-deep","LG AI","2.4b,7.8b,32b","Reasoning","","Math and coding reasoning"],
+  ["deepscaler","Agentica","1.5b","Math","","Tiny model, strong at math"],
+  ["qwen2-math","Alibaba","1.5b,7b,72b","Math","","Specialised for mathematics"],
+  // Coding
+  ["qwen2.5-coder","Alibaba","0.5b,1.5b,3b,7b,14b,32b","Coding","tools","Best small coding model family"],
+  ["qwen3-coder","Alibaba","30b","Coding","tools","Long-context agentic coding"],
+  ["deepseek-coder","DeepSeek","1.3b,6.7b,33b","Coding","","Code generation, 80+ languages"],
+  ["deepseek-coder-v2","DeepSeek","16b,236b","Coding","","MoE coder, GPT-4-Turbo level on code"],
+  ["codellama","Meta","7b,13b,34b,70b","Coding","","Classic code model"],
+  ["codegemma","Google","2b,7b","Coding","","Code completion, fill-in-the-middle"],
+  ["starcoder2","BigCode","3b,7b,15b","Coding","","Transparently trained code LLM"],
+  ["granite-code","IBM","3b,8b,20b,34b","Coding","","Code intelligence"],
+  ["devstral-small-2","Mistral AI","24b","Coding","vision,tools","Coding agents, multi-file edits"],
+  ["deepcoder","Agentica","1.5b,14b","Coding","","Open reasoning coder"],
+  ["yi-coder","01.AI","1.5b,9b","Coding","","Small but capable coder"],
+  ["opencoder","OpenCoder","1.5b,8b","Coding","","Open, reproducible code LLM"],
+  ["stable-code","Stability AI","3b","Coding","","Code completion"],
+  ["sqlcoder","Defog","7b,15b","Coding","","Natural language to SQL"],
+  // Vision / OCR
+  ["llava","LLaVA","7b,13b,34b","Vision","vision","Describe and reason about images"],
+  ["llama3.2-vision","Meta","11b,90b","Vision","vision","Image reasoning"],
+  ["qwen2.5vl","Alibaba","3b,7b,32b,72b","Vision","vision","Strong image + document understanding"],
+  ["qwen3-vl","Alibaba","2b,4b,8b,30b,32b,235b","Vision","vision,tools,thinking","Most powerful Qwen vision model"],
+  ["minicpm-v","OpenBMB","8b","Vision","vision","Vision-language understanding"],
+  ["moondream","Moondream","1.8b","Vision","vision","Tiny vision model for edge devices"],
+  ["llava-phi3","LLaVA","3.8b","Vision","vision","Small LLaVA on Phi-3"],
+  ["granite3.2-vision","IBM","2b","Vision","vision,tools","Tables, charts, documents"],
+  ["glm-ocr","Zhipu AI","","OCR","vision,tools","Complex document OCR"],
+  ["deepseek-ocr","DeepSeek","3b","OCR","vision","Efficient OCR from images"],
+  ["reader-lm","Jina AI","0.5b,1.5b","OCR","","Convert HTML into Markdown"],
+  // Embeddings
+  ["nomic-embed-text","Nomic","","Embedding","embedding","Most popular embedding model for RAG"],
+  ["nomic-embed-text-v2-moe","Nomic","","Embedding","embedding","Multilingual retrieval"],
+  ["mxbai-embed-large","mixedbread.ai","335m","Embedding","embedding","High-quality English embeddings"],
+  ["bge-m3","BAAI","567m","Embedding","embedding","Multilingual, multi-granularity"],
+  ["all-minilm","Sentence-Transformers","22m,33m","Embedding","embedding","Tiny and fast"],
+  ["snowflake-arctic-embed","Snowflake","22m,33m,110m,137m,335m","Embedding","embedding","Retrieval-optimised"],
+  ["embeddinggemma","Google","300m","Embedding","embedding","Small Google embedding model"],
+  ["qwen3-embedding","Alibaba","0.6b,4b,8b","Embedding","embedding","Strong multilingual embeddings"],
+  ["paraphrase-multilingual","Sentence-Transformers","278m","Embedding","embedding","Clustering, semantic search"],
+  // Safety & domain
+  ["llama-guard3","Meta","1b,8b","Safety","","Classify unsafe prompts/responses"],
+  ["shieldgemma","Google","2b,9b,27b","Safety","","Safety policy checks"],
+  ["meditron","EPFL","7b,70b","Domain","","Medical domain (learning only)"]
+];
+
+function sizeToB(s) {
+  var m = /^(?:e)?([\d.]+)([mb])$/.exec(s);
+  if (!m) return 999;
+  return m[2] === 'm' ? parseFloat(m[1]) / 1000 : parseFloat(m[1]);
+}
+function smallest(sizes) {
+  if (!sizes) return '';
+  return sizes.split(',').sort(function (a, b) { return sizeToB(a) - sizeToB(b); })[0];
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+var catState = { cat: 'All', q: '', small: false };
+var cats = ['All'];
+MODELS.forEach(function (m) { if (cats.indexOf(m[3]) === -1) cats.push(m[3]); });
+var chipsEl = document.getElementById('catChips');
+cats.forEach(function (c) {
+  var b = document.createElement('button'); b.type = 'button'; b.textContent = c;
+  if (c === 'All') b.className = 'active';
+  b.addEventListener('click', function () {
+    catState.cat = c;
+    chipsEl.querySelectorAll('button').forEach(function (x) { x.classList.toggle('active', x === b); });
+    renderCatalog();
+  });
+  chipsEl.appendChild(b);
+});
+
+function renderCatalog() {
+  var tbody = document.querySelector('#catalogTable tbody'); var rows = []; var n = 0;
+  MODELS.forEach(function (m) {
+    var name = m[0], maker = m[1], sizes = m[2], cat = m[3], caps = m[4], best = m[5];
+    if (catState.cat !== 'All' && cat !== catState.cat) return;
+    var small = smallest(sizes);
+    if (catState.small && sizes && sizeToB(small) > 4) return;
+    var hay = (name + ' ' + maker + ' ' + cat + ' ' + caps + ' ' + best).toLowerCase();
+    if (catState.q && hay.indexOf(catState.q) === -1) return;
+    n++;
+    var sizeHtml = sizes ? sizes.split(',').map(function (s) { return '<span class="size">' + esc(s) + '</span>'; }).join('') : '<span class="size">default</span>';
+    var capHtml = caps ? caps.split(',').map(function (c) { return '<span class="badge ' + esc(c) + '">' + esc(c) + '</span>'; }).join('') : '<span style="color:var(--muted)">text</span>';
+    var verb = cat === 'Embedding' ? 'pull' : 'run';
+    var cmd = 'ollama ' + verb + ' ' + name + (small ? ':' + small : '');
+    rows.push('<tr><td><a href="https://ollama.com/library/' + esc(name) + '" target="_blank" rel="noopener"><b>' + esc(name) + '</b></a><br><small style="color:var(--muted)">' + esc(cat) + '</small></td><td>' + esc(maker) + '</td><td>' + sizeHtml + '</td><td>' + capHtml + '</td><td>' + esc(best) + '</td><td><code>' + esc(cmd) + '</code></td></tr>');
+  });
+  tbody.innerHTML = rows.join('') || '<tr><td colspan="6" style="color:var(--muted)">No models match.</td></tr>';
+  document.getElementById('catCount').textContent = 'Showing ' + n + ' of ' + MODELS.length + ' models';
+}
+document.getElementById('catSearch').addEventListener('input', function (e) { catState.q = e.target.value.trim().toLowerCase(); renderCatalog(); });
+document.getElementById('smallOnly').addEventListener('change', function (e) { catState.small = e.target.checked; renderCatalog(); });
+renderCatalog();
+
+// Theme toggle (remembered per browser)
+var root = document.documentElement;
+try { var saved = localStorage.getItem('ollama-guide-theme'); if (saved) root.dataset.theme = saved; } catch (e) {}
+document.getElementById('themeBtn').addEventListener('click', function () {
+  var dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('ollama-guide-theme', root.dataset.theme); } catch (e) {}
+});
+
+// Highlight current section in sidebar
+var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a:not(.sub)'));
+var observer = new IntersectionObserver(function (entries) {
+  entries.forEach(function (e) {
+    if (e.isIntersecting) {
+      links.forEach(function (l) { l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id); });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+document.querySelectorAll('main section[id]').forEach(function (s) { observer.observe(s); });
+</script>
+</body>
+</html>

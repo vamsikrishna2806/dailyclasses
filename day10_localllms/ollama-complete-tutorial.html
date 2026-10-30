@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ollama Complete Course</title>
+<style>
+:root {
+  --bg: #f6f7fb; --surface: #ffffff; --surface-2: #eef1f6; --text: #1b2230; --muted: #5a6476;
+  --border: #dbe0e8; --accent: #2563eb; --accent-2: #7c3aed; --accent-soft: #e7eefc;
+  --ok: #15803d; --ok-soft: #e6f5ea; --warn: #b45309; --warn-soft: #fdf2e1; --danger: #b91c1c; --danger-soft: #fdeaea;
+  --code-bg: #0f172a; --code-text: #e2e8f0; --code-dim: #8b9bb4; --code-cmd: #7dd3fc; --code-ok: #86efac; --code-err: #fca5a5;
+  --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1015; --surface: #151a21; --surface-2: #1c222b; --text: #e6e9ef; --muted: #9aa4b3; --border: #2a313b;
+    --accent: #60a5fa; --accent-2: #a78bfa; --accent-soft: #162238; --ok: #4ade80; --ok-soft: #10251a;
+    --warn: #fbbf24; --warn-soft: #2a200f; --danger: #f87171; --danger-soft: #2b1414; --code-bg: #090c11; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1015; --surface: #151a21; --surface-2: #1c222b; --text: #e6e9ef; --muted: #9aa4b3; --border: #2a313b;
+  --accent: #60a5fa; --accent-2: #a78bfa; --accent-soft: #162238; --ok: #4ade80; --ok-soft: #10251a;
+  --warn: #fbbf24; --warn-soft: #2a200f; --danger: #f87171; --danger-soft: #2b1414; --code-bg: #090c11; --shadow: none;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+code, pre, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+:not(pre) > code { font-size: .88em; background: var(--surface-2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; }
+button { font: inherit; }
+h2 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 6px; }
+h3 { font-size: 1.15rem; margin: 26px 0 8px; }
+p, li { max-width: 80ch; }
+
+/* ---------- top bar & progress ---------- */
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--border); }
+.topbar-inner { display: flex; align-items: center; gap: 12px; padding: 10px 20px; }
+.brand { font-weight: 700; white-space: nowrap; }
+.prog-wrap { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.prog { flex: 1; height: 8px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+.prog > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .6s ease; }
+.prog-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.btn { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn.small { padding: 3px 10px; font-size: 13px; }
+#menuBtn { display: none; }
+
+/* ---------- layout ---------- */
+.wrap { display: grid; grid-template-columns: 270px minmax(0, 1fr); max-width: 1240px; margin: 0 auto; gap: 34px; padding: 0 20px; }
+nav.side { position: sticky; top: 58px; align-self: start; max-height: calc(100vh - 64px); overflow: auto; padding: 22px 0 40px; font-size: 14px; }
+nav.side .group { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 14px 0 4px 10px; }
+nav.side a { display: flex; align-items: center; gap: 8px; padding: 5px 10px; color: var(--muted); text-decoration: none; border-radius: 6px; }
+nav.side a:hover { background: var(--surface-2); color: var(--text); }
+nav.side a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+nav.side a .dot { width: 18px; height: 18px; flex: 0 0 18px; border-radius: 50%; border: 2px solid var(--border); display: grid; place-items: center; font-size: 10px; color: #fff; transition: all .3s; }
+nav.side a.done .dot { background: var(--ok); border-color: var(--ok); }
+nav.side a.done .dot::after { content: "✓"; }
+main { padding: 24px 0 100px; min-width: 0; }
+
+/* ---------- hero ---------- */
+.hero { position: relative; overflow: hidden; border-radius: 18px; padding: 34px 30px; margin-bottom: 10px; color: #fff;
+  background: linear-gradient(135deg, #1e3a8a, #6d28d9 60%, #be185d); }
+.hero::before, .hero::after { content: ""; position: absolute; border-radius: 50%; filter: blur(40px); opacity: .45; animation: float 9s ease-in-out infinite; }
+.hero::before { width: 260px; height: 260px; background: #38bdf8; top: -80px; right: -60px; }
+.hero::after { width: 200px; height: 200px; background: #f472b6; bottom: -90px; left: 30%; animation-delay: -4s; }
+@keyframes float { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-30px, 20px); } }
+.hero > * { position: relative; z-index: 1; }
+.hero h1 { font-size: 2.3rem; line-height: 1.15; margin: 0 0 10px; }
+.hero p { margin: 0 0 18px; opacity: .92; font-size: 1.05rem; }
+.hero .llama { font-size: 54px; display: inline-block; animation: bob 2.6s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
+.typer { background: rgba(2,6,23,.72); border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 14px 16px; font-family: ui-monospace, Consolas, monospace; font-size: 14px; min-height: 120px; white-space: pre-wrap; max-width: 640px; }
+.typer .cur { display: inline-block; width: 8px; height: 16px; background: #7dd3fc; vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.roadmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 18px; }
+.roadmap div { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.roadmap b { display: block; font-size: 12px; opacity: .8; }
+
+/* ---------- module ---------- */
+.module { padding-top: 42px; scroll-margin-top: 60px; }
+.mod-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.mod-num { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.mod-head p { margin: 0; color: var(--muted); }
+.mod-foot { display: flex; justify-content: flex-end; margin-top: 18px; }
+.complete-btn.done { background: var(--ok); border-color: var(--ok); color: #fff; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin: 14px 0; box-shadow: var(--shadow); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.grid > .card { margin: 0; }
+.lab { border: 2px dashed var(--accent); background: var(--surface); border-radius: var(--radius); padding: 16px 20px; margin: 18px 0; }
+.lab-title { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 14px 0; }
+.note.ok { border-color: var(--ok); background: var(--ok-soft); }
+.note.warn { border-color: var(--warn); background: var(--warn-soft); }
+.note.danger { border-color: var(--danger); background: var(--danger-soft); }
+.note > strong:first-child { display: block; }
+
+/* reveal animation */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+/* code */
+.code { position: relative; margin: 10px 0 14px; }
+.code pre { margin: 0; background: var(--code-bg); color: var(--code-text); padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 14px; line-height: 1.55; }
+.code .label { position: absolute; top: 0; left: 12px; transform: translateY(-50%); background: var(--surface); color: var(--muted); border: 1px solid var(--border); font-size: 11px; padding: 0 8px; border-radius: 10px; }
+.code .copy { position: absolute; top: 8px; right: 8px; background: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 6px; padding: 2px 10px; font-size: 12px; cursor: pointer; }
+.c { color: var(--code-dim); } .k { color: var(--code-cmd); } .g { color: var(--code-ok); }
+
+/* tables */
+.table-wrap { overflow-x: auto; margin: 12px 0; border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+
+/* tabs */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tabs button { border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 14px; border-radius: 9px 9px 0 0; border-bottom: none; cursor: pointer; font-size: 14px; }
+.tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tabpanel { display: none; border: 1px solid var(--border); background: var(--surface); padding: 8px 20px 16px; border-radius: 0 10px 10px 10px; animation: fade .35s ease; }
+.tabpanel.active { display: block; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* checklist steps */
+.checksteps { list-style: none; padding: 0; margin: 10px 0; }
+.checksteps li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+.checksteps li:last-child { border-bottom: none; }
+.checksteps input { width: 22px; height: 22px; accent-color: var(--ok); margin-top: 2px; cursor: pointer; }
+.checksteps li.checked > div { opacity: .6; }
+.checksteps li.checked > div > b:first-child { text-decoration: line-through; }
+.stepbar { height: 6px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin: 6px 0 2px; }
+.stepbar div { height: 100%; width: 0; background: var(--ok); transition: width .4s; }
+.steptext { font-size: 13px; color: var(--muted); }
+
+/* sliders / forms */
+.row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 10px 0; }
+.row label { font-size: 14px; color: var(--muted); }
+input[type=range] { accent-color: var(--accent); width: 220px; max-width: 100%; }
+select, input[type=text], input[type=search], textarea { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 14px; }
+textarea { width: 100%; resize: vertical; }
+.search { width: 100%; }
+.big-num { font-size: 1.6rem; font-weight: 800; }
+
+/* bars */
+.bars { display: grid; gap: 6px; margin: 10px 0; }
+.bar-row { display: grid; grid-template-columns: 110px 1fr 54px; gap: 10px; align-items: center; font-size: 14px; }
+.bar-track { height: 18px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+.bar-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 6px; transition: width .5s ease; }
+.bar-row.pick .bar-fill { background: var(--ok); }
+.bar-row.pick span:first-child { font-weight: 700; color: var(--ok); }
+
+/* tokens */
+.gen-text { font-size: 1.2rem; padding: 12px 14px; background: var(--surface-2); border-radius: 10px; min-height: 52px; }
+.gen-text .new { color: var(--ok); font-weight: 700; animation: pop .5s ease; display: inline-block; }
+@keyframes pop { from { transform: scale(1.5); opacity: 0; } to { transform: none; opacity: 1; } }
+.tok-out { display: flex; flex-wrap: wrap; gap: 3px; margin: 10px 0; font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+.tok-out span { padding: 2px 4px; border-radius: 4px; animation: pop .3s ease both; white-space: pre; }
+.t0 { background: #dbeafe; color: #1e3a8a; } .t1 { background: #ede9fe; color: #4c1d95; } .t2 { background: #dcfce7; color: #14532d; }
+.t3 { background: #fef3c7; color: #78350f; } .t4 { background: #fce7f3; color: #831843; }
+
+/* context window */
+.ctx { display: flex; flex-wrap: wrap; gap: 4px; margin: 12px 0; }
+.ctx span { width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; color: #fff; background: var(--accent); transition: all .4s; animation: pop .3s ease; }
+.ctx span.user { background: var(--accent-2); }
+.ctx span.lost { background: var(--surface-2); color: var(--muted); opacity: .5; transform: scale(.85); }
+
+/* meter */
+.meter { height: 26px; border-radius: 8px; background: var(--surface-2); position: relative; overflow: hidden; margin: 8px 0; }
+.meter .fill { position: absolute; inset: 0 auto 0 0; width: 0; transition: width .6s ease, background .3s; }
+.meter .cap { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text); }
+.meter .lbl { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 10px; font-size: 13px; font-weight: 600; }
+
+/* svg diagrams */
+.diagram { width: 100%; height: auto; display: block; margin: 10px 0; }
+.diagram .node { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+.diagram .node.hl { stroke: var(--accent); stroke-width: 2.5; }
+.diagram text { fill: var(--text); font-size: 13px; font-family: system-ui, sans-serif; }
+.diagram text.sub { fill: var(--muted); font-size: 11px; }
+.diagram .wire { stroke: var(--border); stroke-width: 2; fill: none; stroke-dasharray: 6 5; animation: dash 1.2s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -22; } }
+
+/* stepper (RAG/tools) */
+.stepper { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.stepper .st { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 14px; transition: all .35s; }
+.stepper .st.on { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-3px); box-shadow: 0 6px 16px rgba(37,99,235,.18); }
+.stepper .st.done { border-color: var(--ok); }
+.stepper .ar { color: var(--muted); }
+.step-explain { min-height: 48px; padding: 10px 14px; border-radius: 10px; background: var(--surface-2); font-size: 14.5px; }
+
+/* terminal simulator */
+.term { background: #0b1020; border-radius: 12px; border: 1px solid #1f2a44; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+.term-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #141b2f; color: #94a3b8; font-size: 12px; }
+.term-bar i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.term-body { height: 380px; overflow-y: auto; padding: 12px 14px; font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; color: #e2e8f0; line-height: 1.5; cursor: text; }
+.term-body .line { white-space: pre-wrap; word-break: break-word; }
+.term-body .cmd { color: #7dd3fc; } .term-body .dim { color: #8b9bb4; } .term-body .err { color: #fca5a5; } .term-body .okc { color: #86efac; } .term-body .bot { color: #f1f5f9; }
+.term-input { display: flex; gap: 8px; align-items: center; }
+.term-input span { color: #86efac; white-space: nowrap; }
+.term-input input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font: inherit; padding: 0; min-width: 0; }
+.term-sugg { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.term-sugg button { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+.term-sugg button:hover { border-color: var(--accent); color: var(--accent); }
+.missions { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px; margin-top: 8px; }
+.missions div { font-size: 13.5px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); transition: all .4s; }
+.missions div.ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.missions div.ok::before { content: "✓ "; font-weight: 800; }
+
+/* command cards */
+details.cmd { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin: 10px 0; overflow: hidden; }
+details.cmd summary { cursor: pointer; padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; list-style: none; }
+details.cmd summary::-webkit-details-marker { display: none; }
+details.cmd summary::before { content: "▸"; color: var(--muted); transition: transform .25s; }
+details.cmd[open] summary::before { transform: rotate(90deg); }
+details.cmd summary code { background: var(--accent-soft); color: var(--accent); border: none; font-size: .95rem; }
+details.cmd summary .desc { color: var(--muted); font-size: 14px; }
+details.cmd > div { padding: 0 18px 12px; animation: fade .3s ease; }
+details.faq { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin: 8px 0; }
+details.faq summary { cursor: pointer; font-weight: 600; }
+.pill { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); font-weight: 600; }
+
+/* catalog */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.chips button { border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+.chips button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.badge { display: inline-block; font-size: 11px; padding: 0 7px; border-radius: 10px; margin: 1px 2px 1px 0; border: 1px solid var(--border); color: var(--muted); }
+.badge.tools { color: var(--accent); border-color: var(--accent); } .badge.vision { color: var(--ok); border-color: var(--ok); }
+.badge.thinking { color: var(--warn); border-color: var(--warn); } .badge.embedding { color: var(--danger); border-color: var(--danger); }
+.size { display: inline-block; font-family: ui-monospace, Consolas, monospace; font-size: 12px; padding: 0 5px; margin: 1px; border-radius: 4px; background: var(--surface-2); }
+
+/* tag anatomy */
+.anatomy { display: flex; flex-wrap: wrap; gap: 2px; font-family: ui-monospace, Consolas, monospace; font-size: 1.4rem; margin: 10px 0; }
+.anatomy span { padding: 4px 8px; border-radius: 8px; cursor: pointer; transition: all .25s; border: 2px solid transparent; }
+.anatomy span[data-part]:hover, .anatomy span.on { border-color: var(--accent); background: var(--accent-soft); }
+.anatomy .sep { cursor: default; color: var(--muted); padding: 4px 0; }
+
+/* picker results */
+.choice { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 12px; }
+.choice label { border: 1.5px solid var(--border); border-radius: 10px; padding: 6px 12px; cursor: pointer; font-size: 14px; background: var(--surface); transition: all .2s; }
+.choice input { display: none; }
+.choice label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.reco { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.reco div { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; background: var(--surface); animation: pop .4s ease both; }
+.reco code { font-size: 13px; }
+
+/* quiz */
+.q { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin: 12px 0; }
+.q p { margin: 0 0 8px; font-weight: 600; }
+.q .opts { display: grid; gap: 6px; }
+.q .opts button { text-align: left; background: var(--surface-2); color: var(--text); border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 14.5px; transition: all .2s; }
+.q .opts button:hover:not(:disabled) { border-color: var(--accent); }
+.q .opts button.right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.q .opts button.wrong { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); animation: shake .4s; }
+@keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.q .why { display: none; margin-top: 8px; font-size: 14px; color: var(--muted); }
+.q.answered .why { display: block; animation: fade .3s; }
+.score { position: sticky; bottom: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow); }
+.confetti { position: fixed; top: -10px; width: 9px; height: 14px; z-index: 50; animation: fall 2.6s linear forwards; pointer-events: none; }
+@keyframes fall { to { transform: translateY(105vh) rotate(720deg); } }
+
+.flow-cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); margin-top: 50px; padding-top: 16px; }
+
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); padding: 0 16px; }
+  nav.side { display: none; position: fixed; top: 52px; left: 0; right: 0; bottom: 0; max-height: none; background: var(--surface); z-index: 30; padding: 16px; }
+  nav.side.open { display: block; }
+  #menuBtn { display: inline-block; }
+  .topbar-inner { padding: 10px 16px; }
+  .prog-label { display: none; }
+  .hero { padding: 24px 18px; } .hero h1 { font-size: 1.65rem; }
+  .bar-row { grid-template-columns: 84px 1fr 46px; }
+  .term-body { height: 320px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+@media print { .topbar, nav.side, .copy, .lab, .term, .score { display: none !important; } .tabpanel { display: block; } .wrap { display: block; } .reveal { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-inner">
+  <button class="btn small" id="menuBtn" type="button">☰ Menu</button>
+  <span class="brand">🦙 Ollama Course</span>
+  <div class="prog-wrap"><div class="prog"><div id="progFill"></div></div><span class="prog-label" id="progLabel">0 of 18 modules</span></div>
+  <button class="btn small" id="themeBtn" type="button">◐ Theme</button>
+</div></div>
+
+<div class="wrap">
+<nav class="side" id="side"></nav>
+
+<main id="main">
+
+<!-- ================= 0 START ================= -->
+<section class="module" id="m0" data-title="Start here" data-group="Getting started">
+  <div class="hero">
+    <div class="llama">🦙</div>
+    <h1>Run AI on your own laptop: the complete Ollama course</h1>
+    <p>From “what is an LLM?” to installing Ollama, mastering every command, choosing models, customizing them, and building apps with the API, RAG and tool calling. Learn by doing: every module has a hands-on lab.</p>
+    <div class="typer" id="typer"></div>
+    <div class="roadmap">
+      <div><b>PART 1</b>AI concepts</div>
+      <div><b>PART 2</b>Install Ollama</div>
+      <div><b>PART 3</b>Commands &amp; models</div>
+      <div><b>PART 4</b>Build with code</div>
+      <div><b>PART 5</b>Configure, fix, test yourself</div>
+    </div>
+  </div>
+  <div class="grid reveal">
+    <div class="card"><b>📚 How to use this course</b><br>Go in order. Read, try the lab, then click <i>Mark module complete</i>. The progress bar at the top tracks you.</div>
+    <div class="card"><b>🧪 Labs work offline</b><br>The simulators and the practice terminal run inside this page, so you can learn the commands before installing anything.</div>
+    <div class="card"><b>💻 Then do it for real</b><br>Module 5 installs Ollama on your machine. Every command you practiced works the same in a real terminal.</div>
+    <div class="card"><b>⏱️ Time needed</b><br>About 3–4 hours for everything. Installation alone takes about 15 minutes, plus model download time.</div>
+  </div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 1 LLM BASICS ================= -->
+<section class="module" id="m1" data-title="What is an LLM?" data-group="Part 1 · AI concepts">
+  <div class="mod-head"><div class="mod-num">1</div><div><h2>What is an LLM?</h2><p>The core idea behind ChatGPT, Llama, Gemma and every model you'll run.</p></div></div>
+  <div class="reveal">
+  <p>A <b>Large Language Model (LLM)</b> is a program trained on huge amounts of text to do one thing extremely well: <b>predict the next token</b> (a word or piece of a word). By predicting one token, adding it, and predicting again, it writes whole answers, code and essays.</p>
+  <div class="grid">
+    <div class="card"><b>1. Training</b> (done by Meta, Google, etc.)<br>The model reads trillions of words and learns patterns. This costs millions of dollars of GPU time.</div>
+    <div class="card"><b>2. Weights</b><br>What it learned is stored as billions of numbers called <i>parameters</i> or <i>weights</i>. That's the file you download.</div>
+    <div class="card"><b>3. Inference</b> (what Ollama does)<br>Loading the weights and using them to generate text. This happens on <i>your</i> computer.</div>
+  </div>
+  </div>
+
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: watch a model think, one token at a time</div>
+    <p style="margin-top:0">Click <b>Next token</b>. The model scores every possible next token, then picks one (here, the most likely).</p>
+    <div class="gen-text" id="genText"></div>
+    <div class="bars" id="genBars"></div>
+    <div class="row"><button class="btn primary" id="genNext" type="button">Next token ▶</button><button class="btn" id="genAuto" type="button">Auto-play</button><button class="btn" id="genReset" type="button">Reset</button></div>
+  </div>
+
+  <h3>Tokens: how models read text</h3>
+  <p class="reveal">Models don't see letters or whole words. They see <b>tokens</b>, chunks of about 3–4 characters on average. In English, 100 tokens ≈ 75 words. Limits, speed (“tokens per second”) and context size are all measured in tokens.</p>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: token playground</div>
+    <textarea id="tokIn" rows="2">Ollama lets students run LLMs locally on their laptops in 2026!</textarea>
+    <div class="tok-out" id="tokOut"></div>
+    <div class="steptext" id="tokStats"></div>
+    <p class="steptext">This is a simplified demo split. Real tokenizers (BPE) differ per model, but the idea is the same.</p>
+  </div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 2 KEY CONCEPTS ================= -->
+<section class="module" id="m2" data-title="Key concepts" data-group="Part 1 · AI concepts">
+  <div class="mod-head"><div class="mod-num">2</div><div><h2>Key concepts you must know</h2><p>Parameters, quantization, context window, temperature, CPU vs GPU, local vs cloud.</p></div></div>
+
+  <h3>Parameters &amp; quantization: why model size matters</h3>
+  <div class="reveal">
+  <p><b>Parameters</b> are the model's learned numbers. More parameters usually means a smarter model but a bigger file and slower answers. Sizes are written as <code>1b</code> (1 billion), <code>270m</code> (270 million), <code>70b</code>, and so on.</p>
+  <p><b>Quantization</b> compresses each number. Full precision (<code>fp16</code>) uses 16 bits per parameter; <code>q8_0</code> uses about 8 bits; <code>q4_K_M</code> (Ollama's usual default) uses about 4.5 bits. That's about ¼ of the size with only a small loss in quality.</p>
+  </div>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: will this model fit on my laptop?</div>
+    <div class="row">
+      <label>Model size: <b id="pVal">8</b>B parameters<br><input type="range" id="pSlider" min="0" max="11" value="6"></label>
+      <label>Quantization<br><select id="qSel"><option value="0.6">q4_K_M (default)</option><option value="1.1">q8_0</option><option value="2.05">fp16</option></select></label>
+      <label>Your RAM / VRAM<br><select id="ramSel"><option>8</option><option selected>16</option><option>32</option><option>64</option></select> GB</label>
+    </div>
+    <div class="row"><div><div class="steptext">Download size</div><div class="big-num" id="dlSize">–</div></div><div><div class="steptext">Memory needed when running</div><div class="big-num" id="memSize">–</div></div></div>
+    <div class="meter"><div class="fill" id="memFill"></div><div class="lbl" id="memLbl"></div></div>
+    <div id="fitVerdict" class="note"></div>
+  </div>
+
+  <h3>Context window: the model's short-term memory</h3>
+  <p class="reveal">The <b>context window</b> (<code>num_ctx</code>) is how many tokens the model can “see” at once: your messages, its replies and any documents. When a chat gets longer than the window, the <b>oldest tokens fall out</b> and the model forgets them. Bigger windows remember more but use more RAM.</p>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: watch the model forget</div>
+    <div class="row"><label>Context window: <b id="ctxVal">24</b> tokens <input type="range" id="ctxSlider" min="8" max="48" value="24"></label>
+      <button class="btn primary" id="ctxUser" type="button">+ You send a message</button><button class="btn" id="ctxBot" type="button">+ Model replies</button><button class="btn" id="ctxReset" type="button">Reset</button></div>
+    <div class="ctx" id="ctxBox"></div>
+    <div class="steptext"><span style="color:var(--accent-2)">■</span> your tokens &nbsp; <span style="color:var(--accent)">■</span> model tokens &nbsp; <span style="opacity:.5">■</span> forgotten (outside the window)</div>
+  </div>
+
+  <h3>Temperature &amp; sampling: creative or focused?</h3>
+  <p class="reveal">After scoring each possible next token, the model <b>samples</b> one. <b>Temperature</b> reshapes the odds: low (0–0.3) almost always picks the top token, which is predictable and good for facts and code. High (0.8–1.5) gives rare tokens a chance, which is creative but can go off topic. Related settings are <code>top_k</code> (consider only the K best tokens), <code>top_p</code> (consider the smallest set adding up to P probability), <code>repeat_penalty</code> and <code>seed</code> (same seed + same settings = same answer).</p>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: temperature playground</div>
+    <p style="margin-top:0">Prompt: <i>“My favourite programming language is …”</i></p>
+    <div class="row"><label>Temperature: <b id="tVal">0.8</b> <input type="range" id="tSlider" min="1" max="20" value="8"></label><button class="btn primary" id="tSample" type="button">Sample 10 answers 🎲</button></div>
+    <div class="bars" id="tBars"></div>
+    <div class="step-explain" id="tOut">Press “Sample” to see what the model would pick.</div>
+  </div>
+
+  <h3>CPU vs GPU</h3>
+  <div class="grid reveal">
+    <div class="card"><b>🧠 CPU + RAM</b><br>Works on every computer. Fine for 1B–4B models. Expect roughly 5–20 tokens/second.</div>
+    <div class="card"><b>⚡ GPU + VRAM</b><br>NVIDIA (CUDA), AMD (ROCm) or Apple Silicon (Metal). Often 3–10× faster. The model must fit in VRAM to be fully fast.</div>
+    <div class="card"><b>🔀 Split</b><br>If a model is bigger than VRAM, Ollama puts part on the GPU and the rest on the CPU. That works, but it's slower. <code>ollama ps</code> shows the split.</div>
+  </div>
+
+  <h3>Local vs cloud AI</h3>
+  <div class="flow-cmp reveal">
+    <div class="card">
+      <b>☁️ Cloud AI (ChatGPT, Claude, Gemini)</b>
+      <svg class="diagram" viewBox="0 0 320 90" aria-label="cloud flow">
+        <rect class="node" x="5" y="25" width="80" height="40" rx="8"/><text x="45" y="50" text-anchor="middle">Laptop</text>
+        <rect class="node" x="235" y="25" width="80" height="40" rx="8"/><text x="275" y="50" text-anchor="middle">Server</text>
+        <path id="cloudPath" class="wire" d="M85 45 C 140 0, 180 0, 235 45"/>
+        <text x="160" y="80" text-anchor="middle" class="sub">internet · data leaves your PC</text>
+        <circle r="6" fill="#f59e0b"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#cloudPath"/></animateMotion></circle>
+      </svg>
+      ✔ Most powerful models · ✔ No hardware needed<br>✘ Needs internet · ✘ Costs money / limits · ✘ Data leaves your PC
+    </div>
+    <div class="card">
+      <b>💻 Local AI (Ollama)</b>
+      <svg class="diagram" viewBox="0 0 320 90" aria-label="local flow">
+        <rect class="node hl" x="5" y="5" width="310" height="70" rx="10"/><text x="20" y="22" class="sub">your laptop</text>
+        <rect class="node" x="25" y="30" width="80" height="36" rx="8"/><text x="65" y="53" text-anchor="middle">App</text>
+        <rect class="node" x="215" y="30" width="80" height="36" rx="8"/><text x="255" y="53" text-anchor="middle">Ollama</text>
+        <path id="localPath" class="wire" d="M105 48 L 215 48"/>
+        <circle r="6" fill="#22c55e"><animateMotion dur="1.2s" repeatCount="indefinite"><mpath href="#localPath"/></animateMotion></circle>
+        <text x="160" y="86" text-anchor="middle" class="sub">nothing leaves the machine</text>
+      </svg>
+      ✔ Free · ✔ Private · ✔ Offline · ✔ Great for learning<br>✘ Limited by your hardware · ✘ Smaller models are less capable
+    </div>
+  </div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 3 WHAT IS OLLAMA ================= -->
+<section class="module" id="m3" data-title="How Ollama works" data-group="Part 1 · AI concepts">
+  <div class="mod-head"><div class="mod-num">3</div><div><h2>What is Ollama and how does it work?</h2><p>The pieces inside, and what happens when you press Enter.</p></div></div>
+  <p class="reveal"><b>Ollama</b> is a free, open-source tool (MIT license) that makes running LLMs as easy as <code>ollama run llama3.2</code>. It downloads models, manages them, runs them on your CPU/GPU, and offers an API so your own apps can use them.</p>
+
+  <svg class="diagram reveal" viewBox="0 0 780 210" aria-label="Ollama architecture">
+    <path id="archPath" class="wire" d="M155 95 L 215 95 M 365 95 L 425 95 M 575 95 L 625 95"/>
+    <path id="archMotion" d="M80 95 L 700 95" fill="none" stroke="none"/>
+    <rect class="node" x="5" y="50" width="150" height="90" rx="12"/><text x="80" y="85" text-anchor="middle" font-weight="700">You / your app</text><text x="80" y="105" text-anchor="middle" class="sub">ollama run …</text><text x="80" y="121" text-anchor="middle" class="sub">or Python / curl</text>
+    <rect class="node hl" x="215" y="50" width="150" height="90" rx="12"/><text x="290" y="85" text-anchor="middle" font-weight="700">Ollama server</text><text x="290" y="105" text-anchor="middle" class="sub">localhost:11434</text><text x="290" y="121" text-anchor="middle" class="sub">REST API, scheduling</text>
+    <rect class="node" x="425" y="50" width="150" height="90" rx="12"/><text x="500" y="85" text-anchor="middle" font-weight="700">Model runner</text><text x="500" y="105" text-anchor="middle" class="sub">inference engine</text><text x="500" y="121" text-anchor="middle" class="sub">(llama.cpp / GGML)</text>
+    <rect class="node" x="625" y="50" width="150" height="90" rx="12"/><text x="700" y="85" text-anchor="middle" font-weight="700">CPU / GPU</text><text x="700" y="105" text-anchor="middle" class="sub">weights in RAM/VRAM</text><text x="700" y="121" text-anchor="middle" class="sub">from ~/.ollama/models</text>
+    <circle r="7" fill="#3b82f6"><animateMotion dur="3s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#archMotion"/></animateMotion></circle>
+    <circle r="7" fill="#22c55e"><animateMotion dur="3s" begin="1.5s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#archMotion"/></animateMotion></circle>
+    <text x="390" y="180" text-anchor="middle" class="sub">● blue = your prompt going in    ● green = generated tokens streaming back</text>
+  </svg>
+
+  <div class="grid reveal">
+    <div class="card"><b>CLI</b><br>The <code>ollama</code> command. It's just a client that sends requests to the server.</div>
+    <div class="card"><b>Server</b><br>Runs in the background (the tray app on Windows/macOS, a systemd service on Linux). Listens on port <code>11434</code>.</div>
+    <div class="card"><b>Registry</b><br><code>ollama.com/library</code>, where <code>pull</code> downloads models from (like Docker Hub, for AI).</div>
+    <div class="card"><b>GGUF</b><br>The file format for the weights. You can also import <code>.gguf</code> files from Hugging Face.</div>
+    <div class="card"><b>Modelfile</b><br>A recipe (like a Dockerfile) for building custom models with your own system prompt and settings.</div>
+    <div class="card"><b>Load / unload</b><br>A model is loaded into memory on first use and unloaded after 5 idle minutes (<code>keep_alive</code>).</div>
+  </div>
+  <div class="note reveal"><strong>Analogy</strong>Ollama is to AI models what Docker is to apps: <code>pull</code> an image (model), <code>run</code> it, <code>list</code> / <code>rm</code> / <code>cp</code> it, and build your own from a recipe file.</div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 4 REQUIREMENTS ================= -->
+<section class="module" id="m4" data-title="Requirements" data-group="Part 2 · Installation">
+  <div class="mod-head"><div class="mod-num">4</div><div><h2>System requirements</h2><p>Check your computer before installing.</p></div></div>
+  <div class="table-wrap reveal"><table>
+    <tr><th>Item</th><th>Minimum</th><th>Recommended</th></tr>
+    <tr><td>OS</td><td>Windows 10 22H2+, macOS 14 Sonoma+, 64-bit Linux</td><td>Windows 11 / latest macOS / Ubuntu 22.04+</td></tr>
+    <tr><td>RAM</td><td>8 GB (1B–3B models)</td><td>16 GB+ (7B–8B models)</td></tr>
+    <tr><td>Disk</td><td>~5 GB free (app + one small model)</td><td>30 GB+ for several models (SSD is much faster to load)</td></tr>
+    <tr><td>GPU (optional)</td><td>None: CPU works</td><td>NVIDIA GTX 10-series or newer with current drivers · AMD Radeon RX 6000/7000 · Apple M1–M4</td></tr>
+  </table></div>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: find your specs (Windows)</div>
+    <div class="code"><span class="label">PowerShell</span><pre><span class="c"># Total RAM in GB</span>
+<span class="k">[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)</span>
+<span class="c"># Graphics card name</span>
+<span class="k">Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM</span>
+<span class="c"># NVIDIA only: GPU + VRAM + driver</span>
+<span class="k">nvidia-smi</span>
+<span class="c"># Free disk space</span>
+<span class="k">Get-PSDrive C, D</span></pre></div>
+    <p>Or use the GUI: <code>Ctrl + Shift + Esc</code> → Task Manager → <b>Performance</b> (Memory, GPU, Disk). On macOS:  → About This Mac. On Linux: <code>free -h</code>, <code>lspci | grep -i vga</code>.</p>
+  </div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 5 INSTALL ================= -->
+<section class="module" id="m5" data-title="Install Ollama" data-group="Part 2 · Installation">
+  <div class="mod-head"><div class="mod-num">5</div><div><h2>Install Ollama</h2><p>Pick your OS and tick each step as you go.</p></div></div>
+  <div class="tabs" data-tabs>
+    <button class="active" data-tab="in-win" type="button">🪟 Windows (.exe)</button>
+    <button data-tab="in-zip" type="button">🪟 Windows (manual zip)</button>
+    <button data-tab="in-mac" type="button">🍎 macOS</button>
+    <button data-tab="in-linux" type="button">🐧 Linux</button>
+    <button data-tab="in-docker" type="button">🐳 Docker</button>
+  </div>
+
+  <div class="tabpanel active" id="in-win">
+    <div class="stepbar"><div></div></div><div class="steptext">0 of 6 steps done</div>
+    <ul class="checksteps">
+      <li><input type="checkbox"><div><b>Download the installer</b><br>Open <a href="https://ollama.com/download/windows" target="_blank" rel="noopener">ollama.com/download/windows</a> → <b>Download for Windows</b>. You get <code>OllamaSetup.exe</code> (~1 GB) in <code>Downloads</code>.</div></li>
+      <li><input type="checkbox"><div><b>Run OllamaSetup.exe</b><br>Double-click → <b>Install</b>. No admin rights needed: it installs to <code>%LOCALAPPDATA%\Programs\Ollama</code>. If SmartScreen warns, click <i>More info → Run anyway</i> (only for the file from ollama.com).
+        <div class="code"><span class="label">Optional: install to another folder</span><pre><span class="k">.\OllamaSetup.exe /DIR="D:\Ollama"</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>Look for the 🦙 tray icon</b><br>After install, Ollama starts automatically and a llama icon appears near the clock. That means the server is running.</div></li>
+      <li><input type="checkbox"><div><b>Open a NEW terminal</b><br>Start → type <b>PowerShell</b> (or cmd / Windows Terminal). It must be new so it picks up the updated PATH.</div></li>
+      <li><input type="checkbox"><div><b>Check the version</b><div class="code"><pre><span class="k">ollama --version</span>
+<span class="c">ollama version is 0.x.x</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>Run your first model</b><div class="code"><pre><span class="k">ollama run llama3.2:1b</span></pre></div></div></li>
+    </ul>
+    <div class="note warn"><strong>“ollama is not recognized…”</strong>Close every terminal (including VS Code's) and open a new one. Still failing? Sign out of Windows and back in.</div>
+  </div>
+
+  <div class="tabpanel" id="in-zip">
+    <p>Use this when a lab PC blocks installers, or to keep everything on <code>D:</code>.</p>
+    <div class="stepbar"><div></div></div><div class="steptext">0 of 6 steps done</div>
+    <ul class="checksteps">
+      <li><input type="checkbox"><div><b>Download the zip</b><br>From <a href="https://github.com/ollama/ollama/releases/latest" target="_blank" rel="noopener">github.com/ollama/ollama/releases/latest</a> get <code>ollama-windows-amd64.zip</code> (ARM laptops: <code>ollama-windows-arm64.zip</code>; AMD GPUs may also need the extra <code>-rocm</code> zip extracted into the same folder).</div></li>
+      <li><input type="checkbox"><div><b>Extract</b> to, for example, <code>D:\tools\ollama</code>. You'll see <code>ollama.exe</code> inside.</div></li>
+      <li><input type="checkbox"><div><b>Add it to PATH</b><br>Start → “Edit environment variables for your account” → <b>Path</b> → Edit → New → <code>D:\tools\ollama</code>. Or:
+        <div class="code"><span class="label">PowerShell</span><pre><span class="k">[Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path","User") + ";D:\tools\ollama", "User")</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>(Optional) store models on D:</b><div class="code"><pre><span class="k">[Environment]::SetEnvironmentVariable("OLLAMA_MODELS", "D:\ollama-models", "User")</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>Start the server</b> in a new terminal and leave it open (the zip has no tray app):<div class="code"><pre><span class="k">ollama serve</span>
+<span class="c">... Listening on 127.0.0.1:11434</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>Use it in a second terminal</b><div class="code"><pre><span class="k">ollama --version</span>
+<span class="k">ollama run llama3.2:1b</span></pre></div></div></li>
+    </ul>
+  </div>
+
+  <div class="tabpanel" id="in-mac">
+    <div class="stepbar"><div></div></div><div class="steptext">0 of 4 steps done</div>
+    <ul class="checksteps">
+      <li><input type="checkbox"><div><b>Download</b> <code>Ollama.dmg</code> from <a href="https://ollama.com/download/mac" target="_blank" rel="noopener">ollama.com/download/mac</a>.</div></li>
+      <li><input type="checkbox"><div><b>Drag Ollama into Applications</b> and open it. Allow it to install the command-line tool when asked.</div></li>
+      <li><input type="checkbox"><div><b>See the 🦙 in the menu bar</b>: the server is running.</div></li>
+      <li><input type="checkbox"><div><b>Terminal:</b> <code>ollama --version</code>, then <code>ollama run llama3.2:1b</code>.</div></li>
+    </ul>
+    <div class="code"><span class="label">Alternative: Homebrew</span><pre><span class="k">brew install ollama</span>
+<span class="k">brew services start ollama</span>   <span class="c"># or run "ollama serve" in its own tab</span></pre></div>
+  </div>
+
+  <div class="tabpanel" id="in-linux">
+    <div class="stepbar"><div></div></div><div class="steptext">0 of 3 steps done</div>
+    <ul class="checksteps">
+      <li><input type="checkbox"><div><b>Run the install script</b> (installs the binary, creates an <code>ollama</code> user and a systemd service, and sets up NVIDIA/AMD drivers if present):<div class="code"><pre><span class="k">curl -fsSL https://ollama.com/install.sh | sh</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>Check the service</b><div class="code"><pre><span class="k">ollama --version</span>
+<span class="k">systemctl status ollama</span>
+<span class="k">sudo systemctl restart ollama</span>   <span class="c"># after config changes</span>
+<span class="k">journalctl -u ollama -f</span>         <span class="c"># live logs</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>Run a model:</b> <code>ollama run llama3.2:1b</code></div></li>
+    </ul>
+    <p>Change settings for the service with <code>sudo systemctl edit ollama</code>, then add lines like <code>Environment="OLLAMA_HOST=0.0.0.0:11434"</code> under <code>[Service]</code>, and restart.</p>
+  </div>
+
+  <div class="tabpanel" id="in-docker">
+    <p>Run Ollama inside a container: great for servers and for keeping your system clean.</p>
+    <div class="stepbar"><div></div></div><div class="steptext">0 of 3 steps done</div>
+    <ul class="checksteps">
+      <li><input type="checkbox"><div><b>Start the container</b><div class="code"><pre><span class="c"># CPU only</span>
+<span class="k">docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama</span>
+<span class="c"># NVIDIA GPU (needs NVIDIA Container Toolkit)</span>
+<span class="k">docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama</span>
+<span class="c"># AMD GPU (Linux)</span>
+<span class="k">docker run -d --device /dev/kfd --device /dev/dri -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama:rocm</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>Run a model inside it</b><div class="code"><pre><span class="k">docker exec -it ollama ollama run llama3.2:1b</span></pre></div></div></li>
+      <li><input type="checkbox"><div><b>Call the API from your host:</b> <code>http://localhost:11434</code>. Models are kept in the <code>ollama</code> volume.</div></li>
+    </ul>
+  </div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 6 VERIFY ================= -->
+<section class="module" id="m6" data-title="Verify &amp; first run" data-group="Part 2 · Installation">
+  <div class="mod-head"><div class="mod-num">6</div><div><h2>Verify the install &amp; your first chat</h2><p>Three checks, then talk to a model.</p></div></div>
+  <div class="code reveal"><span class="label">Terminal</span><pre><span class="c"># 1. CLI on PATH?</span>
+<span class="k">ollama --version</span>
+<span class="c"># 2. Server running? → "Ollama is running"   (PowerShell: use curl.exe)</span>
+<span class="k">curl.exe http://localhost:11434</span>
+<span class="c"># 3. Models on this machine (empty at first, that's OK)</span>
+<span class="k">ollama list</span></pre></div>
+  <p class="reveal">You can also open <a href="http://localhost:11434" target="_blank" rel="noopener">http://localhost:11434</a> in a browser.</p>
+  <div class="code reveal"><span class="label">First chat</span><pre><span class="k">ollama run llama3.2:1b</span>
+<span class="c">pulling manifest
+pulling 74701a8c35f6... 100% ▕████████████████▏ 1.3 GB
+verifying sha256 digest
+writing manifest
+success
+&gt;&gt;&gt; </span>Explain what an API is in two lines.
+<span class="g">An API is a set of rules that lets two programs talk to each other.
+It defines what you can ask for and what you get back.</span>
+<span class="c">&gt;&gt;&gt; </span>/bye</pre></div>
+  <div class="note ok reveal"><strong>What just happened?</strong>The first <code>run</code> downloaded the model once (it's now on disk), the server loaded it into memory, and the model streamed tokens back. Next time it starts in seconds, even offline.</div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 7 TERMINAL SIM ================= -->
+<section class="module" id="m7" data-title="Practice terminal" data-group="Part 3 · Commands &amp; models">
+  <div class="mod-head"><div class="mod-num">7</div><div><h2>Practice terminal (simulator)</h2><p>Type real Ollama commands here safely. Nothing is downloaded: it's a simulation of what you'll see.</p></div></div>
+  <div class="term reveal">
+    <div class="term-bar"><i style="background:#ef4444"></i><i style="background:#f59e0b"></i><i style="background:#22c55e"></i>&nbsp; PowerShell (simulated Ollama)</div>
+    <div class="term-body" id="termBody">
+      <div id="termOut"></div>
+      <div class="term-input"><span id="termPrompt">PS C:\Users\student&gt;</span><input id="termIn" autocomplete="off" spellcheck="false" aria-label="terminal input"></div>
+    </div>
+  </div>
+  <div class="term-sugg" id="termSugg"></div>
+  <b>🎯 Missions</b> <span class="steptext">(they tick automatically)</span>
+  <div class="missions" id="missions"></div>
+  <p class="steptext">Tips: ↑/↓ recall history · type <code>clear</code> to clear · in chat mode type <code>/bye</code> to exit · try a model that doesn't exist to see the error.</p>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 8 COMMANDS ================= -->
+<section class="module" id="m8" data-title="All commands" data-group="Part 3 · Commands &amp; models">
+  <div class="mod-head"><div class="mod-num">8</div><div><h2>Every Ollama command explained</h2><p>Click a command to expand it. Use the filter to find one fast.</p></div></div>
+  <div class="code reveal"><span class="label">ollama --help</span><pre>Usage:
+  ollama [flags]
+  ollama [command]
+
+Available Commands:
+  serve       Start Ollama
+  create      Create a model
+  show        Show information for a model
+  run         Run a model
+  stop        Stop a running model
+  pull        Pull a model from a registry
+  push        Push a model to a registry
+  signin      Sign in to ollama.com
+  signout     Sign out from ollama.com
+  list        List models
+  ps          List running models
+  cp          Copy a model
+  rm          Remove a model
+  launch      Launch the Ollama menu or an integration
+  help        Help about any command
+
+Flags:
+  -h, --help      help for ollama
+  -v, --version   Show version information</pre></div>
+  <input class="search" id="cmdFilter" type="search" placeholder="Filter commands… (run, pull, rm, memory, share)">
+  <div id="cmdCards">
+
+  <details class="cmd" data-k="serve server start port host"><summary><code>ollama serve</code><span class="desc">Start the Ollama server</span><span class="pill">server</span></summary><div>
+    <p>Starts the background engine on <code>127.0.0.1:11434</code>. You only need it when the server isn't already running: zip install, Docker, Linux without systemd, or custom settings. The tray app on Windows/macOS runs it for you.</p>
+    <div class="code"><pre><span class="k">ollama serve</span>
+<span class="c"># PowerShell: listen on all network interfaces (let phones/other PCs connect)</span>
+<span class="k">$env:OLLAMA_HOST="0.0.0.0:11434"; ollama serve</span>
+<span class="c"># bash</span>
+<span class="k">OLLAMA_HOST=0.0.0.0:11434 ollama serve</span>
+<span class="c"># debug logging</span>
+<span class="k">$env:OLLAMA_DEBUG="1"; ollama serve</span></pre></div>
+    <div class="note danger"><strong>Error: bind: Only one usage of each socket address…</strong>The server is already running (the tray app), so just use the other commands. To run it manually, quit Ollama from the tray first.</div>
+  </div></details>
+
+  <details class="cmd" data-k="run chat prompt start model verbose think format keepalive image" open><summary><code>ollama run &lt;model&gt; [prompt]</code><span class="desc">Run a model (download if needed) and chat</span><span class="pill">most used</span></summary><div>
+    <div class="code"><pre><span class="k">ollama run llama3.2</span>                              <span class="c"># interactive chat (tag :latest)</span>
+<span class="k">ollama run qwen3:1.7b</span>                            <span class="c"># specific size/tag</span>
+<span class="k">ollama run llama3.2 "Write a haiku about Python"</span>  <span class="c"># one-shot answer, then exit</span>
+<span class="k">ollama run llama3.2 --verbose</span>                    <span class="c"># show tokens/sec stats</span>
+<span class="k">ollama run deepseek-r1:1.5b --think=false</span>         <span class="c"># hide reasoning (thinking models)</span>
+<span class="k">ollama run deepseek-r1:1.5b --hidethinking</span>        <span class="c"># think, but only print the answer</span>
+<span class="k">ollama run llama3.2 --format json "3 fruits as JSON"</span>  <span class="c"># force JSON output</span>
+<span class="k">ollama run llama3.2 --keepalive 30m</span>              <span class="c"># stay loaded 30 min after use</span>
+<span class="k">ollama run llama3.2 --nowordwrap</span>                 <span class="c"># don't wrap long lines</span>
+<span class="k">ollama run gemma3:4b "Describe this image ./cat.jpg"</span>  <span class="c"># vision: include an image path</span>
+
+<span class="c"># pipe a file in</span>
+<span class="k">Get-Content notes.txt | ollama run llama3.2 "Summarize:"</span>   <span class="c"># PowerShell</span>
+<span class="k">ollama run llama3.2 "Summarize:" &lt; notes.txt</span>               <span class="c"># bash / cmd</span></pre></div>
+    <p>Names are <code>model:tag</code>. With no tag, Ollama uses <code>:latest</code>. Embedding-only models can't be “run” for chat; use <code>pull</code> and the API.</p>
+  </div></details>
+
+  <details class="cmd" data-k="pull download update registry"><summary><code>ollama pull &lt;model&gt;</code><span class="desc">Download or update a model</span><span class="pill">download</span></summary><div>
+    <div class="code"><pre><span class="k">ollama pull llama3.2</span>
+<span class="k">ollama pull gemma3:1b</span>
+<span class="k">ollama pull nomic-embed-text</span>     <span class="c"># embedding model for RAG</span>
+<span class="k">ollama pull hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF:Q4_K_M</span>  <span class="c"># from Hugging Face</span></pre></div>
+    <p>Interrupted? Run the same command again and it resumes. Pulling a model you already have downloads only the changed layers (that's how you update).</p>
+  </div></details>
+
+  <details class="cmd" data-k="list ls models downloaded disk"><summary><code>ollama list</code> / <code>ollama ls</code><span class="desc">Models on your disk</span><span class="pill">inspect</span></summary><div>
+    <div class="code"><pre><span class="k">ollama list</span>
+<span class="c">NAME               ID              SIZE      MODIFIED
+llama3.2:latest    a80c4f17acd5    2.0 GB    2 hours ago
+gemma3:1b          8648f39daa8f    815 MB    3 days ago</span></pre></div>
+  </div></details>
+
+  <details class="cmd" data-k="ps running memory gpu cpu loaded"><summary><code>ollama ps</code><span class="desc">Models loaded in memory right now</span><span class="pill">monitor</span></summary><div>
+    <div class="code"><pre><span class="k">ollama ps</span>
+<span class="c">NAME               ID              SIZE      PROCESSOR    CONTEXT    UNTIL
+llama3.2:latest    a80c4f17acd5    3.1 GB    100% GPU     4096       4 minutes from now</span></pre></div>
+    <p><b>PROCESSOR</b>: <code>100% GPU</code> is fastest, <code>100% CPU</code> is slower, and a split like <code>40%/60% CPU/GPU</code> means it didn't fit in VRAM. <b>UNTIL</b>: when it will be unloaded automatically.</p>
+  </div></details>
+
+  <details class="cmd" data-k="stop unload memory free"><summary><code>ollama stop &lt;model&gt;</code><span class="desc">Unload from RAM/GPU (keeps it on disk)</span><span class="pill">memory</span></summary><div>
+    <div class="code"><pre><span class="k">ollama ps</span>
+<span class="k">ollama stop llama3.2</span></pre></div>
+  </div></details>
+
+  <details class="cmd" data-k="show info details modelfile license parameters template"><summary><code>ollama show &lt;model&gt;</code><span class="desc">Model details, settings and license</span><span class="pill">inspect</span></summary><div>
+    <div class="code"><pre><span class="k">ollama show llama3.2</span>
+<span class="c">  Model
+    architecture        llama
+    parameters          3.2B
+    context length      131072
+    embedding length    3072
+    quantization        Q4_K_M
+  Capabilities
+    completion
+    tools</span>
+<span class="k">ollama show llama3.2 --modelfile</span>    <span class="c"># Modelfile recipe</span>
+<span class="k">ollama show llama3.2 --parameters</span>   <span class="c"># default params</span>
+<span class="k">ollama show llama3.2 --template</span>     <span class="c"># prompt template</span>
+<span class="k">ollama show llama3.2 --system</span>       <span class="c"># system prompt</span>
+<span class="k">ollama show llama3.2 --license</span>      <span class="c"># license</span>
+<span class="k">ollama show llama3.2 --verbose</span>      <span class="c"># all metadata</span></pre></div>
+  </div></details>
+
+  <details class="cmd" data-k="create modelfile custom build gguf quantize"><summary><code>ollama create &lt;name&gt; -f Modelfile</code><span class="desc">Build a custom model</span><span class="pill">customize</span></summary><div>
+    <div class="code"><pre><span class="k">ollama create pybuddy -f Modelfile</span>
+<span class="k">ollama create mymodel -f Modelfile --quantize q4_K_M</span>   <span class="c"># quantize an fp16 import</span></pre></div>
+    <p>See <a href="#m11">Module 11</a> for the interactive Modelfile builder.</p>
+  </div></details>
+
+  <details class="cmd" data-k="cp copy rename"><summary><code>ollama cp &lt;src&gt; &lt;dest&gt;</code><span class="desc">Copy / rename a model (instant, shares data)</span><span class="pill">manage</span></summary><div>
+    <div class="code"><pre><span class="k">ollama cp llama3.2 my-llama</span>
+<span class="k">ollama cp pybuddy yourname/pybuddy</span>   <span class="c"># rename before push</span></pre></div>
+  </div></details>
+
+  <details class="cmd" data-k="rm remove delete space"><summary><code>ollama rm &lt;model&gt;</code><span class="desc">Delete a model from disk</span><span class="pill">manage</span></summary><div>
+    <div class="code"><pre><span class="k">ollama rm mistral</span>
+<span class="c">deleted 'mistral'</span>
+<span class="k">ollama rm gemma3:1b qwen3:1.7b</span>   <span class="c"># several at once</span></pre></div>
+    <div class="note warn"><strong>No undo</strong>You'd need to pull it again.</div>
+  </div></details>
+
+  <details class="cmd" data-k="signin signout account login cloud"><summary><code>ollama signin</code> / <code>ollama signout</code><span class="desc">Connect to an ollama.com account</span><span class="pill">account</span></summary><div>
+    <p>Not needed for local models. Needed to <b>push</b> your own models, and to use <b>cloud</b> models (tags ending in <code>-cloud</code>, which run on Ollama's servers with free-tier limits).</p>
+    <div class="code"><pre><span class="k">ollama signin</span>    <span class="c"># opens/prints a link to approve in your browser</span>
+<span class="k">ollama signout</span></pre></div>
+  </div></details>
+
+  <details class="cmd" data-k="push share upload publish"><summary><code>ollama push &lt;user/model&gt;</code><span class="desc">Share your model on ollama.com</span><span class="pill">share</span></summary><div>
+    <div class="code"><pre><span class="k">ollama signin</span>
+<span class="k">ollama cp pybuddy yourname/pybuddy</span>
+<span class="k">ollama push yourname/pybuddy</span>
+<span class="c"># classmates:</span>
+<span class="k">ollama run yourname/pybuddy</span></pre></div>
+  </div></details>
+
+  <details class="cmd" data-k="launch integration menu tools coding"><summary><code>ollama launch</code><span class="desc">Ollama menu / start an integration</span><span class="pill">integrations</span></summary><div>
+    <p>Opens a menu, or starts a supported tool (for example a coding assistant) already configured to use your local models. The list of integrations depends on your version.</p>
+    <div class="code"><pre><span class="k">ollama launch</span>                 <span class="c"># interactive menu</span>
+<span class="k">ollama launch --help</span>          <span class="c"># integrations your version supports</span>
+<span class="k">ollama launch &lt;integration&gt;</span></pre></div>
+  </div></details>
+
+  <details class="cmd" data-k="help version flags"><summary><code>ollama help</code> · <code>-v</code> · <code>-h</code><span class="desc">Help and version</span><span class="pill">help</span></summary><div>
+    <div class="code"><pre><span class="k">ollama help</span>          <span class="c"># all commands</span>
+<span class="k">ollama help run</span>      <span class="c"># flags of one command</span>
+<span class="k">ollama run --help</span>    <span class="c"># same</span>
+<span class="k">ollama -v</span>            <span class="c"># version</span></pre></div>
+  </div></details>
+  </div>
+  <p id="cmdNone" class="steptext" style="display:none">No command matches.</p>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 9 CHAT COMMANDS ================= -->
+<section class="module" id="m9" data-title="Chat slash commands" data-group="Part 3 · Commands &amp; models">
+  <div class="mod-head"><div class="mod-num">9</div><div><h2>Inside the chat: slash commands &amp; shortcuts</h2><p>What you can type at the <code>&gt;&gt;&gt;</code> prompt.</p></div></div>
+  <div class="table-wrap reveal"><table>
+    <tr><th>Command</th><th>What it does</th></tr>
+    <tr><td><code>/?</code> · <code>/help</code></td><td>List slash commands (<code>/? shortcuts</code> lists keyboard shortcuts)</td></tr>
+    <tr><td><code>/bye</code></td><td>Exit (or <code>Ctrl + D</code>)</td></tr>
+    <tr><td><code>/clear</code></td><td>Forget the conversation so far</td></tr>
+    <tr><td><code>/show info</code> · <code>/show modelfile</code> · <code>/show parameters</code> · <code>/show system</code> · <code>/show license</code></td><td>Inspect the current model</td></tr>
+    <tr><td><code>/set system "…"</code></td><td>Set the system prompt (role / rules) for this session</td></tr>
+    <tr><td><code>/set parameter temperature 0.2</code></td><td>Change sampling (also <code>num_ctx</code>, <code>top_p</code>, <code>top_k</code>, <code>seed</code>, <code>repeat_penalty</code>, <code>num_predict</code>)</td></tr>
+    <tr><td><code>/set verbose</code> · <code>/set quiet</code></td><td>Show / hide speed stats</td></tr>
+    <tr><td><code>/set think</code> · <code>/set nothink</code></td><td>Turn reasoning on/off (thinking models)</td></tr>
+    <tr><td><code>/set format json</code> · <code>/set noformat</code></td><td>Force JSON / back to normal</td></tr>
+    <tr><td><code>/set wordwrap</code> · <code>/set nowordwrap</code></td><td>Line wrapping</td></tr>
+    <tr><td><code>/set history</code> · <code>/set nohistory</code></td><td>Save the ↑ history or not</td></tr>
+    <tr><td><code>/save &lt;name&gt;</code></td><td>Save the session (messages + settings) as a new model</td></tr>
+    <tr><td><code>/load &lt;model&gt;</code></td><td>Switch model without leaving</td></tr>
+    <tr><td><code>"""</code> … <code>"""</code></td><td>Multi-line input (paste code)</td></tr>
+  </table></div>
+  <div class="table-wrap reveal"><table>
+    <tr><th>Shortcut</th><th>Action</th></tr>
+    <tr><td><code>Ctrl + C</code></td><td>Stop the current answer</td></tr>
+    <tr><td><code>Ctrl + D</code></td><td>Exit</td></tr>
+    <tr><td><code>Ctrl + L</code></td><td>Clear the screen</td></tr>
+    <tr><td><code>↑ / ↓</code></td><td>Previous / next message</td></tr>
+    <tr><td><code>Ctrl + A / Ctrl + E</code></td><td>Start / end of line</td></tr>
+    <tr><td><code>Ctrl + W / Ctrl + U</code></td><td>Delete previous word / whole line</td></tr>
+  </table></div>
+  <div class="code reveal"><span class="label">Example</span><pre><span class="c">&gt;&gt;&gt; </span>/set system "You are a friendly teacher. Answer in simple English for 10th graders."
+<span class="c">Set system message.
+&gt;&gt;&gt; </span>/set parameter temperature 0.3
+<span class="c">Set parameter 'temperature' to '0.3'
+&gt;&gt;&gt; </span>"""
+Explain this:
+for i in range(3):
+    print(i)
+"""
+<span class="g">This loop runs 3 times and prints 0, 1, 2 …</span>
+<span class="c">&gt;&gt;&gt; </span>/save teacher-bot
+<span class="c">Created new model 'teacher-bot'</span></pre></div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 10 MODELS ================= -->
+<section class="module" id="m10" data-title="Free models" data-group="Part 3 · Commands &amp; models">
+  <div class="mod-head"><div class="mod-num">10</div><div><h2>Free local models: find, understand, choose</h2><p>200+ free models: how to discover them, read their names, and pick the right one.</p></div></div>
+
+  <h3>How to find ALL available models</h3>
+  <div class="grid reveal">
+    <div class="card"><b>1. Library</b><br><a href="https://ollama.com/library" target="_blank" rel="noopener">ollama.com/library</a>: every official model. Sort by <i>Popular</i> or <i>Newest</i>.</div>
+    <div class="card"><b>2. Search &amp; filter</b><br><a href="https://ollama.com/search" target="_blank" rel="noopener">ollama.com/search</a> plus filters:
+      <a href="https://ollama.com/search?c=tools" target="_blank" rel="noopener">tools</a> ·
+      <a href="https://ollama.com/search?c=vision" target="_blank" rel="noopener">vision</a> ·
+      <a href="https://ollama.com/search?c=thinking" target="_blank" rel="noopener">thinking</a> ·
+      <a href="https://ollama.com/search?c=embedding" target="_blank" rel="noopener">embedding</a></div>
+    <div class="card"><b>3. Tags page</b><br>Open a model → <b>Tags</b> to see every size and quantization with its exact GB.</div>
+    <div class="card"><b>4. Hugging Face</b><br><a href="https://huggingface.co/models?library=gguf" target="_blank" rel="noopener">huggingface.co GGUF models</a> → <i>Use this model → Ollama</i>. Run with <code>ollama run hf.co/user/repo</code>.</div>
+  </div>
+  <div class="note reveal"><strong>No “ollama search” command</strong>The CLI only lists what you've downloaded (<code>ollama list</code>). Use the website to browse.</div>
+
+  <h3>Read a model name: click each part</h3>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: tag anatomy</div>
+    <div class="anatomy" id="anatomy">
+      <span data-part="name">gemma3</span><span class="sep">:</span><span data-part="size">4b</span><span class="sep">-</span><span data-part="type">it</span><span class="sep">-</span><span data-part="quant">q4_K_M</span>
+    </div>
+    <div class="step-explain" id="anatomyOut">Click a part of the name above.</div>
+  </div>
+
+  <h3>Capability badges</h3>
+  <div class="table-wrap reveal"><table>
+    <tr><th>Badge</th><th>Meaning</th></tr>
+    <tr><td><span class="badge tools">tools</span></td><td>Can call functions you define (agents, function calling)</td></tr>
+    <tr><td><span class="badge thinking">thinking</span></td><td>Reasons step by step before answering; can be toggled</td></tr>
+    <tr><td><span class="badge vision">vision</span></td><td>Understands images</td></tr>
+    <tr><td><span class="badge embedding">embedding</span></td><td>Turns text into vectors for search/RAG; doesn't chat</td></tr>
+    <tr><td><span class="badge">audio</span></td><td>Accepts audio input</td></tr>
+    <tr><td><span class="badge">cloud</span></td><td>Runs on Ollama's servers, not locally: needs signin, has limits, and isn't private/offline</td></tr>
+  </table></div>
+
+  <h3>Model picker</h3>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: which model should I use?</div>
+    <div><b>Your memory (RAM, or VRAM if you have a GPU)</b></div>
+    <div class="choice" id="pickRam">
+      <label><input type="radio" name="pr" value="8" checked>8 GB</label>
+      <label><input type="radio" name="pr" value="16">16 GB</label>
+      <label><input type="radio" name="pr" value="32">32 GB+</label>
+    </div>
+    <div><b>What do you want to do?</b></div>
+    <div class="choice" id="pickTask">
+      <label><input type="radio" name="pt" value="chat" checked>Chat / Q&amp;A</label>
+      <label><input type="radio" name="pt" value="code">Coding</label>
+      <label><input type="radio" name="pt" value="reason">Math &amp; reasoning</label>
+      <label><input type="radio" name="pt" value="vision">Images</label>
+      <label><input type="radio" name="pt" value="ocr">Read documents (OCR)</label>
+      <label><input type="radio" name="pt" value="embed">RAG / search</label>
+      <label><input type="radio" name="pt" value="tools">Agents / tools</label>
+      <label><input type="radio" name="pt" value="lang">Other languages</label>
+    </div>
+    <div class="reco" id="pickOut"></div>
+  </div>
+
+  <h3>Full catalog</h3>
+  <p class="reveal">78 popular free models from the Ollama Library (snapshot from October 2026). Click a name to open its page.</p>
+  <div class="row"><input class="search" id="catSearch" type="search" placeholder="Search… (qwen, google, code, vision)" style="flex:1 1 240px"><label><input type="checkbox" id="smallOnly"> Fits 8 GB (≤ 4B)</label></div>
+  <div class="chips" id="catChips"></div>
+  <div class="steptext" id="catCount"></div>
+  <div class="table-wrap"><table id="catTable"><thead><tr><th>Model</th><th>By</th><th>Sizes</th><th>Capabilities</th><th>Best for</th><th>Try it</th></tr></thead><tbody></tbody></table></div>
+
+  <h3>Licenses: free for what?</h3>
+  <div class="table-wrap reveal"><table>
+    <tr><th>License</th><th>Examples</th><th>Meaning</th></tr>
+    <tr><td>Apache 2.0 / MIT</td><td>Qwen, Mistral 7B, Granite, DeepSeek-R1, Phi-4, gpt-oss, OLMo</td><td>Commercial use OK</td></tr>
+    <tr><td>Community licenses</td><td>Llama (Meta), Gemma (Google)</td><td>Free for most uses, with extra conditions</td></tr>
+    <tr><td>Non-commercial</td><td>Some fine-tunes</td><td>Learning/research only</td></tr>
+  </table></div>
+  <p class="reveal">Check any model: <code>ollama show &lt;model&gt; --license</code></p>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 11 MODELFILE ================= -->
+<section class="module" id="m11" data-title="Custom models" data-group="Part 4 · Build with code">
+  <div class="mod-head"><div class="mod-num">11</div><div><h2>Build your own model with a Modelfile</h2><p>Give a model a name, a personality and default settings.</p></div></div>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: Modelfile builder</div>
+    <div class="row">
+      <label>Model name<br><input type="text" id="mfName" value="pybuddy"></label>
+      <label>Base model<br><select id="mfBase"><option>llama3.2</option><option>llama3.2:1b</option><option>gemma3:4b</option><option>qwen3:4b</option><option>qwen2.5-coder:1.5b</option><option>mistral</option><option>phi4-mini</option></select></label>
+      <label>Temperature: <b id="mfTv">0.4</b><br><input type="range" id="mfTemp" min="0" max="15" value="4"></label>
+      <label>Context (num_ctx)<br><select id="mfCtx"><option>2048</option><option selected>4096</option><option>8192</option><option>16384</option></select></label>
+    </div>
+    <label class="steptext">System prompt (personality and rules)</label>
+    <textarea id="mfSys" rows="3">You are PyBuddy, a patient Python tutor for college students. Explain with one short example, then ask one practice question. Keep answers under 150 words.</textarea>
+    <label class="row" style="margin:6px 0"><input type="checkbox" id="mfMsg" checked> Add an example conversation (MESSAGE)</label>
+    <div class="code"><span class="label">Modelfile</span><pre id="mfOut"></pre></div>
+    <div class="code"><span class="label">Then run</span><pre id="mfCmd"></pre></div>
+  </div>
+  <div class="table-wrap reveal"><table>
+    <tr><th>Instruction</th><th>Purpose</th><th>Example</th></tr>
+    <tr><td><code>FROM</code> (required)</td><td>Base model or a GGUF file / Safetensors folder</td><td><code>FROM llama3.2</code> · <code>FROM ./model.gguf</code></td></tr>
+    <tr><td><code>SYSTEM</code></td><td>System prompt</td><td><code>SYSTEM """You are…"""</code></td></tr>
+    <tr><td><code>PARAMETER</code></td><td>Default settings</td><td><code>temperature</code>, <code>num_ctx</code>, <code>top_k</code>, <code>top_p</code>, <code>min_p</code>, <code>repeat_penalty</code>, <code>seed</code>, <code>stop</code>, <code>num_predict</code></td></tr>
+    <tr><td><code>TEMPLATE</code></td><td>Prompt format (Go template). Advanced; usually inherited</td><td><code>{{ .System }} {{ .Prompt }}</code></td></tr>
+    <tr><td><code>MESSAGE</code></td><td>Example turns (few-shot)</td><td><code>MESSAGE user Hi</code></td></tr>
+    <tr><td><code>ADAPTER</code></td><td>LoRA fine-tune adapter</td><td><code>ADAPTER ./lora.gguf</code></td></tr>
+    <tr><td><code>LICENSE</code></td><td>License text</td><td><code>LICENSE """MIT"""</code></td></tr>
+  </table></div>
+  <div class="code reveal"><span class="label">Import a GGUF file you downloaded</span><pre><span class="c"># Modelfile</span>
+FROM ./Llama-3.2-1B-Instruct-Q4_K_M.gguf
+<span class="c"># terminal</span>
+<span class="k">ollama create my-gguf -f Modelfile</span>
+<span class="k">ollama run my-gguf</span></pre></div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 12 API ================= -->
+<section class="module" id="m12" data-title="API &amp; code" data-group="Part 4 · Build with code">
+  <div class="mod-head"><div class="mod-num">12</div><div><h2>Use Ollama from code: REST API, Python, JavaScript</h2><p>Every app you build can talk to <code>http://localhost:11434</code>.</p></div></div>
+
+  <h3>Request → streamed response</h3>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: what streaming looks like</div>
+    <p style="margin-top:0">With <code>"stream": true</code> (the default), the server sends one small JSON chunk per token, so you can show text as it's produced. With <code>"stream": false</code> you wait and get one big JSON.</p>
+    <div class="row"><button class="btn primary" id="streamBtn" type="button">Send request ▶</button></div>
+    <div class="code"><span class="label">Response chunks</span><pre id="streamOut" style="min-height:140px;max-height:240px"></pre></div>
+    <div class="gen-text" id="streamText"></div>
+  </div>
+
+  <div class="tabs" data-tabs>
+    <button class="active" data-tab="api-py" type="button">Python</button>
+    <button data-tab="api-oa" type="button">OpenAI-compatible</button>
+    <button data-tab="api-curl" type="button">curl</button>
+    <button data-tab="api-ps" type="button">PowerShell</button>
+    <button data-tab="api-js" type="button">JavaScript</button>
+  </div>
+  <div class="tabpanel active" id="api-py">
+    <div class="code"><span class="label">Terminal</span><pre><span class="k">pip install ollama</span></pre></div>
+    <div class="code"><span class="label">basics.py</span><pre>import ollama
+
+<span class="c"># 1. single prompt</span>
+r = ollama.generate(model="llama3.2", prompt="Why is the sky blue? One line.")
+print(r["response"])
+
+<span class="c"># 2. chat with roles</span>
+r = ollama.chat(model="llama3.2", messages=[
+    {"role": "system", "content": "You are a helpful tutor."},
+    {"role": "user", "content": "Explain Python dictionaries in 3 lines."},
+])
+print(r["message"]["content"])
+
+<span class="c"># 3. streaming</span>
+for chunk in ollama.chat(model="llama3.2", stream=True,
+                         messages=[{"role": "user", "content": "Tell me a short joke"}]):
+    print(chunk["message"]["content"], end="", flush=True)
+
+<span class="c"># 4. options (same as PARAMETER / /set parameter)</span>
+r = ollama.chat(model="llama3.2",
+                messages=[{"role": "user", "content": "Name 3 colors"}],
+                options={"temperature": 0.2, "num_ctx": 8192, "seed": 42},
+                keep_alive="10m")
+
+<span class="c"># 5. manage models from code</span>
+ollama.pull("gemma3:1b")
+print([m["model"] for m in ollama.list()["models"]])</pre></div>
+    <div class="code"><span class="label">chatbot.py: remembers the conversation</span><pre>import ollama
+
+history = [{"role": "system", "content": "You are a friendly study buddy."}]
+while True:
+    user = input("You: ")
+    if user.lower() in ("exit", "quit"):
+        break
+    history.append({"role": "user", "content": user})
+    reply = ""
+    print("Bot: ", end="")
+    for chunk in ollama.chat(model="llama3.2", messages=history, stream=True):
+        piece = chunk["message"]["content"]
+        reply += piece
+        print(piece, end="", flush=True)
+    print()
+    history.append({"role": "assistant", "content": reply})</pre></div>
+  </div>
+  <div class="tabpanel" id="api-oa">
+    <p>Ollama speaks the OpenAI API at <code>/v1</code>, so ChatGPT code works by changing two lines.</p>
+    <div class="code"><span class="label">openai_local.py</span><pre>from openai import OpenAI   <span class="c"># pip install openai</span>
+
+client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")  <span class="c"># key not checked</span>
+resp = client.chat.completions.create(
+    model="llama3.2",
+    messages=[{"role": "user", "content": "3 project ideas using FastAPI"}],
+)
+print(resp.choices[0].message.content)</pre></div>
+    <p>Also works with LangChain (<code>langchain-ollama</code>), LlamaIndex, and most tools that accept an “OpenAI base URL”.</p>
+  </div>
+  <div class="tabpanel" id="api-curl">
+    <div class="code"><pre><span class="k">curl http://localhost:11434/api/generate -d '{"model":"llama3.2","prompt":"Why is the sky blue?","stream":false}'</span>
+
+<span class="k">curl http://localhost:11434/api/chat -d '{
+  "model": "llama3.2",
+  "messages": [{"role":"user","content":"Hello!"}],
+  "stream": false,
+  "options": {"temperature": 0.3}
+}'</span>
+
+<span class="k">curl http://localhost:11434/api/tags</span>     <span class="c"># list models</span>
+<span class="k">curl http://localhost:11434/api/ps</span>       <span class="c"># running models</span>
+<span class="k">curl http://localhost:11434/api/version</span>
+<span class="k">curl http://localhost:11434/api/embed -d '{"model":"nomic-embed-text","input":"hello"}'</span></pre></div>
+  </div>
+  <div class="tabpanel" id="api-ps">
+    <div class="code"><pre><span class="k">$body = @{ model = "llama3.2"; prompt = "3 tips to learn Python"; stream = $false } | ConvertTo-Json
+(Invoke-RestMethod -Uri http://localhost:11434/api/generate -Method Post -Body $body -ContentType "application/json").response</span></pre></div>
+  </div>
+  <div class="tabpanel" id="api-js">
+    <div class="code"><pre>// npm install ollama   (or plain fetch as below)
+const res = await fetch("http://localhost:11434/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ model: "llama3.2", stream: false,
+    messages: [{ role: "user", content: "What is JSON?" }] }),
+});
+console.log((await res.json()).message.content);</pre></div>
+    <p>Calling from a web page on another origin? Set <code>OLLAMA_ORIGINS</code> (Module 14).</p>
+  </div>
+
+  <h3>API endpoints</h3>
+  <div class="table-wrap reveal"><table>
+    <tr><th>Endpoint</th><th>Method</th><th>CLI equivalent</th><th>Purpose</th></tr>
+    <tr><td><code>/api/generate</code></td><td>POST</td><td><code>run m "prompt"</code></td><td>Prompt → completion</td></tr>
+    <tr><td><code>/api/chat</code></td><td>POST</td><td><code>run m</code></td><td>Chat with roles, tools, images</td></tr>
+    <tr><td><code>/api/embed</code></td><td>POST</td><td>n/a</td><td>Embeddings (vectors)</td></tr>
+    <tr><td><code>/api/tags</code></td><td>GET</td><td><code>list</code></td><td>Local models</td></tr>
+    <tr><td><code>/api/ps</code></td><td>GET</td><td><code>ps</code></td><td>Loaded models</td></tr>
+    <tr><td><code>/api/show</code></td><td>POST</td><td><code>show</code></td><td>Model info</td></tr>
+    <tr><td><code>/api/pull</code> · <code>/api/push</code></td><td>POST</td><td><code>pull</code> · <code>push</code></td><td>Download / upload</td></tr>
+    <tr><td><code>/api/create</code> · <code>/api/copy</code></td><td>POST</td><td><code>create</code> · <code>cp</code></td><td>Build / copy</td></tr>
+    <tr><td><code>/api/delete</code></td><td>DELETE</td><td><code>rm</code></td><td>Delete</td></tr>
+    <tr><td><code>/api/version</code></td><td>GET</td><td><code>-v</code></td><td>Server version</td></tr>
+    <tr><td><code>/v1/chat/completions</code>, <code>/v1/embeddings</code>, <code>/v1/models</code></td><td>POST/GET</td><td>n/a</td><td>OpenAI-compatible</td></tr>
+  </table></div>
+  <div class="note reveal"><strong>Tip: unload instantly from code</strong>Send a request with <code>"keep_alive": 0</code> to unload a model, or <code>-1</code> to keep it loaded forever.</div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 13 ADVANCED ================= -->
+<section class="module" id="m13" data-title="RAG, tools, vision, JSON" data-group="Part 4 · Build with code">
+  <div class="mod-head"><div class="mod-num">13</div><div><h2>Advanced: embeddings &amp; RAG, tool calling, structured output, vision, thinking</h2><p>The building blocks of real AI apps.</p></div></div>
+
+  <h3>Embeddings &amp; RAG (chat with your own documents)</h3>
+  <p class="reveal">An <b>embedding</b> turns text into a list of numbers (a vector) so that texts with similar meanings have similar vectors. <b>RAG</b> (Retrieval-Augmented Generation) uses this to find the relevant parts of your documents and hand them to the LLM, so it can answer about things it was never trained on.</p>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: animated RAG pipeline</div>
+    <div class="stepper" id="ragSteps"></div>
+    <div class="step-explain" id="ragExplain">Press play to watch a question flow through a RAG app.</div>
+    <div class="row"><button class="btn primary" id="ragPlay" type="button">▶ Play</button></div>
+  </div>
+  <div class="code reveal"><span class="label">mini_rag.py (no extra libraries)</span><pre>import ollama, math
+<span class="c"># ollama pull nomic-embed-text   and   ollama pull llama3.2</span>
+
+docs = [
+    "Ollama runs large language models locally on port 11434.",
+    "The ollama ps command shows models loaded in memory.",
+    "Use ollama rm to delete a model and free disk space.",
+]
+
+def embed(texts):
+    return ollama.embed(model="nomic-embed-text", input=texts)["embeddings"]
+
+def cosine(a, b):
+    dot = sum(x * y for x, y in zip(a, b))
+    return dot / (math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b)))
+
+doc_vecs = embed(docs)                                   <span class="c"># 1. index documents</span>
+question = "How do I free up disk space?"
+q_vec = embed([question])[0]                             <span class="c"># 2. embed the question</span>
+best = max(range(len(docs)), key=lambda i: cosine(q_vec, doc_vecs[i]))  <span class="c"># 3. search</span>
+
+answer = ollama.chat(model="llama3.2", messages=[        <span class="c"># 4. generate with context</span>
+    {"role": "system", "content": "Answer only using the context."},
+    {"role": "user", "content": f"Context: {docs[best]}\n\nQuestion: {question}"},
+])
+print(answer["message"]["content"])</pre></div>
+
+  <h3>Tool (function) calling</h3>
+  <p class="reveal">Models with the <span class="badge tools">tools</span> badge can ask <i>your code</i> to run a function (get the weather, query a database, do maths), then use the result in their answer. This is how <b>AI agents</b> work.</p>
+  <div class="lab reveal">
+    <div class="lab-title">🧪 Lab: tool-calling flow</div>
+    <div class="stepper" id="toolSteps"></div>
+    <div class="step-explain" id="toolExplain">Press play.</div>
+    <div class="row"><button class="btn primary" id="toolPlay" type="button">▶ Play</button></div>
+  </div>
+  <div class="code reveal"><span class="label">tools.py</span><pre>import ollama
+
+def add_numbers(a: int, b: int) -> int:
+    """Add two numbers.
+
+    Args:
+      a: first number
+      b: second number
+    """
+    return a + b
+
+messages = [{"role": "user", "content": "What is 1234 + 5678?"}]
+r = ollama.chat(model="llama3.2", messages=messages, tools=[add_numbers])  <span class="c"># pass the function</span>
+
+if r.message.tool_calls:
+    messages.append(r.message)
+    for call in r.message.tool_calls:
+        result = add_numbers(**call.function.arguments)              <span class="c"># YOUR code runs it</span>
+        messages.append({"role": "tool", "content": str(result), "tool_name": call.function.name})
+    final = ollama.chat(model="llama3.2", messages=messages)
+    print(final.message.content)   <span class="c"># "1234 + 5678 = 6912"</span></pre></div>
+
+  <h3>Structured output (guaranteed JSON)</h3>
+  <div class="code reveal"><span class="label">structured.py</span><pre>from pydantic import BaseModel   <span class="c"># pip install pydantic</span>
+import ollama
+
+class Student(BaseModel):
+    name: str
+    age: int
+    skills: list[str]
+
+r = ollama.chat(
+    model="llama3.2",
+    messages=[{"role": "user", "content": "Ravi is 20 and knows Python and SQL."}],
+    format=Student.model_json_schema(),     <span class="c"># output must match this schema</span>
+)
+s = Student.model_validate_json(r.message.content)
+print(s.name, s.age, s.skills)</pre></div>
+
+  <h3>Vision (images)</h3>
+  <div class="code reveal"><span class="label">vision.py</span><pre>import ollama
+r = ollama.chat(model="gemma3:4b", messages=[{
+    "role": "user",
+    "content": "What is in this picture? List the objects.",
+    "images": ["./photo.jpg"],          <span class="c"># file path, bytes or base64</span>
+}])
+print(r.message.content)</pre></div>
+
+  <h3>Thinking models</h3>
+  <div class="code reveal"><span class="label">thinking.py</span><pre>import ollama
+r = ollama.chat(model="deepseek-r1:1.5b", think=True,
+                messages=[{"role": "user", "content": "Is 221 a prime number?"}])
+print("THINKING:", r.message.thinking)
+print("ANSWER:", r.message.content)</pre></div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 14 CONFIG ================= -->
+<section class="module" id="m14" data-title="Configuration &amp; GPU" data-group="Part 5 · Configure &amp; fix">
+  <div class="mod-head"><div class="mod-num">14</div><div><h2>Configuration, storage, GPU &amp; performance</h2><p>Environment variables, where files live, network access, speed tips, updates.</p></div></div>
+  <h3>Where things are stored</h3>
+  <div class="table-wrap reveal"><table>
+    <tr><th>What</th><th>Windows</th><th>macOS</th><th>Linux</th></tr>
+    <tr><td>Models</td><td><code>%USERPROFILE%\.ollama\models</code></td><td><code>~/.ollama/models</code></td><td><code>/usr/share/ollama/.ollama/models</code></td></tr>
+    <tr><td>Logs</td><td><code>%LOCALAPPDATA%\Ollama\server.log</code></td><td><code>~/.ollama/logs/server.log</code></td><td><code>journalctl -u ollama</code></td></tr>
+    <tr><td>Program</td><td><code>%LOCALAPPDATA%\Programs\Ollama</code></td><td><code>/Applications/Ollama.app</code></td><td><code>/usr/local/bin/ollama</code></td></tr>
+  </table></div>
+  <h3>Environment variables</h3>
+  <div class="table-wrap reveal"><table>
+    <tr><th>Variable</th><th>Example</th><th>Effect</th></tr>
+    <tr><td><code>OLLAMA_MODELS</code></td><td><code>D:\ollama-models</code></td><td>Where models are stored</td></tr>
+    <tr><td><code>OLLAMA_HOST</code></td><td><code>0.0.0.0:11434</code></td><td>Listen address/port (0.0.0.0 = allow your network)</td></tr>
+    <tr><td><code>OLLAMA_KEEP_ALIVE</code></td><td><code>30m</code>, <code>-1</code>, <code>0</code></td><td>How long models stay loaded</td></tr>
+    <tr><td><code>OLLAMA_CONTEXT_LENGTH</code></td><td><code>8192</code></td><td>Default context window</td></tr>
+    <tr><td><code>OLLAMA_NUM_PARALLEL</code></td><td><code>2</code></td><td>Parallel requests per model</td></tr>
+    <tr><td><code>OLLAMA_MAX_LOADED_MODELS</code></td><td><code>2</code></td><td>Models loaded at once</td></tr>
+    <tr><td><code>OLLAMA_MAX_QUEUE</code></td><td><code>512</code></td><td>Queued requests before “busy” errors</td></tr>
+    <tr><td><code>OLLAMA_FLASH_ATTENTION</code></td><td><code>1</code></td><td>Faster attention and less memory on supported GPUs</td></tr>
+    <tr><td><code>OLLAMA_KV_CACHE_TYPE</code></td><td><code>q8_0</code></td><td>Compress the context cache (needs flash attention)</td></tr>
+    <tr><td><code>OLLAMA_ORIGINS</code></td><td><code>*</code></td><td>Allow browser apps from other origins</td></tr>
+    <tr><td><code>OLLAMA_DEBUG</code></td><td><code>1</code></td><td>Verbose logs for troubleshooting</td></tr>
+    <tr><td><code>CUDA_VISIBLE_DEVICES</code></td><td><code>0</code> / <code>-1</code></td><td>Pick an NVIDIA GPU / force CPU</td></tr>
+    <tr><td><code>HTTPS_PROXY</code></td><td><code>http://proxy:8080</code></td><td>Download through a college proxy</td></tr>
+  </table></div>
+  <div class="tabs" data-tabs>
+    <button class="active" data-tab="env-win" type="button">Set on Windows</button>
+    <button data-tab="env-mac" type="button">macOS</button>
+    <button data-tab="env-linux" type="button">Linux</button>
+  </div>
+  <div class="tabpanel active" id="env-win"><ol><li>Quit Ollama from the tray icon.</li><li>Run (or use Start → “Edit environment variables for your account”):
+    <div class="code"><pre><span class="k">[Environment]::SetEnvironmentVariable("OLLAMA_MODELS", "D:\ollama-models", "User")</span></pre></div></li><li>Start Ollama again from the Start menu and open a new terminal.</li></ol></div>
+  <div class="tabpanel" id="env-mac"><div class="code"><pre><span class="k">launchctl setenv OLLAMA_HOST "0.0.0.0:11434"</span>   <span class="c"># then restart the Ollama app</span></pre></div></div>
+  <div class="tabpanel" id="env-linux"><div class="code"><pre><span class="k">sudo systemctl edit ollama</span>
+<span class="c"># add:</span>
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+Environment="OLLAMA_MODELS=/data/ollama"
+<span class="k">sudo systemctl daemon-reload &amp;&amp; sudo systemctl restart ollama</span></pre></div></div>
+
+  <h3>Use Ollama from your phone / another PC</h3>
+  <p class="reveal">Set <code>OLLAMA_HOST=0.0.0.0:11434</code>, restart Ollama, find your IP (<code>ipconfig</code>), and allow port 11434 in the firewall. Other devices can then call <code>http://&lt;your-ip&gt;:11434</code>. ⚠️ Only do this on a network you trust: there's no password.</p>
+
+  <h3>Speed tips</h3>
+  <div class="grid reveal">
+    <div class="card">⚡ Choose the smallest model that does the job well.</div>
+    <div class="card">🎮 Update GPU drivers; check <code>ollama ps</code> says GPU.</div>
+    <div class="card">🧹 Close Chrome tabs and games to free RAM/VRAM.</div>
+    <div class="card">📏 Keep <code>num_ctx</code> only as big as you need.</div>
+    <div class="card">⏳ Use <code>keep_alive</code> to avoid reloading between requests.</div>
+    <div class="card">💽 Store models on an SSD for fast loading.</div>
+  </div>
+
+  <h3>Update &amp; uninstall</h3>
+  <div class="table-wrap reveal"><table>
+    <tr><th></th><th>Update</th><th>Uninstall</th></tr>
+    <tr><td>Windows</td><td>Tray icon → <i>Restart to update</i>, or run the newest installer</td><td>Settings → Apps → Ollama → Uninstall; delete <code>%USERPROFILE%\.ollama</code></td></tr>
+    <tr><td>macOS</td><td>Auto-updates from the menu bar app</td><td>Delete the app; <code>rm -rf ~/.ollama</code></td></tr>
+    <tr><td>Linux</td><td>Rerun the install script</td><td>Stop and remove the service, the binary and <code>/usr/share/ollama</code></td></tr>
+    <tr><td>Docker</td><td><code>docker pull ollama/ollama</code>, then recreate the container</td><td><code>docker rm -f ollama; docker volume rm ollama</code></td></tr>
+  </table></div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 15 TROUBLESHOOT ================= -->
+<section class="module" id="m15" data-title="Troubleshooting" data-group="Part 5 · Configure &amp; fix">
+  <div class="mod-head"><div class="mod-num">15</div><div><h2>Troubleshooting</h2><p>The errors students hit most, and the fixes.</p></div></div>
+  <details class="faq"><summary>“ollama is not recognized as an internal or external command”</summary><p>Open a NEW terminal (close VS Code too). Check that <code>%LOCALAPPDATA%\Programs\Ollama\ollama.exe</code> exists. For the zip install, check your PATH. Sign out and back in.</p></details>
+  <details class="faq"><summary>“Error: could not connect to ollama app, is it running?”</summary><p>The server isn't running. Open Ollama from the Start menu (look for the tray icon) or run <code>ollama serve</code> in another terminal.</p></details>
+  <details class="faq"><summary>“listen tcp 127.0.0.1:11434: bind: Only one usage of each socket address…”</summary><p>It's already running, which is fine. Skip <code>serve</code>. To see what's on the port: <code>netstat -ano | findstr 11434</code>.</p></details>
+  <details class="faq"><summary>“Error: pull model manifest: file does not exist”</summary><p>The model name or tag is wrong. Check spelling on ollama.com/library (e.g. <code>llama3.2</code>, not <code>llama-3.2</code>).</p></details>
+  <details class="faq"><summary>“model requires more system memory than is available”</summary><p>Pick a smaller tag (<code>:1b</code>, <code>:3b</code>), close apps, or reduce <code>num_ctx</code>.</p></details>
+  <details class="faq"><summary>“does not support generate” / “does not support chat”</summary><p>It's an embedding model. Use <code>/api/embed</code> or <code>ollama.embed()</code> instead of run/chat.</p></details>
+  <details class="faq"><summary>Very slow replies or laptop freezes</summary><p>Use a 1B–3B model, check <code>ollama ps</code> for GPU vs CPU, update GPU drivers, and <code>ollama stop</code> models you're not using.</p></details>
+  <details class="faq"><summary>GPU not used (100% CPU)</summary><p>Update NVIDIA/AMD drivers and restart Ollama. Check <code>nvidia-smi</code> works. Check <code>server.log</code> for “no compatible GPUs”. Very old GPUs aren't supported.</p></details>
+  <details class="faq"><summary>Download stuck / slow / fails on college Wi-Fi</summary><p>Ctrl+C and re-run <code>pull</code> (it resumes). Behind a proxy, set <code>HTTPS_PROXY</code> and restart Ollama. Try a mobile hotspot if the network blocks it.</p></details>
+  <details class="faq"><summary>C: drive full</summary><p><code>ollama list</code> → <code>ollama rm</code> unused models, or move them with <code>OLLAMA_MODELS</code>.</p></details>
+  <details class="faq"><summary>Answers are wrong or made up (hallucinations)</summary><p>Small models make mistakes. Try a bigger model, lower the temperature, give context (RAG), and always verify facts.</p></details>
+  <details class="faq"><summary>Browser app gets a CORS error</summary><p>Set <code>OLLAMA_ORIGINS</code> to your app's origin (or <code>*</code> for local testing) and restart Ollama.</p></details>
+  <details class="faq"><summary>Where are the logs?</summary><p>Windows: <code>explorer %LOCALAPPDATA%\Ollama</code> → <code>server.log</code>. macOS: <code>~/.ollama/logs/server.log</code>. Linux: <code>journalctl -u ollama</code>.</p></details>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 16 QUIZ ================= -->
+<section class="module" id="m16" data-title="Final quiz" data-group="Part 5 · Configure &amp; fix">
+  <div class="mod-head"><div class="mod-num">16</div><div><h2>Final quiz</h2><p>15 questions. Click an answer to check it instantly.</p></div></div>
+  <div id="quiz"></div>
+  <div class="score"><b>Score: <span id="qScore">0</span> / <span id="qTotal">0</span></b><span class="steptext" id="qMsg">Answer all questions.</span><button class="btn small" id="qReset" type="button">Retry</button></div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+</section>
+
+<!-- ================= 17 CHEATSHEET ================= -->
+<section class="module" id="m17" data-title="Cheat sheet, projects, glossary" data-group="Part 5 · Configure &amp; fix">
+  <div class="mod-head"><div class="mod-num">17</div><div><h2>Cheat sheet, projects &amp; glossary</h2><p>Keep this page handy.</p></div></div>
+  <div class="code reveal"><span class="label">Cheat sheet</span><pre><span class="c"># setup</span>
+<span class="k">ollama --version</span>                      <span class="c"># check install</span>
+<span class="k">ollama serve</span>                          <span class="c"># start server (if not running)</span>
+<span class="c"># models</span>
+<span class="k">ollama pull llama3.2</span>                  <span class="c"># download</span>
+<span class="k">ollama list</span>                           <span class="c"># on disk</span>
+<span class="k">ollama show llama3.2</span>                  <span class="c"># details</span>
+<span class="k">ollama cp llama3.2 my-llama</span>           <span class="c"># copy</span>
+<span class="k">ollama rm my-llama</span>                    <span class="c"># delete</span>
+<span class="c"># running</span>
+<span class="k">ollama run llama3.2</span>                   <span class="c"># chat</span>
+<span class="k">ollama run llama3.2 "question"</span>        <span class="c"># one-shot</span>
+<span class="k">ollama run llama3.2 --verbose</span>         <span class="c"># speed stats</span>
+<span class="k">ollama ps</span>                             <span class="c"># loaded (GPU/CPU)</span>
+<span class="k">ollama stop llama3.2</span>                  <span class="c"># unload</span>
+<span class="c"># custom &amp; share</span>
+<span class="k">ollama create pybuddy -f Modelfile</span>
+<span class="k">ollama signin</span> · <span class="k">ollama push user/pybuddy</span> · <span class="k">ollama signout</span>
+<span class="c"># other</span>
+<span class="k">ollama launch</span> · <span class="k">ollama help run</span>
+<span class="c"># in chat (&gt;&gt;&gt;)</span>
+/?  /bye  /clear  /show info  /set system "..."  /set parameter temperature 0.3
+/set verbose  /set think  /set format json  /save name  /load model  """multi-line"""
+<span class="c"># API</span>
+http://localhost:11434/api/chat · /api/generate · /api/embed · /api/tags · /v1 (OpenAI)</pre></div>
+
+  <h3>Practice projects</h3>
+  <div class="grid reveal">
+    <div class="card"><b>🟢 Beginner: Compare models</b><br>Ask 3 models the same 5 questions with <code>--verbose</code>. Make a table of speed and quality.</div>
+    <div class="card"><b>🟢 Beginner: Custom tutor</b><br>Write a Modelfile for a “SQL Tutor” or “Interview Coach”, <code>create</code> it, and share it with <code>push</code>.</div>
+    <div class="card"><b>🟡 Intermediate: CLI chatbot</b><br>A Python chatbot with history and streaming (Module 12).</div>
+    <div class="card"><b>🟡 Intermediate: Flask/FastAPI app</b><br>A web page with a chat box that calls <code>/api/chat</code> from your backend.</div>
+    <div class="card"><b>🔴 Advanced: PDF Q&amp;A (RAG)</b><br>Extract text from PDFs, embed chunks with <code>nomic-embed-text</code>, and answer questions with citations.</div>
+    <div class="card"><b>🔴 Advanced: Agent</b><br>A model with tools: calculator, weather API and file search. Let it decide which to call.</div>
+  </div>
+
+  <h3>Glossary</h3>
+  <input class="search" id="glossSearch" type="search" placeholder="Search terms…">
+  <div class="table-wrap"><table id="glossTable"><tbody></tbody></table></div>
+  <div class="mod-foot"><button class="btn complete-btn" type="button">Mark module complete</button></div>
+
+  <footer>
+    Official: <a href="https://ollama.com" target="_blank" rel="noopener">ollama.com</a> ·
+    <a href="https://ollama.com/library" target="_blank" rel="noopener">Model library</a> ·
+    <a href="https://docs.ollama.com" target="_blank" rel="noopener">Docs</a> ·
+    <a href="https://github.com/ollama/ollama" target="_blank" rel="noopener">GitHub</a><br>
+    Commands, models and sizes change as Ollama updates. When unsure, run <code>ollama help &lt;command&gt;</code>.
+  </footer>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+'use strict';
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+
+/* ---------- sidebar + progress ---------- */
+var modules = $$('section.module');
+var side = $('#side'); var lastGroup = '';
+modules.forEach(function (m, i) {
+  var g = m.dataset.group;
+  if (g !== lastGroup) { var d = document.createElement('div'); d.className = 'group'; d.textContent = g; side.appendChild(d); lastGroup = g; }
+  var a = document.createElement('a'); a.href = '#' + m.id; a.dataset.id = m.id;
+  a.innerHTML = '<span class="dot"></span><span>' + (i === 0 ? '' : i + '. ') + m.dataset.title + '</span>';
+  a.addEventListener('click', function () { side.classList.remove('open'); });
+  side.appendChild(a);
+});
+$('#menuBtn').addEventListener('click', function () { side.classList.toggle('open'); });
+var done = store('ollama-course-done') || {};
+function refreshProgress() {
+  var n = 0;
+  modules.forEach(function (m) {
+    var isDone = !!done[m.id]; if (isDone) n++;
+    var link = side.querySelector('a[data-id="' + m.id + '"]'); link.classList.toggle('done', isDone);
+    var b = $('.complete-btn', m); if (b) { b.classList.toggle('done', isDone); b.textContent = isDone ? '✓ Completed' : 'Mark module complete'; }
+  });
+  $('#progFill').style.width = (n / modules.length * 100) + '%';
+  $('#progLabel').textContent = n + ' of ' + modules.length + ' modules';
+}
+$$('.complete-btn').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var id = b.closest('section').id; done[id] = !done[id]; store('ollama-course-done', done); refreshProgress();
+    if (done[id]) {
+      var idx = modules.findIndex(function (m) { return m.id === id; });
+      if (Object.keys(done).filter(function (k) { return done[k]; }).length === modules.length) confetti();
+      else if (modules[idx + 1]) setTimeout(function () { modules[idx + 1].scrollIntoView({ behavior: 'smooth' }); }, 350);
+    }
+  });
+});
+refreshProgress();
+var spy = new IntersectionObserver(function (es) {
+  es.forEach(function (e) { if (e.isIntersecting) $$('a', side).forEach(function (a) { a.classList.toggle('active', a.dataset.id === e.target.id); }); });
+}, { rootMargin: '-30% 0px -65% 0px' });
+modules.forEach(function (m) { spy.observe(m); });
+
+/* ---------- reveal on scroll ---------- */
+var rev = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rev.unobserve(e.target); } }); }, { threshold: 0.08 });
+$$('.reveal').forEach(function (el) { rev.observe(el); });
+
+/* ---------- theme ---------- */
+var root = document.documentElement; var th = store('ollama-course-theme'); if (th) root.dataset.theme = th;
+$('#themeBtn').addEventListener('click', function () {
+  var dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark'; store('ollama-course-theme', root.dataset.theme);
+});
+
+/* ---------- copy buttons ---------- */
+$$('.code').forEach(function (block) {
+  var b = document.createElement('button'); b.className = 'copy'; b.type = 'button'; b.textContent = 'Copy';
+  b.addEventListener('click', function () {
+    var t = $('pre', block).innerText;
+    var ok = function () { b.textContent = 'Copied!'; setTimeout(function () { b.textContent = 'Copy'; }, 1300); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, ok); else ok();
+  });
+  block.appendChild(b);
+});
+
+/* ---------- tabs ---------- */
+$$('[data-tabs]').forEach(function (group) {
+  var btns = $$('button', group);
+  btns.forEach(function (b) { b.addEventListener('click', function () {
+    btns.forEach(function (x) { x.classList.remove('active'); var p = document.getElementById(x.dataset.tab); if (p) p.classList.remove('active'); });
+    b.classList.add('active'); document.getElementById(b.dataset.tab).classList.add('active');
+  }); });
+});
+
+/* ---------- install checklists ---------- */
+var chk = store('ollama-course-checks') || {};
+$$('.tabpanel').forEach(function (panel) {
+  var boxes = $$('.checksteps input', panel); if (!boxes.length) return;
+  var bar = $('.stepbar div', panel), txt = $('.steptext', panel);
+  function upd() {
+    var n = boxes.filter(function (b) { return b.checked; }).length;
+    boxes.forEach(function (b) { b.closest('li').classList.toggle('checked', b.checked); });
+    bar.style.width = (n / boxes.length * 100) + '%';
+    txt.textContent = n === boxes.length ? '🎉 All ' + n + ' steps done!' : n + ' of ' + boxes.length + ' steps done';
+  }
+  boxes.forEach(function (b, i) {
+    var key = panel.id + i; b.checked = !!chk[key];
+    b.addEventListener('change', function () { chk[key] = b.checked; store('ollama-course-checks', chk); upd(); });
+  });
+  upd();
+});
+
+/* ---------- hero typer ---------- */
+var typerLines = [
+  ['$ ', 'ollama run llama3.2:1b'],
+  ['>>> ', 'What can I build with a local LLM?'],
+  ['', 'A study chatbot, a PDF question-answerer, a code helper, an offline translator...'],
+  ['>>> ', '/bye']
+];
+(function typer() {
+  var el = $('#typer'); var li = 0, ci = 0, html = '';
+  function step() {
+    if (li >= typerLines.length) { setTimeout(function () { html = ''; li = 0; ci = 0; step(); }, 2600); return; }
+    var pre = typerLines[li][0], txt = typerLines[li][1];
+    if (ci === 0) html += '<span style="color:#86efac">' + esc(pre) + '</span>';
+    if (ci < txt.length) { html += esc(txt[ci]); ci++; el.innerHTML = html + '<span class="cur"></span>'; setTimeout(step, pre === '' ? 18 : 55); }
+    else { html += '\n'; li++; ci = 0; el.innerHTML = html + '<span class="cur"></span>'; setTimeout(step, 500); }
+  }
+  step();
+})();
+
+/* ---------- bars helper ---------- */
+function renderBars(el, items, pickIdx) {
+  el.innerHTML = items.map(function (it, i) {
+    return '<div class="bar-row' + (i === pickIdx ? ' pick' : '') + '"><span>' + esc(it[0]) + '</span><div class="bar-track"><div class="bar-fill"></div></div><span>' + (it[1] * 100).toFixed(1) + '%</span></div>';
+  }).join('');
+  requestAnimationFrame(function () { requestAnimationFrame(function () { $$('.bar-fill', el).forEach(function (f, i) { f.style.width = (items[i][1] * 100) + '%'; }); }); });
+}
+
+/* ---------- next-token lab ---------- */
+var genSteps = [
+  [['locally', .62], ['offline', .18], ['models', .12], ['today', .08]],
+  [['on', .70], ['with', .15], ['using', .10], ['for', .05]],
+  [['their', .55], ['a', .25], ['any', .12], ['the', .08]],
+  [['laptops', .60], ['computers', .30], ['phones', .06], ['GPUs', .04]],
+  [['using', .50], ['.', .30], ['with', .15], ['!', .05]],
+  [['Ollama', .85], ['Python', .08], ['Docker', .05], ['magic', .02]],
+  [['.', .90], ['!', .07], ['today', .03]]
+];
+var genI = 0, genWords = [], genTimer = null;
+function genRender(newWord) {
+  var html = '<span style="color:var(--muted)">Students can run AI</span> ' + genWords.map(function (w, i) {
+    return '<span class="' + (i === genWords.length - 1 && newWord ? 'new' : '') + '">' + esc(w) + '</span>';
+  }).join(' ');
+  $('#genText').innerHTML = html;
+}
+function genNext() {
+  if (genI >= genSteps.length) { clearInterval(genTimer); genTimer = null; $('#genAuto').textContent = 'Auto-play'; $('#genBars').innerHTML = '<div class="note ok"><strong>Done!</strong>That\'s all an LLM does: score, pick, repeat. A real model scores ~100,000+ possible tokens at every step.</div>'; return; }
+  var s = genSteps[genI]; renderBars($('#genBars'), s, 0); genWords.push(s[0][0]); genRender(true); genI++;
+}
+function genReset() { genI = 0; genWords = []; clearInterval(genTimer); genTimer = null; $('#genAuto').textContent = 'Auto-play'; genRender(false); $('#genBars').innerHTML = '<div class="steptext">Press “Next token” to start.</div>'; }
+$('#genNext').addEventListener('click', genNext);
+$('#genReset').addEventListener('click', genReset);
+$('#genAuto').addEventListener('click', function () {
+  if (genTimer) { clearInterval(genTimer); genTimer = null; this.textContent = 'Auto-play'; return; }
+  if (genI >= genSteps.length) genReset();
+  this.textContent = 'Pause'; genNext(); genTimer = setInterval(genNext, 1300);
+});
+genReset();
+
+/* ---------- token playground ---------- */
+function tokenize(text) {
+  var parts = text.match(/\s*[A-Za-z]+|\s*\d|\s*[^\sA-Za-z\d]|\s+/g) || [];
+  var out = [];
+  parts.forEach(function (p) {
+    var lead = p.match(/^\s*/)[0], w = p.slice(lead.length);
+    if (/^[A-Za-z]+$/.test(w) && w.length > 6) {
+      var first = true;
+      for (var i = 0; i < w.length; i += 4) { out.push((first ? lead : '') + w.slice(i, i + 4)); first = false; }
+    } else out.push(p);
+  });
+  return out;
+}
+function tokRender() {
+  var t = $('#tokIn').value, toks = tokenize(t);
+  $('#tokOut').innerHTML = toks.map(function (x, i) { return '<span class="t' + (i % 5) + '" style="animation-delay:' + Math.min(i * 25, 800) + 'ms">' + esc(x.replace(/ /g, '·')) + '</span>'; }).join('');
+  var words = (t.trim().match(/\S+/g) || []).length;
+  $('#tokStats').textContent = toks.length + ' tokens · ' + words + ' words · ' + t.length + ' characters  (· = space)';
+}
+$('#tokIn').addEventListener('input', tokRender); tokRender();
+
+/* ---------- size calculator ---------- */
+var pSizes = [0.5, 1, 1.5, 3, 4, 7, 8, 12, 14, 20, 32, 70];
+function calc() {
+  var p = pSizes[+$('#pSlider').value], q = +$('#qSel').value, ram = +$('#ramSel').value;
+  var dl = p * q, mem = dl + 0.5 + p * 0.08;
+  $('#pVal').textContent = p;
+  $('#dlSize').textContent = dl < 1 ? Math.round(dl * 1000) + ' MB' : dl.toFixed(1) + ' GB';
+  $('#memSize').textContent = '≈ ' + mem.toFixed(1) + ' GB';
+  var usable = ram * 0.75, pct = Math.min(mem / ram * 100, 100);
+  var fill = $('#memFill'); fill.style.width = pct + '%';
+  var v = $('#fitVerdict');
+  if (mem <= usable * 0.7) { fill.style.background = 'var(--ok)'; v.className = 'note ok'; v.innerHTML = '<strong>✅ Fits comfortably</strong>Runs well with room for your other apps.'; }
+  else if (mem <= usable) { fill.style.background = 'var(--warn)'; v.className = 'note warn'; v.innerHTML = '<strong>⚠️ Tight fit</strong>Should run, but close other apps. Consider a smaller size.'; }
+  else { fill.style.background = 'var(--danger)'; v.className = 'note danger'; v.innerHTML = '<strong>❌ Too big</strong>Not enough memory. Pick a smaller model or a stronger quantization (q4).'; }
+  $('#memLbl').textContent = mem.toFixed(1) + ' GB of ' + ram + ' GB';
+}
+['#pSlider', '#qSel', '#ramSel'].forEach(function (s) { $(s).addEventListener('input', calc); });
+calc();
+
+/* ---------- context window ---------- */
+var ctxTokens = [], ctxN = 0;
+function ctxRender() {
+  var win = +$('#ctxSlider').value; $('#ctxVal').textContent = win;
+  var start = Math.max(0, ctxTokens.length - win);
+  $('#ctxBox').innerHTML = ctxTokens.map(function (t, i) { return '<span class="' + (t.u ? 'user ' : '') + (i < start ? 'lost' : '') + '">' + t.n + '</span>'; }).join('') || '<span style="background:none;color:var(--muted);width:auto">empty: send a message</span>';
+}
+function ctxAdd(u, k) { for (var i = 0; i < k; i++) ctxTokens.push({ u: u, n: ++ctxN }); ctxRender(); }
+$('#ctxUser').addEventListener('click', function () { ctxAdd(true, 4 + Math.floor(Math.random() * 3)); });
+$('#ctxBot').addEventListener('click', function () { ctxAdd(false, 6 + Math.floor(Math.random() * 5)); });
+$('#ctxReset').addEventListener('click', function () { ctxTokens = []; ctxN = 0; ctxRender(); });
+$('#ctxSlider').addEventListener('input', ctxRender); ctxRender();
+
+/* ---------- temperature ---------- */
+var langs = [['Python', .40], ['JavaScript', .25], ['Java', .12], ['C++', .09], ['Rust', .07], ['Go', .05], ['COBOL', .02]];
+function tempDist() {
+  var T = +$('#tSlider').value / 10; $('#tVal').textContent = T.toFixed(1);
+  var w = langs.map(function (l) { return Math.pow(l[1], 1 / T); }), s = w.reduce(function (a, b) { return a + b; }, 0);
+  return langs.map(function (l, i) { return [l[0], w[i] / s]; });
+}
+function tempRender() { renderBars($('#tBars'), tempDist(), -1); }
+$('#tSlider').addEventListener('input', tempRender); tempRender();
+$('#tSample').addEventListener('click', function () {
+  var d = tempDist(), picks = [];
+  for (var k = 0; k < 10; k++) { var r = Math.random(), acc = 0; for (var i = 0; i < d.length; i++) { acc += d[i][1]; if (r <= acc || i === d.length - 1) { picks.push(d[i][0]); break; } } }
+  var uniq = picks.filter(function (x, i) { return picks.indexOf(x) === i; }).length;
+  $('#tOut').innerHTML = '<b>10 samples:</b> ' + picks.map(esc).join(', ') + '<br><span class="steptext">' + uniq + ' different answers. ' + (uniq <= 2 ? 'Low temperature = consistent.' : uniq >= 5 ? 'High temperature = varied / creative.' : 'Medium variety.') + '</span>';
+});
+
+/* ---------- tag anatomy ---------- */
+var parts = {
+  name: '<b>Model family</b>: <code>gemma3</code> is Google\'s Gemma 3. Other families: llama3.2, qwen3, mistral, phi4-mini, deepseek-r1…',
+  size: '<b>Size</b>: <code>4b</code> = 4 billion parameters (needs ~3.3 GB). Others: 270m, 1b, 12b, 27b. Bigger = smarter but slower and needs more RAM. Special forms: <code>e2b</code> (efficient, for devices), <code>8x7b</code> (mixture of experts).',
+  type: '<b>Variant</b>: <code>it</code> = instruction-tuned (chat). Others: <code>instruct</code>, <code>chat</code>, <code>text</code>/<code>base</code> (raw, just continues text). Most default tags are already instruction-tuned.',
+  quant: '<b>Quantization</b>: <code>q4_K_M</code> ≈ 4.5 bits per weight, Ollama\'s usual default and the best balance. <code>q8_0</code> = higher quality, twice the size. <code>fp16</code> = full precision, 4× the size.'
+};
+$$('#anatomy span[data-part]').forEach(function (s) {
+  s.addEventListener('click', function () { $$('#anatomy span').forEach(function (x) { x.classList.remove('on'); }); s.classList.add('on'); $('#anatomyOut').innerHTML = parts[s.dataset.part]; });
+});
+
+/* ---------- model picker ---------- */
+var picks = {
+  chat:   { 8: ['llama3.2:1b', 'gemma3:1b', 'qwen3.5:2b', 'llama3.2'], 16: ['gemma4:e4b', 'qwen3:8b', 'llama3.1:8b', 'mistral'], 32: ['gemma3:12b', 'qwen3:14b', 'phi4', 'gpt-oss:20b'] },
+  code:   { 8: ['qwen2.5-coder:1.5b', 'qwen2.5-coder:3b', 'deepseek-coder:1.3b'], 16: ['qwen2.5-coder:7b', 'deepseek-coder:6.7b', 'codegemma:7b'], 32: ['qwen2.5-coder:14b', 'deepcoder:14b', 'devstral-small-2'] },
+  reason: { 8: ['deepseek-r1:1.5b', 'deepscaler', 'qwen3:1.7b', 'phi4-mini'], 16: ['deepseek-r1:8b', 'qwen3:8b'], 32: ['deepseek-r1:14b', 'phi4-reasoning', 'gpt-oss:20b'] },
+  vision: { 8: ['moondream', 'gemma3:4b', 'qwen3-vl:2b'], 16: ['qwen2.5vl:7b', 'llava:7b', 'minicpm-v'], 32: ['gemma3:12b', 'llama3.2-vision', 'mistral-small3.2'] },
+  ocr:    { 8: ['deepseek-ocr', 'granite3.2-vision'], 16: ['glm-ocr', 'qwen3-vl:8b'], 32: ['qwen2.5vl:32b', 'qwen3-vl:30b'] },
+  embed:  { 8: ['nomic-embed-text', 'all-minilm', 'embeddinggemma'], 16: ['bge-m3', 'mxbai-embed-large', 'qwen3-embedding:4b'], 32: ['qwen3-embedding:8b', 'bge-m3'] },
+  tools:  { 8: ['llama3.2', 'granite4:3b', 'qwen3:4b'], 16: ['qwen3:8b', 'llama3.1:8b', 'mistral'], 32: ['qwen3:14b', 'gpt-oss:20b', 'mistral-small3.2'] },
+  lang:   { 8: ['qwen3.5:2b', 'gemma3:4b'], 16: ['translategemma:4b', 'aya-expanse:8b', 'qwen3:8b'], 32: ['translategemma:12b', 'gemma3:12b', 'aya-expanse:32b'] }
+};
+function pickRender() {
+  var ram = $('#pickRam input:checked').value, task = $('#pickTask input:checked').value;
+  var verb = task === 'embed' ? 'pull' : 'run';
+  $('#pickOut').innerHTML = picks[task][ram].map(function (m, i) {
+    return '<div style="animation-delay:' + i * 80 + 'ms"><b>' + (i === 0 ? '⭐ Best pick' : 'Also try') + '</b><br><code>ollama ' + verb + ' ' + esc(m) + '</code></div>';
+  }).join('');
+}
+$$('#pickRam input, #pickTask input').forEach(function (r) { r.addEventListener('change', pickRender); }); pickRender();
+
+/* ---------- catalog ---------- */
+var MODELS = [
+  ["llama3.2","Meta","1b,3b","General","tools","Beginners, low-RAM laptops"],["llama3.1","Meta","8b,70b,405b","General","tools","Strong all-round 8B"],
+  ["llama3.3","Meta","70b","General","tools","High quality, big GPU"],["llama4","Meta","16x17b,128x17b","General","vision,tools","Server-class multimodal"],
+  ["gemma4","Google","e2b,e4b,12b,26b,31b","General","vision,tools,thinking,audio","Newest Gemma: reasoning, images, audio"],
+  ["gemma3","Google","270m,1b,4b,12b,27b","General","vision","Popular; 4B+ read images"],["gemma3n","Google","e2b,e4b","General","vision","Laptops, tablets, phones"],
+  ["gemma2","Google","2b,9b,27b","General","","Older solid Gemma"],["qwen3.5","Alibaba","0.8b,2b,4b,9b,27b,35b,122b","General","vision,tools,thinking","Multilingual multimodal"],
+  ["qwen3","Alibaba","0.6b,1.7b,4b,8b,14b,30b,32b,235b","General","tools,thinking","Reasoning + tools"],["qwen2.5","Alibaba","0.5b,1.5b,3b,7b,14b,32b,72b","General","tools","Multilingual, 128K context"],
+  ["qwen3.6","Alibaba","27b,35b","General","vision,tools,thinking","Agentic coding + thinking"],["mistral","Mistral AI","7b","General","tools","Fast 7B all-rounder"],
+  ["mistral-nemo","Mistral AI","12b","General","tools","128K context"],["mistral-small3.2","Mistral AI","24b","General","vision,tools","Strong mid-size"],
+  ["ministral-3","Mistral AI","3b,8b,14b","General","vision,tools","Edge devices"],["phi4-mini","Microsoft","3.8b","General","tools","Math/logic, small"],
+  ["phi4","Microsoft","14b","General","","Capable 14B"],["phi3.5","Microsoft","3.8b","General","","Lightweight"],
+  ["granite4","IBM","350m,1b,3b","Small","tools","Tiny, good at tools"],["granite3.3","IBM","2b,8b","General","tools","128K context"],
+  ["smollm2","Hugging Face","135m,360m,1.7b","Small","tools","Runs on anything"],["tinyllama","TinyLlama","1.1b","Small","","Experiments"],
+  ["lfm2.5-thinking","Liquid AI","1.2b","Small","tools,thinking","On-device reasoning"],["falcon3","TII","1b,3b,7b,10b","General","","Science, math, code"],
+  ["olmo2","AI2","7b,13b","General","","Fully open data + code"],["nemotron-3-nano","NVIDIA","4b,30b","General","tools,thinking","Efficient agents"],
+  ["hermes3","Nous Research","3b,8b,70b","General","tools","Role-play, function calls"],["cogito","Deep Cogito","3b,8b,14b,32b,70b","General","tools","Hybrid reasoning"],
+  ["gpt-oss","OpenAI","20b,120b","General","tools,thinking","OpenAI open-weight reasoning"],["command-r","Cohere","35b","General","tools","Long docs, RAG"],
+  ["aya-expanse","Cohere","8b,32b","Multilingual","tools","23 languages"],["translategemma","Google","4b,12b,27b","Multilingual","vision","Translate 55 languages"],
+  ["deepseek-r1","DeepSeek","1.5b,7b,8b,14b,32b,70b,671b","Reasoning","tools,thinking","Step-by-step thinking"],["qwq","Alibaba","32b","Reasoning","tools","Qwen reasoning"],
+  ["phi4-reasoning","Microsoft","14b","Reasoning","","Complex reasoning"],["magistral","Mistral AI","24b","Reasoning","tools,thinking","Efficient reasoning"],
+  ["openthinker","Open source","7b,32b","Reasoning","","Open reasoning"],["exaone-deep","LG AI","2.4b,7.8b,32b","Reasoning","","Math + code reasoning"],
+  ["deepscaler","Agentica","1.5b","Math","","Tiny, strong at math"],["qwen2-math","Alibaba","1.5b,7b,72b","Math","","Math specialist"],
+  ["qwen2.5-coder","Alibaba","0.5b,1.5b,3b,7b,14b,32b","Coding","tools","Best small coder family"],["qwen3-coder","Alibaba","30b","Coding","tools","Agentic coding"],
+  ["deepseek-coder","DeepSeek","1.3b,6.7b,33b","Coding","","80+ languages"],["deepseek-coder-v2","DeepSeek","16b,236b","Coding","","MoE coder"],
+  ["codellama","Meta","7b,13b,34b,70b","Coding","","Classic code model"],["codegemma","Google","2b,7b","Coding","","Code completion"],
+  ["starcoder2","BigCode","3b,7b,15b","Coding","","Open code LLM"],["granite-code","IBM","3b,8b,20b,34b","Coding","","Code intelligence"],
+  ["devstral-small-2","Mistral AI","24b","Coding","vision,tools","Coding agents"],["deepcoder","Agentica","1.5b,14b","Coding","","Reasoning coder"],
+  ["yi-coder","01.AI","1.5b,9b","Coding","","Small coder"],["opencoder","OpenCoder","1.5b,8b","Coding","","Reproducible coder"],
+  ["stable-code","Stability AI","3b","Coding","","Completion"],["sqlcoder","Defog","7b,15b","Coding","","Text to SQL"],
+  ["llava","LLaVA","7b,13b,34b","Vision","vision","Describe images"],["llama3.2-vision","Meta","11b,90b","Vision","vision","Image reasoning"],
+  ["qwen2.5vl","Alibaba","3b,7b,32b,72b","Vision","vision","Images + documents"],["qwen3-vl","Alibaba","2b,4b,8b,30b,32b,235b","Vision","vision,tools,thinking","Top Qwen vision"],
+  ["minicpm-v","OpenBMB","8b","Vision","vision","Vision-language"],["moondream","Moondream","1.8b","Vision","vision","Tiny vision"],
+  ["llava-phi3","LLaVA","3.8b","Vision","vision","Small LLaVA"],["granite3.2-vision","IBM","2b","Vision","vision,tools","Charts, tables, docs"],
+  ["glm-ocr","Zhipu AI","","OCR","vision,tools","Complex document OCR"],["deepseek-ocr","DeepSeek","3b","OCR","vision","Efficient OCR"],
+  ["reader-lm","Jina AI","0.5b,1.5b","OCR","","HTML to Markdown"],["nomic-embed-text","Nomic","","Embedding","embedding","Most popular for RAG"],
+  ["nomic-embed-text-v2-moe","Nomic","","Embedding","embedding","Multilingual retrieval"],["mxbai-embed-large","mixedbread.ai","335m","Embedding","embedding","High-quality English"],
+  ["bge-m3","BAAI","567m","Embedding","embedding","Multilingual"],["all-minilm","Sentence-Transformers","22m,33m","Embedding","embedding","Tiny and fast"],
+  ["snowflake-arctic-embed","Snowflake","22m,33m,110m,137m,335m","Embedding","embedding","Retrieval"],["embeddinggemma","Google","300m","Embedding","embedding","Small Google embedder"],
+  ["qwen3-embedding","Alibaba","0.6b,4b,8b","Embedding","embedding","Strong multilingual"],["paraphrase-multilingual","Sentence-Transformers","278m","Embedding","embedding","Clustering, search"],
+  ["llama-guard3","Meta","1b,8b","Safety","","Flag unsafe content"],["shieldgemma","Google","2b,9b,27b","Safety","","Safety policy checks"],
+  ["meditron","EPFL","7b,70b","Domain","","Medical (learning only)"]
+];
+function sizeToB(s) { var m = /^(?:e)?([\d.]+)([mb])$/.exec(s); if (!m) return 999; return m[2] === 'm' ? parseFloat(m[1]) / 1000 : parseFloat(m[1]); }
+function smallest(sz) { return sz ? sz.split(',').sort(function (a, b) { return sizeToB(a) - sizeToB(b); })[0] : ''; }
+var cat = { c: 'All', q: '', small: false }, cats = ['All'];
+MODELS.forEach(function (m) { if (cats.indexOf(m[3]) < 0) cats.push(m[3]); });
+cats.forEach(function (c) {
+  var b = document.createElement('button'); b.type = 'button'; b.textContent = c; if (c === 'All') b.className = 'active';
+  b.addEventListener('click', function () { cat.c = c; $$('#catChips button').forEach(function (x) { x.classList.toggle('active', x === b); }); catRender(); });
+  $('#catChips').appendChild(b);
+});
+function catRender() {
+  var rows = [], n = 0;
+  MODELS.forEach(function (m) {
+    if (cat.c !== 'All' && m[3] !== cat.c) return;
+    var sm = smallest(m[2]); if (cat.small && m[2] && sizeToB(sm) > 4) return;
+    if (cat.q && (m.join(' ').toLowerCase().indexOf(cat.q) < 0)) return;
+    n++;
+    var sizes = m[2] ? m[2].split(',').map(function (s) { return '<span class="size">' + esc(s) + '</span>'; }).join('') : '<span class="size">default</span>';
+    var caps = m[4] ? m[4].split(',').map(function (c) { return '<span class="badge ' + c + '">' + c + '</span>'; }).join('') : '<span class="steptext">text</span>';
+    rows.push('<tr><td><a href="https://ollama.com/library/' + esc(m[0]) + '" target="_blank" rel="noopener"><b>' + esc(m[0]) + '</b></a></td><td>' + esc(m[1]) + '</td><td>' + sizes + '</td><td>' + caps + '</td><td>' + esc(m[5]) + '</td><td><code>ollama ' + (m[3] === 'Embedding' ? 'pull ' : 'run ') + esc(m[0]) + (sm ? ':' + sm : '') + '</code></td></tr>');
+  });
+  $('#catTable tbody').innerHTML = rows.join('') || '<tr><td colspan="6">No models match.</td></tr>';
+  $('#catCount').textContent = 'Showing ' + n + ' of ' + MODELS.length + ' models';
+}
+$('#catSearch').addEventListener('input', function (e) { cat.q = e.target.value.trim().toLowerCase(); catRender(); });
+$('#smallOnly').addEventListener('change', function (e) { cat.small = e.target.checked; catRender(); });
+catRender();
+
+/* ---------- command filter ---------- */
+$('#cmdFilter').addEventListener('input', function (e) {
+  var q = e.target.value.trim().toLowerCase(), n = 0;
+  $$('#cmdCards details').forEach(function (d) {
+    var hit = !q || d.dataset.k.indexOf(q) >= 0 || d.innerText.toLowerCase().indexOf(q) >= 0;
+    d.style.display = hit ? '' : 'none'; if (hit) { n++; if (q) d.open = true; }
+  });
+  $('#cmdNone').style.display = n ? 'none' : 'block';
+});
+
+/* ---------- Modelfile builder ---------- */
+function mfRender() {
+  var name = ($('#mfName').value.trim() || 'mymodel').toLowerCase().replace(/[^a-z0-9._\-\/]/g, '-');
+  var t = (+$('#mfTemp').value / 10).toFixed(1); $('#mfTv').textContent = t;
+  var txt = 'FROM ' + $('#mfBase').value + '\n\nPARAMETER temperature ' + t + '\nPARAMETER num_ctx ' + $('#mfCtx').value + '\n\nSYSTEM """\n' + $('#mfSys').value.trim() + '\n"""';
+  if ($('#mfMsg').checked) txt += '\n\nMESSAGE user Hi, who are you?\nMESSAGE assistant Hi! I am ' + name + '. How can I help you today?';
+  $('#mfOut').textContent = txt;
+  $('#mfCmd').innerHTML = '<span class="c"># save the text above as a file named "Modelfile" (no extension), then:</span>\n<span class="k">ollama create ' + esc(name) + ' -f Modelfile</span>\n<span class="k">ollama run ' + esc(name) + '</span>\n<span class="k">ollama show ' + esc(name) + ' --modelfile</span>';
+}
+['#mfName', '#mfBase', '#mfTemp', '#mfCtx', '#mfSys', '#mfMsg'].forEach(function (s) { $(s).addEventListener('input', mfRender); $(s).addEventListener('change', mfRender); });
+mfRender();
+
+/* ---------- streaming demo ---------- */
+var streaming = false;
+$('#streamBtn').addEventListener('click', function () {
+  if (streaming) return; streaming = true;
+  var words = ['Local', ' AI', ' keeps', ' your', ' data', ' private', ' and', ' works', ' offline', '.'];
+  var out = $('#streamOut'), txt = $('#streamText'), i = 0;
+  out.textContent = 'POST /api/chat  {"model":"llama3.2","messages":[...],"stream":true}\n\n'; txt.textContent = '';
+  var timer = setInterval(function () {
+    if (i < words.length) {
+      out.textContent += '{"model":"llama3.2","message":{"role":"assistant","content":"' + words[i] + '"},"done":false}\n';
+      txt.textContent += words[i]; i++;
+    } else {
+      out.textContent += '{"model":"llama3.2","message":{"role":"assistant","content":""},"done":true,"eval_count":10,"eval_duration":412000000}\n';
+      clearInterval(timer); streaming = false;
+    }
+    out.scrollTop = out.scrollHeight;
+  }, 260);
+});
+
+/* ---------- steppers (RAG, tools) ---------- */
+function stepper(boxSel, explSel, btnSel, steps) {
+  var box = $(boxSel);
+  box.innerHTML = steps.map(function (s, i) { return (i ? '<span class="ar">→</span>' : '') + '<span class="st">' + s[0] + '</span>'; }).join('');
+  var els = $$('.st', box), timer = null;
+  $(btnSel).addEventListener('click', function () {
+    clearInterval(timer); var i = 0; els.forEach(function (e) { e.className = 'st'; });
+    function go() {
+      if (i > 0) { els[i - 1].classList.remove('on'); els[i - 1].classList.add('done'); }
+      if (i >= steps.length) { clearInterval(timer); $(explSel).innerHTML = '✅ ' + steps[steps.length - 1][1]; return; }
+      els[i].classList.add('on'); $(explSel).innerHTML = '<b>Step ' + (i + 1) + ':</b> ' + steps[i][1]; i++;
+    }
+    go(); timer = setInterval(go, 1900);
+  });
+}
+stepper('#ragSteps', '#ragExplain', '#ragPlay', [
+  ['📄 Documents', 'Load your notes, PDFs or web pages.'],
+  ['✂️ Chunk', 'Split them into small pieces (e.g. 500 characters) so each piece has one idea.'],
+  ['🔢 Embed', 'An embedding model (nomic-embed-text) turns each chunk into a vector of numbers.'],
+  ['🗄️ Vector DB', 'Store the vectors (in a list, ChromaDB, FAISS, pgvector…).'],
+  ['❓ Question', 'A user asks: “How do I free disk space?” It gets embedded the same way.'],
+  ['🔍 Search', 'Find chunks whose vectors are closest to the question (cosine similarity).'],
+  ['🧩 Prompt', 'Build a prompt: “Use this context: [top chunks]. Question: …”'],
+  ['🦙 LLM', 'The chat model (llama3.2) reads the context and writes an answer grounded in YOUR documents.']
+]);
+stepper('#toolSteps', '#toolExplain', '#toolPlay', [
+  ['🙋 User', 'Asks: “What is 1234 + 5678?” Your code also sends the list of tools (e.g. add_numbers).'],
+  ['🦙 Model decides', 'The model replies with a tool_call: add_numbers(a=1234, b=5678) instead of text.'],
+  ['🐍 Your code runs', 'Your Python runs the real function → 6912. The model never runs code itself.'],
+  ['📨 Send result', 'You append a message with role "tool" containing 6912 and call the model again.'],
+  ['💬 Final answer', 'The model answers: “1234 + 5678 = 6912.” Agents repeat this loop with many tools.']
+]);
+
+/* ---------- quiz ---------- */
+var QUIZ = [
+  ['What does Ollama do?', ['Trains new AI models from scratch', 'Downloads and runs LLMs locally on your computer', 'Is a cloud chatbot like ChatGPT', 'Speeds up your internet'], 1, 'Ollama is an inference tool: it runs pre-trained models on your machine.'],
+  ['Which port does the Ollama server use by default?', ['8080', '3000', '11434', '5000'], 2, 'http://localhost:11434'],
+  ['Which command downloads a model WITHOUT starting a chat?', ['ollama run', 'ollama pull', 'ollama get', 'ollama install'], 1, 'pull downloads; run downloads if needed and then starts a chat.'],
+  ['How do you see which models are loaded in memory (and GPU/CPU use)?', ['ollama list', 'ollama show', 'ollama ps', 'ollama top'], 2, 'ps = running models. list = models on disk.'],
+  ['You want to free RAM but keep the model on disk. Use…', ['ollama rm', 'ollama stop', 'ollama cp', 'ollama signout'], 1, 'stop unloads; rm deletes from disk.'],
+  ['A student has 8 GB RAM. The best first model is…', ['llama3.3:70b', 'gpt-oss:120b', 'llama3.2:1b', 'deepseek-r1:671b'], 2, 'Small 1B–3B models fit easily in 8 GB.'],
+  ['What does q4_K_M in a tag mean?', ['4 GB model', 'Version 4', '~4-bit quantization (compression)', '4 languages'], 2, 'Quantization shrinks the weights to about 4 bits each.'],
+  ['Temperature 0.1 makes answers…', ['More random and creative', 'Focused and predictable', 'Longer', 'Faster to download'], 1, 'Low temperature almost always picks the most likely token.'],
+  ['How do you exit an ollama run chat?', ['/exit', '/quit', '/bye', 'exit()'], 2, '/bye (or Ctrl+D).'],
+  ['Which file is used to build a custom model?', ['Dockerfile', 'Modelfile', 'model.json', 'requirements.txt'], 1, 'ollama create name -f Modelfile'],
+  ['What is an embedding model used for?', ['Generating images', 'Turning text into vectors for search / RAG', 'Compressing files', 'Translating code to binary'], 1, 'Embeddings power semantic search and RAG.'],
+  ['A tag ending in -cloud means…', ['It runs on Ollama\'s servers, not locally', 'It is free and offline', 'It only works on Mac', 'It is a vision model'], 0, 'Cloud models need signin and are not private/offline.'],
+  ['“bind: Only one usage of each socket address” after ollama serve means…', ['Ollama is broken', 'The server is already running', 'No internet', 'Model is too big'], 1, 'The tray app already runs the server, so skip serve.'],
+  ['Which environment variable moves model storage to another drive?', ['OLLAMA_HOST', 'OLLAMA_MODELS', 'OLLAMA_PATH', 'OLLAMA_DISK'], 1, 'OLLAMA_MODELS=D:\\ollama-models'],
+  ['Base URL for using the OpenAI Python library with Ollama?', ['https://api.openai.com/v1', 'http://localhost:11434/v1', 'http://localhost:11434/openai', 'http://127.0.0.1:8000'], 1, 'Ollama exposes an OpenAI-compatible API at /v1.']
+];
+var qScore = 0, qAnswered = 0;
+function quizRender() {
+  qScore = 0; qAnswered = 0; $('#qTotal').textContent = QUIZ.length; $('#qScore').textContent = 0; $('#qMsg').textContent = 'Answer all questions.';
+  $('#quiz').innerHTML = QUIZ.map(function (q, i) {
+    return '<div class="q reveal in" data-i="' + i + '"><p>' + (i + 1) + '. ' + esc(q[0]) + '</p><div class="opts">' + q[1].map(function (o, j) { return '<button type="button" data-j="' + j + '">' + esc(o) + '</button>'; }).join('') + '</div><div class="why">💡 ' + esc(q[3]) + '</div></div>';
+  }).join('');
+  $$('#quiz .q').forEach(function (qe) {
+    var q = QUIZ[+qe.dataset.i];
+    $$('button', qe).forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (qe.classList.contains('answered')) return;
+        qe.classList.add('answered'); qAnswered++;
+        var j = +b.dataset.j; $$('button', qe).forEach(function (x) { x.disabled = true; });
+        $$('button', qe)[q[2]].classList.add('right');
+        if (j === q[2]) qScore++; else b.classList.add('wrong');
+        $('#qScore').textContent = qScore;
+        if (qAnswered === QUIZ.length) {
+          var pct = qScore / QUIZ.length;
+          $('#qMsg').textContent = pct === 1 ? '🏆 Perfect! You are an Ollama pro.' : pct >= 0.7 ? '🎉 Great job! Review the ones you missed.' : '📖 Re-read the modules and retry.';
+          if (pct >= 0.7) confetti();
+        }
+      });
+    });
+  });
+}
+$('#qReset').addEventListener('click', quizRender); quizRender();
+
+/* ---------- glossary ---------- */
+var GLOSS = [
+  ['LLM', 'Large Language Model: a neural network trained on text that predicts the next token.'],
+  ['Token', 'A chunk of text (~3–4 characters) that the model reads and writes.'],
+  ['Parameters / weights', 'The learned numbers inside a model. 7B = 7 billion.'],
+  ['Inference', 'Running a trained model to get output. What Ollama does.'],
+  ['Training / fine-tuning', 'Teaching a model from data / adjusting an existing model for a specific task.'],
+  ['Quantization', 'Compressing weights to fewer bits (q4, q8) to save memory.'],
+  ['GGUF', 'File format for quantized models used by Ollama and llama.cpp.'],
+  ['Context window (num_ctx)', 'Maximum number of tokens the model can consider at once.'],
+  ['Temperature', 'Randomness of sampling. Low = focused, high = creative.'],
+  ['top_k / top_p', 'Limit sampling to the K best tokens / to tokens adding up to probability P.'],
+  ['Seed', 'Random starting number. Same seed + settings = repeatable output.'],
+  ['System prompt', 'Hidden instruction that sets the model\'s role and rules.'],
+  ['Modelfile', 'Recipe file to build a custom Ollama model.'],
+  ['Tag', 'The version part after the colon: gemma3:4b → 4b.'],
+  ['Registry', 'Server that stores models (ollama.com) for pull/push.'],
+  ['Embedding', 'A vector of numbers representing the meaning of text.'],
+  ['Vector database', 'Database that searches embeddings by similarity (ChromaDB, FAISS, pgvector).'],
+  ['RAG', 'Retrieval-Augmented Generation: give the model relevant document chunks before it answers.'],
+  ['Tool / function calling', 'The model asks your code to run a function and uses the result.'],
+  ['Agent', 'An LLM that loops: think → call tools → observe → answer.'],
+  ['Structured output', 'Forcing the model to reply in JSON that matches a schema.'],
+  ['Thinking / reasoning model', 'A model that writes out reasoning steps before the final answer.'],
+  ['Multimodal / vision', 'A model that understands images (and sometimes audio) as well as text.'],
+  ['MoE (Mixture of Experts)', 'Architecture where only some expert sub-networks run per token, e.g. 8x7b.'],
+  ['Hallucination', 'When a model confidently states something false.'],
+  ['VRAM', 'Memory on the graphics card. Models run fastest when they fit in VRAM.'],
+  ['CUDA / ROCm / Metal', 'GPU platforms for NVIDIA / AMD / Apple.'],
+  ['keep_alive', 'How long a model stays loaded after the last request (default 5m).'],
+  ['Streaming', 'Sending tokens one by one as they are generated.'],
+  ['OpenAI-compatible API', 'Ollama\'s /v1 endpoints that accept OpenAI-style requests.'],
+  ['Open-weight model', 'A model whose weights are published for anyone to download and run.']
+];
+function glossRender(q) {
+  q = (q || '').toLowerCase();
+  $('#glossTable tbody').innerHTML = GLOSS.filter(function (g) { return !q || (g[0] + g[1]).toLowerCase().indexOf(q) >= 0; })
+    .map(function (g) { return '<tr><td><b>' + esc(g[0]) + '</b></td><td>' + esc(g[1]) + '</td></tr>'; }).join('') || '<tr><td>No match.</td></tr>';
+}
+$('#glossSearch').addEventListener('input', function (e) { glossRender(e.target.value); }); glossRender();
+
+/* ---------- confetti ---------- */
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var colors = ['#2563eb', '#7c3aed', '#22c55e', '#f59e0b', '#ec4899'];
+  for (var i = 0; i < 70; i++) {
+    var c = document.createElement('div'); c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw'; c.style.background = colors[i % colors.length];
+    c.style.animationDelay = Math.random() * 0.8 + 's'; c.style.animationDuration = 2 + Math.random() * 1.5 + 's';
+    document.body.appendChild(c); setTimeout(function (el) { el.remove(); }, 4200, c);
+  }
+}
+
+/* =========================================================
+   TERMINAL SIMULATOR
+   ========================================================= */
+var term = { models: {}, running: {}, chat: null, signed: false, busy: false, hist: [], hi: 0 };
+var KNOWN_SIZES = { 'llama3.2:latest': '2.0 GB', 'llama3.2:1b': '1.3 GB', 'llama3.2:3b': '2.0 GB', 'gemma3:1b': '815 MB', 'gemma3:latest': '3.3 GB', 'gemma3:4b': '3.3 GB',
+  'qwen3:1.7b': '1.4 GB', 'qwen3:latest': '5.2 GB', 'mistral:latest': '4.4 GB', 'phi4-mini:latest': '2.5 GB', 'deepseek-r1:1.5b': '1.1 GB', 'nomic-embed-text:latest': '274 MB',
+  'qwen2.5-coder:1.5b': '986 MB', 'llava:latest': '4.7 GB', 'gemma4:e2b': '7.2 GB', 'moondream:latest': '1.7 GB', 'smollm2:135m': '271 MB' };
+var LIB = {}; MODELS.forEach(function (m) { LIB[m[0]] = m; });
+var termOut = $('#termOut'), termIn = $('#termIn'), termBody = $('#termBody');
+var PS = 'PS C:\\Users\\student>';
+function norm(n) { return n.indexOf(':') >= 0 ? n : n + ':latest'; }
+function base(n) { return n.split(':')[0]; }
+function hexId() { var s = ''; for (var i = 0; i < 12; i++) s += '0123456789abcdef'[Math.floor(Math.random() * 16)]; return s; }
+function print(text, cls) { var d = document.createElement('div'); d.className = 'line' + (cls ? ' ' + cls : ''); d.textContent = text; termOut.appendChild(d); termBody.scrollTop = termBody.scrollHeight; return d; }
+function setPrompt() { $('#termPrompt').textContent = term.chat ? '>>>' : PS; }
+function pad(s, n) { s = String(s); while (s.length < n) s += ' '; return s; }
+function sizeFor(full) {
+  if (KNOWN_SIZES[full]) return KNOWN_SIZES[full];
+  var tag = full.split(':')[1], b = sizeToB(tag);
+  if (b === 999) { var m = LIB[base(full)]; b = m && m[2] ? sizeToB(m[2].split(',')[0]) : 4; }
+  var gb = Math.max(b * 0.62, 0.1); return gb < 1 ? Math.round(gb * 1000) + ' MB' : gb.toFixed(1) + ' GB';
+}
+function exists(full) {
+  if (term.models[full]) return true;
+  var b = base(full), tag = full.split(':')[1];
+  if (KNOWN_SIZES[full]) return true;
+  var m = LIB[b]; if (!m) return false;
+  if (tag === 'latest') return true;
+  return m[2].split(',').indexOf(tag) >= 0;
+}
+var MISSIONS = [['version', 'Check the version'], ['pull', 'Pull a model'], ['list', 'List your models'], ['run', 'Chat with a model'], ['show', 'Inspect with show'],
+  ['ps', 'See running models'], ['stop', 'Stop a model'], ['cp', 'Copy a model'], ['rm', 'Remove a model'], ['create', 'Create a custom model']];
+var mdone = store('ollama-course-missions') || {};
+function missionsRender() { $('#missions').innerHTML = MISSIONS.map(function (m) { return '<div class="' + (mdone[m[0]] ? 'ok' : '') + '">' + m[1] + '</div>'; }).join(''); }
+function mission(k) { if (!mdone[k]) { mdone[k] = true; store('ollama-course-missions', mdone); missionsRender(); } }
+missionsRender();
+
+function args(line) { var out = [], re = /"([^"]*)"|'([^']*)'|(\S+)/g, m; while ((m = re.exec(line))) out.push(m[1] !== undefined ? m[1] : m[2] !== undefined ? m[2] : m[3]); return out; }
+
+function pullAnim(full, cb) {
+  term.busy = true; print('pulling manifest', 'dim');
+  var size = sizeFor(full), line = print('', 'dim'), p = 0, digest = hexId();
+  var t = setInterval(function () {
+    p = Math.min(100, p + 4 + Math.random() * 9);
+    var filled = Math.round(p / 6.25), bar = '';
+    for (var i = 0; i < 16; i++) bar += i < filled ? '█' : ' ';
+    line.textContent = 'pulling ' + digest + '... ' + pad(Math.floor(p) + '%', 4) + ' ▕' + bar + '▏ ' + size;
+    termBody.scrollTop = termBody.scrollHeight;
+    if (p >= 100) {
+      clearInterval(t);
+      print('verifying sha256 digest', 'dim'); print('writing manifest', 'dim'); print('success', 'okc');
+      term.models[full] = { size: size, id: hexId(), when: Date.now() }; term.busy = false; mission('pull'); cb && cb();
+    }
+  }, 90);
+}
+function streamText(text, cb) {
+  term.busy = true; var line = print('', 'bot'), i = 0;
+  var t = setInterval(function () {
+    i += 2 + Math.floor(Math.random() * 3); line.textContent = text.slice(0, i); termBody.scrollTop = termBody.scrollHeight;
+    if (i >= text.length) { clearInterval(t); term.busy = false; print(''); cb && cb(); }
+  }, 28);
+}
+function reply(q, model) {
+  var s = q.toLowerCase();
+  if (/^(hi|hello|hey)\b/.test(s)) return 'Hello! I\'m ' + model + ', running locally on your computer. How can I help you today?';
+  if (s.indexOf('joke') >= 0) return 'Why do programmers prefer dark mode? Because light attracts bugs! 🐛';
+  if (s.indexOf('python') >= 0) return 'Python is a beginner-friendly programming language. Example:\n\nnames = ["Asha", "Ravi"]\nfor n in names:\n    print("Hello", n)\n\nThis loops over a list and greets each name.';
+  if (s.indexOf('api') >= 0) return 'An API (Application Programming Interface) is a set of rules that lets two programs talk to each other. Ollama itself exposes an API on http://localhost:11434.';
+  if (s.indexOf('capital') >= 0) return 'The capital of France is Paris. (Tip: small models can make mistakes, so always double-check facts!)';
+  if (s.indexOf('llm') >= 0 || s.indexOf('model') >= 0) return 'A large language model predicts the next token over and over to generate text. I am one of them, running fully offline through Ollama.';
+  if (s.indexOf('who are you') >= 0) return 'I am ' + model + ', an open-weight language model served by Ollama on this machine.';
+  return 'That\'s a great question! (Simulated answer) In a real terminal, ' + model + ' would now generate a full response, streaming token by token. Try asking about Python, APIs, or ask for a joke.';
+}
+function loadModel(full) { term.running[full] = Date.now(); }
+function enterChat(full) { term.chat = full; setPrompt(); print('Send a message (/? for help)', 'dim'); }
+
+var CMDS = {
+  help: function () {
+    print('Usage:\n  ollama [flags]\n  ollama [command]\n\nAvailable Commands:\n  serve       Start Ollama\n  create      Create a model\n  show        Show information for a model\n  run         Run a model\n  stop        Stop a running model\n  pull        Pull a model from a registry\n  push        Push a model to a registry\n  signin      Sign in to ollama.com\n  signout     Sign out from ollama.com\n  list        List models\n  ps          List running models\n  cp          Copy a model\n  rm          Remove a model\n  launch      Launch the Ollama menu or an integration\n  help        Help about any command\n\nFlags:\n  -h, --help      help for ollama\n  -v, --version   Show version information');
+  },
+  version: function () { print('ollama version is 0.x.x (simulated)'); mission('version'); },
+  serve: function () { print('Error: listen tcp 127.0.0.1:11434: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.', 'err'); print('→ This means the server is ALREADY running (tray app). You do not need "ollama serve".', 'dim'); },
+  list: function () {
+    mission('list'); var keys = Object.keys(term.models);
+    print(pad('NAME', 30) + pad('ID', 16) + pad('SIZE', 10) + 'MODIFIED');
+    keys.forEach(function (k) { var m = term.models[k], mins = Math.round((Date.now() - m.when) / 60000); print(pad(k, 30) + pad(m.id, 16) + pad(m.size, 10) + (mins < 1 ? 'Less than a minute ago' : mins + ' minutes ago')); });
+    if (!keys.length) print('(no models yet: try "ollama pull llama3.2:1b")', 'dim');
+  },
+  ps: function () {
+    mission('ps'); print(pad('NAME', 26) + pad('ID', 16) + pad('SIZE', 10) + pad('PROCESSOR', 13) + pad('CONTEXT', 10) + 'UNTIL');
+    Object.keys(term.running).forEach(function (k) { if (!term.models[k]) return; print(pad(k, 26) + pad(term.models[k].id, 16) + pad(term.models[k].size, 10) + pad('100% GPU', 13) + pad('4096', 10) + '4 minutes from now'); });
+  },
+  pull: function (a) {
+    if (!a[0]) return print('Error: accepts 1 arg(s), received 0', 'err');
+    var full = norm(a[0]); if (!exists(full)) return print('Error: pull model manifest: file does not exist', 'err');
+    pullAnim(full);
+  },
+  run: function (a) {
+    var flags = a.filter(function (x) { return x.indexOf('--') === 0; }); a = a.filter(function (x) { return x.indexOf('--') !== 0; });
+    if (!a[0]) return print('Error: requires at least 1 arg(s), only received 0', 'err');
+    var full = norm(a[0]), prompt = a.slice(1).join(' ');
+    if (!exists(full)) return print('Error: pull model manifest: file does not exist', 'err');
+    var go = function () {
+      var lib = LIB[base(full)];
+      if (lib && lib[3] === 'Embedding') return print('Error: "' + base(full) + '" does not support generate', 'err'), print('→ Embedding models are used through the API (ollama.embed), not chat.', 'dim');
+      loadModel(full); mission('run');
+      if (prompt) streamText(reply(prompt, base(full)), function () { if (flags.indexOf('--verbose') >= 0) print('total duration: 1.84s\neval count: 42 token(s)\neval rate: 38.6 tokens/s', 'dim'); });
+      else enterChat(full);
+    };
+    if (!term.models[full]) pullAnim(full, go); else go();
+  },
+  show: function (a) {
+    if (!a[0]) return print('Error: accepts 1 arg(s), received 0', 'err');
+    var full = norm(a[0]); if (!term.models[full]) return print('Error: model \'' + a[0] + '\' not found', 'err');
+    mission('show'); var lib = LIB[base(full)] || ['', '', '', 'General', 'tools'];
+    if (a.indexOf('--license') >= 0) return print('(license text for ' + base(full) + ', check before commercial use)');
+    if (a.indexOf('--modelfile') >= 0) return print('# Modelfile generated by "ollama show"\nFROM ' + full + '\nPARAMETER temperature 0.7\nPARAMETER stop "<|eot_id|>"');
+    var caps = ['completion'].concat((lib[4] || '').split(',').filter(Boolean));
+    if (lib[3] === 'Embedding') caps = ['embedding'];
+    print('  Model\n    architecture        ' + base(full).replace(/[\d.]+.*$/, '') + '\n    parameters          ' + (full.split(':')[1] === 'latest' ? 'default' : full.split(':')[1].toUpperCase()) + '\n    context length      131072\n    quantization        Q4_K_M\n\n  Capabilities\n    ' + caps.join('\n    ') + '\n\n  Parameters\n    temperature    0.7');
+  },
+  stop: function (a) {
+    if (!a[0]) return print('Error: accepts 1 arg(s), received 0', 'err');
+    var full = norm(a[0]); if (!term.running[full]) return print('Error: couldn\'t find model "' + a[0] + '" to stop', 'err');
+    delete term.running[full]; mission('stop');
+  },
+  rm: function (a) {
+    if (!a.length) return print('Error: requires at least 1 arg(s), only received 0', 'err');
+    a.forEach(function (n) { var full = norm(n); if (!term.models[full]) return print('Error: model \'' + n + '\' not found', 'err'); delete term.models[full]; delete term.running[full]; print('deleted \'' + n + '\''); mission('rm'); });
+  },
+  cp: function (a) {
+    if (a.length < 2) return print('Error: accepts 2 arg(s), received ' + a.length, 'err');
+    var src = norm(a[0]), dst = norm(a[1]); if (!term.models[src]) return print('Error: model \'' + a[0] + '\' not found', 'err');
+    term.models[dst] = { size: term.models[src].size, id: term.models[src].id, when: Date.now() }; print('copied \'' + a[0] + '\' to \'' + a[1] + '\''); mission('cp');
+  },
+  create: function (a) {
+    if (!a[0]) return print('Error: accepts 1 arg(s), received 0', 'err');
+    var basem = Object.keys(term.models)[0];
+    if (!basem) return print('Error: no Modelfile base model found locally. Pull one first, e.g. "ollama pull llama3.2:1b".', 'err');
+    term.busy = true; var steps = ['gathering model components', 'using existing layer sha256:' + hexId() + '...', 'creating new layer sha256:' + hexId() + '...', 'writing manifest', 'success'], i = 0;
+    var t = setInterval(function () { print(steps[i], i === steps.length - 1 ? 'okc' : 'dim'); i++; if (i >= steps.length) { clearInterval(t); term.models[norm(a[0])] = { size: term.models[basem].size, id: hexId(), when: Date.now() }; term.busy = false; mission('create'); print('(simulated: assumed a Modelfile with FROM ' + basem + ')', 'dim'); } }, 350);
+  },
+  signin: function () { term.signed = true; print('You need to authorize this device. Open this link in your browser:\n  https://ollama.com/connect?... (simulated)'); print('Signed in as student (simulated)', 'okc'); },
+  signout: function () { if (!term.signed) return print('You are not signed in.', 'dim'); term.signed = false; print('Signed out from ollama.com'); },
+  push: function (a) {
+    if (!a[0]) return print('Error: accepts 1 arg(s), received 0', 'err');
+    if (!term.signed) return print('Error: you are not signed in. Run "ollama signin" first.', 'err');
+    if (a[0].indexOf('/') < 0) return print('Error: model name must be in the form <username>/<model>. Use "ollama cp ' + a[0] + ' student/' + a[0] + '" first.', 'err');
+    if (!term.models[norm(a[0])]) return print('Error: model \'' + a[0] + '\' not found', 'err');
+    print('pushing manifest\nsuccess\n\nYou can find your model at:\n  https://ollama.com/' + a[0].split(':')[0], 'okc');
+  },
+  launch: function () { print('Ollama launch: pick an integration to start with your local models.\n(The list depends on your Ollama version. Run "ollama launch --help" on your real machine.)'); }
+};
+
+function runLine(line) {
+  print((term.chat ? '>>> ' : PS + ' ') + line, 'cmd');
+  var t = line.trim(); if (!t) return;
+  if (term.chat) return chatLine(t);
+  if (t === 'clear' || t === 'cls') { termOut.innerHTML = ''; return; }
+  var a = args(t);
+  if (a[0] !== 'ollama') {
+    if (/^(curl|curl\.exe)\b/.test(t) && t.indexOf('11434') >= 0) return print('Ollama is running', 'okc');
+    return print(a[0] + ' : The term \'' + a[0] + '\' is not recognized. (This simulator only understands "ollama ..." commands, "clear" and "curl.exe http://localhost:11434".)', 'err');
+  }
+  var c = a[1], rest = a.slice(2);
+  if (!c || c === 'help' || c === '--help' || c === '-h') return CMDS.help();
+  if (c === '-v' || c === '--version') return CMDS.version();
+  if (c === 'ls') c = 'list';
+  if (rest[0] === '--help' || rest[0] === '-h') return print('Usage:\n  ollama ' + c + ' [flags]\n\n(See Module 8 for every flag of "' + c + '")');
+  if (CMDS[c]) return CMDS[c](rest);
+  print('Error: unknown command "' + c + '" for "ollama"\nRun \'ollama --help\' for usage.', 'err');
+}
+function chatLine(t) {
+  var m = base(term.chat);
+  if (t === '/bye') { term.chat = null; setPrompt(); return; }
+  if (t === '/?' || t === '/help') return print('Available Commands:\n  /set            Set session variables\n  /show           Show model information\n  /load <model>   Load a session or model\n  /save <model>   Save your current session\n  /clear          Clear session context\n  /bye            Exit\n  /?, /help       Help for a command\n\nUse """ to begin a multi-line message.');
+  if (t === '/clear') return print('Cleared session context', 'dim');
+  if (t.indexOf('/show') === 0) return CMDS.show([term.chat]);
+  if (t.indexOf('/set system') === 0) return print('Set system message.', 'dim');
+  if (t.indexOf('/set parameter') === 0) { var p = t.split(/\s+/); return print('Set parameter \'' + (p[2] || '?') + '\' to \'' + (p[3] || '?') + '\'', 'dim'); }
+  if (t.indexOf('/set') === 0) return print('Set \'' + t.split(/\s+/)[1] + '\' mode.', 'dim');
+  if (t.indexOf('/save') === 0) { var n = t.split(/\s+/)[1]; if (!n) return print('Usage: /save <modelname>', 'err'); term.models[norm(n)] = { size: term.models[term.chat].size, id: hexId(), when: Date.now() }; return print('Created new model \'' + n + '\'', 'dim'); }
+  if (t.indexOf('/load') === 0) { var l = norm(t.split(/\s+/)[1] || ''); if (!term.models[l]) return print('Error: model not found', 'err'); term.chat = l; loadModel(l); return print('Loading model \'' + l + '\'', 'dim'); }
+  if (t[0] === '/') return print('Unknown command \'' + t.split(' ')[0] + '\'. Type /? for help', 'err');
+  streamText(reply(t, m));
+}
+termIn.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { if (term.busy) return; var v = termIn.value; termIn.value = ''; if (v.trim()) { term.hist.push(v); term.hi = term.hist.length; } runLine(v); }
+  else if (e.key === 'ArrowUp') { if (term.hi > 0) { term.hi--; termIn.value = term.hist[term.hi]; } e.preventDefault(); }
+  else if (e.key === 'ArrowDown') { if (term.hi < term.hist.length - 1) { term.hi++; termIn.value = term.hist[term.hi]; } else { term.hi = term.hist.length; termIn.value = ''; } e.preventDefault(); }
+  else if (e.key === 'c' && e.ctrlKey && term.chat) { print('^C', 'dim'); }
+});
+termBody.addEventListener('click', function () { if (!window.getSelection().toString()) termIn.focus({ preventScroll: true }); });
+var SUGG = ['ollama --version', 'ollama help', 'ollama pull llama3.2:1b', 'ollama list', 'ollama run llama3.2:1b', 'hello', 'tell me a joke', '/bye',
+  'ollama run gemma3:1b "explain python"', 'ollama ps', 'ollama show llama3.2:1b', 'ollama stop llama3.2:1b', 'ollama cp llama3.2:1b my-llama',
+  'ollama create pybuddy -f Modelfile', 'ollama rm my-llama', 'ollama serve', 'ollama run llama-99', 'ollama pull nomic-embed-text', 'ollama run nomic-embed-text', 'curl.exe http://localhost:11434', 'clear'];
+$('#termSugg').innerHTML = SUGG.map(function (s) { return '<button type="button">' + esc(s) + '</button>'; }).join('');
+$$('#termSugg button').forEach(function (b) { b.addEventListener('click', function () { if (term.busy) return; runLine(b.textContent); }); });
+print('Windows PowerShell (Ollama simulator). Type an ollama command, or click a suggestion below.', 'dim');
+print('Try: ollama pull llama3.2:1b', 'dim');
+setPrompt();
+})();
+</script>
+</body>
+</html>

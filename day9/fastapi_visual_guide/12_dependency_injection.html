@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12. Dependency Injection (Depends)</title>
+<meta name="description" content="Little helpers that run BEFORE your function and hand it what it needs.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff7ec; --bg2:#ffeed6; --card:#ffffff; --ink:#2a2342; --muted:#6b6385; --line:#efe2cf;
+  --blue:#3b82f6; --green:#16a34a; --orange:#f97316; --red:#ef4444; --purple:#8b5cf6; --yellow:#eab308; --pink:#ec4899; --teal:#0d9488;
+  --sky1:#bfe6ff; --sky2:#fff3e0; --floor:#e3f4ff; --grid:rgba(59,130,246,.18);
+  --codebg:#1f1b33; --codeink:#ece8ff; --shadow:0 10px 30px rgba(80,50,20,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15122a; --bg2:#1d1938; --card:#231f3f; --ink:#f3efff; --muted:#aaa3cc; --line:#352f5c;
+  --sky1:#1d2a55; --sky2:#15122a; --floor:#1c2950; --grid:rgba(147,197,253,.16); --shadow:0 10px 30px rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  --bg:#15122a; --bg2:#1d1938; --card:#231f3f; --ink:#f3efff; --muted:#aaa3cc; --line:#352f5c;
+  --sky1:#1d2a55; --sky2:#15122a; --floor:#1c2950; --grid:rgba(147,197,253,.16); --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Baloo 2","Nunito","Segoe UI",system-ui,sans-serif;font-size:18px;line-height:1.55;overflow-x:hidden}
+a{color:var(--blue)}
+code{font-family:"JetBrains Mono",Consolas,monospace;font-size:.88em;background:var(--bg2);padding:1px 6px;border-radius:6px}
+.wrap{max-width:1220px;margin:0 auto;padding:0 16px}
+h2{font-size:30px;margin:0 0 14px;line-height:1.2}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px;padding:14px 0;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:6px 14px;text-decoration:none;color:var(--ink);font-weight:700;font-size:15px;box-shadow:var(--shadow)}
+.pill:hover{border-color:var(--blue)}
+.sp{flex:1}
+
+/* hero */
+.hero{display:flex;align-items:center;gap:20px;margin:6px 0 18px}
+.hero-emoji{font-size:64px;width:96px;height:96px;flex:none;display:grid;place-items:center;background:var(--card);border-radius:28px;box-shadow:var(--shadow);animation:wobble 4s ease-in-out infinite}
+.hero h1{margin:0;font-size:clamp(28px,4.5vw,44px);line-height:1.1}
+.hero .num{color:var(--orange);font-weight:800;font-size:16px;letter-spacing:.06em;text-transform:uppercase}
+.tagline{margin:4px 0 0;color:var(--muted);font-size:20px}
+
+/* stage */
+.stage-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:980px){.stage-grid{grid-template-columns:1fr}}
+.viewport{position:relative;height:470px;border-radius:26px;overflow:hidden;perspective:1600px;perspective-origin:50% 30%;
+  background:linear-gradient(180deg,var(--sky1),var(--sky2));box-shadow:var(--shadow);touch-action:pan-y;cursor:grab;user-select:none}
+.viewport:active{cursor:grabbing}
+.world{position:absolute;left:50%;top:58%;transform-style:preserve-3d;
+  transform:scale(var(--k,1)) rotateX(var(--rx,-38deg)) rotateY(var(--ry,0deg))}
+.world div{transform-style:preserve-3d}
+.floor{position:absolute;width:1000px;height:580px;left:-500px;top:-290px;transform:rotateX(90deg);border-radius:48px;
+  background-color:var(--floor);background-image:linear-gradient(var(--grid) 2px,transparent 2px),linear-gradient(90deg,var(--grid) 2px,transparent 2px);
+  background-size:50px 50px;background-position:center;box-shadow:0 0 0 10px rgba(255,255,255,.35) inset}
+.hint{position:absolute;left:14px;bottom:12px;font-size:13px;font-weight:700;color:var(--muted);background:var(--card);padding:3px 10px;border-radius:999px;opacity:.85}
+.bb{transform:rotateY(calc(var(--ry) * -1)) rotateX(calc(var(--rx) * -1))}
+
+.actor{position:absolute;left:0;top:0}
+.actor .pop{transition:transform .5s cubic-bezier(.3,1.6,.5,1),opacity .35s}
+.actor.off .pop{transform:scale3d(.01,.01,.01);opacity:0}
+.box{position:absolute;transform:translateY(-22px)}
+.face{position:absolute;background:var(--c);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;
+  font-size:15px;text-align:center;line-height:1.05;padding:2px 5px;backface-visibility:hidden;text-shadow:0 1px 2px rgba(0,0,0,.35);word-break:break-word}
+.face.front{width:124px;height:44px;left:-62px;top:-22px;transform:translateZ(48px)}
+.face.back{width:124px;height:44px;left:-62px;top:-22px;transform:rotateY(180deg) translateZ(48px);filter:brightness(.7)}
+.face.right{width:96px;height:44px;left:-48px;top:-22px;transform:rotateY(90deg) translateZ(62px);filter:brightness(.78)}
+.face.left{width:96px;height:44px;left:-48px;top:-22px;transform:rotateY(-90deg) translateZ(62px);filter:brightness(.78)}
+.face.top{width:124px;height:96px;left:-62px;top:-48px;transform:rotateX(90deg) translateZ(22px);filter:brightness(1.18)}
+.ringwrap{position:absolute;transform:translateY(-1px) rotateX(90deg)}
+.ring{position:absolute;width:190px;height:190px;left:-95px;top:-95px;border-radius:50%;border:6px solid var(--c);opacity:0;transition:opacity .3s}
+.actor.glow .ring{opacity:.9;animation:ring 1.2s ease-out infinite}
+.char{position:absolute;transform:translate3d(0,-96px,0) rotateY(calc(var(--ry) * -1)) rotateX(calc(var(--rx) * -1))}
+.char span{display:block;width:100px;margin-left:-50px;margin-top:-44px;text-align:center;font-size:70px;line-height:1;animation:bob 2.6s ease-in-out infinite;filter:drop-shadow(0 8px 5px rgba(0,0,0,.22));transition:font-size .3s}
+.actor.glow .char span{font-size:88px}
+.actor.shake .char span{animation:shake .5s ease-in-out 2}
+.actor.shake .face{background:var(--red)}
+.fx{position:absolute;transform:translate3d(0,-185px,0) rotateY(calc(var(--ry) * -1)) rotateX(calc(var(--rx) * -1))}
+.badge{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;background:#fff;color:#2a2342;border:3px solid var(--blue);border-radius:14px;
+  padding:4px 14px;font-weight:800;font-size:23px;animation:popin .5s cubic-bezier(.3,1.7,.5,1);box-shadow:0 6px 0 rgba(0,0,0,.12)}
+.badge.ok{border-color:var(--green);color:#14532d;background:#ecfdf3}
+.badge.err{border-color:var(--red);color:#7f1d1d;background:#fef2f2}
+.packet{position:absolute;left:0;top:0}
+.pk span{display:block;transform:translate(-50%,-50%);background:var(--pc);color:#fff;padding:6px 13px;border-radius:13px;white-space:nowrap;
+  font:700 19px "JetBrains Mono",Consolas,monospace;box-shadow:0 7px 0 rgba(0,0,0,.2);border:2px solid rgba(255,255,255,.7)}
+
+/* narration */
+.narr{display:flex;gap:12px;align-items:flex-start;margin-top:14px}
+.mascot{font-size:48px;line-height:1;animation:bob 2.4s ease-in-out infinite;flex:none}
+.bubble{position:relative;flex:1;background:var(--card);border-radius:22px;padding:14px 20px;box-shadow:var(--shadow);min-height:104px;border:3px solid var(--line)}
+.bubble:before{content:"";position:absolute;left:-12px;top:20px;border:10px solid transparent;border-right-color:var(--line);border-left:0}
+.stepno{font-size:14px;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:.05em}
+.say{margin:2px 0 0;font-size:20px;line-height:1.45}
+.say.enter{animation:slidein .45s ease}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.btn{font:inherit;font-weight:800;font-size:16px;border:0;border-radius:14px;padding:8px 16px;cursor:pointer;background:var(--card);color:var(--ink);box-shadow:0 5px 0 var(--line);border:2px solid var(--line)}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
+.btn.main{background:var(--blue);color:#fff;border-color:#1d4ed8;box-shadow:0 5px 0 #1d4ed8}
+.dots{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--line);border:0;cursor:pointer;padding:0}
+.dot.on{background:var(--orange);transform:scale(1.25)}
+.dot.done{background:#fdba74}
+
+/* code */
+.code-card{background:var(--codebg);color:var(--codeink);border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.code-head{display:flex;align-items:center;gap:6px;padding:10px 12px;background:rgba(255,255,255,.06);flex-wrap:wrap}
+.lights{display:flex;gap:6px;margin-right:6px}.lights i{width:11px;height:11px;border-radius:50%;display:block}
+.tab{font:700 13px "JetBrains Mono",Consolas,monospace;background:transparent;color:#b7b0dd;border:0;padding:5px 10px;border-radius:9px;cursor:pointer}
+.tab.on{background:rgba(255,255,255,.13);color:#fff}
+.code-body{max-height:560px;overflow:auto;padding:10px 0;font:13.5px/1.6 "JetBrains Mono",Consolas,monospace;position:relative}
+.ln{display:flex;padding:0 14px 0 0;white-space:pre;transition:background .3s}
+.ln .no{flex:none;width:3em;text-align:right;padding-right:12px;opacity:.35;user-select:none}
+.ln.hl{background:rgba(250,204,21,.2);box-shadow:inset 5px 0 0 #facc15}
+.tk-k{color:#c792ea}.tk-s{color:#c3e88d}.tk-c{color:#8a84b0;font-style:italic}.tk-d{color:#ffcb6b}.tk-n{color:#f78c6c}.tk-b{color:#82aaff}
+.code-note{font-size:13px;color:#b7b0dd;padding:8px 14px 12px;border-top:1px solid rgba(255,255,255,.08)}
+
+/* sections */
+section.block{margin:44px 0}
+.analogy{display:flex;gap:18px;align-items:center;background:linear-gradient(135deg,#fde68a55,#fbcfe855);border:3px dashed var(--yellow);border-radius:26px;padding:20px 24px}
+.analogy .big{font-size:70px;line-height:1;flex:none;animation:wobble 5s ease-in-out infinite}
+.analogy h3{margin:0 0 4px;font-size:24px}
+.analogy p{margin:0;font-size:19px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:16px;perspective:1000px}
+.wcard{background:var(--card);border-radius:24px;padding:18px 18px 20px;box-shadow:var(--shadow);border-top:10px solid var(--wc);
+  opacity:0;transform:rotateY(-75deg) translateY(30px);transition:transform .8s cubic-bezier(.2,.9,.3,1.25),opacity .6s;transition-delay:calc(var(--i)*130ms)}
+.wcard.in{opacity:1;transform:none}
+.wcard.ready{transition:transform .15s ease-out,opacity .3s;transition-delay:0s}
+.wcard .we{font-size:46px;line-height:1}
+.wcard h3{margin:6px 0 6px;font-size:23px;color:var(--wc)}
+.wcard p{margin:0;font-size:17px;overflow-wrap:anywhere}
+.tryit{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:860px){.tryit{grid-template-columns:1fr}}
+.term{background:var(--codebg);color:var(--codeink);border-radius:20px;padding:16px 18px;font:14px/1.7 "JetBrains Mono",Consolas,monospace;overflow-x:auto;box-shadow:var(--shadow)}
+.term .c{color:#8a84b0}.term .p{color:#4ade80}
+.visits{background:var(--card);border-radius:20px;padding:14px 18px;box-shadow:var(--shadow)}
+.visit{padding:8px 0;border-bottom:2px dashed var(--line)}
+.visit:last-child{border:0}
+.visit .u{font:700 14px "JetBrains Mono",Consolas,monospace;color:var(--blue);word-break:break-all}
+.visit .o{font:13px "JetBrains Mono",Consolas,monospace;color:var(--muted);word-break:break-all}
+.quiz{display:grid;gap:16px}
+.q{background:var(--card);border-radius:22px;padding:18px 20px;box-shadow:var(--shadow)}
+.q h3{margin:0 0 10px;font-size:21px}
+.opts{display:grid;gap:8px}
+.opt{font:inherit;font-size:17px;text-align:left;padding:10px 14px;border-radius:14px;border:3px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.opt:hover{border-color:var(--blue)}
+.opt.right{border-color:var(--green);background:#dcfce7;color:#14532d}
+.opt.wrong{border-color:var(--red);background:#fee2e2;color:#7f1d1d;animation:shake2 .4s}
+.why{margin-top:10px;font-size:17px;display:none}
+.q.answered .why{display:block}
+.remember{background:var(--card);border-left:10px solid var(--green);border-radius:18px;padding:14px 20px;box-shadow:var(--shadow);font-size:19px}
+.navfoot{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:40px 0 50px}
+.navfoot a{display:block;background:var(--card);border-radius:22px;padding:16px 20px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);border:3px solid transparent}
+.navfoot a:hover{border-color:var(--blue)}
+.navfoot small{color:var(--muted);font-weight:700}
+.navfoot .nx{text-align:right}
+.burst{position:fixed;pointer-events:none;font-size:26px;z-index:50;animation:burst 1s ease-out forwards}
+
+/* index */
+.ihero{display:grid;grid-template-columns:auto 1fr;gap:34px;align-items:center;padding:30px 0 10px}
+@media (max-width:760px){.ihero{grid-template-columns:1fr;text-align:center}.cubebox{margin:0 auto}}
+.cubebox{width:170px;height:170px;perspective:700px}
+.cube3d{width:110px;height:110px;position:relative;margin:30px;transform-style:preserve-3d;animation:spin 12s linear infinite}
+.cube3d div{position:absolute;inset:0;display:grid;place-items:center;font-size:54px;border-radius:18px;border:4px solid rgba(255,255,255,.7)}
+.cube3d .f1{background:#3b82f6;transform:translateZ(55px)}.cube3d .f2{background:#16a34a;transform:rotateY(180deg) translateZ(55px)}
+.cube3d .f3{background:#f97316;transform:rotateY(90deg) translateZ(55px)}.cube3d .f4{background:#ec4899;transform:rotateY(-90deg) translateZ(55px)}
+.cube3d .f5{background:#8b5cf6;transform:rotateX(90deg) translateZ(55px)}.cube3d .f6{background:#eab308;transform:rotateX(-90deg) translateZ(55px)}
+.ihero h1{font-size:clamp(34px,6vw,58px);line-height:1.05;margin:0}
+.ihero p{font-size:21px;color:var(--muted);margin:8px 0 0}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:24px 0}
+.how div{background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow);font-size:17px}
+.how b{display:block;font-size:20px}
+.group h2{margin-top:34px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;perspective:1200px}
+.lcard{display:block;text-decoration:none;color:var(--ink);background:var(--card);border-radius:24px;padding:18px;box-shadow:var(--shadow);border-bottom:8px solid var(--lc);
+  opacity:0;transform:rotateX(-60deg) translateY(30px);transition:transform .7s cubic-bezier(.2,.9,.3,1.25),opacity .5s;transition-delay:calc(var(--i)*60ms)}
+.lcard.in{opacity:1;transform:none}
+.lcard.ready{transition:transform .15s ease-out;transition-delay:0s}
+.lcard .le{font-size:46px;line-height:1}
+.lcard .ln2{font-weight:800;color:var(--lc);font-size:14px;letter-spacing:.06em}
+.lcard h3{margin:4px 0;font-size:21px;line-height:1.2}
+.lcard p{margin:0;color:var(--muted);font-size:16px}
+
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes wobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes shake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-9px) rotate(-12deg)}75%{transform:translateX(9px) rotate(12deg)}}
+@keyframes shake2{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes popin{0%{transform:translate(-50%,-50%) scale(.2)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes ring{0%{transform:scale(.55);opacity:.9}100%{transform:scale(1.15);opacity:0}}
+@keyframes slidein{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none}}
+@keyframes spin{0%{transform:rotateX(-20deg) rotateY(0)}100%{transform:rotateX(-20deg) rotateY(360deg)}}
+@keyframes burst{0%{transform:translate(0,0) scale(.5);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.3) rotate(var(--rot));opacity:0}}
+@media (prefers-reduced-motion:reduce){.char span,.mascot,.hero-emoji,.analogy .big{animation:none}.cube3d{animation-duration:60s}}
+@media (max-width:600px){.viewport{height:400px}.say{font-size:18px}body{font-size:17px}.hero-emoji{width:72px;height:72px;font-size:46px}}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="application/json" id="lesson">
+{
+ "slug": "12_dependency_injection",
+ "group": "⚙️ Power-ups",
+ "emoji": "🧩",
+ "title": "Dependency Injection (Depends)",
+ "tagline": "Little helpers that run BEFORE your function and hand it what it needs.",
+ "actors": [
+  {
+   "id": "you",
+   "emoji": "🧒",
+   "name": "You (browser)",
+   "x": -430,
+   "z": 60,
+   "color": "#3b82f6",
+   "hidden": false
+  },
+  {
+   "id": "fast",
+   "emoji": "⚡",
+   "name": "FastAPI app",
+   "x": -240,
+   "z": -10,
+   "color": "#ca8a04",
+   "hidden": false
+  },
+  {
+   "id": "page",
+   "emoji": "📄",
+   "name": "pagination()",
+   "x": -60,
+   "z": -215,
+   "color": "#3b82f6",
+   "hidden": false
+  },
+  {
+   "id": "db",
+   "emoji": "🔌",
+   "name": "get_db()",
+   "x": 75,
+   "z": 0,
+   "color": "#0d9488",
+   "hidden": false
+  },
+  {
+   "id": "tok",
+   "emoji": "🎫",
+   "name": "get_token()",
+   "x": -80,
+   "z": 205,
+   "color": "#ec4899",
+   "hidden": false
+  },
+  {
+   "id": "user",
+   "emoji": "👤",
+   "name": "get_current_user()",
+   "x": 255,
+   "z": -85,
+   "color": "#8b5cf6",
+   "hidden": false
+  },
+  {
+   "id": "prof",
+   "emoji": "🏠",
+   "name": "read_profile()",
+   "x": 425,
+   "z": -230,
+   "color": "#f97316",
+   "hidden": false
+  },
+  {
+   "id": "key",
+   "emoji": "🚧",
+   "name": "verify_key()",
+   "x": 320,
+   "z": 220,
+   "color": "#ef4444",
+   "hidden": false
+  }
+ ],
+ "steps": [
+  {
+   "say": "A <b>dependency<\/b> is a helper function. You write <code>Depends(helper)<\/code>, and FastAPI runs the helper <b>first<\/b> and hands you the result.",
+   "do": [
+    {
+     "glow": [
+      "page",
+      "db",
+      "tok",
+      "user",
+      "key"
+     ]
+    }
+   ]
+  },
+  {
+   "say": "<code>pagination()<\/code> reads <code>skip<\/code> and <code>limit<\/code> once, and any endpoint can reuse it.",
+   "do": [
+    {
+     "code": [
+      "def pagination",
+      "Depends(pagination)"
+     ]
+    },
+    {
+     "send": "you>fast",
+     "label": "GET /items?skip=20&limit=5"
+    },
+    {
+     "send": "fast>page",
+     "label": "skip, limit"
+    },
+    {
+     "badge": [
+      "page",
+      "{skip: 20, limit: 5}"
+     ]
+    }
+   ]
+  },
+  {
+   "say": "Helpers can need other helpers! <code>read_profile<\/code> needs <code>get_current_user<\/code>, which needs <b>get_db<\/b> AND <b>get_token<\/b>.",
+   "do": [
+    {
+     "code": [
+      "def get_current_user",
+      "def get_token"
+     ]
+    },
+    {
+     "send": "you>fast",
+     "label": "GET /profile + Authorization"
+    },
+    {
+     "multi": [
+      [
+       "fast>db",
+       "open db"
+      ],
+      [
+       "fast>tok",
+       "read token"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "say": "FastAPI solves the whole chain for you, then gives the final user to your function.",
+   "do": [
+    {
+     "code": [
+      "CurrentUser = Annotated",
+      "def read_profile(user: CurrentUser)"
+     ]
+    },
+    {
+     "multi": [
+      [
+       "db>user",
+       "db"
+      ],
+      [
+       "tok>user",
+       "token"
+      ]
+     ]
+    },
+    {
+     "send": "user>prof",
+     "label": "user"
+    },
+    {
+     "badge": [
+      "prof",
+      "✅ {name: asha}"
+     ]
+    }
+   ]
+  },
+  {
+   "say": "<code>yield<\/code> in a helper means: \"here you go… and I'll <b>clean up after<\/b>\". The <code>finally<\/code> part runs after the answer is sent.",
+   "do": [
+    {
+     "code": [
+      "yield db",
+      "finally:",
+      "db[\"connected\"] = False"
+     ]
+    },
+    {
+     "badge": [
+      "db",
+      "🔒 closed after"
+     ]
+    }
+   ]
+  },
+  {
+   "say": "No <code>Authorization<\/code> header? <code>get_token<\/code> raises <b>401<\/b> and read_profile never even runs.",
+   "do": [
+    {
+     "code": [
+      "raise HTTPException(401, \"Missing token\")"
+     ]
+    },
+    {
+     "send": "you>fast",
+     "label": "GET /profile (no token)"
+    },
+    {
+     "send": "fast>tok",
+     "label": "token?"
+    },
+    {
+     "shake": [
+      "tok"
+     ]
+    },
+    {
+     "badge": [
+      "tok",
+      "❌ 401 Missing token"
+     ]
+    }
+   ]
+  },
+  {
+   "say": "<code>verify_key<\/code> is a <b>bouncer<\/b>: it returns nothing, it only checks. Wrong key → <b>403<\/b>.",
+   "do": [
+    {
+     "code": [
+      "def verify_key",
+      "dependencies=[Depends(verify_key)]"
+     ]
+    },
+    {
+     "send": "you>fast",
+     "label": "GET /admin X-Key: oops"
+    },
+    {
+     "send": "fast>key",
+     "label": "check key"
+    },
+    {
+     "shake": [
+      "key"
+     ]
+    },
+    {
+     "badge": [
+      "key",
+      "❌ 403 Bad key"
+     ]
+    }
+   ]
+  }
+ ],
+ "analogy": {
+  "emoji": "🎒",
+  "title": "packing your school bag",
+  "text": "Before school (your function), Mom checks you have your lunch, your books and your shoes (the dependencies). You just grab the bag and go. Forgot shoes? You can't leave (an error)."
+ },
+ "w": {
+  "what": "<code>Depends()<\/code> tells FastAPI: \"run this helper first and give me what it returns\".",
+  "why": "Write shared stuff once (database, login, paging, permissions) and reuse it everywhere, plus easy testing.",
+  "when": "Database sessions, the current user, checking keys, common query params, any repeated setup.",
+  "where": "As a parameter: <code>user: Annotated[dict, Depends(get_current_user)]<\/code>, or in <code>dependencies=[...]<\/code>.",
+  "how": "Write a normal function. Use <code>yield<\/code> if it needs cleanup. Make a short alias like <code>CurrentUser<\/code>."
+ },
+ "remember": "Depends = \"get this ready for me first\". yield = \"…and clean up after\".",
+ "quiz": [
+  {
+   "q": "When does a dependency run?",
+   "o": [
+    "Before your function",
+    "After the server stops",
+    "Never"
+   ],
+   "a": 0,
+   "why": "It prepares things first. 🎒"
+  },
+  {
+   "q": "What does <code>yield<\/code> allow?",
+   "o": [
+    "Cleanup after the response",
+    "Faster code",
+    "Bigger files"
+   ],
+   "a": 0,
+   "why": "The code after yield runs at the end."
+  }
+ ],
+ "num": 12,
+ "file": "12_dependency_injection.html",
+ "files": [
+  {
+   "name": "main.py",
+   "code": "from typing import Annotated\nfrom fastapi import Depends, FastAPI, HTTPException, Header\n\napp = FastAPI()\n\n# 1) Simple dependency: shared query parameters\ndef pagination(skip: int = 0, limit: int = 10):\n    return {\"skip\": skip, \"limit\": limit}\n\n@app.get(\"/items\")\ndef list_items(page: Annotated[dict, Depends(pagination)]):\n    return page                                   # /items?skip=20&limit=5\n\n# 2) Dependency with cleanup: `yield`\ndef get_db():\n    db = {\"connected\": True}                      # e.g. SessionLocal()\n    try:\n        yield db                                  # given to the endpoint\n    finally:\n        db[\"connected\"] = False                   # runs AFTER the response: close it\n\n# 3) Dependencies that use other dependencies\ndef get_token(authorization: Annotated[str | None, Header()] = None):\n    if not authorization:\n        raise HTTPException(401, \"Missing token\")\n    return authorization.removeprefix(\"Bearer \")\n\ndef get_current_user(db: Annotated[dict, Depends(get_db)],\n                     token: Annotated[str, Depends(get_token)]):\n    return {\"name\": \"asha\", \"token\": token}\n\n# Tip: make a short alias and reuse it everywhere\nCurrentUser = Annotated[dict, Depends(get_current_user)]\n\n@app.get(\"/profile\")\ndef read_profile(user: CurrentUser):\n    return user\n\n# 4) Run a dependency for its side effect only (no return value needed)\ndef verify_key(x_key: Annotated[str, Header()]):\n    if x_key != \"secret\":\n        raise HTTPException(403, \"Bad key\")\n\n@app.get(\"/admin\", dependencies=[Depends(verify_key)])\ndef admin():\n    return {\"welcome\": \"admin\"}\n\n# 5) For the WHOLE app: FastAPI(dependencies=[Depends(verify_key)])\n\n\n# Run this file directly:  python main.py\n# (same as: fastapi dev / uvicorn main:app --reload)\nif __name__ == \"__main__\":\n    import uvicorn\n    uvicorn.run(\"main:app\", host=\"127.0.0.1\", port=8000, reload=True)\n"
+  }
+ ],
+ "run": {
+  "folder": "12_dependency_injection",
+  "py": "python main.py",
+  "cmd": "fastapi dev main.py",
+  "visits": [
+   [
+    "/items?skip=20&limit=5",
+    "{\"skip\": 20, \"limit\": 5}"
+   ],
+   [
+    "/profile with header Authorization: Bearer abc",
+    "{\"name\": \"asha\", \"token\": \"abc\"}"
+   ],
+   [
+    "/admin with header X-Key: secret",
+    "{\"welcome\": \"admin\"}"
+   ]
+  ]
+ },
+ "prev": {
+  "num": 11,
+  "file": "11_async_await.html",
+  "title": "async / await",
+  "emoji": "🔄",
+  "tagline": "One waiter, many tables: serve others while the food is cooking.",
+  "group": "⚙️ Power-ups"
+ },
+ "next": {
+  "num": 13,
+  "file": "13_security_oauth2_jwt.html",
+  "title": "Login with OAuth2 + JWT",
+  "emoji": "🔐",
+  "tagline": "Show your ticket once, get a wristband, then enjoy every ride.",
+  "group": "⚙️ Power-ups"
+ }
+}
+</script>
+<script>
+(() => {
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 3D tilt + flip-in for cards ---------- */
+function cardFx(sel) {
+  const els = $$(sel);
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('in');
+    setTimeout(() => e.target.classList.add('ready'), 1400);
+    io.unobserve(e.target);
+  }), { threshold: .15 });
+  els.forEach((el, i) => {
+    el.style.setProperty('--i', i % 8);
+    io.observe(el);
+    el.addEventListener('pointermove', ev => {
+      if (!el.classList.contains('ready')) return;
+      const r = el.getBoundingClientRect();
+      const x = (ev.clientX - r.left) / r.width - .5, y = (ev.clientY - r.top) / r.height - .5;
+      el.style.transform = `rotateY(${x * 16}deg) rotateX(${-y * 16}deg) translateZ(10px)`;
+    });
+    el.addEventListener('pointerleave', () => { el.style.transform = ''; });
+  });
+}
+
+/* ---------- index page ---------- */
+const cat = $('#catalog');
+if (cat) {
+  const C = JSON.parse(cat.textContent);
+  const groups = [];
+  C.forEach(l => { let g = groups.find(g => g.name === l.group); if (!g) groups.push(g = { name: l.group, items: [] }); g.items.push(l); });
+  const colors = ['#3b82f6', '#16a34a', '#f97316', '#8b5cf6', '#ec4899', '#0d9488'];
+  $('#app').innerHTML = `
+  <div class="wrap">
+    <div class="ihero">
+      <div class="cubebox"><div class="cube3d"><div class="f1">⚡</div><div class="f2">🐍</div><div class="f3">📦</div><div class="f4">🚀</div><div class="f5">🛡️</div><div class="f6">💬</div></div></div>
+      <div><h1>FastAPI for Kids ⚡</h1><p>21 animated 3D lessons. Every example from the tutorial, explained like a story: <b>What, Why, When, Where</b> and <b>How</b>.</p></div>
+    </div>
+    <div class="how">
+      <div><b>🎬 1. Watch</b>A 3D story plays. Little letters 📨 fly between the characters. Drag the world to spin it!</div>
+      <div><b>👀 2. Follow the code</b>The yellow line in the code lights up at the same moment.</div>
+      <div><b>🃏 3. Read the 4W+H</b>What is it? Why use it? When? Where? How?</div>
+      <div><b>🧪 4. Try & quiz</b>Run the real example, then answer a quick quiz.</div>
+    </div>
+    ${groups.map((g, gi) => `<div class="group"><h2>${g.name}</h2><div class="lgrid">${g.items.map(l => `
+      <a class="lcard" href="${l.file}" style="--lc:${colors[gi % colors.length]}">
+        <div class="le">${l.emoji}</div><div class="ln2">LESSON ${l.num}</div><h3>${l.title}</h3><p>${l.tagline}</p></a>`).join('')}</div></div>`).join('')}
+    <p style="color:var(--muted);margin:40px 0;text-align:center">Code for every lesson lives in <code>day8/fastapi_examples</code>. Run one with <code>python main.py</code>.</p>
+  </div>`;
+  cardFx('.lcard');
+  return;
+}
+
+/* ---------- lesson page ---------- */
+const L = JSON.parse($('#lesson').textContent);
+const W5 = [
+  ['what', '🤔', 'WHAT is it?', '#3b82f6'], ['why', '💡', 'WHY use it?', '#eab308'], ['when', '⏰', 'WHEN do I use it?', '#16a34a'],
+  ['where', '📍', 'WHERE does it go?', '#ec4899'], ['how', '🛠️', 'HOW does it work?', '#8b5cf6']
+];
+const navA = (l, cls, label) => l ? `<a class="${cls}" href="${l.file}"><small>${label}</small><div><b>${l.emoji} ${l.title}</b></div></a>` : '<span></span>';
+$('#app').innerHTML = `
+<div class="wrap">
+  <nav class="top"><a class="pill" href="index.html">🏠 All lessons</a><span class="sp"></span>
+    ${L.prev ? `<a class="pill" href="${L.prev.file}">◀ ${L.prev.num}</a>` : ''}
+    ${L.next ? `<a class="pill" href="${L.next.file}">${L.next.num} ▶</a>` : ''}</nav>
+  <header class="hero"><div class="hero-emoji">${L.emoji}</div>
+    <div><div class="num">Lesson ${L.num} of 21</div><h1>${L.title}</h1><p class="tagline">${L.tagline}</p></div></header>
+
+  <div class="stage-grid">
+    <div>
+      <div class="viewport" id="vp"><div class="world" id="world"><div class="floor"></div></div><div class="hint">🖱️ drag to spin the world</div></div>
+      <div class="narr"><div class="mascot">🤖</div><div class="bubble"><div class="stepno" id="stepno"></div><p class="say" id="say"></p></div></div>
+      <div class="controls">
+        <button class="btn" id="bRestart" title="Start again">⏮ Restart</button>
+        <button class="btn" id="bPrev" title="Back (←)">◀ Back</button>
+        <button class="btn main" id="bPlay" title="Play / pause (space)">⏸ Pause</button>
+        <button class="btn" id="bNext" title="Next (→)">Next ▶</button>
+        <div class="dots" id="dots"></div>
+      </div>
+    </div>
+    <div class="code-card">
+      <div class="code-head"><div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div><span id="tabs"></span></div>
+      <div class="code-body" id="codeBody"></div>
+      <div class="code-note">📂 fastapi_examples/${L.run.folder}</div>
+    </div>
+  </div>
+
+  <section class="block"><div class="analogy"><div class="big">${L.analogy.emoji}</div><div><h3>Imagine this… ${L.analogy.title}</h3><p>${L.analogy.text}</p></div></div></section>
+
+  <section class="block"><h2>🧭 The 4W + H</h2><div class="cards">
+    ${W5.map(([k, e, t, c]) => `<div class="wcard" style="--wc:${c}"><div class="we">${e}</div><h3>${t}</h3><p>${L.w[k]}</p></div>`).join('')}
+  </div></section>
+
+  <section class="block"><div class="remember">🧠 <b>Remember:</b> ${L.remember}</div></section>
+
+  <section class="block"><h2>🧪 Try it yourself</h2><div class="tryit">
+    <div class="term"><span class="c"># 1. go to the examples folder and switch on the virtual env</span><br>
+      <span class="p">&gt;</span> cd D:\\getwork\\day8\\fastapi_examples<br><span class="p">&gt;</span> .venv\\Scripts\\activate<br><br>
+      <span class="c"># 2. go into this lesson's folder</span><br><span class="p">&gt;</span> cd ${esc(L.run.folder.replace(/\//g, '\\'))}<br><br>
+      <span class="c"># 3. start it (pick one)</span><br><span class="p">&gt;</span> ${esc(L.run.py)}<br><span class="p">&gt;</span> ${esc(L.run.cmd)}<br><br>
+      <span class="c"># 4. open the playground</span><br><span class="p">&gt;</span> http://127.0.0.1:8000/docs</div>
+    <div class="visits"><b>👉 Things to try</b>${L.run.visits.map(v => `<div class="visit"><div class="u">${esc(v[0])}</div><div class="o">→ ${esc(v[1])}</div></div>`).join('')}</div>
+  </div></section>
+
+  <section class="block"><h2>🎯 Quick quiz</h2><div class="quiz">
+    ${L.quiz.map((q, qi) => `<div class="q" data-a="${q.a}"><h3>${qi + 1}. ${q.q}</h3><div class="opts">${q.o.map((o, i) => `<button class="opt" data-i="${i}">${o}</button>`).join('')}</div><div class="why">${q.why}</div></div>`).join('')}
+  </div></section>
+
+  <nav class="navfoot">${navA(L.prev, 'pv', '◀ Previous lesson')}${navA(L.next, 'nx', 'Next lesson ▶')}</nav>
+</div>`;
+document.title = `${L.num}. ${L.title} · FastAPI for Kids`;
+cardFx('.wcard');
+
+/* quiz */
+$$('.q').forEach(q => q.addEventListener('click', e => {
+  const b = e.target.closest('.opt'); if (!b || q.classList.contains('answered')) return;
+  const right = +b.dataset.i === +q.dataset.a;
+  b.classList.add(right ? 'right' : 'wrong');
+  if (!right) { setTimeout(() => b.classList.remove('wrong'), 450); return; }
+  q.classList.add('answered');
+  const r = b.getBoundingClientRect();
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement('span'); s.className = 'burst'; s.textContent = ['🎉', '⭐', '✨', '🎈'][i % 4];
+    s.style.left = (r.left + r.width / 2) + 'px'; s.style.top = (r.top + r.height / 2) + 'px';
+    const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 90;
+    s.style.setProperty('--dx', Math.cos(a) * d + 'px'); s.style.setProperty('--dy', Math.sin(a) * d + 'px'); s.style.setProperty('--rot', (Math.random() * 360) + 'deg');
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1000);
+  }
+}));
+
+/* ---------- code panel ---------- */
+const PYK = /\b(from|import|def|async|await|return|class|if|not|in|is|else|elif|try|except|finally|with|as|for|while|yield|raise|None|True|False|lambda|and|or|del|pass)\b/;
+function hlPy(line) {
+  const re = /(#.*$)|("""[^]*?"""|[rf]?"(?:[^"\\]|\\.)*"|[rf]?'(?:[^'\\]|\\.)*')|(@[\w.]+)|\b(from|import|def|async|await|return|class|if|not|in|is|else|elif|try|except|finally|with|as|for|while|yield|raise|None|True|False|lambda|and|or|del|pass)\b|\b(\d+(?:\.\d+)?)\b|\b(int|str|float|bool|dict|list|print|len|max)\b/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(line))) {
+    out += esc(line.slice(last, m.index));
+    const cls = m[1] ? 'c' : m[2] ? 's' : m[3] ? 'd' : m[4] ? 'k' : m[5] ? 'n' : 'b';
+    out += `<span class="tk-${cls}">${esc(m[0])}</span>`; last = re.lastIndex;
+  }
+  return out + esc(line.slice(last));
+}
+const files = L.files.map(f => ({ ...f, lines: f.code.replace(/\n$/, '').split('\n') }));
+let curFile = 0;
+function showFile(i) {
+  curFile = i;
+  $('#tabs').innerHTML = files.map((f, j) => `<button class="tab ${j === i ? 'on' : ''}" data-f="${j}">${esc(f.name)}</button>`).join('');
+  const py = files[i].name.endsWith('.py');
+  $('#codeBody').innerHTML = files[i].lines.map((l, n) => `<div class="ln" data-n="${n}"><span class="no">${n + 1}</span><span>${(py ? hlPy(l) : esc(l)) || ' '}</span></div>`).join('');
+}
+$('#tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showFile(+t.dataset.f); });
+showFile(0);
+function highlight(finds) {
+  if (!finds) { $$('.ln.hl').forEach(l => l.classList.remove('hl')); return; }
+  finds = [].concat(finds);
+  const fi = files.findIndex(f => f.lines.some(l => l.includes(finds[0])));
+  if (fi < 0) return;
+  if (fi !== curFile) showFile(fi);
+  $$('.ln.hl').forEach(l => l.classList.remove('hl'));
+  let first = null;
+  files[fi].lines.forEach((l, n) => {
+    if (finds.some(f => l.includes(f))) { const el = $(`.ln[data-n="${n}"]`); el.classList.add('hl'); if (!first) first = el; }
+  });
+  if (first) { const body = $('#codeBody'); body.scrollTo({ top: Math.max(0, first.offsetTop - body.clientHeight / 3), behavior: 'smooth' }); }
+}
+
+/* ---------- 3D world ---------- */
+const vp = $('#vp'), world = $('#world');
+const actors = {};
+L.actors.forEach((a, i) => {
+  const el = document.createElement('div');
+  el.className = 'actor' + (a.hidden ? ' off' : '');
+  el.style.setProperty('--c', a.color);
+  el.style.transform = `translate3d(${a.x}px,0,${a.z}px)`;
+  el.innerHTML = `<div class="pop"><div class="ringwrap"><div class="ring"></div></div>
+    <div class="box">${['front', 'back', 'right', 'left', 'top'].map(f => `<div class="face ${f}">${f === 'front' || f === 'back' ? esc(a.name) : ''}</div>`).join('')}</div>
+    <div class="char"><span style="animation-delay:${-i * .37}s">${a.emoji}</span></div><div class="fx"></div></div>`;
+  world.appendChild(el);
+  actors[a.id] = { ...a, el };
+});
+let rx = -38, ry = 0, userRy = 0, userRx = -38, drag = null, k = 1;
+function fit() { k = Math.min(1.05, vp.clientWidth / 1060); }
+addEventListener('resize', fit); fit();
+vp.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, ry: userRy, rx: userRx }; vp.setPointerCapture(e.pointerId); });
+vp.addEventListener('pointermove', e => {
+  if (!drag) return;
+  userRy = Math.max(-60, Math.min(60, drag.ry + (e.clientX - drag.x) * .3));
+  userRx = Math.max(-55, Math.min(-6, drag.rx - (e.clientY - drag.y) * .2));
+});
+vp.addEventListener('pointerup', () => drag = null);
+vp.addEventListener('pointercancel', () => drag = null);
+(function loop(t) {
+  const sway = reduce || drag ? 0 : Math.sin(t / 2600) * 7;
+  ry += (userRy + sway - ry) * .08; rx += (userRx - rx) * .08;
+  world.style.setProperty('--ry', ry.toFixed(2) + 'deg');
+  world.style.setProperty('--rx', rx.toFixed(2) + 'deg');
+  world.style.setProperty('--k', k);
+  requestAnimationFrame(loop);
+})(0);
+
+const METHOD_COLORS = { GET: '#3b82f6', POST: '#16a34a', PUT: '#f97316', PATCH: '#8b5cf6', DELETE: '#ef4444', WS: '#0d9488' };
+function packetColor(label, from) {
+  const m = String(label).match(/^([A-Z]+)\b/);
+  if (m && METHOD_COLORS[m[1]]) return METHOD_COLORS[m[1]];
+  if (/^[\[{"]/.test(label) || /^\d{3}\b/.test(label)) return '#d97706';
+  return actors[from] ? actors[from].color : '#3b82f6';
+}
+function fly(from, to, label, color, token) {
+  const A = actors[from], B = actors[to];
+  if (!A || !B) return Promise.resolve();
+  const p = document.createElement('div'); p.className = 'packet';
+  p.innerHTML = `<div class="pk bb"><span style="--pc:${color || packetColor(label, from)}">${esc(label)}</span></div>`;
+  world.appendChild(p);
+  const dist = Math.hypot(B.x - A.x, B.z - A.z), dur = Math.max(900, Math.min(1700, dist * 2.4)) / (reduce ? 1.5 : 1);
+  const h = 70 + dist * .18;
+  return new Promise(res => {
+    const t0 = performance.now();
+    (function step(now) {
+      if (token !== runToken) { p.remove(); return res(); }
+      let t = Math.min(1, (now - t0) / dur); const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const x = A.x + (B.x - A.x) * e, z = A.z + (B.z - A.z) * e, y = -110 - Math.sin(Math.PI * e) * h;
+      p.style.transform = `translate3d(${x}px,${y}px,${z}px)`;
+      if (t < 1) requestAnimationFrame(step); else { setTimeout(() => p.remove(), 120); res(); }
+    })(t0);
+  });
+}
+function setVis(id, on) { const a = actors[id]; if (a) a.el.classList.toggle('off', !on); }
+function clearFx() {
+  Object.values(actors).forEach(a => { a.el.classList.remove('glow', 'shake'); $('.fx', a.el).innerHTML = ''; });
+  $$('.packet', world).forEach(p => p.remove());
+}
+function badge(id, text) {
+  const a = actors[id]; if (!a) return;
+  const cls = /^(✅|👍|🎉)/.test(text) ? 'ok' : /^(❌|🚫|⛔)/.test(text) ? 'err' : '';
+  $('.fx', a.el).innerHTML = `<div class="badge ${cls}">${esc(text)}</div>`;
+}
+
+/* ---------- story player ---------- */
+const steps = L.steps;
+let cur = 0, playing = !reduce, runToken = 0;
+$('#dots').innerHTML = steps.map((_, i) => `<button class="dot" data-i="${i}" aria-label="Step ${i + 1}"></button>`).join('');
+async function doAct(a, tk) {
+  if (a.code !== undefined) highlight(a.code);
+  if (a.show) { [].concat(a.show).forEach(id => setVis(id, true)); await sleep(450); }
+  if (a.hide) { [].concat(a.hide).forEach(id => setVis(id, false)); await sleep(450); }
+  if (a.glow) [].concat(a.glow).forEach(id => actors[id] && actors[id].el.classList.add('glow'));
+  if (a.unglow) [].concat(a.unglow).forEach(id => actors[id] && actors[id].el.classList.remove('glow'));
+  if (a.send) { const [f, t] = a.send.split('>'); await fly(f.trim(), t.trim(), a.label || '', a.color, tk); }
+  if (a.multi) await Promise.all(a.multi.map(m => { const [f, t] = m[0].split('>'); return fly(f.trim(), t.trim(), m[1], m[2], tk); }));
+  if (a.badge) { badge(a.badge[0], a.badge[1]); await sleep(550); }
+  if (a.shake) { [].concat(a.shake).forEach(id => actors[id] && actors[id].el.classList.add('shake')); await sleep(900); }
+  if (a.wait) await sleep(a.wait);
+}
+async function go(i) {
+  i = Math.max(0, Math.min(steps.length - 1, i));
+  const tk = ++runToken; cur = i;
+  clearFx(); highlight(null);
+  L.actors.forEach(a => setVis(a.id, !a.hidden));
+  for (let j = 0; j < i; j++) for (const a of steps[j].do || []) { if (a.show) [].concat(a.show).forEach(id => setVis(id, true)); if (a.hide) [].concat(a.hide).forEach(id => setVis(id, false)); }
+  $('#stepno').textContent = `Step ${i + 1} of ${steps.length}`;
+  const say = $('#say'); say.classList.remove('enter'); void say.offsetWidth; say.innerHTML = steps[i].say; say.classList.add('enter');
+  $$('.dot').forEach((d, j) => { d.classList.toggle('on', j === i); d.classList.toggle('done', j < i); });
+  await sleep(350);
+  for (const a of steps[i].do || []) { if (tk !== runToken) return; await doAct(a, tk); }
+  if (tk !== runToken) return;
+  const read = Math.max(2600, steps[i].say.replace(/<[^>]+>/g, '').length * 55);
+  await sleep(read);
+  if (tk !== runToken || !playing) return;
+  if (i < steps.length - 1) go(i + 1); else { playing = false; syncPlay(); }
+}
+function syncPlay() { $('#bPlay').textContent = playing ? '⏸ Pause' : (cur >= steps.length - 1 ? '🔁 Replay' : '▶ Play'); }
+$('#bPlay').onclick = () => {
+  if (playing) { playing = false; syncPlay(); return; }
+  playing = true; syncPlay(); go(cur >= steps.length - 1 ? 0 : cur + 1);
+};
+$('#bNext').onclick = () => { playing = false; syncPlay(); go(cur + 1); };
+$('#bPrev').onclick = () => { playing = false; syncPlay(); go(cur - 1); };
+$('#bRestart').onclick = () => { playing = true; syncPlay(); go(0); };
+$('#dots').onclick = e => { const d = e.target.closest('.dot'); if (d) { playing = false; syncPlay(); go(+d.dataset.i); } };
+addEventListener('keydown', e => {
+  if (e.target.closest('button,input,textarea')) return;
+  if (e.key === 'ArrowRight') $('#bNext').click(); else if (e.key === 'ArrowLeft') $('#bPrev').click();
+  else if (e.key === ' ') { e.preventDefault(); $('#bPlay').click(); }
+});
+syncPlay();
+go(0);
+})();
+
+</script>
+</body>
+</html>
