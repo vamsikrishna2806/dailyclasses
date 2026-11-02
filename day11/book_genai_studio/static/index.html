@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book GenAI Studio</title>
+  <meta name="description" content="Upload any book. Summarize it, chat with it, and turn it into quizzes, notes and posts.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">📚</span><div><b>Book GenAI Studio</b><small>Summarize · Ask · Create</small></div></div>
+  <div class="topbar-right">
+    <label class="book-picker">
+      <span>Book</span>
+      <select id="activeBook"><option value="">No book (general)</option></select>
+    </label>
+    <span id="modeBadge" class="badge" title="">…</span>
+    <button id="openSettings" class="btn ghost" aria-label="Settings">⚙️ Settings</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="library">📥 Library</button>
+  <button class="tab" data-tab="summarize">📝 Summarize</button>
+  <button class="tab" data-tab="ask">💬 Ask the book</button>
+  <button class="tab" data-tab="create">✨ Create</button>
+  <button class="tab" data-tab="lab">🧪 Prompt Lab</button>
+  <button class="tab" data-tab="usage">📊 Usage</button>
+</nav>
+
+<main>
+  <!-- ============================== LIBRARY -->
+  <section id="tab-library" class="panel active">
+    <div class="grid2">
+      <div class="card">
+        <h2>Upload a book</h2>
+        <label id="dropZone" class="drop">
+          <input id="fileInput" type="file" accept=".pdf,.epub,.docx,.txt,.md,.html,.htm" hidden>
+          <div class="drop-icon">📖</div>
+          <b>Drop a file here or click to choose</b>
+          <small>PDF · EPUB · DOCX · TXT · MD · HTML — up to <span id="maxMb">25</span> MB</small>
+        </label>
+        <div id="uploadStatus" class="status hidden"></div>
+        <button id="loadSample" class="btn ghost small">Try the sample book</button>
+        <details class="explain">
+          <summary>What happens when you upload?</summary>
+          <ol>
+            <li><b>Extract</b> – text is read from each page (PDF), chapter (EPUB) or paragraph (DOCX).</li>
+            <li><b>Clean</b> – broken words and extra spaces are fixed.</li>
+            <li><b>Find chapters</b> – headings like “Chapter 3” or “Part Two” are detected.</li>
+            <li><b>Chunk</b> – text is cut into ~450-token passages with a little overlap.</li>
+            <li><b>Index</b> – keyword search always; with an API key, embeddings for meaning search too.</li>
+          </ol>
+        </details>
+      </div>
+      <div class="card">
+        <h2>Your books</h2>
+        <div id="bookList" class="book-list"><p class="muted">No books yet.</p></div>
+      </div>
+    </div>
+    <div id="bookDetail" class="card hidden"></div>
+  </section>
+
+  <!-- ============================== SUMMARIZE -->
+  <section id="tab-summarize" class="panel">
+    <div class="grid-side">
+      <div class="card">
+        <h2>Summarizer</h2>
+        <label>What to summarize
+          <select id="sumScope">
+            <option value="book">Whole book (chapter by chapter)</option>
+            <option value="chapter">One chapter</option>
+            <option value="text">Text I paste</option>
+          </select>
+        </label>
+        <label id="sumChapterWrap">Chapter <select id="sumChapter"></select></label>
+        <label id="sumTextWrap" class="hidden">Text
+          <textarea id="sumText" rows="9" placeholder="Paste an article, chapter or notes…"></textarea>
+        </label>
+        <div class="row">
+          <label>Length
+            <select id="sumLength"><option value="short">Short</option><option value="medium" selected>Medium</option><option value="detailed">Detailed</option></select>
+          </label>
+          <label>Style
+            <select id="sumStyle">
+              <option value="bullets">Bullet points</option><option value="paragraph">Paragraphs</option>
+              <option value="tldr">TL;DR</option><option value="eli5">Explain like I'm 10</option>
+              <option value="academic">Academic abstract</option><option value="chapter_notes">Study notes</option>
+            </select>
+          </label>
+        </div>
+        <label>Prompt version
+          <select id="sumVersion" class="version-select"></select>
+        </label>
+        <div class="token-meter" id="sumMeter">—</div>
+        <button id="runSummarize" class="btn primary wide">Summarize</button>
+        <div id="sumProgress" class="progress hidden"><div class="bar"></div><span></span></div>
+      </div>
+      <div id="sumOutput" class="output-area"><div class="empty">Your summary will appear here.</div></div>
+    </div>
+  </section>
+
+  <!-- ============================== ASK -->
+  <section id="tab-ask" class="panel">
+    <div class="chat-layout">
+      <aside class="card convo-list">
+        <button id="newChat" class="btn primary wide">＋ New chat</button>
+        <div id="convos"></div>
+      </aside>
+      <div class="card chat-card">
+        <div class="chat-head">
+          <div><b id="chatTitle">New chat</b><small id="chatScopeLabel" class="muted"></small></div>
+          <label class="inline">Search in
+            <select id="chatChapter"><option value="">Whole book</option></select>
+          </label>
+        </div>
+        <div id="messages" class="messages"></div>
+        <div id="suggestions" class="chips"></div>
+        <form id="chatForm" class="composer">
+          <textarea id="chatInput" rows="2" placeholder="Ask anything about the book… (Enter to send, Shift+Enter for new line)"></textarea>
+          <div class="composer-side">
+            <small id="chatTokens" class="muted">0 tokens</small>
+            <button id="sendBtn" class="btn primary" type="submit">Send</button>
+            <button id="stopBtn" class="btn danger hidden" type="button">Stop</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CREATE -->
+  <section id="tab-create" class="panel">
+    <div class="grid-side">
+      <div class="card">
+        <h2>Content generator</h2>
+        <div id="typeGrid" class="type-grid"></div>
+        <label>Source
+          <select id="genSource">
+            <option value="book">Whole book</option><option value="chapter">One chapter</option>
+            <option value="topic">A topic inside the book</option><option value="text">Text I paste</option>
+            <option value="free">Free topic (no book)</option>
+          </select>
+        </label>
+        <label id="genChapterWrap" class="hidden">Chapter <select id="genChapter"></select></label>
+        <label id="genTopicWrap" class="hidden">Topic <input id="genTopic" placeholder="e.g. the storm, leadership, chapter themes"></label>
+        <label id="genTextWrap" class="hidden">Text <textarea id="genText" rows="6"></textarea></label>
+        <div class="row">
+          <label>Tone <input id="genTone" value="clear and friendly" list="tones"></label>
+          <label>Audience <input id="genAudience" value="general readers" list="audiences"></label>
+        </div>
+        <datalist id="tones"><option>clear and friendly</option><option>professional</option><option>playful</option><option>inspiring</option><option>academic</option></datalist>
+        <datalist id="audiences"><option>general readers</option><option>high-school students</option><option>university students</option><option>book club</option><option>busy professionals</option></datalist>
+        <label>Extra instructions <input id="genExtra" placeholder="optional – e.g. include emojis, max 500 words"></label>
+        <label>Prompt version <select id="genVersion" class="version-select"></select></label>
+        <button id="runGenerate" class="btn primary wide">Create</button>
+      </div>
+      <div id="genOutput" class="output-area"><div class="empty">Pick a content type and press Create.</div></div>
+    </div>
+  </section>
+
+  <!-- ============================== PROMPT LAB -->
+  <section id="tab-lab" class="panel">
+    <div class="card">
+      <h2>Prompt Lab – improve prompts with real feedback</h2>
+      <p class="muted">Every output gets a prompt version (v1 baseline, v2 improved). People rate outputs; this table shows which version wins. Use “Blind compare” for a fair side-by-side test.</p>
+      <div id="ratingTable"></div>
+      <div class="row-actions">
+        <button id="refreshLab" class="btn ghost small">↻ Refresh</button>
+        <button id="exportFeedback" class="btn ghost small">⬇ Export feedback (CSV)</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Blind compare</h2>
+      <p class="muted">Same input, two prompt versions, labels hidden. Pick the better one; your vote is saved as feedback.</p>
+      <div class="row">
+        <label>Input <select id="cmpSource"><option value="chapter">A chapter of the active book</option><option value="text">Pasted text</option></select></label>
+        <label id="cmpChapterWrap">Chapter <select id="cmpChapter"></select></label>
+        <label>Style <select id="cmpStyle"><option value="bullets">Bullets</option><option value="paragraph">Paragraphs</option><option value="eli5">ELI5</option></select></label>
+      </div>
+      <textarea id="cmpText" rows="5" class="hidden" placeholder="Paste text to compare summaries of…"></textarea>
+      <button id="runCompare" class="btn primary">Run blind compare</button>
+      <div id="cmpOutput" class="compare"></div>
+    </div>
+    <div class="card">
+      <h2>The prompts</h2>
+      <div id="promptViewer"></div>
+    </div>
+  </section>
+
+  <!-- ============================== USAGE -->
+  <section id="tab-usage" class="panel">
+    <div class="row-actions">
+      <button id="refreshUsage" class="btn ghost small">↻ Refresh</button>
+      <button id="clearUsage" class="btn ghost small">Clear server log</button>
+    </div>
+    <div id="usageTiles" class="tiles"></div>
+    <div class="grid2">
+      <div class="card"><h2>By feature</h2><div id="usageFeatures"></div></div>
+      <div class="card"><h2>By day</h2><div id="usageDays"></div></div>
+    </div>
+    <div class="card"><h2>Recent calls</h2><div id="usageRecent" class="table-wrap"></div></div>
+    <div class="card"><h2>Token calculator</h2>
+      <textarea id="calcText" rows="4" placeholder="Paste anything to count its tokens and estimate cost…"></textarea>
+      <div id="calcOut" class="token-meter">0 tokens</div>
+    </div>
+  </section>
+</main>
+
+<!-- ============================== SETTINGS -->
+<dialog id="settings">
+  <form method="dialog" class="settings-form">
+    <h2>Settings</h2>
+    <label>OpenAI API key
+      <div class="key-row"><input id="apiKey" type="password" placeholder="sk-… (leave empty for Demo mode)" autocomplete="off"><button type="button" id="toggleKey" class="btn ghost small">Show</button></div>
+      <small class="muted">Saved only in this browser and sent only to this app's own server (header <code>X-OpenAI-Key</code>), never to anyone else. If the server has its own key, you can leave this empty.</small>
+    </label>
+    <label>Model <select id="modelSelect"></select></label>
+    <div class="row-actions">
+      <button value="cancel" class="btn ghost">Close</button>
+      <button id="saveSettings" value="save" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

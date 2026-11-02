@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Your First GenAI App</title>
+<style>
+:root{--bg:#f7f6f2;--surface:#fff;--s2:#f0eee8;--text:#1c1b19;--muted:#68655d;--border:#e1ded5;--accent:#3b5bdb;--soft:#e8edff;--ok:#2b8a3e;--warn:#b35c00;--bad:#c92a2a;--code:#1e1e2a;--codetext:#e6e6f0}
+@media (prefers-color-scheme:dark){:root{--bg:#131312;--surface:#1c1c1a;--s2:#262623;--text:#ecebe5;--muted:#a19e95;--border:#34332e;--accent:#8ea0ff;--soft:#232a48;--ok:#69db7c;--warn:#ffc078;--bad:#ff8787;--code:#0e0e14}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.layout{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
+nav{position:sticky;top:0;height:100vh;overflow:auto;padding:22px 16px;border-right:1px solid var(--border);background:var(--surface)}
+nav b{display:block;font-size:1.05rem;margin-bottom:2px}nav small{color:var(--muted);display:block;margin-bottom:16px}
+nav a{display:block;padding:6px 10px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9rem}
+nav a:hover,nav a.on{background:var(--soft);color:var(--accent)}
+nav .grp{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 10px 4px}
+main{max-width:920px;padding:30px 36px 100px;min-width:0}
+h1{font-size:2rem;line-height:1.2;margin:0 0 8px}h2{font-size:1.45rem;margin:56px 0 12px;padding-top:10px;border-top:1px solid var(--border)}h3{font-size:1.1rem;margin:28px 0 8px}
+p,li{max-width:75ch}.lead{font-size:1.1rem;color:var(--muted)}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.86em;background:var(--s2);padding:1px 6px;border-radius:5px}
+pre{position:relative;background:var(--code);color:var(--codetext);padding:16px;border-radius:10px;overflow-x:auto;font-size:.84rem;line-height:1.55}
+pre code{background:none;padding:0;color:inherit}
+.copy{position:absolute;top:8px;right:8px;background:#ffffff18;color:#fff;border:1px solid #ffffff30;border-radius:6px;font-size:.75rem;padding:3px 9px;cursor:pointer}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:14px 0}
+.note{border-left:4px solid var(--accent);background:var(--soft);padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0}
+.warn{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0}
+table{border-collapse:collapse;width:100%;font-size:.9rem;margin:12px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}th{background:var(--s2)}
+.steps{counter-reset:s;list-style:none;padding:0}.steps>li{counter-increment:s;position:relative;padding:4px 0 14px 46px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:.9rem}
+.check{list-style:none;padding:0}.check li{padding:4px 0}.check input{margin-right:8px;transform:scale(1.15)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.pill{display:inline-block;font-size:.75rem;padding:2px 9px;border-radius:99px;background:var(--s2);color:var(--muted);margin-right:4px}
+svg text{font-family:system-ui,sans-serif}
+.diagram{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;margin:14px 0;overflow-x:auto}
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:9;width:0}
+details{margin:8px 0}summary{cursor:pointer;font-weight:600}
+@media(max-width:860px){.layout{grid-template-columns:1fr}nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border)}main{padding:20px 16px 80px}}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div class="layout">
+<nav id="toc">
+  <b>📚 Build Your First GenAI App</b><small>Day 9 · Book GenAI Studio</small>
+  <div class="grp">Start</div>
+  <a href="#overview">1. What we build</a>
+  <a href="#architecture">2. Architecture</a>
+  <a href="#setup">3. Setup</a>
+  <div class="grp">Build it step by step</div>
+  <a href="#s-config">4. Config + tokens</a>
+  <a href="#s-llm">5. OpenAI wrapper & errors</a>
+  <a href="#s-books">6. Reading any book</a>
+  <a href="#s-search">7. Search (RAG)</a>
+  <a href="#s-prompts">8. Versioned prompts</a>
+  <a href="#s-features">9. The 3 features</a>
+  <a href="#s-frontend">10. Frontend</a>
+  <a href="#s-tests">11. Tests</a>
+  <div class="grp">Ship it</div>
+  <a href="#vercel">12. Deploy free on Vercel</a>
+  <a href="#limits">13. Free-plan limits</a>
+  <a href="#security">14. Protect your key</a>
+  <a href="#heroku">15. Heroku / Render</a>
+  <a href="#trouble">16. Troubleshooting</a>
+  <div class="grp">Improve it</div>
+  <a href="#evaluate">17. Evaluate & iterate</a>
+  <a href="#better">18. Why it's better</a>
+  <a href="#checklist">19. Checklist</a>
+</nav>
+
+<main>
+<h1>Build Your First GenAI App — and deploy it free</h1>
+<p class="lead">A complete, step-by-step guide to <b>Book GenAI Studio</b>: upload any book, then summarize it, chat with it, and turn it into quizzes, notes and posts. Python (FastAPI) backend, plain HTML/JS frontend, OpenAI API, deployed on Vercel's free plan.</p>
+<p><span class="pill">FastAPI</span><span class="pill">OpenAI</span><span class="pill">RAG</span><span class="pill">Streaming</span><span class="pill">Token counting</span><span class="pill">Vercel</span></p>
+<div class="note">The finished code is in <code>day9/book_genai_studio/</code>. Each step below names the file it builds. Read the step, open the file, and run it.</div>
+
+<!-- ======================================================= 1 -->
+<h2 id="overview">1. What we build</h2>
+<div class="grid">
+  <div class="card"><b>📝 Summarizer</b><br>Whole book, one chapter, or pasted text. 6 styles, 3 lengths. Handles books far bigger than the model's context window.</div>
+  <div class="card"><b>💬 Q&amp;A bot</b><br>Multi-turn chat about the book. Streams the answer, cites the passages (<code>[S1]</code> → chapter, page), says “not in the book” instead of guessing.</div>
+  <div class="card"><b>✨ Content generator</b><br>Quiz, flashcards, study notes, blog post, social thread, newsletter, lesson plan, timeline…</div>
+  <div class="card"><b>📊 Usage + 🧪 Prompt Lab</b><br>Tokens and cost of every call, ratings per prompt version, blind A/B tests.</div>
+</div>
+<p>Required features from the syllabus and where they are:</p>
+<table>
+<tr><th>Requirement</th><th>Where</th></tr>
+<tr><td>API calls</td><td><code>app/llm.py</code> — every OpenAI call goes through one wrapper</td></tr>
+<tr><td>Error handling</td><td><code>llm.map_error()</code> + FastAPI exception handlers + friendly toasts in the UI</td></tr>
+<tr><td>Token counting</td><td><code>app/tokens.py</code> (tiktoken), live counters in the UI, <code>/api/tokens</code></td></tr>
+<tr><td>Multi-turn conversation</td><td><code>services.chat_events()</code> — history trimming + follow-up rewriting</td></tr>
+<tr><td>Copy-to-clipboard</td><td>📋 on every output and chat message</td></tr>
+<tr><td>Usage tracking</td><td><code>app/db.py</code> + Usage tab</td></tr>
+<tr><td>Feedback &amp; prompt iteration</td><td>★ ratings, 👍/👎, Prompt Lab, <code>EVALUATION.md</code></td></tr>
+<tr><td>Deploy</td><td><code>vercel.json</code> + <code>api/index.py</code> (Vercel), <code>Procfile</code> (Heroku)</td></tr>
+</table>
+
+<!-- ======================================================= 2 -->
+<h2 id="architecture">2. Architecture</h2>
+<div class="diagram">
+<svg viewBox="0 0 860 330" width="100%" role="img" aria-label="Architecture: browser talks to FastAPI, which talks to OpenAI and storage">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect x="10" y="40" width="220" height="250" rx="12" fill="var(--soft)" stroke="var(--accent)"/>
+  <text x="120" y="68" text-anchor="middle" font-weight="700" fill="var(--text)">Browser (static/)</text>
+  <text x="30" y="100" fill="var(--text)" font-size="13">• index.html / app.js</text>
+  <text x="30" y="124" fill="var(--text)" font-size="13">• 6 tabs, streaming chat</text>
+  <text x="30" y="148" fill="var(--text)" font-size="13">• IndexedDB: book copies</text>
+  <text x="30" y="172" fill="var(--text)" font-size="13">• localStorage: chats,</text>
+  <text x="44" y="192" fill="var(--text)" font-size="13">settings, usage, feedback</text>
+  <text x="30" y="220" fill="var(--text)" font-size="13">• API key (optional)</text>
+  <text x="30" y="250" fill="var(--muted)" font-size="12">sends X-OpenAI-Key header</text>
+  <rect x="320" y="20" width="250" height="290" rx="12" fill="var(--surface)" stroke="var(--border)"/>
+  <text x="445" y="48" text-anchor="middle" font-weight="700" fill="var(--text)">FastAPI (app/)</text>
+  <g font-size="13" fill="var(--text)">
+  <rect x="340" y="62" width="210" height="30" rx="6" fill="var(--s2)"/><text x="350" y="82">main.py — routes, errors</text>
+  <rect x="340" y="98" width="210" height="30" rx="6" fill="var(--s2)"/><text x="350" y="118">books.py — read, chunk</text>
+  <rect x="340" y="134" width="210" height="30" rx="6" fill="var(--s2)"/><text x="350" y="154">retrieval.py — search</text>
+  <rect x="340" y="170" width="210" height="30" rx="6" fill="var(--s2)"/><text x="350" y="190">services.py — 3 features</text>
+  <rect x="340" y="206" width="210" height="30" rx="6" fill="var(--s2)"/><text x="350" y="226">prompts.py — v1 / v2</text>
+  <rect x="340" y="242" width="210" height="30" rx="6" fill="var(--s2)"/><text x="350" y="262">llm.py + tokens.py</text>
+  </g>
+  <rect x="660" y="40" width="190" height="100" rx="12" fill="var(--surface)" stroke="var(--ok)"/>
+  <text x="755" y="72" text-anchor="middle" font-weight="700" fill="var(--text)">OpenAI API</text>
+  <text x="755" y="96" text-anchor="middle" font-size="13" fill="var(--text)">chat.completions</text>
+  <text x="755" y="118" text-anchor="middle" font-size="13" fill="var(--text)">embeddings</text>
+  <rect x="660" y="190" width="190" height="100" rx="12" fill="var(--surface)" stroke="var(--warn)"/>
+  <text x="755" y="222" text-anchor="middle" font-weight="700" fill="var(--text)">Storage (data/)</text>
+  <text x="755" y="246" text-anchor="middle" font-size="13" fill="var(--text)">books/*.json</text>
+  <text x="755" y="268" text-anchor="middle" font-size="13" fill="var(--text)">studio.db (SQLite)</text>
+  <line x1="232" y1="140" x2="316" y2="140" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="316" y1="180" x2="234" y2="180" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="274" y="132" text-anchor="middle" font-size="11" fill="var(--muted)">JSON</text>
+  <text x="274" y="198" text-anchor="middle" font-size="11" fill="var(--muted)">JSON / SSE</text>
+  <line x1="572" y1="100" x2="656" y2="90" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="572" y1="240" x2="656" y2="240" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+</svg>
+</div>
+<p><b>Why a backend at all?</b> The Day 5 app called OpenAI straight from the browser. That works for practice, but a backend lets us: hide the server's key, read PDFs and EPUBs, search a book, count tokens on the server, log usage in one place, and enforce a spending limit.</p>
+
+<h3>How “Ask the book” works (RAG = Retrieval-Augmented Generation)</h3>
+<div class="diagram">
+<svg viewBox="0 0 860 150" width="100%" role="img" aria-label="RAG flow">
+  <g font-size="13" fill="var(--text)" text-anchor="middle">
+  <rect x="5" y="40" width="150" height="70" rx="10" fill="var(--soft)" stroke="var(--accent)"/><text x="80" y="70">Question +</text><text x="80" y="90">chat history</text>
+  <rect x="180" y="40" width="150" height="70" rx="10" fill="var(--surface)" stroke="var(--border)"/><text x="255" y="70">Rewrite follow-up</text><text x="255" y="90">“what did he do?” → full</text>
+  <rect x="355" y="40" width="150" height="70" rx="10" fill="var(--surface)" stroke="var(--border)"/><text x="430" y="70">Search book</text><text x="430" y="90">keywords + meaning</text>
+  <rect x="530" y="40" width="150" height="70" rx="10" fill="var(--surface)" stroke="var(--border)"/><text x="605" y="70">Top 6 passages</text><text x="605" y="90">tagged [S1]…[S6]</text>
+  <rect x="705" y="40" width="150" height="70" rx="10" fill="var(--surface)" stroke="var(--ok)"/><text x="780" y="70">Model answers</text><text x="780" y="90">only from sources</text>
+  </g>
+  <g stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"><line x1="156" y1="75" x2="177" y2="75"/><line x1="331" y1="75" x2="352" y2="75"/><line x1="506" y1="75" x2="527" y2="75"/><line x1="681" y1="75" x2="702" y2="75"/></g>
+  <text x="430" y="138" text-anchor="middle" font-size="12" fill="var(--muted)">A 300-page book (~150k tokens) never fits in one prompt cheaply — so we send only the ~3k tokens that matter.</text>
+</svg>
+</div>
+
+<!-- ======================================================= 3 -->
+<h2 id="setup">3. Setup</h2>
+<ol class="steps">
+<li><b>Install Python 3.11+</b> and check: <code>python --version</code></li>
+<li><b>Get an OpenAI key</b> (optional at first): platform.openai.com → API keys → Create. Add a few dollars of credit. Without a key the app runs in Demo mode.</li>
+<li><b>Create the project and a virtual environment</b>
+<pre><code>cd day9/book_genai_studio
+python -m venv .venv
+.venv\Scripts\activate        # Mac/Linux: source .venv/bin/activate
+pip install -r requirements.txt</code></pre></li>
+<li><b>Add your key</b> — copy <code>.env.example</code> to <code>.env</code> and set <code>OPENAI_API_KEY=sk-...</code>. Never commit <code>.env</code> (it's in <code>.gitignore</code>).</li>
+<li><b>Run it</b>
+<pre><code>uvicorn app.main:app --reload</code></pre>
+Open <code>http://127.0.0.1:8000</code>, click <b>Try the sample book</b>. Free API docs at <code>/docs</code>.</li>
+</ol>
+<p><code>requirements.txt</code>:</p>
+<pre><code>fastapi  uvicorn  python-multipart   # web server + file uploads
+openai                              # the OpenAI SDK
+tiktoken                            # exact token counting
+pypdf  python-docx                  # read PDF and Word files (EPUB/HTML use the standard library)
+numpy                               # fast vector math for embeddings
+python-dotenv                       # load .env</code></pre>
+
+<!-- ======================================================= 4 -->
+<h2 id="s-config">4. Config and token counting <span class="pill">config.py · tokens.py</span></h2>
+<p>Put every setting in one file, read from environment variables, so the same code runs on your laptop and on Vercel.</p>
+<pre><code>ON_VERCEL = bool(os.getenv("VERCEL"))          # Vercel sets this automatically
+DATA_DIR = Path("/tmp/book_studio" if ON_VERCEL else BASE_DIR / "data")   # only /tmp is writable there
+MAX_UPLOAD_MB = float(os.getenv("MAX_UPLOAD_MB", "4" if ON_VERCEL else "25"))
+DAILY_BUDGET_USD = float(os.getenv("DAILY_BUDGET_USD", "0"))
+PRICES = {"gpt-4o-mini": (0.15, 0.60), ...}   # USD per 1M tokens (input, output) – keep updated</code></pre>
+<p><b>Tokens</b> are the pieces of text a model reads and bills for (~¾ of a word in English). Count them <i>before</i> calling, to show the cost and to decide whether text fits in one call:</p>
+<pre><code>import tiktoken
+enc = tiktoken.get_encoding("o200k_base")      # the tokenizer used by gpt-4o models
+def count_tokens(text): return len(enc.encode(text, disallowed_special=()))
+def estimate_cost(model, tokens_in, tokens_out):
+    p_in, p_out = PRICES[model]
+    return (tokens_in * p_in + tokens_out * p_out) / 1_000_000</code></pre>
+<div class="note">If tiktoken can't load (no internet on first run), the code falls back to <code>len(text) // 4</code>. Always have a fallback.</div>
+
+<!-- ======================================================= 5 -->
+<h2 id="s-llm">5. One OpenAI wrapper with real error handling <span class="pill">llm.py</span></h2>
+<p>Never call OpenAI from many places. One function = one place for retries, timeouts, logging and error messages.</p>
+<pre><code>client = OpenAI(api_key=key, timeout=60, max_retries=2)   # SDK retries 429/5xx with backoff
+
+def chat(messages, *, key, feature, model, max_tokens=1200):
+    check_budget()                                       # stop if today's $ limit is reached
+    t0 = time.time()
+    try:
+        r = client.chat.completions.create(model=model, messages=messages,
+                                           max_completion_tokens=max_tokens)
+    except openai.OpenAIError as e:
+        err = map_error(e)                               # → friendly LLMError
+        db.log_usage(feature, model, 0, 0, 0, ms(t0), ok=False, error=err.code)
+        raise err
+    u = r.usage
+    db.log_usage(feature, model, u.prompt_tokens, u.completion_tokens,
+                 estimate_cost(model, u.prompt_tokens, u.completion_tokens), ms(t0))
+    return r.choices[0].message.content</code></pre>
+<p>Turn each SDK error into something a user can act on:</p>
+<table>
+<tr><th>OpenAI error</th><th>HTTP</th><th>What the user sees</th></tr>
+<tr><td>AuthenticationError</td><td>401</td><td>“OpenAI rejected the API key.” → open Settings</td></tr>
+<tr><td>RateLimitError (insufficient_quota)</td><td>402</td><td>“Out of credit” → add billing, or use Demo mode</td></tr>
+<tr><td>RateLimitError</td><td>429</td><td>“Too many requests” → wait and retry</td></tr>
+<tr><td>BadRequestError (context_length)</td><td>400</td><td>“Text too long” → pick one chapter</td></tr>
+<tr><td>NotFoundError</td><td>404</td><td>“Model doesn't exist for this key” → choose another</td></tr>
+<tr><td>APITimeoutError / APIConnectionError</td><td>504 / 503</td><td>“Took too long” / “Couldn't reach OpenAI”</td></tr>
+</table>
+<p>In <code>main.py</code> one handler turns every <code>LLMError</code> into JSON: <code>{"error": {"code", "message", "hint"}}</code>. The frontend shows <i>message</i> + <i>hint</i> in a toast. Also check <code>finish_reason == "length"</code> — the answer was cut off — and tell the user.</p>
+<p><b>Streaming</b> (chat) uses the same wrapper with <code>stream=True, stream_options={"include_usage": True}</code> so we still get token counts at the end.</p>
+
+<!-- ======================================================= 6 -->
+<h2 id="s-books">6. Reading any book <span class="pill">books.py</span></h2>
+<p>Pipeline: <b>file bytes → pages → clean text → chapters → chunks</b>.</p>
+<table>
+<tr><th>Format</th><th>How</th></tr>
+<tr><td>PDF</td><td><code>pypdf.PdfReader(...).pages[i].extract_text()</code> — keeps page numbers for citations. Scanned PDFs have no text → clear error: “run OCR first”.</td></tr>
+<tr><td>EPUB</td><td>It's a ZIP: read <code>META-INF/container.xml</code> → the <code>.opf</code> file → chapter order (“spine”) → strip HTML tags.</td></tr>
+<tr><td>DOCX</td><td><code>python-docx</code>; “Heading 1” paragraphs become chapter titles.</td></tr>
+<tr><td>TXT / MD / HTML</td><td>Decode (try UTF-8, then Windows-1252), strip tags for HTML.</td></tr>
+</table>
+<p><b>Chapters:</b> a regular expression finds lines like <code>Chapter 3</code>, <code>PART TWO</code>, <code># Heading</code>, <code>Prologue</code>. Tiny sections (a table of contents) merge into the next one. No headings? Split into equal “Parts” of ~3,000 words.</p>
+<p><b>Chunks:</b> cut each chapter into ~450-token passages on paragraph boundaries, carrying the last short paragraph into the next chunk (overlap) so ideas aren't cut in half.</p>
+<pre><code>for p in paragraphs:
+    if buf and buf_tokens + count_tokens(p) > 450:
+        flush()                          # save chunk with its chapter + page
+        buf = [buf[-1]] if short(buf[-1]) else []   # overlap
+    buf.append(p)</code></pre>
+<p>Validate early with clear messages: unsupported type (415), empty file, too large (413), no text found (422), book too long.</p>
+
+<!-- ======================================================= 7 -->
+<h2 id="s-search">7. Search: keywords + meaning <span class="pill">retrieval.py</span></h2>
+<div class="grid">
+<div class="card"><b>BM25 keyword search</b><br>Free, instant, great for names (“Elias”, “A.O.”). Scores a passage higher when it contains rare words from the question. Always on.</div>
+<div class="card"><b>Embedding search</b><br>With a key, each chunk becomes a vector (<code>text-embedding-3-small</code>, ~$0.02 per 1M tokens — a whole novel costs under a cent). Finds passages with the same <i>meaning</i>.</div>
+</div>
+<p>Combine both with <b>Reciprocal Rank Fusion</b>: each list gives a passage <code>1 / (60 + rank)</code> points; add them up. Simple and robust.</p>
+<pre><code>fused = Counter()
+for ranked in [bm25_ranking, embedding_ranking]:
+    for rank, i in enumerate(ranked[:50]):
+        fused[i] += 1 / (60 + rank)
+top6 = [chunks[i] for i, _ in fused.most_common(6)]</code></pre>
+
+<!-- ======================================================= 8 -->
+<h2 id="s-prompts">8. Versioned prompts <span class="pill">prompts.py</span></h2>
+<p>Keep every prompt in one file with a version. Each output stores which version made it, so ratings tell you which prompt is better.</p>
+<pre><code>QA = {
+  "v1": {"label": "Baseline", "system": "Answer the user's question using the context below.\n{context}"},
+  "v2": {"label": "Cited & honest", "system":
+     "You are a reading assistant for “{title}”. Answer ONLY from the numbered sources.\n"
+     "1. Cite every claim like [S2].\n"
+     "2. If the sources don't contain the answer, say “I couldn't find that in the book.” Never guess.\n"
+     "3. Under 200 words unless asked. Use Markdown.\n\nSOURCES:\n{context}"},
+}
+def pick_version(feature, requested):
+    return requested if requested in FEATURES[feature] else random.choice(list(FEATURES[feature]))  # A/B</code></pre>
+<p>Good prompt habits used here: give a <b>role</b>, clear <b>rules</b>, an exact <b>format</b> and <b>length</b>, delimit the source text with <code>"""</code>, tell the model what to do when it <b>doesn't know</b>, and ask it to <b>self-check</b> against the source.</p>
+
+<!-- ======================================================= 9 -->
+<h2 id="s-features">9. The three features <span class="pill">services.py</span></h2>
+<h3>9a. Summarizer — map-reduce for long text</h3>
+<p>A whole book doesn't fit (or is expensive) in one prompt. So:</p>
+<ol>
+<li><b>Map:</b> for each chapter, make dense notes (120–250 words). Long chapters are split into 6k-token pieces first. Pieces run in parallel (4 threads).</li>
+<li><b>Reduce:</b> send all chapter notes in one call and ask for the final summary in the chosen style and length.</li>
+</ol>
+<p>The <b>browser</b> runs the map step (one request per chapter, 3 at a time) and shows a progress bar. That keeps each request short — essential on Vercel (see §13). Chapter notes are cached so the second summary is almost free.</p>
+
+<h3>9b. Q&amp;A bot — multi-turn, streaming, cited</h3>
+<ol>
+<li>Trim history to the newest ~3,000 tokens (cost control).</li>
+<li>If it's a follow-up, ask the model to rewrite it as a standalone question (“what did he promise?” → “What did Elias promise Adaeze?”). Search with that.</li>
+<li>Retrieve the top 6 passages, tag them <code>[S1]…[S6]</code> with chapter and page.</li>
+<li>Stream the answer as <b>Server-Sent Events</b>: <code>meta</code> (sources) → many <code>delta</code> (text) → <code>done</code> (usage) or <code>error</code>.</li>
+</ol>
+<pre><code>def chat_events(...):
+    yield f"event: meta\ndata: {json.dumps({'sources': sources})}\n\n"
+    for piece in llm.chat_stream(msgs, ...):
+        yield f"event: delta\ndata: {json.dumps({'t': piece})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'usage': meter.to_dict()})}\n\n"
+
+@app.post("/api/chat")
+def chat(body: ChatIn):
+    return StreamingResponse(chat_events(...), media_type="text/event-stream")</code></pre>
+<p>Errors <i>during</i> the stream are sent as an <code>error</code> event, so the browser never hangs.</p>
+
+<h3>9c. Content generator</h3>
+<p>Choose the <b>material</b> (chapter text, passages found for a topic, evenly spaced passages from the whole book, or pasted text), then fill a template with the content type, tone, audience and extra instructions. 11 content types are defined in <code>CONTENT_TYPES</code> — add your own with one line.</p>
+<h3>9d. Demo mode (no key)</h3>
+<p>Each feature has an offline fallback: extractive summary (picks the most important sentences), keyword-search answers built from matching sentences, fill-in-the-blank quizzes. It lets students try everything for free — and is a useful baseline: the AI version must clearly beat it.</p>
+
+<!-- ======================================================= 10 -->
+<h2 id="s-frontend">10. Frontend <span class="pill">static/</span></h2>
+<p>Plain HTML + CSS + JavaScript — no build step, so Vercel and Heroku just serve the files. Key pieces of <code>app.js</code>:</p>
+<details open><summary>One <code>api()</code> helper for every request</summary>
+<pre><code>async function api(path, { method = "GET", body, form, stream, signal } = {}, retry = true) {
+  const headers = {};
+  if (state.settings.apiKey) headers["X-OpenAI-Key"] = state.settings.apiKey;
+  ...
+  if (!res.ok) {
+    const err = (await res.json()).error;
+    if (err.code === "book_not_found" &amp;&amp; retry &amp;&amp; await restoreBook(bookId))
+      return api(path, opts, false);          // server forgot the book → re-send it, retry once
+    throw new AppError(err.code, err.message, err.hint);
+  }
+  return stream ? res : res.json();
+}</code></pre></details>
+<details><summary>Reading a streamed answer (POST + SSE)</summary>
+<pre><code>const reader = res.body.getReader(), dec = new TextDecoder();
+let buf = "";
+for (;;) {
+  const { value, done } = await reader.read();
+  if (done) break;
+  buf += dec.decode(value, { stream: true });
+  let cut;
+  while ((cut = buf.indexOf("\n\n")) >= 0) {
+    const raw = buf.slice(0, cut); buf = buf.slice(cut + 2);
+    const ev = raw.match(/^event: (.*)$/m)[1], data = JSON.parse(raw.match(/^data: (.*)$/m)[1]);
+    if (ev === "delta") { msg.content += data.t; paint(); }
+  }
+}</code></pre>
+<p>A <b>Stop</b> button calls <code>AbortController.abort()</code>.</p></details>
+<details><summary>Copy to clipboard (with fallback)</summary>
+<pre><code>async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch {           // older browsers / non-HTTPS
+    const ta = Object.assign(document.createElement("textarea"), { value: text });
+    document.body.append(ta); ta.select(); document.execCommand("copy"); ta.remove();
+  }
+}</code></pre></details>
+<details><summary>Safe Markdown rendering</summary>
+<p>Model output is Markdown. Render it with <code>marked</code>, then clean it with <code>DOMPurify</code> — never put raw model output into <code>innerHTML</code>.</p>
+<pre><code>const html = DOMPurify.sanitize(marked.parse(text));</code></pre></details>
+<details><summary>What is stored where</summary>
+<table><tr><th>Data</th><th>Where</th><th>Why</th></tr>
+<tr><td>Processed books</td><td>IndexedDB</td><td>Can be several MB; re-sent when the server forgets</td></tr>
+<tr><td>Chats, settings, usage log, feedback log</td><td>localStorage</td><td>Small; survive server restarts</td></tr>
+<tr><td>Usage + feedback (shared)</td><td>SQLite on server</td><td>One view for everyone (until restart on Vercel)</td></tr></table></details>
+
+<!-- ======================================================= 11 -->
+<h2 id="s-tests">11. Tests <span class="pill">tests/test_app.py</span></h2>
+<pre><code>pip install -r requirements-dev.txt
+pytest -q          # 14 passed</code></pre>
+<p>The tests use FastAPI's <code>TestClient</code>, a temporary data folder, and a <b>fake OpenAI</b> (via <code>monkeypatch</code>), so the AI path — follow-up rewriting, map-reduce, A/B compare, error mapping — is tested without spending money.</p>
+
+<!-- ======================================================= 12 -->
+<h2 id="vercel">12. Deploy free on Vercel — step by step</h2>
+<p>Vercel's <b>Hobby</b> plan is free for personal, non-commercial projects and runs Python (FastAPI) as serverless functions. Two files make it work:</p>
+<pre><code># api/index.py – Vercel runs this file for every request
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from app.main import app</code></pre>
+<pre><code>// vercel.json – send every URL to that function, bundle the static files
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
+  "functions": {
+    "api/index.py": { "maxDuration": 60, "includeFiles": "{app,static,samples}/**" }
+  }
+}</code></pre>
+<p>Vercel installs <code>requirements.txt</code> automatically. <code>.vercelignore</code> keeps <code>data/</code>, <code>tests/</code> and <code>.env</code> out of the upload.</p>
+
+<h3>Option A — from GitHub (recommended)</h3>
+<ol class="steps">
+<li><b>Push the code to GitHub.</b>
+<pre><code>git add day9
+git commit -m "Add day9 Book GenAI Studio"
+git push</code></pre></li>
+<li><b>Sign up</b> at vercel.com with your GitHub account (Hobby plan, no card needed).</li>
+<li><b>Add New → Project</b> → pick your repository → <b>Import</b>.</li>
+<li><b>Root Directory → Edit → <code>day9/book_genai_studio</code>.</b> This is the step people miss: the app is in a sub-folder of the repo. Framework preset: <i>Other</i>. Leave build/output commands empty.</li>
+<li><b>Environment Variables:</b>
+<table><tr><th>Name</th><th>Value</th></tr>
+<tr><td><code>DAILY_BUDGET_USD</code></td><td><code>1</code> (stop after $1/day)</td></tr>
+<tr><td><code>MAX_UPLOAD_MB</code></td><td><code>4</code></td></tr>
+<tr><td><code>OPENAI_MODEL</code></td><td><code>gpt-4o-mini</code></td></tr>
+<tr><td><code>OPENAI_API_KEY</code></td><td><i>optional — read §14 first</i></td></tr></table></li>
+<li><b>Deploy.</b> After ~1 minute you get <code>https://your-project.vercel.app</code>. Every <code>git push</code> redeploys automatically; pull requests get preview URLs.</li>
+<li><b>Check it:</b> open <code>/api/health</code> — you should see <code>"on_vercel": true</code>. Then load the sample book and try each tab.</li>
+</ol>
+
+<h3>Option B — from your terminal (Vercel CLI)</h3>
+<pre><code>npm install -g vercel
+cd day9/book_genai_studio
+vercel login
+vercel                      # first time: answers create the project → preview URL
+vercel env add DAILY_BUDGET_USD      # type 1, choose Production
+vercel env add OPENAI_API_KEY        # optional
+vercel --prod               # deploy to your production URL</code></pre>
+<p>Test the Vercel setup locally with <code>vercel dev</code>.</p>
+
+<!-- ======================================================= 13 -->
+<h2 id="limits">13. Free-plan limits and how the app handles them</h2>
+<div class="note">Numbers change — check <b>vercel.com/docs/limits</b> for current values.</div>
+<table>
+<tr><th>Limit on Vercel Hobby</th><th>Problem it causes</th><th>What this app does</th></tr>
+<tr><td>Request body max ~4.5 MB</td><td>Big PDFs fail with 413</td><td>Upload limit 4 MB on Vercel; checked in the browser first, with a tip (“upload a .txt version or compress the PDF”).</td></tr>
+<tr><td>Function time limit per request</td><td>A whole-book summary in one request would time out</td><td>The browser runs one request per chapter (3 in parallel) and a final combine request. <code>maxDuration: 60</code>.</td></tr>
+<tr><td>Disk is read-only except <code>/tmp</code>; <code>/tmp</code> is wiped on cold start and not shared between instances</td><td>“Book not found” a few minutes after upload</td><td>Browser keeps the processed book in IndexedDB; on <code>book_not_found</code> it calls <code>/api/books/restore</code> and retries automatically.</td></tr>
+<tr><td>Same for SQLite</td><td>Usage/feedback history resets</td><td>Browser keeps its own usage + feedback logs; Prompt Lab exports CSV.</td></tr>
+<tr><td>Function bundle size (~250 MB)</td><td>Heavy libraries (torch…) won't fit</td><td>Only light libraries; embeddings come from the OpenAI API.</td></tr>
+<tr><td>Hobby = non-commercial</td><td>—</td><td>Fine for coursework and portfolios. Upgrade for a business.</td></tr>
+</table>
+<p><b>Want permanent storage, still free?</b> Swap <code>db.py</code> and the book store for a free hosted database (e.g. Supabase or Neon Postgres, Vercel Blob for files). The rest of the app doesn't change — that's why storage is behind small functions.</p>
+
+<!-- ======================================================= 14 -->
+<h2 id="security">14. Protect your API key and wallet</h2>
+<div class="warn"><b>If <code>OPENAI_API_KEY</code> is set on a public URL, anyone who finds the link uses your credit.</b></div>
+<ul>
+<li><b>Safest for a public demo:</b> don't set a server key. Visitors paste their own key in ⚙️ Settings. It stays in their browser and goes only to your server in the <code>X-OpenAI-Key</code> header, which uses it for that request and never stores it.</li>
+<li>If you do set a server key: set <code>DAILY_BUDGET_USD</code>, set a <b>monthly limit</b> in your OpenAI dashboard (Settings → Limits), use a separate key just for this project, and limit <code>ALLOWED_MODELS</code> to cheap ones.</li>
+<li>Never put a key in frontend code or in git. Rotate it if it ever leaks.</li>
+<li>Vercel Hobby also offers <b>Deployment Protection</b> (password / Vercel login) for preview URLs.</li>
+</ul>
+
+<!-- ======================================================= 15 -->
+<h2 id="heroku">15. Heroku or Render (alternatives)</h2>
+<p>These run the app as a normal always-on server: no 4.5 MB limit, files persist while it runs (still reset on redeploy).</p>
+<h3>Heroku (paid: Eco dynos ~US$5/month — no free plan any more)</h3>
+<pre><code># Procfile (included)
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT</code></pre>
+<pre><code>heroku login
+heroku create my-book-studio
+heroku config:set OPENAI_API_KEY=sk-... DAILY_BUDGET_USD=1
+# from the repo root, push only the app folder:
+git subtree push --prefix day9/book_genai_studio heroku main</code></pre>
+<h3>Render (has a free web service; sleeps when idle)</h3>
+<p>New → Web Service → your repo → Root directory <code>day9/book_genai_studio</code> → Build <code>pip install -r requirements.txt</code> → Start <code>uvicorn app.main:app --host 0.0.0.0 --port $PORT</code> → add env vars.</p>
+
+<!-- ======================================================= 16 -->
+<h2 id="trouble">16. Troubleshooting</h2>
+<table>
+<tr><th>Symptom</th><th>Cause → fix</th></tr>
+<tr><td>Vercel: 404 on every page</td><td>Root Directory not set to <code>day9/book_genai_studio</code>, or <code>vercel.json</code> missing.</td></tr>
+<tr><td>Vercel: <code>ModuleNotFoundError: app</code></td><td><code>api/index.py</code> must add the parent folder to <code>sys.path</code> (as above).</td></tr>
+<tr><td>Vercel: page loads but no styles</td><td><code>includeFiles</code> must include <code>static/**</code>.</td></tr>
+<tr><td>413 / “too big”</td><td>File &gt; 4.5 MB. Upload a .txt or compressed PDF, or use Render/Heroku.</td></tr>
+<tr><td>504 / timeout</td><td>Request too long. Summarize per chapter; use a faster model.</td></tr>
+<tr><td>“No readable text found”</td><td>Scanned PDF (images). OCR it first (e.g. open in Google Drive → Open with Google Docs).</td></tr>
+<tr><td>Badge says “Demo mode” but you set a key</td><td>Env var added after deploy → redeploy. Locally: <code>.env</code> in the app folder, restart uvicorn.</td></tr>
+<tr><td>401 invalid key / 402 out of credit</td><td>Check the key; add billing at platform.openai.com.</td></tr>
+<tr><td>Chat answer appears all at once</td><td>A proxy is buffering. The response sets <code>X-Accel-Buffering: no</code>; the UI works either way.</td></tr>
+<tr><td>Wrong chapters</td><td>Book uses unusual headings. Edit <code>CHAPTER_RE</code> in <code>books.py</code>.</td></tr>
+</table>
+
+<!-- ======================================================= 17 -->
+<h2 id="evaluate">17. Evaluate and iterate (user testing)</h2>
+<ol class="steps">
+<li><b>Test with 5 real users</b> using the task script in <code>EVALUATION.md</code>: upload a book, summarize, ask 3 questions including a follow-up, check a source, make a quiz, rate everything. Watch silently; note where they get stuck.</li>
+<li><b>Collect ratings in the app:</b> ★1–5 + comment on every output, 👍/👎 on chat answers. Each rating stores the prompt version.</li>
+<li><b>Measure:</b> average rating per version, % happy, grounded-answer rate (do <code>[S#]</code> passages really support the claim?), “not in the book” honesty, cost and speed from the Usage tab.</li>
+<li><b>Fix the top complaint</b> by writing prompt <code>v3</code> in <code>prompts.py</code>. Change one thing at a time.</li>
+<li><b>Blind compare</b> v2 vs v3 in Prompt Lab (labels hidden, order random) — 20+ votes. Keep the winner, log the change in <code>EVALUATION.md</code>. Repeat.</li>
+</ol>
+
+<!-- ======================================================= 18 -->
+<h2 id="better">18. Why this beats a basic sample app</h2>
+<table>
+<tr><th>Typical tutorial app</th><th>Book GenAI Studio</th></tr>
+<tr><td>Paste a few paragraphs</td><td>Upload a whole book: PDF, EPUB, DOCX, TXT, MD, HTML</td></tr>
+<tr><td>Fails when text is too long</td><td>Chapter detection + map-reduce, any length</td></tr>
+<tr><td>Q&amp;A answers from memory, may invent</td><td>RAG with hybrid search, cited passages, page numbers, “not in the book” rule</td></tr>
+<tr><td>Follow-up questions lose context</td><td>History trimming + standalone question rewriting</td></tr>
+<tr><td>Waits, then shows the whole answer</td><td>Streams word by word, with Stop and Regenerate</td></tr>
+<tr><td>Key in frontend code</td><td>Key on server or per-user header; daily budget</td></tr>
+<tr><td>Generic “error” message</td><td>Each failure mapped to a cause and a fix</td></tr>
+<tr><td>No idea what it costs</td><td>Token count + cost before and after every call, dashboard</td></tr>
+<tr><td>“Feels better” prompt changes</td><td>Versioned prompts, ratings, blind A/B tests</td></tr>
+<tr><td>Breaks without a key</td><td>Demo mode works offline</td></tr>
+<tr><td>Breaks on serverless restarts</td><td>Browser-side copies + automatic restore</td></tr>
+<tr><td>No tests</td><td>14 tests incl. fake-OpenAI tests</td></tr>
+</table>
+<h3>Ideas to go further</h3>
+<ul>
+<li>Upload PDFs larger than 4.5 MB on Vercel by extracting text in the browser with pdf.js and sending text in parts.</li>
+<li>Permanent storage with Supabase/Neon; user accounts.</li>
+<li>Structured outputs (JSON schema) for quizzes → an interactive quiz player.</li>
+<li>Text-to-speech audio summaries; translate a chapter.</li>
+<li>Automatic evaluation: a list of question/answer pairs per book, scored by a second model (“LLM-as-judge”).</li>
+</ul>
+
+<!-- ======================================================= 19 -->
+<h2 id="checklist">19. Checklist</h2>
+<p class="muted">Ticks are saved in this browser.</p>
+<ul class="check" id="checklist-items">
+<li><label><input type="checkbox">Runs locally in Demo mode</label></li>
+<li><label><input type="checkbox">Runs locally with my API key (badge says Live AI)</label></li>
+<li><label><input type="checkbox">Uploaded my own book; chapters look right</label></li>
+<li><label><input type="checkbox">Whole-book summary works with a progress bar</label></li>
+<li><label><input type="checkbox">Chat cites sources; follow-up questions work; Stop works</label></li>
+<li><label><input type="checkbox">Made a quiz and copied it to the clipboard</label></li>
+<li><label><input type="checkbox">Usage tab shows tokens and cost</label></li>
+<li><label><input type="checkbox"><code>pytest -q</code> passes</label></li>
+<li><label><input type="checkbox">Deployed on Vercel with Root Directory set</label></li>
+<li><label><input type="checkbox">Set DAILY_BUDGET_USD and an OpenAI monthly limit</label></li>
+<li><label><input type="checkbox">Ran user tests with 5 people; filled the iteration log</label></li>
+<li><label><input type="checkbox">Wrote prompt v3 and won a blind compare</label></li>
+</ul>
+</main>
+</div>
+<script>
+// copy buttons on code blocks
+document.querySelectorAll("pre").forEach(pre => {
+  const b = document.createElement("button"); b.className = "copy"; b.textContent = "Copy";
+  b.onclick = async () => {
+    const t = pre.querySelector("code")?.innerText || pre.innerText;
+    try { await navigator.clipboard.writeText(t); } catch { const a = document.createElement("textarea"); a.value = t; document.body.append(a); a.select(); document.execCommand("copy"); a.remove(); }
+    b.textContent = "Copied ✓"; setTimeout(() => b.textContent = "Copy", 1500);
+  };
+  pre.append(b);
+});
+// reading progress + active section in nav
+const links = [...document.querySelectorAll("#toc a")], secs = links.map(a => document.querySelector(a.getAttribute("href")));
+addEventListener("scroll", () => {
+  const h = document.documentElement; document.getElementById("prog").style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%";
+  let cur = 0; secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top < 120) cur = i; });
+  links.forEach((a, i) => a.classList.toggle("on", i === cur));
+}, { passive: true });
+// checklist saved in browser
+const boxes = document.querySelectorAll("#checklist-items input");
+let saved = []; try { saved = JSON.parse(localStorage.getItem("day9-checklist") || "[]"); } catch {}
+boxes.forEach((b, i) => { b.checked = !!saved[i]; b.onchange = () => { try { localStorage.setItem("day9-checklist", JSON.stringify([...boxes].map(x => x.checked))); } catch {} }; });
+</script>
+</body>
+</html>

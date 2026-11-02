@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Playground</title>
+<style>
+:root{
+  --bg:#f4f6fb; --panel:#fff; --ink:#1b2333; --muted:#64718a; --line:#dde3ee;
+  --accent:#4f46e5; --accent-soft:#eceeff; --green:#16a34a; --green-soft:#e6f7ec;
+  --red:#dc2626; --red-soft:#fdeaea; --amber:#d97706; --amber-soft:#fff4e2;
+  --t-leave:#ec4899; --t-time:#0ea5e9; --t-wfh:#14b8a6; --t-salary:#f59e0b; --t-it:#8b5cf6; --t-food:#22c55e; --t-none:#94a3b8;
+  --code-bg:#0f172a; --code-ink:#e2e8f0; --shadow:0 6px 22px rgba(20,30,60,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1117; --panel:#161b26; --ink:#e6eaf2; --muted:#9aa6bb; --line:#2a3242;
+    --accent:#818cf8; --accent-soft:#1f2340; --green:#4ade80; --green-soft:#11301e;
+    --red:#f87171; --red-soft:#3a1717; --amber:#fbbf24; --amber-soft:#33270c;
+    --code-bg:#0a0e16; --shadow:0 6px 22px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1117; --panel:#161b26; --ink:#e6eaf2; --muted:#9aa6bb; --line:#2a3242;
+  --accent:#818cf8; --accent-soft:#1f2340; --green:#4ade80; --green-soft:#11301e;
+  --red:#f87171; --red-soft:#3a1717; --amber:#fbbf24; --amber-soft:#33270c;
+  --code-bg:#0a0e16; --shadow:0 6px 22px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+.wrap{max-width:1400px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+h1{margin:0;font-size:1.45rem} h1 span{color:var(--accent)}
+.btn{border:none;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer;font-size:.88rem;background:var(--accent);color:#fff}
+.btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* pipeline strip */
+.strip{display:flex;align-items:center;gap:4px;margin:14px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto;box-shadow:var(--shadow)}
+.pn{flex:0 0 auto;padding:6px 10px;border-radius:9px;font-size:.78rem;font-weight:600;border:2px solid var(--line);color:var(--muted);transition:.25s;white-space:nowrap}
+.pn.p1{border-style:solid} .pn.on{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(1.08)}
+.pn.done{border-color:var(--green);color:var(--green)}
+.pn.skip{opacity:.3;text-decoration:line-through}
+.sep{color:var(--muted);font-size:.8rem}
+.divider{width:2px;align-self:stretch;background:var(--line);margin:0 6px}
+
+/* layout */
+.grid{display:grid;grid-template-columns:310px 1fr 380px;gap:14px;align-items:start}
+@media (max-width:1150px){.grid{grid-template-columns:1fr 1fr}.chatp{grid-column:1/-1}}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.panel h2{margin:0 0 8px;font-size:.95rem;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.tag{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+.tag.i{background:var(--amber-soft);color:var(--amber)} .tag.q{background:var(--accent-soft);color:var(--accent)}
+textarea,input[type=text]{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:8px;font:inherit;font-size:.82rem}
+textarea{height:130px;resize:vertical}
+label.ctl{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.8rem;margin:8px 0}
+label.ctl b{color:var(--accent);min-width:18px;text-align:right}
+input[type=range]{flex:1;accent-color:var(--accent)}
+select{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:3px 6px}
+
+/* chunks */
+.chunks{display:flex;flex-direction:column;gap:6px;max-height:440px;overflow-y:auto;margin-top:8px;padding-right:2px}
+.chunk{border:1px solid var(--line);border-left:5px solid var(--cc,var(--t-none));border-radius:9px;padding:6px 8px;font-size:.76rem;background:var(--bg);transition:.3s;cursor:pointer}
+.chunk.hl{box-shadow:0 0 0 2px var(--accent)}
+.chunk.top{box-shadow:0 0 0 2px var(--green);background:var(--green-soft)}
+.chunk.dim{opacity:.4}
+.cid{display:inline-block;font-weight:700;font-size:.66rem;background:var(--cc,var(--t-none));color:#fff;border-radius:5px;padding:0 6px;margin-right:5px}
+.bars{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}
+.bars i{flex:1;background:var(--bc);border-radius:2px 2px 0 0;height:0;transition:height .5s}
+.bars.big{height:44px;gap:4px}
+.blabels{display:flex;gap:4px;font-size:.6rem;color:var(--muted)} .blabels span{flex:1;text-align:center}
+
+/* map */
+.map{position:relative;height:460px;border-radius:12px;border:1px solid var(--line);overflow:hidden;background:
+  radial-gradient(circle at 50% 50%, var(--accent-soft), transparent 70%), var(--panel)}
+.map::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(var(--line) 1px,transparent 1px) 0 0/10% 10%,
+  linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/10% 10%;opacity:.5}
+.map svg{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.anchor{position:absolute;transform:translate(-50%,-50%);font-size:.72rem;font-weight:700;color:var(--ac);opacity:.75;white-space:nowrap;pointer-events:none}
+.anchor::before{content:"";position:absolute;left:50%;top:50%;width:120px;height:120px;transform:translate(-50%,-50%);border-radius:50%;background:var(--ac);opacity:.08}
+.dot{position:absolute;transform:translate(-50%,-50%) scale(0);width:28px;height:28px;border-radius:50%;background:var(--cc);color:#fff;font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;transition:transform .45s cubic-bezier(.3,1.6,.5,1),opacity .3s,box-shadow .3s;cursor:pointer;border:2px solid var(--panel)}
+.dot.in{transform:translate(-50%,-50%) scale(1)}
+.dot.top{box-shadow:0 0 0 4px var(--green);transform:translate(-50%,-50%) scale(1.25)}
+.dot.dim{opacity:.3}
+.star{position:absolute;transform:translate(-50%,-50%);font-size:1.9rem;z-index:4;transition:left .9s cubic-bezier(.3,1.3,.5,1),top .9s cubic-bezier(.3,1.3,.5,1),opacity .3s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));pointer-events:none}
+.ring{position:absolute;transform:translate(-50%,-50%);border:2px dashed var(--green);border-radius:50%;z-index:1;pointer-events:none;transition:width .8s,height .8s,opacity .5s;width:0;height:0}
+.slabel{position:absolute;transform:translate(-50%,-50%);font-size:.66rem;font-weight:700;background:var(--green);color:#fff;padding:1px 6px;border-radius:6px;z-index:3;opacity:0;transition:opacity .4s}
+.line{stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset .8s}
+.line.go{stroke-dashoffset:0}
+.tip{position:absolute;z-index:6;background:var(--code-bg);color:var(--code-ink);font-size:.75rem;padding:6px 9px;border-radius:8px;max-width:240px;pointer-events:none;display:none}
+.status{margin-top:8px;font-size:.85rem;min-height:1.4em;color:var(--muted)}
+.status b{color:var(--ink)}
+.flyer{position:fixed;z-index:50;font-size:.7rem;background:var(--accent);color:#fff;border-radius:8px;padding:3px 8px;pointer-events:none;transition:left .7s ease-in-out,top .7s ease-in-out,opacity .3s}
+
+/* ranking */
+.rank{display:grid;grid-template-columns:36px 1fr 44px;gap:6px;align-items:center;font-size:.75rem;margin-top:4px}
+.rbar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.rbar i{display:block;height:100%;width:0;transition:width .8s;background:var(--muted)}
+.rank.top .rbar i{background:var(--green)}
+.rank.top span:last-child{color:var(--green);font-weight:700}
+
+/* chat */
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.chip{font-size:.72rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:3px 9px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.askrow{display:flex;gap:6px}
+.toggle{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.toggle button{border:none;background:var(--bg);color:var(--muted);padding:5px 10px;font-weight:700;font-size:.75rem;cursor:pointer}
+.toggle button.sel.on{background:var(--green);color:#fff} .toggle button.sel.off{background:var(--red);color:#fff}
+.msgs{display:flex;flex-direction:column;gap:8px;margin-top:10px;min-height:80px}
+.msg{padding:8px 12px;border-radius:13px;font-size:.85rem;max-width:92%;animation:up .35s}
+.msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:3px}
+.msg.bot{align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:3px}
+.msg.bot.guess{border-color:var(--red);background:var(--red-soft)}
+.msg.bot.good{border-color:var(--green);background:var(--green-soft)}
+.badge{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:6px;margin-top:5px}
+.badge.r{background:var(--red);color:#fff} .badge.g{background:var(--green);color:#fff} .badge.a{background:var(--amber);color:#fff}
+.src{display:inline-block;font-size:.66rem;border-radius:999px;padding:1px 7px;margin:3px 3px 0 0;color:#fff;background:var(--cc)}
+.qvec{margin-top:8px;padding:8px;border-radius:9px;background:var(--bg);border:1px solid var(--line);display:none}
+.prompt{margin-top:10px;background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:.72rem;min-height:60px;white-space:pre-wrap;word-break:break-word}
+.prompt .pl{opacity:0;animation:up .4s forwards;display:block}
+.prompt .ctxl{border-left:3px solid var(--cc);padding-left:6px;margin:2px 0}
+.prompt .h{color:#fbbf24}
+.thinking{display:inline-flex;gap:3px} .thinking i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:bounce 1s infinite}
+.thinking i:nth-child(2){animation-delay:.15s}.thinking i:nth-child(3){animation-delay:.3s}
+.cursor::after{content:"▌";animation:blink .8s infinite;color:var(--accent)}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes blink{50%{opacity:0}}
+@keyframes fly{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+.fly{animation:fly .4s both}
+.muted{color:var(--muted)} .small{font-size:.75rem}
+.sub{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧪 <span>RAG</span> Playground</h1>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label class="small">Speed
+        <select id="speed"><option value="1.8">🐢 Slow</option><option value="1" selected>Normal</option><option value="0.45">⚡ Fast</option></select>
+      </label>
+      <button class="btn ghost" id="themeBtn">🌓</button>
+    </div>
+  </header>
+
+  <div class="strip" id="strip">
+    <span class="pn" data-k="docs">📄 Docs</span><span class="sep">→</span>
+    <span class="pn" data-k="chunk">✂️ Chunk</span><span class="sep">→</span>
+    <span class="pn" data-k="embed">🧠 Embed</span><span class="sep">→</span>
+    <span class="pn" data-k="store">🗄️ Vector DB</span>
+    <span class="divider"></span>
+    <span class="pn" data-k="ask">💬 Question</span><span class="sep">→</span>
+    <span class="pn" data-k="qembed">🔢 Embed Q</span><span class="sep">→</span>
+    <span class="pn" data-k="search">🎯 Search</span><span class="sep">→</span>
+    <span class="pn" data-k="prompt">📝 Prompt</span><span class="sep">→</span>
+    <span class="pn" data-k="llm">🤖 LLM</span><span class="sep">→</span>
+    <span class="pn" data-k="answer">✅ Answer</span>
+  </div>
+
+  <div class="grid">
+    <!-- Knowledge base -->
+    <div class="panel">
+      <h2>📚 Knowledge base <span class="tag i">Indexing</span></h2>
+      <textarea id="kb"></textarea>
+      <label class="ctl">✂️ Sentences per chunk <input type="range" id="csize" min="1" max="3" value="1"><b id="csizeV">1</b></label>
+      <div style="display:flex;gap:6px">
+        <button class="btn" id="indexBtn" style="flex:1">⚙️ Index documents</button>
+        <button class="btn ghost" id="resetKb" title="Restore sample text">↺</button>
+      </div>
+      <div class="sub" id="chunkHead">Chunks</div>
+      <div class="chunks" id="chunks"><div class="muted small">Press <b>Index documents</b> to start ▶</div></div>
+    </div>
+
+    <!-- Vector space -->
+    <div class="panel">
+      <h2>🗺️ Vector space <span class="small muted" style="font-weight:400">hover a dot to read it</span></h2>
+      <div class="map" id="map">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" id="svg"></svg>
+        <div class="tip" id="tip"></div>
+      </div>
+      <div class="status" id="status">Waiting to index…</div>
+      <div id="ranking"></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="panel chatp">
+      <h2>💬 Ask the chatbot <span class="tag q">Querying</span></h2>
+      <div class="askrow">
+        <input type="text" id="q" placeholder="Type a question…" value="How many sick leaves do I get?">
+        <button class="btn" id="askBtn">Ask ➤</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <label class="ctl">🎯 Top-k chunks <input type="range" id="topk" min="1" max="5" value="2"><b id="topkV">2</b></label>
+      <label class="ctl">RAG
+        <span class="toggle"><button id="ragOn" class="sel on">ON</button><button id="ragOff">OFF</button></span>
+      </label>
+      <div class="qvec" id="qvec">
+        <div class="small muted">⭐ Question vector</div>
+        <div class="bars big" id="qbars"></div>
+        <div class="blabels" id="qlabels"></div>
+      </div>
+      <div class="msgs" id="msgs"></div>
+      <div class="sub">📝 Prompt sent to LLM</div>
+      <div class="prompt" id="prompt"><span class="muted">— nothing yet —</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= data ================= */
+const SAMPLE = `Employees get 12 casual leaves per year. Sick leave is 10 days per year. A medical certificate is required if sick leave is more than 2 days in a row. Unused casual leaves can be carried forward up to 5 days. Office hours are 9:30 AM to 6:30 PM, Monday to Friday. Employees arriving after 10:30 AM are marked late. Work from home is allowed 2 days a week with manager approval. Remote employees must stay online on Slack during office hours. Salary is credited on the last working day of every month. A performance bonus is paid every April. Every employee gets a company laptop on day one. IT support can reset your password within 1 hour. The cafeteria serves free lunch from 1 PM to 2 PM. Snacks and coffee are free all day.`;
+const CHIPS = ["How many sick leaves do I get?","Do I need a doctor's note?","When is salary paid?","Can I work remotely?","What time does office start?","I forgot my password","Is lunch free?","Who is the CEO?"];
+
+/* "meaning" dimensions of our toy embedding model */
+const TOPICS = [
+  {k:"leave", n:"Leave",  c:"var(--t-leave)",  x:18, y:22, w:["leave","sick","casual","vacation","holiday","medical","certificate","doctor","note","ill","absent","day off","carry"]},
+  {k:"time",  n:"Timing", c:"var(--t-time)",   x:50, y:13, w:["office hour","hours","time","timing","start","late","arriving","am","pm","monday","friday","morning"]},
+  {k:"wfh",   n:"WFH",    c:"var(--t-wfh)",    x:84, y:26, w:["home","remote","remotely","wfh","slack","online","manager approval"]},
+  {k:"salary",n:"Salary", c:"var(--t-salary)", x:82, y:78, w:["salary","pay","paid","credited","bonus","money","month","april","payment"]},
+  {k:"it",    n:"IT",     c:"var(--t-it)",     x:18, y:78, w:["laptop","password","it support","computer","reset","forgot","login"]},
+  {k:"food",  n:"Food",   c:"var(--t-food)",   x:50, y:87, w:["lunch","cafeteria","food","snack","coffee","eat","free lunch"]},
+];
+const SYN = {doctor:"medical",note:"certificate",wfh:"home",remotely:"remote",remote:"home",pay:"salary",paid:"salary",holidays:"leave",holiday:"leave",vacation:"leave",ill:"sick",food:"lunch",computer:"laptop",snacks:"snack",leaves:"leave",forgot:"reset",start:"hours"};
+const STOP = new Set("a an the is are am i do does did to of in on for and or my me you your can get gets what when how who which be with if it at by per every up from this that will much many there".split(" "));
+const HDIM = 24;
+
+/* ================= toy embedding ================= */
+const words = t => t.toLowerCase().replace(/[^a-z0-9' ]/g," ").split(/\s+/).filter(w=>w && !STOP.has(w)).map(w=>w.replace(/'s$/,"")).map(w=>SYN[w]||w);
+function hash(s){let h=7;for(const ch of s)h=(h*31+ch.charCodeAt(0))>>>0;return h}
+function embed(text){
+  const low = " " + text.toLowerCase() + " ";
+  const topic = TOPICS.map(t => t.w.reduce((s,w)=> s + (low.includes(w) ? 1 : 0), 0));
+  const ws = words(text);
+  ws.forEach(w => TOPICS.forEach((t,i)=>{ if (t.w.includes(w) && !low.includes(w)) topic[i]++; })); // synonyms hit topics
+  // sparse vector: 6 topic "meaning" scores + one feature per word
+  const vec = {};
+  topic.forEach((v,i)=>{ if(v) vec["t:"+TOPICS[i].k] = v*0.7; });
+  ws.forEach(w => vec["w:"+w] = 1);
+  return {topic, vec};
+}
+function cosine(a,b){let d=0,na=0,nb=0;for(const k in a){na+=a[k]*a[k]; if(k in b) d+=a[k]*b[k];} for(const k in b) nb+=b[k]*b[k]; return na&&nb? d/Math.sqrt(na*nb):0}
+function position(topic, text){
+  const sum = topic.reduce((a,b)=>a+b,0);
+  let x=50,y=50;
+  if (sum){ x=0;y=0; topic.forEach((v,i)=>{x+=v*TOPICS[i].x;y+=v*TOPICS[i].y}); x/=sum; y/=sum; }
+  const h = hash(text);
+  x += ((h%100)/100-.5)*13; y += (((h>>7)%100)/100-.5)*13;
+  return {x:Math.max(6,Math.min(94,x)), y:Math.max(8,Math.min(92,y))};
+}
+const mainTopic = t => { const m=Math.max(...t); return m? TOPICS[t.indexOf(m)] : null; };
+
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let runId = 0, chunks = [], indexed = false, rag = true, lastQ = null;
+const speed = () => +$("speed").value;
+const sleep = ms => new Promise(r => setTimeout(r, ms*speed()));
+class Cancel extends Error{}
+const guard = id => { if (id !== runId) throw new Cancel(); };
+function light(k, state="on"){ const n=document.querySelector(`.pn[data-k="${k}"]`); if(!n)return; n.classList.remove("on","done","skip"); if(state) n.classList.add(state); }
+function clearStrip(keys){ keys.forEach(k=>light(k,null)); }
+const P1 = ["docs","chunk","embed","store"], P2 = ["ask","qembed","search","prompt","llm","answer"];
+const tick = () => new Promise(r => setTimeout(r, 30));
+const later = fn => setTimeout(fn, 30);
+const status = h => $("status").innerHTML = h;
+function barsHTML(topic, big){ const m=Math.max(1,...topic); return `<div class="bars${big?' big':''}">${topic.map((v,i)=>`<i style="--bc:${TOPICS[i].c}" data-h="${(v/m)*100}"></i>`).join("")}</div>`; }
+function growBars(root){ later(()=>root.querySelectorAll(".bars i").forEach(b=>b.style.height=Math.max(6,+b.dataset.h)+"%")); }
+async function typeInto(node, text, id, ms=18){ node.classList.add("cursor"); for(let i=1;i<=text.length;i++){ guard(id); node.textContent=text.slice(0,i); await sleep(ms);} node.classList.remove("cursor"); }
+
+/* fly a small label from one element to another (visualizes data moving) */
+async function flyLabel(fromEl, toEl, label, id){
+  const a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect();
+  const f=document.createElement("div"); f.className="flyer"; f.textContent=label;
+  f.style.left=(a.left+a.width/2-20)+"px"; f.style.top=(a.top+a.height/2-10)+"px";
+  document.body.appendChild(f); await tick();
+  f.style.transitionDuration=(.7*speed())+"s";
+  f.style.left=(b.left+b.width/2-20)+"px"; f.style.top=(b.top+b.height/2-10)+"px";
+  try{ await sleep(700); } finally { f.remove(); }
+  guard(id);
+}
+
+/* ================= map ================= */
+const map = $("map"), svg = $("svg"), tip = $("tip");
+function resetMap(){
+  map.querySelectorAll(".dot,.star,.ring,.slabel,.anchor").forEach(e=>e.remove());
+  svg.innerHTML = "";
+  TOPICS.forEach(t=>{ const a=document.createElement("div"); a.className="anchor"; a.style.cssText=`--ac:${t.c};left:${t.x}%;top:${t.y}%`; a.textContent=t.n; map.appendChild(a); });
+}
+function clearSearchVisuals(){
+  map.querySelectorAll(".star,.ring,.slabel").forEach(e=>e.remove()); svg.innerHTML="";
+  map.querySelectorAll(".dot").forEach(d=>d.classList.remove("top","dim"));
+  document.querySelectorAll(".chunk").forEach(c=>c.classList.remove("top","dim","hl"));
+  $("ranking").innerHTML="";
+}
+map.addEventListener("mousemove", e=>{
+  const d=e.target.closest(".dot"); if(!d){tip.style.display="none";return;}
+  const c=chunks[+d.dataset.i], r=map.getBoundingClientRect();
+  tip.innerHTML=`<b>${c.id}</b> ${esc(c.text)}${c.score!=null?`<br>similarity: <b>${c.score.toFixed(2)}</b>`:""}`;
+  tip.style.display="block"; tip.style.left=Math.min(e.clientX-r.left+12, r.width-250)+"px"; tip.style.top=(e.clientY-r.top+12)+"px";
+});
+map.addEventListener("mouseleave",()=>tip.style.display="none");
+
+/* ================= Phase 1: indexing ================= */
+async function indexDocs(){
+  const id = ++runId; indexed=false; lastQ=null;
+  clearStrip([...P1,...P2]); resetMap(); $("msgs").innerHTML=""; $("prompt").innerHTML='<span class="muted">— nothing yet —</span>'; $("qvec").style.display="none";
+  $("indexBtn").disabled=true;
+  try{
+    light("docs"); status("📄 Reading the documents…");
+    const text = $("kb").value.trim();
+    const sents = text.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(Boolean);
+    await sleep(600); guard(id); light("docs","done");
+
+    light("chunk"); const size=+$("csize").value;
+    chunks=[]; for(let i=0;i<sents.length;i+=size) chunks.push({id:"C"+(chunks.length+1), text:sents.slice(i,i+size).join(" ")});
+    status(`✂️ Splitting into <b>${chunks.length}</b> chunks (${size} sentence${size>1?"s":""} each)…`);
+    $("chunkHead").textContent=`Chunks (${chunks.length})`;
+    const list=$("chunks"); list.innerHTML="";
+    for (const [i,c] of chunks.entries()){
+      const el=document.createElement("div"); el.className="chunk fly"; el.id="ch"+i; el.dataset.i=i;
+      el.innerHTML=`<span class="cid">${c.id}</span>${esc(c.text)}<div class="vecslot"></div>`;
+      list.appendChild(el); await sleep(110); guard(id);
+    }
+    light("chunk","done");
+
+    light("embed");
+    for (const [i,c] of chunks.entries()){
+      guard(id);
+      const e=embed(c.text); Object.assign(c,e,position(e.topic,c.text)); c.mt=mainTopic(c.topic);
+      const el=$("ch"+i); el.style.setProperty("--cc", c.mt?c.mt.c:"var(--t-none)"); el.classList.add("hl");
+      el.scrollIntoView({block:"nearest"});
+      status(`🧠 Embedding <b>${c.id}</b> → vector (meaning scores + word features)`);
+      el.querySelector(".vecslot").innerHTML=barsHTML(c.topic); growBars(el);
+      await sleep(260); guard(id);
+      light("store");
+      const d=document.createElement("div"); d.className="dot"; d.dataset.i=i; d.id="dot"+i; d.textContent=c.id;
+      d.style.cssText=`--cc:${c.mt?c.mt.c:"var(--t-none)"};left:${c.x}%;top:${c.y}%`;
+      map.appendChild(d); await tick(); d.classList.add("in");
+      await sleep(220); el.classList.remove("hl"); light("embed");
+    }
+    light("embed","done"); light("store","done");
+    status(`✅ Indexed <b>${chunks.length}</b> chunks. Similar meanings sit close together. Now ask a question →`);
+    indexed=true;
+  }catch(e){ if(!(e instanceof Cancel)) throw e; }
+  finally{ if(id===runId) $("indexBtn").disabled=false; }
+}
+
+/* ================= Phase 2: querying ================= */
+function guessAnswer(topic){
+  const t=mainTopic(topic)?.k;
+  return ({leave:"Most companies give around 6–12 leave days a year, and a doctor's note is usually not needed.",
+    time:"Offices usually run from 9 AM to 5 PM.", wfh:"Many companies allow remote work, it depends on the company.",
+    salary:"Salaries are usually paid at the start of the month.", it:"Try clicking 'Forgot password' on the login page.",
+    food:"Some companies have a paid cafeteria."})[t] || "I'm not sure — I don't have information about your company.";
+}
+async function ask(question){
+  question=question.trim(); if(!question) return;
+  if(!indexed){ await indexDocs(); if(!indexed) return; }
+  const id=++runId; lastQ=question;
+  clearStrip(P2); clearSearchVisuals();
+  const msgs=$("msgs"); msgs.innerHTML="";
+  try{
+    light("ask");
+    const um=document.createElement("div"); um.className="msg user"; um.textContent=question; msgs.appendChild(um);
+    await sleep(400); guard(id); light("ask","done");
+
+    if(!rag){
+      ["qembed","search","prompt"].forEach(k=>light(k,"skip"));
+      $("qvec").style.display="none";
+      $("prompt").innerHTML=`<span class="pl">${esc(question)}</span><span class="pl muted">(no context — RAG is OFF)</span>`;
+      status("🚫 RAG is OFF — the question goes straight to the LLM, no documents searched.");
+      light("llm"); const bm=document.createElement("div"); bm.className="msg bot"; bm.innerHTML='<span class="thinking"><i></i><i></i><i></i></span>'; msgs.appendChild(bm);
+      await sleep(1100); guard(id); light("llm","done"); light("answer");
+      bm.classList.add("guess"); bm.innerHTML="🤖 <span></span>";
+      await typeInto(bm.querySelector("span"), guessAnswer(embed(question).topic), id);
+      bm.insertAdjacentHTML("beforeend",'<br><span class="badge r">⚠️ Guess — not from company docs</span>');
+      light("answer","done"); return;
+    }
+
+    /* embed question */
+    light("qembed"); status("🔢 Turning the question into a vector with the <b>same</b> embedding model…");
+    const qe=embed(question), qp=position(qe.topic,question);
+    $("qvec").style.display="block"; $("qbars").outerHTML=barsHTML(qe.topic,true).replace('class="bars big"','class="bars big" id="qbars"');
+    $("qlabels").innerHTML=TOPICS.map(t=>`<span>${t.n}</span>`).join(""); growBars($("qvec"));
+    await sleep(900); guard(id); light("qembed","done");
+
+    /* search */
+    light("search");
+    const star=document.createElement("div"); star.className="star"; star.textContent="⭐"; star.style.left="50%"; star.style.top="-10%";
+    map.appendChild(star); await tick(); star.style.left=qp.x+"%"; star.style.top=qp.y+"%";
+    status("🎯 Dropping the question onto the map…"); await sleep(1000); guard(id);
+    chunks.forEach(c=>c.score=cosine(qe.vec,c.vec));
+    status(`📏 Measuring similarity to all <b>${chunks.length}</b> chunks (cosine similarity)…`);
+    svg.innerHTML=chunks.map((c,i)=>`<line class="line" id="ln${i}" x1="${qp.x}" y1="${qp.y}" x2="${c.x}" y2="${c.y}" pathLength="100" stroke="var(--muted)" stroke-width="1" opacity=".5" vector-effect="non-scaling-stroke"/>`).join("");
+    await tick();
+    for(let i=0;i<chunks.length;i++){ svg.querySelector("#ln"+i).classList.add("go"); await sleep(55); }
+    await sleep(500); guard(id);
+
+    const k=+$("topk").value, sorted=[...chunks].sort((a,b)=>b.score-a.score);
+    const top=sorted.slice(0,k).filter(c=>c.score>0.2);
+    const ring=document.createElement("div"); ring.className="ring"; ring.style.left=qp.x+"%"; ring.style.top=qp.y+"%"; map.appendChild(ring);
+    chunks.forEach((c,i)=>{
+      const isTop=top.includes(c), ln=svg.querySelector("#ln"+i), dot=$("dot"+i), ch=$("ch"+i);
+      dot.classList.add(isTop?"top":"dim"); ch.classList.add(isTop?"top":"dim");
+      if(isTop){ ln.setAttribute("stroke","var(--green)"); ln.setAttribute("stroke-width","2.5"); ln.setAttribute("opacity","1");
+        const s=document.createElement("div"); s.className="slabel"; s.style.left=((qp.x+c.x)/2)+"%"; s.style.top=((qp.y+c.y)/2)+"%"; s.textContent=c.score.toFixed(2); map.appendChild(s); later(()=>s.style.opacity=1); }
+      else ln.setAttribute("opacity",".15");
+    });
+    if(top.length){ const far=top[top.length-1], r=map.getBoundingClientRect(); const dx=(far.x-qp.x)/100*r.width, dy=(far.y-qp.y)/100*r.height, rad=Math.hypot(dx,dy)*2+36; later(()=>{ring.style.width=rad+"px";ring.style.height=rad+"px";}); }
+    $("ch"+chunks.indexOf(sorted[0])).scrollIntoView({block:"nearest",behavior:"smooth"});
+    $("ranking").innerHTML=`<div class="sub">📊 Similarity ranking (top-${k} in green)</div>`+sorted.slice(0,Math.min(8,sorted.length)).map(c=>`
+      <div class="rank${top.includes(c)?" top":""}"><span class="cid" style="--cc:${c.mt?c.mt.c:"var(--t-none)"}">${c.id}</span><div class="rbar"><i data-w="${Math.max(2,c.score*100)}"></i></div><span>${c.score.toFixed(2)}</span></div>`).join("");
+    later(()=>$("ranking").querySelectorAll(".rbar i").forEach(b=>b.style.width=b.dataset.w+"%"));
+    status(top.length? `✅ Retrieved <b>${top.map(c=>c.id).join(", ")}</b> — the closest in meaning.` : "😕 No chunk is similar enough — nothing relevant in the documents.");
+    await sleep(1300); guard(id); light("search","done");
+
+    /* augment */
+    light("prompt");
+    const pr=$("prompt"); pr.innerHTML="";
+    const addLine=async(html)=>{ const s=document.createElement("span"); s.className="pl"; s.innerHTML=html; pr.appendChild(s); await sleep(320); guard(id); };
+    await addLine(`<span class="h">### Instruction</span>\nAnswer ONLY from the context. If not found, say "I don't know".`);
+    await addLine(`<span class="h">### Context</span>`);
+    if(!top.length) await addLine(`<span class="muted">(empty — no relevant chunks)</span>`);
+    for(const c of top){ await flyLabel($("ch"+chunks.indexOf(c)), pr, c.id, id); await addLine(`<span class="ctxl" style="--cc:${c.mt?c.mt.c:"var(--t-none)"};display:block">[${c.id}] ${esc(c.text)}</span>`); }
+    await addLine(`<span class="h">### Question</span>\n${esc(question)}`);
+    status("📝 Prompt = instruction + retrieved chunks + question → sending to LLM");
+    light("prompt","done");
+
+    /* generate */
+    light("llm");
+    const bm=document.createElement("div"); bm.className="msg bot"; bm.innerHTML='<span class="thinking"><i></i><i></i><i></i></span>'; msgs.appendChild(bm);
+    await sleep(1200); guard(id); light("llm","done"); light("answer");
+    bm.innerHTML="🤖 <span></span>";
+    if(top.length){
+      bm.classList.add("good");
+      const best=top.filter(c=>c.score>=top[0].score*0.6);
+      await typeInto(bm.querySelector("span"), "According to the company handbook: " + best.map(c=>c.text).join(" "), id);
+      bm.insertAdjacentHTML("beforeend",`<br><span class="badge g">✅ Grounded in documents</span><br>${best.map(c=>`<span class="src" style="--cc:${c.mt?c.mt.c:"var(--t-none)"}">📄 ${c.id}</span>`).join("")}`);
+      status("🎉 Done! The LLM answered using the retrieved chunks. Try another question, change top-k, or turn RAG OFF.");
+    } else {
+      await typeInto(bm.querySelector("span"), "I don't know — this isn't in the company documents.", id);
+      bm.insertAdjacentHTML("beforeend",'<br><span class="badge a">🙅 No guessing — nothing relevant was retrieved</span>');
+      status("👍 RAG prevents hallucination: no relevant chunk → the LLM says 'I don't know'.");
+    }
+    light("answer","done");
+  }catch(e){ if(!(e instanceof Cancel)) throw e; }
+}
+
+/* ================= wiring ================= */
+$("kb").value=SAMPLE;
+$("chips").innerHTML=CHIPS.map(c=>`<button class="chip">${esc(c)}</button>`).join("");
+$("chips").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(c){ $("q").value=c.textContent; ask(c.textContent);} });
+$("askBtn").onclick=()=>ask($("q").value);
+$("q").addEventListener("keydown",e=>{ if(e.key==="Enter") ask($("q").value); });
+$("indexBtn").onclick=indexDocs;
+$("resetKb").onclick=()=>{ $("kb").value=SAMPLE; indexDocs(); };
+$("csize").oninput=e=>{ $("csizeV").textContent=e.target.value; };
+$("csize").onchange=indexDocs;
+$("topk").oninput=e=>{ $("topkV").textContent=e.target.value; };
+$("topk").onchange=()=>{ if(lastQ) ask(lastQ); };
+function setRag(on){ rag=on; $("ragOn").className=on?"sel on":""; $("ragOff").className=on?"":"sel off"; if(lastQ) ask(lastQ); }
+$("ragOn").onclick=()=>setRag(true); $("ragOff").onclick=()=>setRag(false);
+$("chunks").addEventListener("mouseover",e=>{ const c=e.target.closest(".chunk"); document.querySelectorAll(".dot").forEach(d=>d.style.outline=""); if(c){ const d=$("dot"+c.dataset.i); if(d) d.style.outline="3px solid var(--accent)"; }});
+$("chunks").addEventListener("mouseleave",()=>document.querySelectorAll(".dot").forEach(d=>d.style.outline=""));
+$("themeBtn").onclick=()=>{ const r=document.documentElement; const dark=r.dataset.theme? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches; r.dataset.theme=dark?"light":"dark"; };
+resetMap();
+</script>
+</body>
+</html>

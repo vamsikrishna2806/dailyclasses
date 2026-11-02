@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FastAPI Zero to Hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f8fa; --panel:#ffffff; --panel2:#eef3f6; --text:#1b2430; --muted:#5b6878; --border:#dde3ea;
+  --accent:#009485; --accent-soft:#d8f3ef; --accent2:#6c4bd8; --warn:#e48a00; --bad:#d93a3a; --good:#1f9d55;
+  --get:#2f80ed; --post:#1f9d55; --put:#e48a00; --patch:#8e44ad; --delete:#d93a3a;
+  --code-bg:#0f1720; --code-text:#e6edf3; --code-border:#22303d;
+  --k:#ff7b72; --s:#a5d6ff; --c:#7d8c99; --d:#d2a8ff; --t:#79c0ff; --n:#ffa657;
+  --shadow:0 2px 10px rgba(20,30,40,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1117; --panel:#131a22; --panel2:#18212b; --text:#e3e9ef; --muted:#93a1b0; --border:#26313d;
+    --accent:#19c2ad; --accent-soft:#0f2f2b; --accent2:#9b82ff; --shadow:0 2px 12px rgba(0,0,0,.35);
+    --code-bg:#0a0f14; --code-border:#1f2a35;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1117; --panel:#131a22; --panel2:#18212b; --text:#e3e9ef; --muted:#93a1b0; --border:#26313d;
+  --accent:#19c2ad; --accent-soft:#0f2f2b; --accent2:#9b82ff; --shadow:0 2px 12px rgba(0,0,0,.35);
+  --code-bg:#0a0f14; --code-border:#1f2a35;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.65;font-size:16px}
+code,pre,.mono{font-family:"JetBrains Mono",Consolas,monospace}
+a{color:var(--accent)}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:50}
+
+/* ---------- layout ---------- */
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:10px 16px;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.topbar .logo{display:flex;align-items:center;gap:8px;font-weight:800}
+.logo-mark{width:28px;height:28px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:15px}
+.topbar .sp{flex:1}
+.btn{border:1px solid var(--border);background:var(--panel);color:var(--text);padding:7px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:14px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
+#menuBtn{display:none}
+.wrap{display:grid;grid-template-columns:270px 1fr;max-width:1400px;margin:0 auto}
+nav#side{position:sticky;top:53px;height:calc(100vh - 53px);overflow:auto;padding:16px 10px 40px;border-right:1px solid var(--border)}
+nav#side a{display:flex;gap:8px;align-items:center;padding:5px 10px;border-radius:7px;color:var(--muted);text-decoration:none;font-size:14px}
+nav#side a .n{font-family:"JetBrains Mono",monospace;font-size:11px;opacity:.7;min-width:20px}
+nav#side a:hover{background:var(--panel2);color:var(--text)}
+nav#side a.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav#side .grp{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 10px 4px;font-weight:700}
+main{padding:0 32px 80px;min-width:0}
+@media (max-width:900px){
+  .wrap{grid-template-columns:1fr}
+  #menuBtn{display:inline-block}
+  nav#side{position:fixed;left:0;top:53px;width:280px;background:var(--panel);z-index:45;transform:translateX(-100%);transition:transform .25s}
+  nav#side.open{transform:none;box-shadow:var(--shadow)}
+  main{padding:0 16px 60px}
+}
+
+/* ---------- hero ---------- */
+.hero{padding:56px 0 30px;text-align:center;position:relative;overflow:hidden}
+.hero h1{font-size:clamp(32px,6vw,58px);line-height:1.1;margin:0 0 14px;letter-spacing:-.02em}
+.hero h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);max-width:680px;margin:0 auto 22px;font-size:18px}
+.typer{display:inline-block;background:var(--code-bg);color:var(--code-text);padding:14px 20px;border-radius:12px;text-align:left;font-size:15px;min-width:min(420px,100%);border:1px solid var(--code-border);white-space:pre}
+.typer .cursor{display:inline-block;width:8px;background:var(--accent);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.floaties span{position:absolute;font-size:13px;font-weight:700;padding:5px 10px;border-radius:20px;background:var(--panel);border:1px solid var(--border);box-shadow:var(--shadow);animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:22px}
+.badges span{font-size:13px;padding:5px 12px;border-radius:20px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* ---------- sections ---------- */
+.sec{padding:46px 0 10px;border-top:1px solid var(--border);opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
+.sec.visible{opacity:1;transform:none}
+.sec-num{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.1em}
+.sec h2{font-size:clamp(24px,3.4vw,34px);margin:4px 0 10px;letter-spacing:-.01em}
+.sec h3{font-size:19px;margin:28px 0 8px}
+.lead{font-size:17.5px;color:var(--muted);margin-top:0}
+.nutshell{background:linear-gradient(135deg,var(--accent-soft),transparent);border:1px solid var(--accent);border-left-width:5px;border-radius:12px;padding:14px 18px;margin:18px 0}
+.nutshell b{color:var(--accent)}
+.tip,.warn{border-radius:10px;padding:12px 16px;margin:16px 0;font-size:15px}
+.tip{background:color-mix(in srgb,var(--accent2) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 40%,transparent)}
+.warn{background:color-mix(in srgb,var(--warn) 12%,transparent);border:1px solid color-mix(in srgb,var(--warn) 45%,transparent)}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.grid2{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr))}
+.feat{transition:transform .2s,border-color .2s}
+.feat:hover{transform:translateY(-4px);border-color:var(--accent)}
+.feat .ic{font-size:26px}
+.feat h4{margin:6px 0 4px;font-size:16px}
+.feat p{margin:0;font-size:14px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--panel);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+th,td{padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+th{background:var(--panel2);font-weight:700}
+.tbl-wrap{overflow-x:auto;margin:14px 0}
+code.i{background:var(--panel2);border:1px solid var(--border);padding:1px 6px;border-radius:5px;font-size:.88em;overflow-wrap:anywhere}
+td{overflow-wrap:anywhere}
+@media (max-width:560px){.topbar .logo .full{display:none}}
+
+/* ---------- code blocks ---------- */
+.code{background:var(--code-bg);border:1px solid var(--code-border);border-radius:12px;margin:14px 0;overflow:hidden}
+.code-h{display:flex;align-items:center;gap:8px;padding:7px 12px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--code-border);color:#9fb0c0;font-size:12.5px;font-family:"JetBrains Mono",monospace}
+.code-h::before{content:"";width:10px;height:10px;border-radius:50%;background:#ff5f57;box-shadow:16px 0 #febc2e,32px 0 #28c840;margin-right:36px}
+.code-h .sp{flex:1}
+.copy{background:transparent;border:1px solid #33414f;color:#9fb0c0;border-radius:6px;padding:2px 9px;cursor:pointer;font-size:12px}
+.copy:hover{color:#fff;border-color:#5b6b7b}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;color:var(--code-text);font-size:13.8px;line-height:1.6}
+.k{color:var(--k)}.s{color:var(--s)}.c{color:var(--c);font-style:italic}.d{color:var(--d)}.t{color:var(--t)}.nm{color:var(--n)}
+.out pre{color:#b7f5c9}
+
+/* ---------- annotated hello ---------- */
+.anno{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;align-items:start}
+@media (max-width:800px){.anno{grid-template-columns:1fr}}
+.anno .lines{padding:10px 0;font-size:13.8px;color:var(--code-text);overflow-x:auto}
+.ln{display:flex;padding:1px 12px;transition:background .2s;white-space:pre;min-height:22px}
+.ln .no{color:#4f5f6e;width:28px;flex:none;user-select:none}
+.ln.hl{background:rgba(25,194,173,.22);box-shadow:inset 3px 0 var(--accent)}
+.anno ol{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.anno li{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;font-size:14.5px;transition:border-color .2s,transform .2s}
+.anno li:hover,.anno li.hl{border-color:var(--accent);transform:translateX(4px)}
+.anno li b{color:var(--accent);font-family:"JetBrains Mono",monospace;font-size:12px;margin-right:6px}
+
+/* ---------- restaurant ---------- */
+.restaurant{display:flex;align-items:center;gap:6px;padding:26px 14px;background:var(--panel);border:1px solid var(--border);border-radius:16px;margin:16px 0}
+.actor{display:flex;flex-direction:column;align-items:center;text-align:center;font-size:36px;flex:none;width:86px}
+.actor span{font-size:13px;font-weight:700;line-height:1.3}
+.actor small{font-weight:400;color:var(--muted)}
+.lane{flex:1;position:relative;height:64px;min-width:60px;border-bottom:2px dashed var(--border)}
+.plate{position:absolute;font-size:12px;font-weight:700;padding:3px 8px;border-radius:14px;white-space:nowrap;opacity:0;animation-duration:6s;animation-iteration-count:infinite;animation-timing-function:ease-in-out}
+.plate.req{top:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.plate.res{top:34px;background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);border:1px solid var(--warn)}
+.l1req{animation-name:l1req}.l2req{animation-name:l2req}.l2res{animation-name:l2res}.l1res{animation-name:l1res}
+@keyframes l1req{0%{left:0;opacity:1}24%{left:calc(100% - 70px);opacity:1}25%,100%{opacity:0;left:calc(100% - 70px)}}
+@keyframes l2req{0%,25%{opacity:0;left:0}26%{opacity:1;left:0}49%{left:calc(100% - 70px);opacity:1}50%,100%{opacity:0;left:calc(100% - 70px)}}
+@keyframes l2res{0%,50%{opacity:0;left:calc(100% - 50px)}51%{opacity:1;left:calc(100% - 50px)}74%{left:0;opacity:1}75%,100%{opacity:0;left:0}}
+@keyframes l1res{0%,75%{opacity:0;left:calc(100% - 70px)}76%{opacity:1;left:calc(100% - 70px)}99%{left:0;opacity:1}100%{opacity:0;left:0}}
+@media (max-width:560px){.actor{width:58px;font-size:28px}.actor small{display:none}.plate{font-size:10px;padding:2px 5px}}
+
+/* ---------- stack ---------- */
+.stack{display:flex;flex-direction:column;gap:8px;max-width:640px;margin:18px auto}
+.layer{border-radius:12px;padding:14px 18px;color:#fff;font-weight:700;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;opacity:0;transform:translateX(-40px)}
+.layer small{font-weight:400;opacity:.92}
+.sec.visible .layer{animation:slideIn .6s forwards}
+.sec.visible .layer:nth-child(2){animation-delay:.2s}.sec.visible .layer:nth-child(3){animation-delay:.4s}.sec.visible .layer:nth-child(4){animation-delay:.6s}
+@keyframes slideIn{to{opacity:1;transform:none}}
+.layer-row{display:flex;gap:8px}.layer-row .layer{flex:1}
+
+/* ---------- lifecycle / steppers ---------- */
+.pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin:16px 0}
+.stage{position:relative;background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center;font-size:13px;font-weight:600;transition:all .3s}
+.stage .ic{font-size:24px;display:block}
+.stage.on{border-color:var(--accent);background:var(--accent-soft);transform:scale(1.07);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 20%,transparent)}
+.stage.done{border-color:var(--accent);opacity:.75}
+.stage.err{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.stage.skip{opacity:.3}
+.caption{min-height:54px;background:var(--panel2);border-radius:10px;padding:12px 14px;font-size:15px;border:1px solid var(--border)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+
+/* ---------- methods ---------- */
+.m{display:inline-block;font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12px;color:#fff;padding:3px 9px;border-radius:6px;min-width:62px;text-align:center}
+.m.GET{background:var(--get)}.m.POST{background:var(--post)}.m.PUT{background:var(--put)}.m.PATCH{background:var(--patch)}.m.DELETE{background:var(--delete)}
+.verb{border-top:4px solid}
+.verb.GET{border-top-color:var(--get)}.verb.POST{border-top-color:var(--post)}.verb.PUT{border-top-color:var(--put)}.verb.PATCH{border-top-color:var(--patch)}.verb.DELETE{border-top-color:var(--delete)}
+
+/* ---------- url dissector ---------- */
+.urlbox{display:flex;gap:8px;flex-wrap:wrap}
+.urlbox input,.play textarea,.sw input,.sw textarea{flex:1;min-width:200px;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-family:"JetBrains Mono",monospace;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:14px 0;font-family:"JetBrains Mono",monospace;font-size:15px;align-items:center}
+.chip{padding:4px 8px;border-radius:7px;position:relative;animation:pop .35s}
+.chip small{display:block;font-size:10px;font-family:Inter,sans-serif;font-weight:700;text-transform:uppercase;opacity:.85}
+.chip.path{background:color-mix(in srgb,var(--muted) 18%,transparent)}
+.chip.pp{background:color-mix(in srgb,var(--get) 22%,transparent);color:var(--get)}
+.chip.qp{background:color-mix(in srgb,var(--post) 22%,transparent);color:var(--post)}
+.chip.bad{background:color-mix(in srgb,var(--bad) 22%,transparent);color:var(--bad)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.status{display:inline-block;font-weight:800;padding:3px 10px;border-radius:7px;color:#fff;font-family:"JetBrains Mono",monospace;font-size:13px}
+.status.ok{background:var(--good)}.status.err{background:var(--bad)}.status.warnc{background:var(--warn)}
+
+/* ---------- validation playground ---------- */
+.play textarea{width:100%;min-height:150px;resize:vertical}
+.result{margin-top:10px}
+
+/* ---------- async lanes ---------- */
+.lanebox{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
+.lanebox h4{margin:0 0 8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.track{position:relative;height:26px;background:var(--panel2);border-radius:6px;margin:6px 0;overflow:hidden}
+.bar{position:absolute;top:3px;height:20px;border-radius:5px;width:0;font-size:11px;color:#fff;font-weight:700;padding-left:6px;white-space:nowrap;overflow:hidden;line-height:20px}
+.sync .bar{background:var(--warn)}.async .bar{background:var(--accent)}
+.timeaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace}
+
+/* ---------- DI ---------- */
+.ditree{display:flex;flex-direction:column;align-items:center;gap:0;margin:18px 0}
+.dinode{background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:10px 18px;font-family:"JetBrains Mono",monospace;font-size:14px;transition:all .3s;text-align:center}
+.dinode small{display:block;font-family:Inter,sans-serif;color:var(--muted);font-size:12px}
+.dinode.on{border-color:var(--accent);background:var(--accent-soft);transform:scale(1.06)}
+.diarrow{width:2px;height:28px;background:repeating-linear-gradient(to bottom,var(--accent) 0 5px,transparent 5px 10px);background-size:2px 10px;animation:flowdown .6s linear infinite}
+@keyframes flowdown{to{background-position:0 10px}}
+.dirow{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+
+/* ---------- onion ---------- */
+.onion{display:grid;place-items:center;margin:16px 0}
+.ring{border:2px solid var(--border);border-radius:50%;display:grid;place-items:center;position:relative;transition:all .3s}
+.ring>.lbl{position:absolute;top:8px;font-size:12px;font-weight:700;background:var(--panel);padding:0 6px;border-radius:5px}
+.ring.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.r1{width:min(340px,86vw);height:min(340px,86vw)}.r2{width:76%;height:76%}.r3{width:70%;height:70%}
+.core{width:58%;height:58%;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;text-align:center;transition:all .3s}
+.core.on{transform:scale(1.12);box-shadow:0 0 30px var(--accent)}
+
+/* ---------- sequence (JWT) ---------- */
+.seq{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+.seqrow{display:grid;grid-template-columns:90px 1fr 90px;align-items:center;gap:8px;opacity:.35;transition:opacity .3s}
+.seqrow.on,.seqrow.done{opacity:1}
+.seqrow .who{font-weight:700;font-size:13px;text-align:center;padding:6px;border-radius:8px;background:var(--panel2)}
+.seqmsg{position:relative;text-align:center;font-size:13px;padding:6px 10px;border-radius:8px;border:1px dashed var(--border)}
+.seqrow.on .seqmsg{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.seqmsg.r::after{content:"→";position:absolute;right:-6px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:800}
+.seqmsg.l::before{content:"←";position:absolute;left:-6px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:800}
+@media (max-width:560px){.seqrow{grid-template-columns:62px 1fr 62px}.seqrow .who{font-size:11px}}
+
+/* ---------- websocket ---------- */
+.chat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;max-width:520px}
+.bub{max-width:75%;padding:8px 12px;border-radius:14px;font-size:14px;opacity:0;animation:bub 8s infinite}
+.bub.me{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.bub.sv{align-self:flex-start;background:var(--panel2);border-bottom-left-radius:4px}
+.bub:nth-child(1){animation-delay:0s}.bub:nth-child(2){animation-delay:.8s}.bub:nth-child(3){animation-delay:1.6s}.bub:nth-child(4){animation-delay:2.4s}.bub:nth-child(5){animation-delay:3.2s}
+@keyframes bub{0%{opacity:0;transform:translateY(8px)}6%,80%{opacity:1;transform:none}90%,100%{opacity:0}}
+.compare-anim{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.compare-anim{grid-template-columns:1fr}}
+
+/* ---------- status cards ---------- */
+.sc{border-left:5px solid;padding:12px 14px}
+.sc .code-n{font-family:"JetBrains Mono",monospace;font-size:22px;font-weight:800}
+.sc.s2{border-left-color:var(--good)}.sc.s2 .code-n{color:var(--good)}
+.sc.s4{border-left-color:var(--warn)}.sc.s4 .code-n{color:var(--warn)}
+.sc.s5{border-left-color:var(--bad)}.sc.s5 .code-n{color:var(--bad)}
+.sc p{margin:2px 0 0;font-size:13.5px;color:var(--muted)}
+
+/* ---------- swagger mock ---------- */
+.sw{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.sw-top{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.sw-top h4{margin:0;font-size:20px}
+.sw-top .ver{font-size:11px;background:var(--muted);color:#fff;border-radius:10px;padding:1px 8px}
+.op{margin:10px 14px;border-radius:9px;border:1px solid}
+.op.GET{border-color:var(--get);background:color-mix(in srgb,var(--get) 7%,transparent)}
+.op.POST{border-color:var(--post);background:color-mix(in srgb,var(--post) 7%,transparent)}
+.op.PUT{border-color:var(--put);background:color-mix(in srgb,var(--put) 7%,transparent)}
+.op.DELETE{border-color:var(--delete);background:color-mix(in srgb,var(--delete) 7%,transparent)}
+.op-h{display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;flex-wrap:wrap}
+.op-h .p{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:14px}
+.op-h .sum{color:var(--muted);font-size:13.5px}
+.op-b{display:none;padding:10px 12px 14px;border-top:1px solid var(--border)}
+.op.open .op-b{display:block;animation:pop .25s}
+.op-b label{display:block;font-size:13px;font-weight:700;margin:8px 0 4px}
+.op-b textarea{width:100%;min-height:90px}
+.resp{margin-top:10px}
+
+/* ---------- quiz ---------- */
+.q{margin:14px 0}
+.q .opts{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:8px}
+.q button{text-align:left;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font:inherit;font-size:14.5px;transition:all .2s}
+.q button:hover:not(:disabled){border-color:var(--accent)}
+.q button.right{background:color-mix(in srgb,var(--good) 18%,transparent);border-color:var(--good)}
+.q button.wrong{background:color-mix(in srgb,var(--bad) 18%,transparent);border-color:var(--bad)}
+.q .why{font-size:14px;color:var(--muted);margin-top:6px;display:none}
+.q.answered .why{display:block}
+.score{position:sticky;bottom:14px;margin-left:auto;width:max-content;background:var(--accent);color:#fff;padding:8px 16px;border-radius:30px;font-weight:700;box-shadow:var(--shadow)}
+
+/* ---------- misc ---------- */
+.tree{font-family:"JetBrains Mono",monospace;font-size:13.5px}
+.bars{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.hbar{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:10px;font-size:13.5px;font-weight:600}
+.hbar .fill{height:22px;border-radius:6px;width:0;transition:width 1.4s cubic-bezier(.2,.8,.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:#fff;font-size:12px}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:12px;background:var(--panel2);border:1px solid var(--border)}
+footer{text-align:center;color:var(--muted);font-size:14px;padding:30px 0}
+.kbd{font-family:"JetBrains Mono",monospace;background:var(--panel2);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:0 6px;font-size:13px}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.sec{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="btn" id="menuBtn" aria-label="Open menu">☰</button>
+  <div class="logo"><div class="logo-mark">⚡</div> FastAPI<span class="full">&nbsp;Zero to Hero</span></div>
+  <div class="sp"></div>
+  <button class="btn" id="themeBtn" title="Toggle theme">🌓 Theme</button>
+</header>
+
+<div class="wrap">
+<nav id="side"></nav>
+
+<main>
+
+<!-- =============================== HERO =============================== -->
+<div class="hero">
+  <div class="floaties" aria-hidden="true">
+    <span style="left:4%;top:18%">⚡ Fast</span>
+    <span style="right:5%;top:22%;animation-delay:1s">📄 Auto Docs</span>
+    <span style="left:8%;bottom:14%;animation-delay:2s">✅ Validation</span>
+    <span style="right:9%;bottom:12%;animation-delay:3s">🔄 Async</span>
+  </div>
+  <h1>Learn <span>FastAPI</span><br>from absolute zero</h1>
+  <p>A complete, visual, super-simple tutorial. Every topic has a one-line "nutshell", a tiny example, real code, and an animation or playground you can click.</p>
+  <div class="typer mono" id="typer"></div>
+  <div class="badges">
+    <span>30 topics</span><span>8 interactive playgrounds</span><span>Copy-paste code</span><span>Quiz at the end</span>
+  </div>
+</div>
+
+<!-- =============================== 1 WHAT =============================== -->
+<section class="sec" id="what" data-title="What is FastAPI?" data-group="Basics">
+  <div class="sec-num">01</div>
+  <h2>What is FastAPI?</h2>
+  <p class="lead">FastAPI is a Python library that helps you build <b>APIs</b>: programs that other programs (websites, mobile apps, AI tools) can talk to over the internet.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> You write normal Python functions. FastAPI turns them into web URLs that anyone can call, and it checks the data, writes docs, and sends back JSON for you.</div>
+
+  <h3>The restaurant analogy 🍕</h3>
+  <p>Think of a restaurant. You (the <b>client</b>) don't walk into the kitchen. You tell the <b>waiter</b> what you want. The waiter takes your order to the <b>kitchen</b> and brings back food. <b>FastAPI is the waiter.</b></p>
+  <div class="restaurant">
+    <div class="actor">🧑<span>Client<br><small>browser / app</small></span></div>
+    <div class="lane"><div class="plate req l1req">GET /pizza</div><div class="plate res l1res">JSON 🍕</div></div>
+    <div class="actor">🤵<span>API<br><small>FastAPI</small></span></div>
+    <div class="lane"><div class="plate req l2req">ask DB</div><div class="plate res l2res">data</div></div>
+    <div class="actor">👨‍🍳<span>Kitchen<br><small>DB / logic</small></span></div>
+  </div>
+
+  <h3>Key words you'll hear (super simple)</h3>
+  <div class="tbl-wrap"><table>
+    <tr><th>Word</th><th>Simple meaning</th><th>Example</th></tr>
+    <tr><td><b>API</b></td><td>A menu of things a program can do for you</td><td>"Give me user 5"</td></tr>
+    <tr><td><b>Endpoint / Route</b></td><td>One item on that menu, a URL + a method</td><td><code class="i">GET /users/5</code></td></tr>
+    <tr><td><b>Request</b></td><td>The order you send</td><td>Method, URL, headers, body</td></tr>
+    <tr><td><b>Response</b></td><td>What comes back</td><td>Status code + JSON</td></tr>
+    <tr><td><b>JSON</b></td><td>Text format for data, looks like a Python dict</td><td><code class="i">{"name": "Asha"}</code></td></tr>
+    <tr><td><b>Status code</b></td><td>A number saying how it went</td><td>200 OK, 404 Not Found</td></tr>
+    <tr><td><b>Server</b></td><td>The computer/program that listens for requests</td><td>Uvicorn</td></tr>
+  </table></div>
+</section>
+
+<!-- =============================== 2 WHY =============================== -->
+<section class="sec" id="why" data-title="Why FastAPI?" data-group="Basics">
+  <div class="sec-num">02</div>
+  <h2>Why FastAPI? The superpowers</h2>
+  <p class="lead">FastAPI gives you a lot for free just because you wrote Python <b>type hints</b> like <code class="i">age: int</code>.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Write less code, get fewer bugs, get free docs, and run very fast.</div>
+  <div class="grid">
+    <div class="card feat"><div class="ic">⚡</div><h4>Very fast</h4><p>Built on Starlette + async. One of the fastest Python frameworks.</p></div>
+    <div class="card feat"><div class="ic">📄</div><h4>Automatic docs</h4><p>Interactive Swagger UI at <code class="i">/docs</code> and ReDoc at <code class="i">/redoc</code>, no extra work.</p></div>
+    <div class="card feat"><div class="ic">✅</div><h4>Data validation</h4><p>Pydantic checks every input. Bad data gets a clear 422 error automatically.</p></div>
+    <div class="card feat"><div class="ic">🧠</div><h4>Editor autocomplete</h4><p>Type hints mean VS Code / PyCharm know your data and catch typos.</p></div>
+    <div class="card feat"><div class="ic">🔄</div><h4>Async ready</h4><p>Use <code class="i">async def</code> to handle many requests while waiting on I/O.</p></div>
+    <div class="card feat"><div class="ic">🧩</div><h4>Dependency Injection</h4><p><code class="i">Depends()</code> shares DB sessions, auth, settings cleanly.</p></div>
+    <div class="card feat"><div class="ic">🔐</div><h4>Security built in</h4><p>OAuth2, JWT, API keys, HTTP Basic helpers ready to use.</p></div>
+    <div class="card feat"><div class="ic">📏</div><h4>Open standards</h4><p>Based on OpenAPI + JSON Schema, so tools can generate clients for you.</p></div>
+  </div>
+
+  <h3>How much code does it save? (illustrative)</h3>
+  <div class="bars" id="codeBars">
+    <div class="hbar"><span>Manual checks</span><div class="fill" data-w="100" style="background:var(--warn)">~40 lines</div></div>
+    <div class="hbar"><span>FastAPI</span><div class="fill" data-w="22" style="background:var(--accent)">~9 lines</div></div>
+  </div>
+  <p style="font-size:14px;color:var(--muted)">Same job: read JSON, check types, return errors, document it. FastAPI does the checking + docs for you.</p>
+
+  <h3>FastAPI vs Flask vs Django (quick look)</h3>
+  <div class="tbl-wrap"><table>
+    <tr><th>Feature</th><th>FastAPI</th><th>Flask</th><th>Django</th></tr>
+    <tr><td>Best for</td><td>APIs, ML/AI backends</td><td>Small apps, simple sites</td><td>Big full websites with admin</td></tr>
+    <tr><td>Async</td><td>✅ Native</td><td>⚠️ Partial</td><td>⚠️ Partial</td></tr>
+    <tr><td>Auto validation</td><td>✅ Pydantic</td><td>❌ Add a library</td><td>⚠️ Forms/DRF</td></tr>
+    <tr><td>Auto API docs</td><td>✅ Built in</td><td>❌ Add-on</td><td>❌ Add-on</td></tr>
+    <tr><td>Learning curve</td><td>Easy</td><td>Very easy</td><td>Medium</td></tr>
+  </table></div>
+</section>
+
+<!-- =============================== 3 STACK =============================== -->
+<section class="sec" id="stack" data-title="How it's built" data-group="Basics">
+  <div class="sec-num">03</div>
+  <h2>How FastAPI is built (the layer cake 🎂)</h2>
+  <p class="lead">FastAPI doesn't do everything alone. It stands on the shoulders of other great libraries.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <b>Uvicorn</b> listens to the internet → <b>Starlette</b> handles web stuff → <b>Pydantic</b> checks data → <b>FastAPI</b> glues it together with your functions.</div>
+  <div class="stack">
+    <div class="layer" style="background:var(--accent)">⚡ FastAPI <small>your routes, Depends, auto docs</small></div>
+    <div class="layer-row">
+      <div class="layer" style="background:#e0457b">🧪 Pydantic <small>validation &amp; types</small></div>
+      <div class="layer" style="background:#6c4bd8">⭐ Starlette <small>routing, requests, websockets</small></div>
+    </div>
+    <div class="layer" style="background:#2f80ed">🦄 Uvicorn <small>ASGI server, talks HTTP</small></div>
+    <div class="layer" style="background:#3c4b5c">🐍 Python 3.9+ <small>type hints + async/await</small></div>
+  </div>
+  <h3>ASGI vs WSGI in one breath</h3>
+  <div class="grid2">
+    <div class="card"><b>WSGI</b> (old, Flask/Django classic)<br><span style="color:var(--muted)">One request per worker at a time. Like a cashier who waits for your card to finish before helping anyone else.</span></div>
+    <div class="card"><b>ASGI</b> (new, FastAPI)<br><span style="color:var(--muted)">A worker can juggle many requests while they wait. Also supports WebSockets. Like a cashier who helps the next person while your card processes.</span></div>
+  </div>
+</section>
+
+<!-- =============================== 4 SETUP =============================== -->
+<section class="sec" id="setup" data-title="Install & setup" data-group="Basics">
+  <div class="sec-num">04</div>
+  <h2>Install &amp; setup</h2>
+  <p class="lead">You need Python 3.9 or newer. Then three commands.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Make a virtual environment, <code class="i">pip install "fastapi[standard]"</code>, done.</div>
+  <div class="code"><div class="code-h">Terminal (Windows)<span class="sp"></span></div><pre><code class="sh"># 1. create a project folder and a virtual environment
+mkdir myapi
+cd myapi
+python -m venv .venv
+
+# 2. activate it
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # Mac / Linux
+
+# 3. install FastAPI with the standard extras (uvicorn, CLI, forms, email...)
+pip install "fastapi[standard]"</code></pre></div>
+  <div class="tip">💡 <b>What does <code class="i">[standard]</code> add?</b> The <code class="i">fastapi</code> command, the Uvicorn server, <code class="i">python-multipart</code> (forms/files), <code class="i">email-validator</code>, Jinja2 and <code class="i">httpx</code> (for testing). Perfect for learning.</div>
+</section>
+
+<!-- =============================== 5 HELLO =============================== -->
+<section class="sec" id="hello" data-title="First app (Hello World)" data-group="Basics">
+  <div class="sec-num">05</div>
+  <h2>Your first app: Hello World 👋</h2>
+  <p class="lead">Create a file called <code class="i">main.py</code>. Hover or tap each explanation to light up its line.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">app = FastAPI()</code> makes the app. <code class="i">@app.get("/")</code> says "when someone visits <code class="i">/</code>, run this function". Return a dict, get JSON.</div>
+  <div class="anno">
+    <div class="code"><div class="code-h">main.py<span class="sp"></span><button class="copy" data-copy-target="helloSrc">Copy</button></div><div class="lines" id="helloLines"></div></div>
+    <ol id="helloNotes"></ol>
+  </div>
+  <h3>Run it</h3>
+  <div class="code"><div class="code-h">Terminal<span class="sp"></span></div><pre><code class="sh">fastapi dev main.py        # dev mode, auto-reloads when you save
+# or the classic way:
+uvicorn main:app --reload  # "main" = file name, "app" = the variable</code></pre></div>
+  <div class="grid2">
+    <div class="code out"><div class="code-h">Visit http://127.0.0.1:8000/<span class="sp"></span></div><pre><code class="json">{"message": "Hello World"}</code></pre></div>
+    <div class="code out"><div class="code-h">Visit /items/5?q=phone<span class="sp"></span></div><pre><code class="json">{"item_id": 5, "q": "phone"}</code></pre></div>
+  </div>
+  <div class="tip">🎁 Now open <b>http://127.0.0.1:8000/docs</b>. You get a free interactive page listing your endpoints, where you can test them. You wrote zero lines for it.</div>
+</section>
+
+<!-- =============================== 6 LIFECYCLE =============================== -->
+<section class="sec" id="lifecycle" data-title="Request lifecycle" data-group="Basics">
+  <div class="sec-num">06</div>
+  <h2>What happens when a request arrives? 🚦</h2>
+  <p class="lead">Click a button to watch a request travel through FastAPI, step by step.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Server receives → middleware → find the route → validate data → run dependencies → run your function → shape the response → send JSON back.</div>
+  <div class="controls">
+    <button class="btn primary" id="lcGood">▶ Send a good request</button>
+    <button class="btn danger" id="lcBad">▶ Send bad data (age = "abc")</button>
+  </div>
+  <div class="pipeline" id="lcPipe">
+    <div class="stage"><span class="ic">🧑</span>Client</div>
+    <div class="stage"><span class="ic">🦄</span>Uvicorn</div>
+    <div class="stage"><span class="ic">🧅</span>Middleware</div>
+    <div class="stage"><span class="ic">🧭</span>Router</div>
+    <div class="stage"><span class="ic">✅</span>Validation</div>
+    <div class="stage"><span class="ic">🧩</span>Dependencies</div>
+    <div class="stage"><span class="ic">🐍</span>Your code</div>
+    <div class="stage"><span class="ic">📦</span>Response model</div>
+    <div class="stage"><span class="ic">📬</span>Back to client</div>
+  </div>
+  <div class="caption" id="lcCap">Press a button above to start the animation.</div>
+</section>
+
+<!-- =============================== 7 METHODS =============================== -->
+<section class="sec" id="methods" data-title="HTTP methods & CRUD" data-group="Core">
+  <div class="sec-num">07</div>
+  <h2>HTTP methods = verbs (CRUD) 📚</h2>
+  <p class="lead">The method says <b>what you want to do</b>. The URL says <b>to what</b>. Imagine a library of books.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> GET = read, POST = create, PUT = replace, PATCH = edit a bit, DELETE = remove.</div>
+  <div class="grid">
+    <div class="card verb GET"><span class="m GET">GET</span><h4>Read</h4><p style="color:var(--muted);margin:0">"Show me book 7." Never changes data.</p></div>
+    <div class="card verb POST"><span class="m POST">POST</span><h4>Create</h4><p style="color:var(--muted);margin:0">"Add this new book." Sends a body.</p></div>
+    <div class="card verb PUT"><span class="m PUT">PUT</span><h4>Replace</h4><p style="color:var(--muted);margin:0">"Replace book 7 with this whole new version."</p></div>
+    <div class="card verb PATCH"><span class="m PATCH">PATCH</span><h4>Update part</h4><p style="color:var(--muted);margin:0">"Only change book 7's title."</p></div>
+    <div class="card verb DELETE"><span class="m DELETE">DELETE</span><h4>Remove</h4><p style="color:var(--muted);margin:0">"Throw away book 7."</p></div>
+  </div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from fastapi import FastAPI
+
+app = FastAPI()
+books = {1: "Harry Potter"}
+
+@app.get("/books/{book_id}")          # READ
+def read_book(book_id: int):
+    return {"id": book_id, "title": books.get(book_id)}
+
+@app.post("/books")                   # CREATE
+def create_book(title: str):
+    new_id = max(books) + 1
+    books[new_id] = title
+    return {"id": new_id, "title": title}
+
+@app.put("/books/{book_id}")          # REPLACE
+def replace_book(book_id: int, title: str):
+    books[book_id] = title
+    return {"id": book_id, "title": title}
+
+@app.delete("/books/{book_id}")       # DELETE
+def delete_book(book_id: int):
+    books.pop(book_id, None)
+    return {"deleted": book_id}</code></pre></div>
+</section>
+
+<!-- =============================== 8 PATH =============================== -->
+<section class="sec" id="path" data-title="Path parameters" data-group="Core">
+  <div class="sec-num">08</div>
+  <h2>Path parameters 🛣️</h2>
+  <p class="lead">A path parameter is a <b>variable inside the URL</b>, written in curly braces.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">/users/{user_id}</code> + <code class="i">user_id: int</code> → visiting <code class="i">/users/42</code> gives you the number <code class="i">42</code> (not the text "42"). Visiting <code class="i">/users/abc</code> gives an automatic error.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from enum import Enum
+from fastapi import FastAPI
+
+app = FastAPI()
+
+# 1. Basic: the type hint converts + validates
+@app.get("/users/{user_id}")
+def get_user(user_id: int):
+    return {"user_id": user_id}
+
+# 2. ORDER MATTERS: put fixed paths BEFORE variable ones
+@app.get("/me")                       # fine, different path
+def who_am_i():
+    return {"user": "current user"}
+
+@app.get("/files/me")                 # declared first, so it wins
+def my_files():
+    return {"owner": "me"}
+
+@app.get("/files/{owner}")            # otherwise "me" would land here
+def files_of(owner: str):
+    return {"owner": owner}
+
+# 3. Allowed values only: use an Enum (shows as a dropdown in /docs)
+class Model(str, Enum):
+    alexnet = "alexnet"
+    resnet = "resnet"
+
+@app.get("/models/{name}")
+def get_model(name: Model):
+    return {"model": name, "is_resnet": name is Model.resnet}
+
+# 4. A path that contains slashes
+@app.get("/download/{file_path:path}")
+def download(file_path: str):
+    return {"file": file_path}        # /download/docs/a/b.txt -> "docs/a/b.txt"</code></pre></div>
+  <div class="warn">⚠️ <b>Order matters.</b> FastAPI checks routes top to bottom and picks the first match. Always declare <code class="i">/files/me</code> before <code class="i">/files/{owner}</code>.</div>
+</section>
+
+<!-- =============================== 9 QUERY =============================== -->
+<section class="sec" id="query" data-title="Query parameters" data-group="Core">
+  <div class="sec-num">09</div>
+  <h2>Query parameters ❓</h2>
+  <p class="lead">Query parameters come after the <code class="i">?</code> in a URL, joined with <code class="i">&amp;</code>. Used for filters, search, and pages.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Any function argument that is <b>not</b> in the path is a query parameter. Give it a default to make it optional.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">@app.get("/users/{user_id}/items")
+def read_items(user_id: int, q: str | None = None, limit: int = 10):
+    #           ^ path param   ^ optional query     ^ query with default
+    return {"user_id": user_id, "q": q, "limit": limit}
+
+@app.get("/search")
+def search(term: str, in_stock: bool = False):   # term has no default = REQUIRED
+    return {"term": term, "in_stock": in_stock}
+    # in_stock accepts: true/false, 1/0, yes/no, on/off</code></pre></div>
+
+  <h3>🔬 Playground: URL dissector</h3>
+  <p>Type a URL for the <code class="i">read_items</code> endpoint above and see how FastAPI splits it and converts the types.</p>
+  <div class="card">
+    <div class="urlbox">
+      <input id="urlIn" value="/users/42/items?q=phone&amp;limit=5" aria-label="URL to dissect">
+      <button class="btn primary" id="urlGo">Dissect</button>
+    </div>
+    <div class="controls" style="margin-top:8px">
+      <button class="btn" data-url="/users/42/items?q=phone&amp;limit=5">valid</button>
+      <button class="btn" data-url="/users/7/items">only path</button>
+      <button class="btn" data-url="/users/abc/items">bad user_id</button>
+      <button class="btn" data-url="/users/7/items?limit=ten">bad limit</button>
+      <button class="btn" data-url="/user/7/items">wrong path</button>
+    </div>
+    <div class="chips" id="urlChips"></div>
+    <div id="urlOut"></div>
+  </div>
+</section>
+
+<!-- =============================== 10 BODY =============================== -->
+<section class="sec" id="body" data-title="Request body & Pydantic" data-group="Core">
+  <div class="sec-num">10</div>
+  <h2>Request body &amp; Pydantic models 📦</h2>
+  <p class="lead">When a client sends lots of data (like a sign-up form), it goes in the <b>body</b> as JSON. You describe its shape with a <b>Pydantic model</b>, a class with typed fields.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> A Pydantic model is a <b>form with rules</b>. FastAPI reads the JSON, fills the form, checks every rule, and gives you a clean Python object. If something's wrong, the client gets a 422 error listing exactly what.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from fastapi import FastAPI
+from pydantic import BaseModel, EmailStr, Field
+
+app = FastAPI()
+
+class User(BaseModel):
+    name: str = Field(min_length=2)       # text, at least 2 characters
+    age: int = Field(gt=0)                # whole number, greater than 0
+    email: EmailStr                       # must look like an email
+    is_active: bool = True                # optional, default True
+
+@app.post("/users")
+def create_user(user: User):              # a model type = read from the BODY
+    print(user.name, user.age)            # real attributes, with autocomplete!
+    return {"saved": user.model_dump()}   # model_dump() -> plain dict</code></pre></div>
+  <h3>How FastAPI decides where data comes from</h3>
+  <div class="tbl-wrap"><table>
+    <tr><th>Your parameter looks like…</th><th>FastAPI reads it from…</th></tr>
+    <tr><td>Name appears in the path, e.g. <code class="i">{item_id}</code></td><td>🛣️ Path</td></tr>
+    <tr><td>Simple type (<code class="i">int</code>, <code class="i">str</code>, <code class="i">bool</code>…) not in path</td><td>❓ Query string</td></tr>
+    <tr><td>A Pydantic model</td><td>📦 JSON body</td></tr>
+    <tr><td>Wrapped in <code class="i">Header()</code>, <code class="i">Cookie()</code>, <code class="i">Form()</code>, <code class="i">File()</code></td><td>Those places</td></tr>
+  </table></div>
+
+  <h3>🔬 Playground: be Pydantic</h3>
+  <p>Edit the JSON body and press <b>Send</b>. This mimics what FastAPI returns for the <code class="i">User</code> model above, including its real error format.</p>
+  <div class="card play">
+    <div class="controls">
+      <button class="btn" data-preset="valid">✅ valid</button>
+      <button class="btn" data-preset="coerce">🔄 "25" as text</button>
+      <button class="btn" data-preset="wrongtype">❌ wrong type</button>
+      <button class="btn" data-preset="missing">❌ missing field</button>
+      <button class="btn" data-preset="many">❌ many errors</button>
+    </div>
+    <textarea id="valIn" spellcheck="false" aria-label="JSON body"></textarea>
+    <div class="controls"><button class="btn primary" id="valGo">Send POST /users</button></div>
+    <div class="result" id="valOut"></div>
+  </div>
+</section>
+
+<!-- =============================== 11 VALIDATION =============================== -->
+<section class="sec" id="validation" data-title="Validation: Query, Path, Field" data-group="Core">
+  <div class="sec-num">11</div>
+  <h2>Extra validation rules 📏</h2>
+  <p class="lead">Want "between 1 and 100" or "max 50 characters"? Add rules with <code class="i">Query()</code>, <code class="i">Path()</code>, <code class="i">Body()</code> and <code class="i">Field()</code>, using <code class="i">Annotated</code>.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">Annotated[type, Rule(...)]</code> = "this type, plus these rules". Rules show up in the docs too.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from typing import Annotated
+from fastapi import FastAPI, Path, Query, Body
+from pydantic import BaseModel, Field
+
+app = FastAPI()
+
+@app.get("/items/{item_id}")
+def read_item(
+    item_id: Annotated[int, Path(ge=1, le=1000, title="The item ID")],
+    q: Annotated[str | None, Query(min_length=3, max_length=50)] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    tags: Annotated[list[str], Query()] = [],     # ?tags=a&amp;tags=b -> ["a", "b"]
+):
+    return {"item_id": item_id, "q": q, "page": page, "tags": tags}
+
+class Product(BaseModel):
+    name: str = Field(min_length=1, max_length=100, examples=["Laptop"])
+    price: float = Field(gt=0, description="Price in USD")
+    code: str = Field(pattern=r"^[A-Z]{3}-\d{3}$")   # like "ABC-123"
+    tags: list[str] = []
+
+@app.post("/products")
+def add_product(product: Product, importance: Annotated[int, Body(ge=1, le=5)]):
+    return {"product": product, "importance": importance}</code></pre></div>
+  <div class="tbl-wrap"><table>
+    <tr><th>Rule</th><th>Means</th><th>Works on</th></tr>
+    <tr><td><code class="i">gt</code> / <code class="i">ge</code></td><td>greater than / greater or equal</td><td>numbers</td></tr>
+    <tr><td><code class="i">lt</code> / <code class="i">le</code></td><td>less than / less or equal</td><td>numbers</td></tr>
+    <tr><td><code class="i">min_length</code> / <code class="i">max_length</code></td><td>size limits</td><td>strings, lists</td></tr>
+    <tr><td><code class="i">pattern</code></td><td>must match a regex</td><td>strings</td></tr>
+    <tr><td><code class="i">alias</code></td><td>different name in the URL/JSON (e.g. <code class="i">item-query</code>)</td><td>all</td></tr>
+    <tr><td><code class="i">deprecated=True</code></td><td>marks it as old in docs</td><td>all</td></tr>
+  </table></div>
+  <h3>Custom validators (your own rules)</h3>
+  <div class="code"><div class="code-h">models.py<span class="sp"></span></div><pre><code class="py">from pydantic import BaseModel, field_validator, model_validator
+
+class SignUp(BaseModel):
+    username: str
+    password: str
+    confirm: str
+
+    @field_validator("username")
+    @classmethod
+    def no_spaces(cls, v: str) -> str:
+        if " " in v:
+            raise ValueError("username cannot contain spaces")
+        return v.lower()                  # you can also clean the value
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.password != self.confirm:
+            raise ValueError("passwords do not match")
+        return self</code></pre></div>
+</section>
+
+<!-- =============================== 12 RESPONSE =============================== -->
+<section class="sec" id="response" data-title="Response models" data-group="Core">
+  <div class="sec-num">12</div>
+  <h2>Response models: control what goes out 🚪</h2>
+  <p class="lead">Input and output are often different. You take a <b>password</b> in, but you must <b>never</b> send it back.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">response_model</code> (or a return type hint) is a <b>filter</b> on the way out. Fields not in the model are removed.</div>
+  <div class="grid2">
+    <div class="card" style="text-align:center">
+      <b>Your function returns</b>
+      <div class="code" style="text-align:left"><pre><code class="json">{"username": "asha",
+ "email": "a@x.com",
+ "password": "s3cret!"}</code></pre></div>
+    </div>
+    <div class="card" style="text-align:center">
+      <b>Client receives (filtered by UserOut) 🛡️</b>
+      <div class="code" style="text-align:left"><pre><code class="json">{"username": "asha",
+ "email": "a@x.com"}</code></pre></div>
+    </div>
+  </div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from fastapi import FastAPI
+from pydantic import BaseModel, EmailStr
+
+app = FastAPI()
+
+class UserIn(BaseModel):          # what the client SENDS
+    username: str
+    email: EmailStr
+    password: str
+
+class UserOut(BaseModel):         # what the client GETS
+    username: str
+    email: EmailStr
+
+@app.post("/users", response_model=UserOut, status_code=201)
+def create_user(user: UserIn):
+    # save to DB here...
+    return user                   # password is stripped automatically!
+
+# Modern style: the return type hint does the same job
+@app.get("/users/{username}")
+def get_user(username: str) -> UserOut:
+    return UserOut(username=username, email=f"{username}@example.com")
+
+# Useful options
+@app.get("/items/{id}", response_model=UserOut, response_model_exclude_unset=True)
+def item(id: int):
+    ...                           # only send fields that were actually set</code></pre></div>
+  <div class="tip">💡 A common pattern: <code class="i">UserBase</code> (shared fields) → <code class="i">UserCreate(UserBase)</code> adds <code class="i">password</code> → <code class="i">UserPublic(UserBase)</code> adds <code class="i">id</code>. Inheritance keeps it short.</div>
+</section>
+
+<!-- =============================== 13 ERRORS =============================== -->
+<section class="sec" id="errors" data-title="Status codes & errors" data-group="Core">
+  <div class="sec-num">13</div>
+  <h2>Status codes &amp; error handling 🚨</h2>
+  <p class="lead">Every response has a number. 2xx = good, 4xx = the client made a mistake, 5xx = the server broke.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Use <code class="i">raise HTTPException(status_code=404, detail="Not found")</code> to stop and send an error. FastAPI already sends 422 for bad input on its own.</div>
+  <div class="grid">
+    <div class="card sc s2"><div class="code-n">200</div><b>OK</b><p>Everything worked (default)</p></div>
+    <div class="card sc s2"><div class="code-n">201</div><b>Created</b><p>New thing was made (POST)</p></div>
+    <div class="card sc s2"><div class="code-n">204</div><b>No Content</b><p>Done, nothing to send back (DELETE)</p></div>
+    <div class="card sc s4"><div class="code-n">400</div><b>Bad Request</b><p>Request makes no sense</p></div>
+    <div class="card sc s4"><div class="code-n">401</div><b>Unauthorized</b><p>Who are you? Log in first</p></div>
+    <div class="card sc s4"><div class="code-n">403</div><b>Forbidden</b><p>I know you, but you're not allowed</p></div>
+    <div class="card sc s4"><div class="code-n">404</div><b>Not Found</b><p>That thing doesn't exist</p></div>
+    <div class="card sc s4"><div class="code-n">422</div><b>Unprocessable</b><p>Data failed validation (automatic)</p></div>
+    <div class="card sc s5"><div class="code-n">500</div><b>Server Error</b><p>Your code crashed</p></div>
+  </div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+
+app = FastAPI()
+items = {"apple": 1.5}
+
+@app.get("/items/{name}")
+def get_item(name: str):
+    if name not in items:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,     # same as 404, but readable
+            detail=f"Item '{name}' not found",
+            headers={"X-Error": "missing-item"},       # optional
+        )
+    return {"name": name, "price": items[name]}
+
+@app.post("/items", status_code=status.HTTP_201_CREATED)   # change the success code
+def create_item(name: str, price: float):
+    items[name] = price
+    return {"name": name}
+
+# Your own exception + a global handler for it
+class OutOfStock(Exception):
+    def __init__(self, name: str):
+        self.name = name
+
+@app.exception_handler(OutOfStock)
+async def out_of_stock_handler(request: Request, exc: OutOfStock):
+    return JSONResponse(status_code=409, content={"error": f"{exc.name} is out of stock"})
+
+@app.get("/buy/{name}")
+def buy(name: str):
+    raise OutOfStock(name)                              # -> 409 + friendly JSON</code></pre></div>
+  <div class="code out"><div class="code-h">GET /items/banana → 404<span class="sp"></span></div><pre><code class="json">{"detail": "Item 'banana' not found"}</code></pre></div>
+</section>
+
+<!-- =============================== 14 INPUTS =============================== -->
+<section class="sec" id="inputs" data-title="Headers, cookies, forms, files" data-group="Core">
+  <div class="sec-num">14</div>
+  <h2>Headers, cookies, forms &amp; file uploads 📎</h2>
+  <p class="lead">Data doesn't only come in JSON. FastAPI has a helper for each place it can hide.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Wrap the type with <code class="i">Header()</code>, <code class="i">Cookie()</code>, <code class="i">Form()</code> or use <code class="i">UploadFile</code>. Same type checking as everything else.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from typing import Annotated
+from fastapi import FastAPI, Header, Cookie, Form, File, UploadFile, Response
+
+app = FastAPI()
+
+# HEADERS: user_agent reads the "User-Agent" header (_ becomes -)
+@app.get("/whoami")
+def whoami(user_agent: Annotated[str | None, Header()] = None,
+           x_token: Annotated[str | None, Header()] = None):
+    return {"browser": user_agent, "token": x_token}
+
+# COOKIES: read one...
+@app.get("/cart")
+def cart(session_id: Annotated[str | None, Cookie()] = None):
+    return {"session": session_id}
+
+# ...and set one
+@app.post("/login-cookie")
+def set_cookie(response: Response):
+    response.set_cookie(key="session_id", value="abc123", httponly=True)
+    return {"ok": True}
+
+# HTML FORMS (needs python-multipart, included in fastapi[standard])
+@app.post("/login")
+def login(username: Annotated[str, Form()], password: Annotated[str, Form()]):
+    return {"username": username}
+
+# FILE UPLOADS
+@app.post("/upload")
+async def upload(file: UploadFile):
+    data = await file.read()
+    return {"filename": file.filename, "type": file.content_type, "size": len(data)}
+
+@app.post("/upload-many")
+async def upload_many(files: list[UploadFile], note: Annotated[str, Form()] = ""):
+    return {"names": [f.filename for f in files], "note": note}</code></pre></div>
+  <div class="tip">💡 <code class="i">UploadFile</code> stores big files on disk instead of memory, and gives you <code class="i">.filename</code>, <code class="i">.content_type</code>, <code class="i">await .read()</code>, <code class="i">await .write()</code>, <code class="i">await .seek()</code>.</div>
+</section>
+
+<!-- =============================== 15 DOCS =============================== -->
+<section class="sec" id="docs" data-title="Automatic docs (Swagger)" data-group="Core">
+  <div class="sec-num">15</div>
+  <h2>Automatic interactive docs 📖</h2>
+  <p class="lead">FastAPI reads your code and writes an <b>OpenAPI</b> description. Two pages show it for you.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">/docs</code> = Swagger UI (click and test), <code class="i">/redoc</code> = pretty read-only docs, <code class="i">/openapi.json</code> = the raw machine-readable description.</div>
+  <h3>🔬 Playground: a working mini Swagger UI</h3>
+  <p>This is a fake, in-browser version of what <code class="i">/docs</code> looks like for the Todo API (code in section 28). Open an endpoint, press <b>Execute</b>, and it really works.</p>
+  <div class="sw" id="swagger">
+    <div class="sw-top"><h4>Todo API</h4><span class="ver">1.0.0</span><span class="ver" style="background:var(--good)">OAS 3.1</span><span style="color:var(--muted);font-size:13px">/openapi.json</span></div>
+    <div id="swOps"></div>
+    <div style="padding:4px 14px 14px"><button class="btn" id="swReset">↺ Reset fake database</button></div>
+  </div>
+  <h3>Make your docs look professional</h3>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from fastapi import FastAPI
+
+app = FastAPI(
+    title="Todo API",
+    description="Manage your todos. **Markdown** works here!",
+    version="1.0.0",
+    docs_url="/docs",          # set to None to hide Swagger UI
+    redoc_url="/redoc",
+)
+
+@app.get(
+    "/todos",
+    tags=["todos"],                         # groups endpoints in the UI
+    summary="List all todos",
+    description="Returns every todo, newest last.",
+    response_description="A list of todos",
+)
+def list_todos():
+    """You can also write the description as a docstring."""
+    return []
+
+@app.get("/old-endpoint", deprecated=True, tags=["legacy"])
+def old():
+    return {}</code></pre></div>
+</section>
+
+<!-- =============================== 16 ASYNC =============================== -->
+<section class="sec" id="async" data-title="async / await" data-group="Power features">
+  <div class="sec-num">16</div>
+  <h2>async / await: serving many at once 🔄</h2>
+  <p class="lead">Most web work is <b>waiting</b>: for a database, another API, a file. <code class="i">async</code> lets Python serve other requests during that waiting.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> A sync waiter stands at the kitchen until your food is ready. An async waiter takes everyone's orders, and brings each dish as it's ready. Same waiter, much more served.</div>
+  <div class="controls"><button class="btn primary" id="asyncGo">▶ Run 3 requests (each waits 2s for the DB)</button></div>
+  <div class="lanebox sync"><h4>🐢 Sync (one after another) <span class="pill" id="syncT">total: ?</span></h4>
+    <div class="track"><div class="bar">Request 1</div></div>
+    <div class="track"><div class="bar">Request 2</div></div>
+    <div class="track"><div class="bar">Request 3</div></div>
+    <div class="timeaxis"><span>0s</span><span>2s</span><span>4s</span><span>6s</span></div>
+  </div>
+  <div class="lanebox async"><h4>⚡ Async (waits overlap) <span class="pill" id="asyncT">total: ?</span></h4>
+    <div class="track"><div class="bar">Request 1</div></div>
+    <div class="track"><div class="bar">Request 2</div></div>
+    <div class="track"><div class="bar">Request 3</div></div>
+    <div class="timeaxis"><span>0s</span><span>2s</span><span>4s</span><span>6s</span></div>
+  </div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">import asyncio
+import time
+import httpx
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/async-wait")
+async def good():
+    await asyncio.sleep(2)              # non-blocking: others run meanwhile
+    return {"done": True}
+
+@app.get("/call-other-api")
+async def call_other():
+    async with httpx.AsyncClient() as client:
+        r = await client.get("https://api.github.com")
+    return {"status": r.status_code}
+
+@app.get("/sync-wait")
+def also_fine():
+    time.sleep(2)                       # blocking, but FastAPI runs plain `def`
+    return {"done": True}               # in a thread pool, so it's still OK
+
+@app.get("/BAD")
+async def bad():
+    time.sleep(2)                       # ❌ blocking call inside async def
+    return {"oops": "froze the whole server for 2s"}</code></pre></div>
+  <div class="tbl-wrap"><table>
+    <tr><th>Situation</th><th>Use</th></tr>
+    <tr><td>You call libraries with <code class="i">await</code> (httpx, asyncpg, motor, aiofiles)</td><td><code class="i">async def</code></td></tr>
+    <tr><td>You use normal blocking libraries (requests, most DB drivers, pandas)</td><td><code class="i">def</code> (FastAPI runs it in a thread)</td></tr>
+    <tr><td>Not sure?</td><td><code class="i">def</code> is the safe choice</td></tr>
+    <tr><td>Heavy CPU math (ML training, image processing)</td><td>Neither helps; use background workers / processes</td></tr>
+  </table></div>
+</section>
+
+<!-- =============================== 17 DI =============================== -->
+<section class="sec" id="di" data-title="Dependency Injection" data-group="Power features">
+  <div class="sec-num">17</div>
+  <h2>Dependency Injection with <code>Depends</code> 🧩</h2>
+  <p class="lead">Many endpoints need the same thing first: a database session, the logged-in user, pagination settings. Write it once as a function, then "ask" for it.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">Depends(func)</code> = "before running my endpoint, run <code class="i">func</code> and give me its result." Dependencies can depend on other dependencies, forming a tree. FastAPI runs them in the right order.</div>
+  <div class="controls"><button class="btn primary" id="diGo">▶ Show the order FastAPI runs them</button></div>
+  <div class="ditree" id="diTree">
+    <div class="dinode">get_settings()<small>reads config</small></div>
+    <div class="diarrow"></div>
+    <div class="dirow">
+      <div class="dinode">get_db()<small>opens DB session</small></div>
+      <div class="dinode">get_token()<small>reads Authorization header</small></div>
+    </div>
+    <div class="diarrow"></div>
+    <div class="dinode">get_current_user(db, token)<small>finds the user</small></div>
+    <div class="diarrow"></div>
+    <div class="dinode" style="border-style:dashed">read_profile(user)<small>your endpoint</small></div>
+  </div>
+  <div class="caption" id="diCap">Press the button to see the order.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, Header
+
+app = FastAPI()
+
+# 1) Simple dependency: shared query parameters
+def pagination(skip: int = 0, limit: int = 10):
+    return {"skip": skip, "limit": limit}
+
+@app.get("/items")
+def list_items(page: Annotated[dict, Depends(pagination)]):
+    return page                                   # /items?skip=20&amp;limit=5
+
+# 2) Dependency with cleanup: `yield`
+def get_db():
+    db = {"connected": True}                      # e.g. SessionLocal()
+    try:
+        yield db                                  # given to the endpoint
+    finally:
+        db["connected"] = False                   # runs AFTER the response: close it
+
+# 3) Dependencies that use other dependencies
+def get_token(authorization: Annotated[str | None, Header()] = None):
+    if not authorization:
+        raise HTTPException(401, "Missing token")
+    return authorization.removeprefix("Bearer ")
+
+def get_current_user(db: Annotated[dict, Depends(get_db)],
+                     token: Annotated[str, Depends(get_token)]):
+    return {"name": "asha", "token": token}
+
+# Tip: make a short alias and reuse it everywhere
+CurrentUser = Annotated[dict, Depends(get_current_user)]
+
+@app.get("/profile")
+def read_profile(user: CurrentUser):
+    return user
+
+# 4) Run a dependency for its side effect only (no return value needed)
+def verify_key(x_key: Annotated[str, Header()]):
+    if x_key != "secret":
+        raise HTTPException(403, "Bad key")
+
+@app.get("/admin", dependencies=[Depends(verify_key)])
+def admin():
+    return {"welcome": "admin"}
+
+# 5) For the WHOLE app: FastAPI(dependencies=[Depends(verify_key)])</code></pre></div>
+  <div class="tip">💡 Within one request, a dependency used in several places runs <b>only once</b> (its result is cached). Great for DB sessions.</div>
+</section>
+
+<!-- =============================== 18 SECURITY =============================== -->
+<section class="sec" id="security" data-title="Security: OAuth2 + JWT" data-group="Power features">
+  <div class="sec-num">18</div>
+  <h2>Security: login with OAuth2 + JWT 🔐</h2>
+  <p class="lead">The most common pattern: log in once, receive a <b>token</b>, then send that token with every request. Like a wristband at a concert.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">POST /token</code> with username + password → get a signed JWT → send <code class="i">Authorization: Bearer &lt;token&gt;</code> → a dependency checks the token and gives you the user.</div>
+  <div class="controls"><button class="btn primary" id="jwtGo">▶ Play the login flow</button></div>
+  <div class="seq" id="jwtSeq">
+    <div class="seqrow"><div class="who">🧑 Client</div><div class="seqmsg r">POST /token (username=asha, password=***)</div><div class="who">🖥️ API</div></div>
+    <div class="seqrow"><div class="who">🧑 Client</div><div class="seqmsg">🔍 API checks password against stored <b>hash</b></div><div class="who">🖥️ API</div></div>
+    <div class="seqrow"><div class="who">🧑 Client</div><div class="seqmsg l">200 {"access_token": "eyJhbGci...", "token_type": "bearer"}</div><div class="who">🖥️ API</div></div>
+    <div class="seqrow"><div class="who">🧑 Client</div><div class="seqmsg r">GET /users/me + header Authorization: Bearer eyJhbGci...</div><div class="who">🖥️ API</div></div>
+    <div class="seqrow"><div class="who">🧑 Client</div><div class="seqmsg">🔏 API verifies signature + expiry, reads "sub": "asha"</div><div class="who">🖥️ API</div></div>
+    <div class="seqrow"><div class="who">🧑 Client</div><div class="seqmsg l">200 {"username": "asha"}</div><div class="who">🖥️ API</div></div>
+  </div>
+  <div class="code"><div class="code-h">Terminal<span class="sp"></span></div><pre><code class="sh">pip install pyjwt "pwdlib[argon2]"</code></pre></div>
+  <div class="code"><div class="code-h">auth_app.py<span class="sp"></span></div><pre><code class="py">from datetime import datetime, timedelta, timezone
+from typing import Annotated
+
+import jwt
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pwdlib import PasswordHash
+
+SECRET_KEY = "change-me"          # real apps: long random value from an env variable
+ALGORITHM = "HS256"
+password_hash = PasswordHash.recommended()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")   # adds the Authorize button in /docs
+
+# never store plain passwords, only hashes
+fake_users = {"asha": {"username": "asha", "hashed_password": password_hash.hash("secret")}}
+
+app = FastAPI()
+
+def create_token(username: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+    return jwt.encode({"sub": username, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+
+@app.post("/token")
+def login(form: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    user = fake_users.get(form.username)
+    if not user or not password_hash.verify(form.password, user["hashed_password"]):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong username or password")
+    return {"access_token": create_token(user["username"]), "token_type": "bearer"}
+
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.InvalidTokenError:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token",
+                            headers={"WWW-Authenticate": "Bearer"})
+    user = fake_users.get(payload.get("sub"))
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not found")
+    return user
+
+@app.get("/users/me")
+def read_me(user: Annotated[dict, Depends(get_current_user)]):
+    return {"username": user["username"]}</code></pre></div>
+  <div class="tip">💡 Other built-in helpers in <code class="i">fastapi.security</code>: <code class="i">APIKeyHeader</code>, <code class="i">APIKeyQuery</code>, <code class="i">APIKeyCookie</code>, <code class="i">HTTPBasic</code>, <code class="i">HTTPBearer</code>, and OAuth2 <b>scopes</b> for permissions.</div>
+</section>
+
+<!-- =============================== 19 MIDDLEWARE =============================== -->
+<section class="sec" id="middleware" data-title="Middleware & CORS" data-group="Power features">
+  <div class="sec-num">19</div>
+  <h2>Middleware &amp; CORS 🧅</h2>
+  <p class="lead">Middleware is code that wraps <b>every</b> request and response, like layers of an onion. Great for logging, timing, adding headers.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> The request goes in through each layer to your endpoint, then the response comes back out through the same layers in reverse.</div>
+  <div class="controls"><button class="btn primary" id="onionGo">▶ Send a request through the onion</button></div>
+  <div class="onion">
+    <div class="ring r1" id="on1"><span class="lbl">CORSMiddleware</span>
+      <div class="ring r2" id="on2"><span class="lbl">Timing middleware</span>
+        <div class="ring r3" id="on3"><span class="lbl">Logging</span>
+          <div class="core" id="on4">Your<br>endpoint</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="caption" id="onionCap">Press the button.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">import time
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Custom middleware: measure how long each request takes
+@app.middleware("http")
+async def add_process_time(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)             # go deeper into the onion
+    response.headers["X-Process-Time"] = f"{time.perf_counter() - start:.4f}"
+    return response                                  # coming back out
+
+# CORS: allow a website on another domain (e.g. your React app) to call this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "https://myfrontend.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)</code></pre></div>
+  <div class="tip">🌍 <b>What is CORS?</b> Browsers block a page on <code class="i">site-a.com</code> from calling an API on <code class="i">site-b.com</code> unless the API says "site-a is allowed". That permission is CORS. Without it you'll see a red "blocked by CORS policy" error in the browser console.</div>
+  <p>Other built-in middleware: <code class="i">GZipMiddleware</code> (compress responses), <code class="i">TrustedHostMiddleware</code>, <code class="i">HTTPSRedirectMiddleware</code>.</p>
+</section>
+
+<!-- =============================== 20 BACKGROUND =============================== -->
+<section class="sec" id="background" data-title="Background tasks" data-group="Power features">
+  <div class="sec-num">20</div>
+  <h2>Background tasks ⏳</h2>
+  <p class="lead">Some work doesn't need to make the user wait, like sending a welcome email. Reply first, do it after.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Add a <code class="i">BackgroundTasks</code> parameter, call <code class="i">.add_task(func, args)</code>. The function runs right after the response is sent.</div>
+  <div class="compare-anim">
+    <div class="lanebox"><h4>Without background task</h4>
+      <div class="track"><div class="bar" style="background:var(--warn);width:100%;animation:none">save + send email (3s)… then reply</div></div>
+      <span style="font-size:13px;color:var(--muted)">User waits 3 seconds 😴</span></div>
+    <div class="lanebox"><h4>With background task</h4>
+      <div class="track"><div class="bar" style="background:var(--accent);width:18%">reply</div><div class="bar" style="background:color-mix(in srgb,var(--accent) 45%,transparent);left:19%;width:80%">email sent in background</div></div>
+      <span style="font-size:13px;color:var(--muted)">User gets a reply instantly ⚡</span></div>
+  </div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from fastapi import BackgroundTasks, FastAPI
+
+app = FastAPI()
+
+def send_welcome_email(email: str, name: str):
+    # slow work: SMTP, writing logs, resizing an image...
+    with open("emails.log", "a") as f:
+        f.write(f"Welcome {name} -> {email}\n")
+
+@app.post("/signup")
+def signup(email: str, name: str, background_tasks: BackgroundTasks):
+    background_tasks.add_task(send_welcome_email, email, name)
+    return {"message": "Signed up! Check your inbox soon."}</code></pre></div>
+  <div class="warn">⚠️ For heavy or long jobs (video processing, jobs that must survive a restart), use a real task queue like <b>Celery</b>, <b>RQ</b> or <b>ARQ</b>.</div>
+</section>
+
+<!-- =============================== 21 ROUTERS =============================== -->
+<section class="sec" id="routers" data-title="Bigger apps: APIRouter" data-group="Real projects">
+  <div class="sec-num">21</div>
+  <h2>Bigger apps: APIRouter &amp; project structure 🗂️</h2>
+  <p class="lead">One giant <code class="i">main.py</code> gets messy. Split routes into files with <code class="i">APIRouter</code>, a "mini app" you plug into the main app.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Each file gets <code class="i">router = APIRouter(prefix="/users")</code>. <code class="i">main.py</code> does <code class="i">app.include_router(router)</code>. Like chapters in a book.</div>
+  <div class="grid2">
+    <div class="code"><div class="code-h">Project layout<span class="sp"></span></div><pre class="tree">myapi/
+├── app/
+│   ├── __init__.py
+│   ├── main.py           ← creates app, includes routers
+│   ├── config.py         ← settings (env vars)
+│   ├── database.py       ← engine + get_session
+│   ├── dependencies.py   ← shared Depends
+│   ├── models.py         ← database tables
+│   ├── schemas.py        ← Pydantic in/out models
+│   └── routers/
+│       ├── __init__.py
+│       ├── users.py
+│       └── items.py
+├── tests/
+│   └── test_users.py
+├── requirements.txt
+└── Dockerfile</pre></div>
+    <div>
+      <div class="code"><div class="code-h">app/routers/users.py<span class="sp"></span></div><pre><code class="py">from fastapi import APIRouter
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+@router.get("/")                  # -> GET /users/
+def list_users():
+    return [{"username": "asha"}]
+
+@router.get("/{username}")        # -> GET /users/asha
+def get_user(username: str):
+    return {"username": username}</code></pre></div>
+      <div class="code"><div class="code-h">app/main.py<span class="sp"></span></div><pre><code class="py">from fastapi import FastAPI
+from app.routers import users, items
+
+app = FastAPI(title="My API")
+app.include_router(users.router)
+app.include_router(items.router, prefix="/v1")   # extra prefix</code></pre></div>
+    </div>
+  </div>
+  <div class="code"><div class="code-h">Run from the myapi/ folder<span class="sp"></span></div><pre><code class="sh">fastapi dev app/main.py</code></pre></div>
+</section>
+
+<!-- =============================== 22 DATABASE =============================== -->
+<section class="sec" id="database" data-title="Databases (SQLModel)" data-group="Real projects">
+  <div class="sec-num">22</div>
+  <h2>Databases with SQLModel 🗄️</h2>
+  <p class="lead">SQLModel (by the same author as FastAPI) is a class that is <b>both</b> a database table and a Pydantic model. One class, two jobs.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Define a <code class="i">table=True</code> class → create an engine → give each request a session with a <code class="i">yield</code> dependency → <code class="i">add</code>, <code class="i">commit</code>, <code class="i">get</code>, <code class="i">select</code>.</div>
+  <div class="code"><div class="code-h">Terminal<span class="sp"></span></div><pre><code class="sh">pip install sqlmodel</code></pre></div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from contextlib import asynccontextmanager
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException
+from sqlmodel import Field, Session, SQLModel, create_engine, select
+
+class Hero(SQLModel, table=True):           # a TABLE and a Pydantic model
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    age: int | None = None
+
+engine = create_engine("sqlite:///heroes.db", connect_args={"check_same_thread": False})
+
+def get_session():
+    with Session(engine) as session:        # one session per request
+        yield session
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    SQLModel.metadata.create_all(engine)    # create tables at startup
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
+@app.post("/heroes")
+def create_hero(hero: Hero, session: SessionDep) -> Hero:
+    session.add(hero)
+    session.commit()
+    session.refresh(hero)                   # get the new id from the DB
+    return hero
+
+@app.get("/heroes")
+def list_heroes(session: SessionDep, offset: int = 0, limit: int = 100) -> list[Hero]:
+    return session.exec(select(Hero).offset(offset).limit(limit)).all()
+
+@app.get("/heroes/{hero_id}")
+def get_hero(hero_id: int, session: SessionDep) -> Hero:
+    hero = session.get(Hero, hero_id)
+    if not hero:
+        raise HTTPException(404, "Hero not found")
+    return hero
+
+@app.delete("/heroes/{hero_id}")
+def delete_hero(hero_id: int, session: SessionDep):
+    hero = session.get(Hero, hero_id)
+    if not hero:
+        raise HTTPException(404, "Hero not found")
+    session.delete(hero)
+    session.commit()
+    return {"ok": True}</code></pre></div>
+  <div class="tip">💡 Swap SQLite for PostgreSQL by changing one line: <code class="i">create_engine("postgresql://user:pass@localhost/db")</code>. You can also use plain SQLAlchemy, or MongoDB with <code class="i">motor</code>/<code class="i">beanie</code>. For changing table structure over time, use <b>Alembic</b> migrations.</div>
+</section>
+
+<!-- =============================== 23 LIFESPAN =============================== -->
+<section class="sec" id="lifespan" data-title="Lifespan & settings" data-group="Real projects">
+  <div class="sec-num">23</div>
+  <h2>Lifespan events &amp; settings ⚙️</h2>
+  <p class="lead">Some things should happen <b>once</b>: load an ML model at startup, close connections at shutdown. And secrets should live in environment variables, not in code.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Code <b>before</b> <code class="i">yield</code> in <code class="i">lifespan</code> runs at startup, code <b>after</b> runs at shutdown. <code class="i">pydantic-settings</code> reads env vars / <code class="i">.env</code> into a typed class.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from contextlib import asynccontextmanager
+from functools import lru_cache
+from typing import Annotated
+
+from fastapi import Depends, FastAPI
+from pydantic_settings import BaseSettings, SettingsConfigDict   # pip install pydantic-settings
+
+class Settings(BaseSettings):
+    app_name: str = "My API"
+    database_url: str = "sqlite:///app.db"
+    secret_key: str                       # REQUIRED: must be in env or .env
+    debug: bool = False
+    model_config = SettingsConfigDict(env_file=".env")
+
+@lru_cache                                # read the file only once
+def get_settings() -> Settings:
+    return Settings()
+
+ml_models = {}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("🚀 starting: loading model...")
+    ml_models["sentiment"] = lambda text: "positive" if "good" in text else "negative"
+    yield                                 # ---- app is running here ----
+    print("🛑 shutting down: cleaning up")
+    ml_models.clear()
+
+app = FastAPI(lifespan=lifespan)
+
+@app.get("/predict")
+def predict(text: str):
+    return {"label": ml_models["sentiment"](text)}
+
+@app.get("/info")
+def info(settings: Annotated[Settings, Depends(get_settings)]):
+    return {"app": settings.app_name, "debug": settings.debug}</code></pre></div>
+  <div class="code"><div class="code-h">.env (never commit this file!)<span class="sp"></span></div><pre><code class="sh">SECRET_KEY=super-long-random-string
+DEBUG=true</code></pre></div>
+</section>
+
+<!-- =============================== 24 WEBSOCKETS =============================== -->
+<section class="sec" id="websockets" data-title="WebSockets (real-time)" data-group="Real projects">
+  <div class="sec-num">24</div>
+  <h2>WebSockets: real-time chat 💬</h2>
+  <p class="lead">Normal HTTP is like sending letters: ask, get one reply, done. A WebSocket is a <b>phone call</b>: the line stays open and both sides can talk any time.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">@app.websocket("/ws")</code> → <code class="i">await ws.accept()</code> → loop: <code class="i">receive_text()</code> / <code class="i">send_text()</code>. Used for chats, live dashboards, games, streaming AI replies.</div>
+  <div class="grid2">
+    <div class="chat" aria-label="Animated chat example">
+      <div class="bub me">Hi server 👋</div>
+      <div class="bub sv">You said: Hi server 👋</div>
+      <div class="bub sv">📈 Live price update: 101.4</div>
+      <div class="bub me">Thanks!</div>
+      <div class="bub sv">You said: Thanks!</div>
+    </div>
+    <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+
+app = FastAPI()
+clients: list[WebSocket] = []
+
+@app.websocket("/ws/{name}")
+async def chat(websocket: WebSocket, name: str):
+    await websocket.accept()
+    clients.append(websocket)
+    try:
+        while True:
+            text = await websocket.receive_text()
+            for c in clients:              # broadcast to everyone
+                await c.send_text(f"{name}: {text}")
+    except WebSocketDisconnect:
+        clients.remove(websocket)</code></pre></div>
+  </div>
+  <div class="code"><div class="code-h">Browser console (JavaScript) to test it<span class="sp"></span></div><pre><code class="plain">const ws = new WebSocket("ws://127.0.0.1:8000/ws/asha");
+ws.onmessage = (e) =&gt; console.log(e.data);
+ws.onopen = () =&gt; ws.send("hello everyone");</code></pre></div>
+</section>
+
+<!-- =============================== 25 RESPONSES =============================== -->
+<section class="sec" id="responses" data-title="Response types, static, templates" data-group="Real projects">
+  <div class="sec-num">25</div>
+  <h2>Other response types, static files &amp; templates 🎨</h2>
+  <p class="lead">JSON is the default, but you can return HTML, files, redirects, or stream data piece by piece.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Return a dict → JSON. Return a <code class="i">HTMLResponse</code>, <code class="i">FileResponse</code>, <code class="i">RedirectResponse</code> or <code class="i">StreamingResponse</code> for other things.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">import asyncio
+from fastapi import FastAPI, Request
+from fastapi.responses import (HTMLResponse, FileResponse, RedirectResponse,
+                               StreamingResponse, PlainTextResponse)
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")  # /static/logo.png
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/hello", response_class=HTMLResponse)
+def hello():
+    return "&lt;h1&gt;Hello from FastAPI&lt;/h1&gt;"
+
+@app.get("/report")
+def report():
+    return FileResponse("report.pdf", filename="report.pdf")   # download
+
+@app.get("/old")
+def old():
+    return RedirectResponse(url="/hello")
+
+@app.get("/ping", response_class=PlainTextResponse)
+def ping():
+    return "pong"
+
+@app.get("/stream")
+async def stream():
+    async def words():
+        for w in ["Fast", "API ", "streams ", "like ", "ChatGPT"]:
+            yield w + " "
+            await asyncio.sleep(0.3)
+    return StreamingResponse(words(), media_type="text/plain")
+
+@app.get("/page/{name}", response_class=HTMLResponse)
+def page(request: Request, name: str):
+    return templates.TemplateResponse(request, "page.html", {"name": name})</code></pre></div>
+  <div class="code"><div class="code-h">templates/page.html<span class="sp"></span></div><pre><code class="plain">&lt;html&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Hello, {{ name }}!&lt;/h1&gt;
+    &lt;img src="{{ url_for('static', path='logo.png') }}"&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre></div>
+</section>
+
+<!-- =============================== 26 TESTING =============================== -->
+<section class="sec" id="testing" data-title="Testing" data-group="Real projects">
+  <div class="sec-num">26</div>
+  <h2>Testing with TestClient + pytest 🧪</h2>
+  <p class="lead">You can test your API without starting a server. <code class="i">TestClient</code> pretends to be a browser.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">client = TestClient(app)</code> → <code class="i">client.get("/")</code> → <code class="i">assert</code> the status and JSON. Run with <code class="i">pytest</code>.</div>
+  <div class="code"><div class="code-h">test_main.py<span class="sp"></span></div><pre><code class="py">from fastapi.testclient import TestClient
+from main import app, get_db
+
+client = TestClient(app)
+
+def test_root():
+    r = client.get("/")
+    assert r.status_code == 200
+    assert r.json() == {"message": "Hello World"}
+
+def test_create_todo():
+    r = client.post("/todos", json={"title": "Write tests"})
+    assert r.status_code == 201
+    assert r.json()["title"] == "Write tests"
+
+def test_validation_error():
+    r = client.post("/todos", json={})          # title missing
+    assert r.status_code == 422
+
+def test_not_found():
+    assert client.get("/todos/9999").status_code == 404
+
+# Swap a real dependency for a fake one during tests
+def fake_db():
+    yield {"fake": True}
+
+app.dependency_overrides[get_db] = fake_db</code></pre></div>
+  <div class="code"><div class="code-h">Terminal<span class="sp"></span></div><pre><code class="sh">pip install pytest
+pytest -v</code></pre></div>
+</section>
+
+<!-- =============================== 27 DEPLOY =============================== -->
+<section class="sec" id="deploy" data-title="Deployment" data-group="Real projects">
+  <div class="sec-num">27</div>
+  <h2>Deployment: put it on the internet 🚀</h2>
+  <p class="lead">In development you use <code class="i">fastapi dev</code>. In production you use <code class="i">fastapi run</code> (no auto-reload, listens on all interfaces), usually inside Docker.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> <code class="i">requirements.txt</code> + <code class="i">Dockerfile</code> → build image → run it on any cloud (Render, Railway, Fly.io, AWS, GCP, Azure). Use several workers to use all CPU cores.</div>
+  <div class="code"><div class="code-h">Terminal<span class="sp"></span></div><pre><code class="sh">pip freeze &gt; requirements.txt
+
+fastapi run main.py --port 8000 --workers 4
+# or: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4</code></pre></div>
+  <div class="code"><div class="code-h">Dockerfile<span class="sp"></span></div><pre><code class="sh">FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["fastapi", "run", "main.py", "--port", "80"]</code></pre></div>
+  <div class="code"><div class="code-h">Terminal<span class="sp"></span></div><pre><code class="sh">docker build -t myapi .
+docker run -p 8000:80 myapi</code></pre></div>
+  <div class="tbl-wrap"><table>
+    <tr><th>Production checklist ✅</th><th>Why</th></tr>
+    <tr><td>Secrets in env vars, not code</td><td>Code ends up on GitHub</td></tr>
+    <tr><td>HTTPS (via your host or a proxy like Nginx/Traefik/Caddy)</td><td>Encrypts passwords and tokens</td></tr>
+    <tr><td>Restrict CORS <code class="i">allow_origins</code></td><td><code class="i">"*"</code> lets any site call you</td></tr>
+    <tr><td>Multiple workers</td><td>Use all CPU cores</td></tr>
+    <tr><td>Logging + health check endpoint (<code class="i">/health</code>)</td><td>Know when things break</td></tr>
+    <tr><td>Consider hiding <code class="i">/docs</code> for private APIs</td><td><code class="i">FastAPI(docs_url=None)</code></td></tr>
+  </table></div>
+</section>
+
+<!-- =============================== 28 PROJECT =============================== -->
+<section class="sec" id="project" data-title="Mini project: Todo API" data-group="Wrap-up">
+  <div class="sec-num">28</div>
+  <h2>Mini project: a complete Todo API ✅</h2>
+  <p class="lead">Everything together in one file: models, CRUD, status codes, errors, tags, a dependency. This is the API the mini Swagger in section 15 imitates.</p>
+  <div class="nutshell"><b>🥜 In a nutshell:</b> Copy this into <code class="i">main.py</code>, run <code class="i">fastapi dev main.py</code>, open <code class="i">/docs</code>, and play.</div>
+  <div class="code"><div class="code-h">main.py<span class="sp"></span></div><pre><code class="py">from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, Query, status
+from pydantic import BaseModel, Field
+
+app = FastAPI(title="Todo API", version="1.0.0")
+
+# ---------- schemas ----------
+class TodoCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=100)
+    done: bool = False
+
+class TodoUpdate(BaseModel):          # every field optional, for PATCH
+    title: str | None = Field(default=None, min_length=1, max_length=100)
+    done: bool | None = None
+
+class Todo(TodoCreate):
+    id: int
+
+# ---------- "database" ----------
+db: dict[int, Todo] = {}
+counter = {"next": 1}
+
+def get_todo_or_404(todo_id: int) -> Todo:          # reusable dependency
+    if todo_id not in db:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Todo not found")
+    return db[todo_id]
+
+TodoDep = Annotated[Todo, Depends(get_todo_or_404)]
+
+# ---------- routes ----------
+@app.get("/")
+def root():
+    return {"message": "Hello World"}
+
+@app.get("/todos", tags=["todos"])
+def list_todos(done: bool | None = None,
+               limit: Annotated[int, Query(ge=1, le=100)] = 20) -> list[Todo]:
+    todos = list(db.values())
+    if done is not None:
+        todos = [t for t in todos if t.done == done]
+    return todos[:limit]
+
+@app.post("/todos", status_code=status.HTTP_201_CREATED, tags=["todos"])
+def create_todo(data: TodoCreate) -> Todo:
+    todo = Todo(id=counter["next"], **data.model_dump())
+    db[todo.id] = todo
+    counter["next"] += 1
+    return todo
+
+@app.get("/todos/{todo_id}", tags=["todos"])
+def read_todo(todo: TodoDep) -> Todo:
+    return todo
+
+@app.put("/todos/{todo_id}", tags=["todos"])
+def replace_todo(todo: TodoDep, data: TodoCreate) -> Todo:
+    new = Todo(id=todo.id, **data.model_dump())
+    db[todo.id] = new
+    return new
+
+@app.patch("/todos/{todo_id}", tags=["todos"])
+def update_todo(todo: TodoDep, data: TodoUpdate) -> Todo:
+    changes = data.model_dump(exclude_unset=True)    # only fields the client sent
+    updated = todo.model_copy(update=changes)
+    db[todo.id] = updated
+    return updated
+
+@app.delete("/todos/{todo_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["todos"])
+def delete_todo(todo: TodoDep):
+    del db[todo.id]</code></pre></div>
+  <h3>Try it with curl</h3>
+  <div class="code"><div class="code-h">Terminal<span class="sp"></span></div><pre><code class="sh">curl -X POST http://127.0.0.1:8000/todos -H "Content-Type: application/json" -d "{\"title\": \"Learn FastAPI\"}"
+curl http://127.0.0.1:8000/todos
+curl -X PATCH http://127.0.0.1:8000/todos/1 -H "Content-Type: application/json" -d "{\"done\": true}"
+curl -X DELETE http://127.0.0.1:8000/todos/1</code></pre></div>
+  <div class="tip">🏋️ <b>Practice ideas:</b> (1) Move the routes to <code class="i">routers/todos.py</code>. (2) Store todos in SQLite with SQLModel. (3) Add JWT login so each user only sees their own todos. (4) Write 5 pytest tests.</div>
+</section>
+
+<!-- =============================== 29 CHEATSHEET =============================== -->
+<section class="sec" id="cheatsheet" data-title="Cheat sheet" data-group="Wrap-up">
+  <div class="sec-num">29</div>
+  <h2>Cheat sheet 📝</h2>
+  <p class="lead">"I want to…" → "Write this."</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>I want to…</th><th>Write this</th></tr>
+    <tr><td>Create the app</td><td><code class="i">app = FastAPI()</code></td></tr>
+    <tr><td>Make a GET endpoint</td><td><code class="i">@app.get("/path")</code></td></tr>
+    <tr><td>Read a value from the URL path</td><td><code class="i">@app.get("/u/{id}")</code> + <code class="i">def f(id: int)</code></td></tr>
+    <tr><td>Optional query param</td><td><code class="i">q: str | None = None</code></td></tr>
+    <tr><td>Read a JSON body</td><td><code class="i">class M(BaseModel): ...</code> + <code class="i">def f(m: M)</code></td></tr>
+    <tr><td>Add limits</td><td><code class="i">Annotated[int, Query(ge=1, le=100)]</code> / <code class="i">Field(gt=0)</code></td></tr>
+    <tr><td>Hide fields in output</td><td><code class="i">response_model=UserOut</code> or <code class="i">-&gt; UserOut</code></td></tr>
+    <tr><td>Change success code</td><td><code class="i">@app.post("/x", status_code=201)</code></td></tr>
+    <tr><td>Return an error</td><td><code class="i">raise HTTPException(404, "Not found")</code></td></tr>
+    <tr><td>Read a header / cookie</td><td><code class="i">Annotated[str | None, Header()] = None</code></td></tr>
+    <tr><td>Accept a form / file</td><td><code class="i">Annotated[str, Form()]</code> / <code class="i">file: UploadFile</code></td></tr>
+    <tr><td>Share logic (DB, auth)</td><td><code class="i">Annotated[T, Depends(func)]</code></td></tr>
+    <tr><td>Clean up after request</td><td>dependency with <code class="i">yield</code></td></tr>
+    <tr><td>Run after response</td><td><code class="i">background_tasks.add_task(fn, arg)</code></td></tr>
+    <tr><td>Wrap every request</td><td><code class="i">@app.middleware("http")</code></td></tr>
+    <tr><td>Allow frontend on another domain</td><td><code class="i">app.add_middleware(CORSMiddleware, ...)</code></td></tr>
+    <tr><td>Split into files</td><td><code class="i">APIRouter(prefix=...)</code> + <code class="i">app.include_router()</code></td></tr>
+    <tr><td>Startup / shutdown code</td><td><code class="i">FastAPI(lifespan=lifespan)</code></td></tr>
+    <tr><td>Real-time</td><td><code class="i">@app.websocket("/ws")</code></td></tr>
+    <tr><td>Test</td><td><code class="i">TestClient(app).get("/")</code></td></tr>
+    <tr><td>Run (dev / prod)</td><td><code class="i">fastapi dev main.py</code> / <code class="i">fastapi run main.py</code></td></tr>
+    <tr><td>See docs</td><td><code class="i">/docs</code>, <code class="i">/redoc</code>, <code class="i">/openapi.json</code></td></tr>
+  </table></div>
+  <h3>Learning path 🗺️</h3>
+  <div class="pipeline" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+    <div class="stage done"><span class="ic">1️⃣</span>Hello World + routes</div>
+    <div class="stage done"><span class="ic">2️⃣</span>Params + Pydantic</div>
+    <div class="stage done"><span class="ic">3️⃣</span>Errors + response models</div>
+    <div class="stage done"><span class="ic">4️⃣</span>Depends + DB</div>
+    <div class="stage done"><span class="ic">5️⃣</span>Auth + routers</div>
+    <div class="stage done"><span class="ic">6️⃣</span>Tests + Docker</div>
+  </div>
+</section>
+
+<!-- =============================== 30 QUIZ =============================== -->
+<section class="sec" id="quiz" data-title="Quiz" data-group="Wrap-up">
+  <div class="sec-num">30</div>
+  <h2>Quick quiz 🎯</h2>
+  <p class="lead">Click an answer. You get instant feedback and an explanation.</p>
+  <div id="quizBox"></div>
+  <div class="score" id="score">Score: 0 / 0</div>
+</section>
+
+<footer>Made for learning ⚡ Official docs: <a href="https://fastapi.tiangolo.com" target="_blank" rel="noopener">fastapi.tiangolo.com</a></footer>
+</main>
+</div>
+
+<script>
+/* ================= helpers ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const PY_RE = /(#[^\n]*)|("""[\s\S]*?"""|[rf]?"(?:[^"\\\n]|\\.)*"|[rf]?'(?:[^'\\\n]|\\.)*')|(@[\w.]+)|\b(def|async|await|return|from|import|class|if|else|elif|for|in|while|with|as|try|except|finally|raise|yield|None|True|False|not|and|or|is|lambda|pass|del)\b|\b(str|int|float|bool|list|dict|bytes|print|len|max)\b|\b(\d+(?:\.\d+)?)\b/g;
+function hlPy(src) {
+  return esc(src).replace(PY_RE, (m, c, s, d, k, t, n) =>
+    c ? `<span class="c">${c}</span>` : s ? `<span class="s">${s}</span>` : d ? `<span class="d">${d}</span>` :
+    k ? `<span class="k">${k}</span>` : t ? `<span class="t">${t}</span>` : `<span class="nm">${n}</span>`);
+}
+function hlSh(src) {
+  return esc(src).replace(/(#[^\n]*)|("[^"\n]*"|'[^'\n]*')/g, (m, c, s) => c ? `<span class="c">${c}</span>` : `<span class="s">${s}</span>`);
+}
+function hlJson(src) {
+  return esc(src).replace(/("(?:[^"\\]|\\.)*")(\s*:)?|\b(true|false|null)\b|(-?\b\d+(?:\.\d+)?\b)/g, (m, s, colon, kw, n) =>
+    s ? (colon ? `<span class="t">${s}</span>${colon}` : `<span class="s">${s}</span>`) : kw ? `<span class="k">${kw}</span>` : `<span class="nm">${n}</span>`);
+}
+$$('pre code').forEach(el => {
+  const txt = el.textContent;
+  if (el.classList.contains('py')) el.innerHTML = hlPy(txt);
+  else if (el.classList.contains('sh')) el.innerHTML = hlSh(txt);
+  else if (el.classList.contains('json')) el.innerHTML = hlJson(txt);
+});
+
+/* copy buttons: add one to every code header that lacks it */
+$$('.code').forEach(block => {
+  const head = $('.code-h', block);
+  if (!head) return;
+  let btn = $('.copy', head);
+  if (!btn) { btn = document.createElement('button'); btn.className = 'copy'; btn.textContent = 'Copy'; head.appendChild(btn); }
+  btn.addEventListener('click', () => {
+    const src = btn.dataset.copyTarget ? window[btn.dataset.copyTarget] : ($('pre', block) || block).innerText;
+    const done = () => { btn.textContent = 'Copied ✓'; setTimeout(() => btn.textContent = 'Copy', 1400); };
+    if (navigator.clipboard) navigator.clipboard.writeText(src).then(done, done); else done();
+  });
+});
+
+/* ================= theme ================= */
+try { const t = localStorage.getItem('fa-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+$('#themeBtn').addEventListener('click', () => {
+  const root = document.documentElement;
+  const isDark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = isDark ? 'light' : 'dark';
+  try { localStorage.setItem('fa-theme', root.dataset.theme); } catch (e) {}
+});
+
+/* ================= sidebar ================= */
+const side = $('#side');
+let lastGroup = '';
+$$('.sec').forEach((s, i) => {
+  if (s.dataset.group !== lastGroup) {
+    lastGroup = s.dataset.group;
+    const g = document.createElement('div'); g.className = 'grp'; g.textContent = lastGroup; side.appendChild(g);
+  }
+  const a = document.createElement('a');
+  a.href = '#' + s.id;
+  a.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span>${s.dataset.title}`;
+  a.addEventListener('click', () => side.classList.remove('open'));
+  side.appendChild(a);
+});
+$('#menuBtn').addEventListener('click', () => side.classList.toggle('open'));
+
+/* progress + active link */
+const links = $$('a', side);
+function onScroll() {
+  const h = document.documentElement;
+  $('#progress').style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+  let cur = 0;
+  $$('.sec').forEach((s, i) => { if (s.getBoundingClientRect().top < 140) cur = i; });
+  links.forEach((l, i) => l.classList.toggle('active', i === cur));
+}
+addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+/* reveal on scroll */
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      if (e.target.id === 'why') $$('#codeBars .fill').forEach(f => f.style.width = f.dataset.w + '%');
+    }
+  }), { threshold: 0.08 });
+  $$('.sec').forEach(s => io.observe(s));
+} else { $$('.sec').forEach(s => s.classList.add('visible')); $$('#codeBars .fill').forEach(f => f.style.width = f.dataset.w + '%'); }
+
+/* ================= hero typer ================= */
+(async function typer() {
+  const el = $('#typer');
+  const lines = ['from fastapi import FastAPI', 'app = FastAPI()', '', '@app.get("/")', 'def home():', '    return {"hello": "world"}'];
+  while (true) {
+    let txt = '';
+    for (const line of lines) {
+      for (const ch of line) { txt += ch; el.innerHTML = hlPy(txt) + '<span class="cursor">&nbsp;</span>'; await sleep(45); }
+      txt += '\n'; await sleep(200);
+    }
+    await sleep(2600);
+  }
+})();
+
+/* ================= annotated hello world ================= */
+const helloLines = [
+  'from fastapi import FastAPI', '', 'app = FastAPI()', '', '@app.get("/")', 'def read_root():',
+  '    return {"message": "Hello World"}', '', '@app.get("/items/{item_id}")',
+  'def read_item(item_id: int, q: str | None = None):', '    return {"item_id": item_id, "q": q}'
+];
+window.helloSrc = helloLines.join('\n');
+const helloNotes = [
+  [[0], 'Import the <b>FastAPI</b> class from the library.'],
+  [[2], 'Create the app object. This is the "brain" Uvicorn will run.'],
+  [[4], 'A <b>decorator</b>: "when a <b>GET</b> request comes to <code class="i">/</code>, call the function below."'],
+  [[5], 'A normal Python function. Its name is up to you; it does not change the URL.'],
+  [[6], 'Return a dict. FastAPI turns it into <b>JSON</b> automatically.'],
+  [[8], '<code class="i">{item_id}</code> is a placeholder: any value in that part of the URL.'],
+  [[9], '<code class="i">item_id: int</code> converts "5" → 5 and rejects "abc". <code class="i">q</code> isn\'t in the path, so it\'s an optional <b>query</b> param.'],
+  [[10], 'Send both values back as JSON.']
+];
+$('#helloLines').innerHTML = helloLines.map((l, i) => `<div class="ln" data-l="${i}"><span class="no">${i + 1}</span><span>${hlPy(l) || ' '}</span></div>`).join('');
+$('#helloNotes').innerHTML = helloNotes.map(([ls, t], i) => `<li data-ls="${ls.join(',')}"><b>L${ls.map(x => x + 1).join(',')}</b>${t}</li>`).join('');
+function hlHello(li) {
+  $$('#helloLines .ln').forEach(l => l.classList.remove('hl'));
+  $$('#helloNotes li').forEach(x => x.classList.remove('hl'));
+  if (!li) return;
+  li.classList.add('hl');
+  li.dataset.ls.split(',').forEach(n => $(`#helloLines .ln[data-l="${n}"]`).classList.add('hl'));
+}
+$$('#helloNotes li').forEach(li => { li.addEventListener('mouseenter', () => hlHello(li)); li.addEventListener('click', () => hlHello(li)); });
+$('#helloNotes').addEventListener('mouseleave', () => hlHello(null));
+
+/* ================= request lifecycle ================= */
+const lcGood = [
+  '🧑 The client sends <code class="i">POST /users</code> with JSON <code class="i">{"name": "Asha", "age": 25}</code>.',
+  '🦄 <b>Uvicorn</b> receives raw HTTP bytes from the network and turns them into a Python request object (ASGI).',
+  '🧅 <b>Middleware</b> runs first: CORS checks, logging, timing… it wraps everything.',
+  '🧭 The <b>router</b> matches method + path (<code class="i">POST /users</code>) to your function.',
+  '✅ <b>Pydantic</b> reads path, query and body, converts types, and checks every rule. All good!',
+  '🧩 <b>Dependencies</b> run: e.g. open a DB session, find the current user.',
+  '🐍 <b>Your function</b> runs with clean, typed data. You just write business logic.',
+  '📦 The <b>response model</b> filters the output (removes secrets) and turns it into JSON.',
+  '📬 The response goes back out through middleware → Uvicorn → client receives <span class="status ok">200 OK</span> + JSON. 🎉'
+];
+const lcBad = {
+  4: '❌ <b>Pydantic</b> finds <code class="i">age = "abc"</code> is not an integer. Stop! Your function never runs.',
+  8: '📬 FastAPI automatically sends <span class="status err">422</span> with <code class="i">{"detail": [{"loc": ["body","age"], "msg": "Input should be a valid integer…"}]}</code>.'
+};
+let lcBusy = false;
+async function runLifecycle(bad) {
+  if (lcBusy) return; lcBusy = true;
+  const st = $$('#lcPipe .stage'), cap = $('#lcCap');
+  st.forEach(s => s.className = 'stage');
+  for (let i = 0; i < st.length; i++) {
+    if (bad && i > 4 && i < 8) { st[i].classList.add('skip'); continue; }
+    st[i].classList.add('on');
+    cap.innerHTML = (bad && lcBad[i]) ? lcBad[i] : (bad && i === 0 ? lcGood[0].replace('25', '"abc"') : lcGood[i]);
+    if (bad && (i === 4 || i === 8)) st[i].classList.add('err');
+    await sleep(1500);
+    st[i].classList.remove('on'); st[i].classList.add('done');
+  }
+  lcBusy = false;
+}
+$('#lcGood').addEventListener('click', () => runLifecycle(false));
+$('#lcBad').addEventListener('click', () => runLifecycle(true));
+
+/* ================= URL dissector ================= */
+function dissect(url) {
+  const chips = $('#urlChips'), out = $('#urlOut');
+  const [path, qs = ''] = url.trim().split('?');
+  const m = path.match(/^\/users\/([^/]+)\/items\/?$/);
+  const resp = (code, body, cls) => `<div style="margin-top:8px"><span class="status ${cls}">${code}</span></div><div class="code out"><div class="code-h">Response body<span class="sp"></span></div><pre><code>${hlJson(JSON.stringify(body, null, 2))}</code></pre></div>`;
+  if (!m) {
+    chips.innerHTML = `<span class="chip bad"><small>no route matches</small>${esc(path)}</span>`;
+    out.innerHTML = '<p>No route matches this path, so FastAPI returns 404 before any validation.</p>' + resp(404, { detail: 'Not Found' }, 'err');
+    return;
+  }
+  const params = new URLSearchParams(qs);
+  const errs = [];
+  const raw = decodeURIComponent(m[1]);
+  let html = `<span class="chip path"><small>fixed</small>/users/</span>`;
+  const uidOk = /^-?\d+$/.test(raw);
+  html += `<span class="chip ${uidOk ? 'pp' : 'bad'}"><small>path: user_id</small>${esc(raw)}</span><span class="chip path"><small>fixed</small>/items</span>`;
+  if (!uidOk) errs.push({ type: 'int_parsing', loc: ['path', 'user_id'], msg: 'Input should be a valid integer, unable to parse string as an integer', input: raw });
+  const vals = { user_id: uidOk ? parseInt(raw, 10) : raw, q: null, limit: 10 };
+  let first = true;
+  for (const [k, v] of params) {
+    html += `<span class="chip path"><small>&nbsp;</small>${first ? '?' : '&amp;'}</span>`; first = false;
+    if (k === 'q') { vals.q = v; html += `<span class="chip qp"><small>query: q (str)</small>q=${esc(v)}</span>`; }
+    else if (k === 'limit') {
+      const ok = /^-?\d+$/.test(v);
+      html += `<span class="chip ${ok ? 'qp' : 'bad'}"><small>query: limit (int)</small>limit=${esc(v)}</span>`;
+      if (ok) vals.limit = parseInt(v, 10); else errs.push({ type: 'int_parsing', loc: ['query', 'limit'], msg: 'Input should be a valid integer, unable to parse string as an integer', input: v });
+    } else html += `<span class="chip path"><small>ignored (unknown)</small>${esc(k)}=${esc(v)}</span>`;
+  }
+  chips.innerHTML = html;
+  if (errs.length) { out.innerHTML = '<p>The route matched, but validation failed. Your function is never called.</p>' + resp(422, { detail: errs }, 'err'); return; }
+  const call = `read_items(user_id=${vals.user_id}, q=${vals.q === null ? 'None' : "'" + vals.q + "'"}, limit=${vals.limit})`;
+  out.innerHTML = `<p>FastAPI calls your function like this (note the real <b>int</b> values):</p><div class="code"><pre><code>${hlPy(call)}</code></pre></div>` + resp(200, vals, 'ok');
+}
+$('#urlGo').addEventListener('click', () => dissect($('#urlIn').value));
+$('#urlIn').addEventListener('keydown', e => { if (e.key === 'Enter') dissect(e.target.value); });
+$$('[data-url]').forEach(b => b.addEventListener('click', () => { $('#urlIn').value = b.dataset.url; dissect(b.dataset.url); }));
+dissect($('#urlIn').value);
+
+/* ================= Pydantic playground ================= */
+const presets = {
+  valid: { name: 'Asha', age: 25, email: 'asha@example.com' },
+  coerce: { name: 'Ravi', age: '30', email: 'ravi@example.com', is_active: 'yes' },
+  wrongtype: { name: 'Asha', age: 'abc', email: 'asha@example.com' },
+  missing: { age: 25, email: 'asha@example.com' },
+  many: { name: 'A', age: -5, email: 'not-an-email', is_active: 'maybe' }
+};
+const valIn = $('#valIn');
+valIn.value = JSON.stringify(presets.valid, null, 2);
+$$('[data-preset]').forEach(b => b.addEventListener('click', () => { valIn.value = JSON.stringify(presets[b.dataset.preset], null, 2); validateUser(); }));
+
+function validateUser() {
+  const out = $('#valOut');
+  const show = (code, body, note) => {
+    out.innerHTML = `<span class="status ${code === 200 ? 'ok' : 'err'}">${code} ${code === 200 ? 'OK' : 'Unprocessable Entity'}</span>${note ? `<p style="margin:8px 0">${note}</p>` : ''}<div class="code out"><div class="code-h">Response body<span class="sp"></span></div><pre><code>${hlJson(JSON.stringify(body, null, 2))}</code></pre></div>`;
+  };
+  let data;
+  try { data = JSON.parse(valIn.value); }
+  catch (e) { return show(422, { detail: [{ type: 'json_invalid', loc: ['body', 0], msg: 'JSON decode error', input: {}, ctx: { error: 'Expecting value' } }] }, 'The body is not valid JSON at all.'); }
+  if (typeof data !== 'object' || data === null || Array.isArray(data))
+    return show(422, { detail: [{ type: 'model_attributes_type', loc: ['body'], msg: 'Input should be a valid dictionary or object to extract fields from', input: data }] });
+  const errs = [], clean = {}, notes = [];
+  const miss = f => errs.push({ type: 'missing', loc: ['body', f], msg: 'Field required', input: data });
+  // name
+  if (!('name' in data)) miss('name');
+  else if (typeof data.name !== 'string') errs.push({ type: 'string_type', loc: ['body', 'name'], msg: 'Input should be a valid string', input: data.name });
+  else if (data.name.length < 2) errs.push({ type: 'string_too_short', loc: ['body', 'name'], msg: 'String should have at least 2 characters', input: data.name, ctx: { min_length: 2 } });
+  else clean.name = data.name;
+  // age
+  if (!('age' in data)) miss('age');
+  else {
+    let a = data.age, ok = true;
+    if (typeof a === 'string' && /^\s*-?\d+\s*$/.test(a)) { notes.push(`age <code class="i">"${a}"</code> (text) was converted to <code class="i">${parseInt(a, 10)}</code> (int)`); a = parseInt(a, 10); }
+    if (typeof a === 'number' && !Number.isInteger(a)) { ok = false; errs.push({ type: 'int_from_float', loc: ['body', 'age'], msg: 'Input should be a valid integer, got a number with a fractional part', input: a }); }
+    else if (typeof a === 'string') { ok = false; errs.push({ type: 'int_parsing', loc: ['body', 'age'], msg: 'Input should be a valid integer, unable to parse string as an integer', input: a }); }
+    else if (typeof a !== 'number') { ok = false; errs.push({ type: 'int_type', loc: ['body', 'age'], msg: 'Input should be a valid integer', input: a }); }
+    if (ok && a <= 0) { ok = false; errs.push({ type: 'greater_than', loc: ['body', 'age'], msg: 'Input should be greater than 0', input: a, ctx: { gt: 0 } }); }
+    if (ok) clean.age = a;
+  }
+  // email
+  if (!('email' in data)) miss('email');
+  else if (typeof data.email !== 'string') errs.push({ type: 'string_type', loc: ['body', 'email'], msg: 'Input should be a valid string', input: data.email });
+  else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) errs.push({ type: 'value_error', loc: ['body', 'email'], msg: 'value is not a valid email address: An email address must have an @-sign.', input: data.email });
+  else clean.email = data.email;
+  // is_active
+  if (!('is_active' in data)) { clean.is_active = true; notes.push('is_active was missing, so the default <code class="i">true</code> was used'); }
+  else {
+    const v = data.is_active, s = String(v).toLowerCase();
+    if (typeof v === 'boolean') clean.is_active = v;
+    else if (['true', 'yes', 'on', '1', 't', 'y'].includes(s) && typeof v !== 'object') { clean.is_active = true; notes.push(`is_active <code class="i">${esc(JSON.stringify(v))}</code> was converted to <code class="i">true</code>`); }
+    else if (['false', 'no', 'off', '0', 'f', 'n'].includes(s) && typeof v !== 'object') { clean.is_active = false; notes.push(`is_active <code class="i">${esc(JSON.stringify(v))}</code> was converted to <code class="i">false</code>`); }
+    else errs.push({ type: 'bool_parsing', loc: ['body', 'is_active'], msg: 'Input should be a valid boolean, unable to interpret input', input: v });
+  }
+  if (errs.length) return show(422, { detail: errs }, `Found <b>${errs.length}</b> problem${errs.length > 1 ? 's' : ''}. FastAPI lists them all at once, with the exact location (<code class="i">loc</code>).`);
+  show(200, { saved: clean }, notes.length ? '🔄 ' + notes.join('; ') + '.' : 'All fields passed validation.');
+}
+$('#valGo').addEventListener('click', validateUser);
+validateUser();
+
+/* ================= async lanes ================= */
+let asyncBusy = false;
+$('#asyncGo').addEventListener('click', async () => {
+  if (asyncBusy) return; asyncBusy = true;
+  const syncBars = $$('.lanebox.sync .bar'), asyncBars = $$('.lanebox.async .bar');
+  [...syncBars, ...asyncBars].forEach(b => { b.style.transition = 'none'; b.style.width = '0'; });
+  $('#syncT').textContent = 'total: …'; $('#asyncT').textContent = 'total: …';
+  void document.body.offsetWidth;
+  syncBars.forEach((b, i) => { b.style.left = (i * 33.33) + '%'; b.style.transition = `width 1s linear ${i}s`; b.style.width = '33.33%'; });
+  asyncBars.forEach((b, i) => { b.style.left = (i * 0.8) + '%'; b.style.transition = `width 1s linear ${i * 0.04}s`; b.style.width = '33.33%'; });
+  await sleep(1150); $('#asyncT').textContent = 'total: ~2s ⚡';
+  await sleep(1900); $('#syncT').textContent = 'total: 6s 🐢';
+  asyncBusy = false;
+});
+
+/* ================= generic stepper ================= */
+function stepper(btnSel, items, capSel, captions, delay = 1300, trail = false) {
+  let busy = false;
+  $(btnSel).addEventListener('click', async () => {
+    if (busy) return; busy = true;
+    const uniq = [...new Set(items)];
+    uniq.forEach(x => x.classList.remove('on', 'done'));
+    for (let i = 0; i < items.length; i++) {
+      if (!trail) uniq.forEach(x => x.classList.remove('on'));
+      items[i].classList.add('on');
+      $(capSel).innerHTML = captions[i];
+      await sleep(delay);
+      if (trail) { items[i].classList.remove('on'); items[i].classList.add('done'); }
+    }
+    if (!trail) uniq.forEach(x => x.classList.remove('on'));
+    busy = false;
+  });
+}
+/* DI */
+const dn = $$('#diTree .dinode');
+stepper('#diGo', dn, '#diCap', [
+  '1️⃣ <code class="i">get_settings()</code> runs first, because others need it.',
+  '2️⃣ <code class="i">get_db()</code> opens a database session (it uses <code class="i">yield</code>, so it will close later).',
+  '3️⃣ <code class="i">get_token()</code> reads the Authorization header. If missing → 401, stop here.',
+  '4️⃣ <code class="i">get_current_user(db, token)</code> gets both results and finds the user.',
+  '5️⃣ Finally your endpoint runs with <code class="i">user</code> ready to use. After the response, <code class="i">get_db</code>\'s cleanup runs. ✨'
+]);
+/* JWT */
+const jr = $$('#jwtSeq .seqrow');
+stepper('#jwtGo', jr, '#jwtGo', jr.map(() => '▶ Playing…'), 1400, true);
+$('#jwtGo').addEventListener('click', () => setTimeout(() => $('#jwtGo').innerHTML = '▶ Play again', jr.length * 1400 + 50));
+/* Onion */
+const o = [$('#on1'), $('#on2'), $('#on3'), $('#on4'), $('#on3'), $('#on2'), $('#on1')];
+stepper('#onionGo', o, '#onionCap', [
+  '➡️ Request enters <b>CORSMiddleware</b>: is this website allowed to call us?',
+  '➡️ <b>Timing middleware</b> starts a stopwatch.',
+  '➡️ <b>Logging</b> writes "GET /items".',
+  '🎯 Your <b>endpoint</b> runs and creates the response.',
+  '⬅️ Logging writes "200 OK".',
+  '⬅️ Timing stops the stopwatch and adds header <code class="i">X-Process-Time: 0.0042</code>.',
+  '⬅️ CORS adds <code class="i">Access-Control-Allow-Origin</code>. Response leaves for the client. ✅'
+], 1200);
+
+/* ================= mini swagger ================= */
+let todoDb;
+function resetDb() { todoDb = { next: 3, items: { 1: { id: 1, title: 'Learn FastAPI', done: false }, 2: { id: 2, title: 'Build an API', done: true } } }; }
+resetDb();
+function checkTodoBody(raw) {
+  let b;
+  try { b = JSON.parse(raw); } catch (e) { return [422, { detail: [{ type: 'json_invalid', loc: ['body', 0], msg: 'JSON decode error', input: {}, ctx: { error: 'Expecting value' } }] }]; }
+  const errs = [];
+  if (typeof b !== 'object' || b === null || Array.isArray(b)) return [422, { detail: [{ type: 'model_attributes_type', loc: ['body'], msg: 'Input should be a valid dictionary or object to extract fields from', input: b }] }];
+  if (!('title' in b)) errs.push({ type: 'missing', loc: ['body', 'title'], msg: 'Field required', input: b });
+  else if (typeof b.title !== 'string') errs.push({ type: 'string_type', loc: ['body', 'title'], msg: 'Input should be a valid string', input: b.title });
+  else if (b.title.length < 1) errs.push({ type: 'string_too_short', loc: ['body', 'title'], msg: 'String should have at least 1 character', input: b.title, ctx: { min_length: 1 } });
+  if ('done' in b && typeof b.done !== 'boolean') errs.push({ type: 'bool_parsing', loc: ['body', 'done'], msg: 'Input should be a valid boolean, unable to interpret input', input: b.done });
+  if (errs.length) return [422, { detail: errs }];
+  return [null, { title: b.title, done: b.done ?? false }];
+}
+function checkId(raw) {
+  if (!/^-?\d+$/.test(String(raw).trim())) return [422, { detail: [{ type: 'int_parsing', loc: ['path', 'todo_id'], msg: 'Input should be a valid integer, unable to parse string as an integer', input: raw }] }];
+  const id = parseInt(raw, 10);
+  if (!todoDb.items[id]) return [404, { detail: 'Todo not found' }];
+  return [null, id];
+}
+const ops = [
+  { m: 'GET', p: '/todos', sum: 'List Todos', run: () => [200, Object.values(todoDb.items)] },
+  { m: 'POST', p: '/todos', sum: 'Create Todo', body: '{\n  "title": "Write tests",\n  "done": false\n}', run: (id, body) => {
+      const [e, v] = checkTodoBody(body); if (e) return [e, v];
+      const t = { id: todoDb.next++, ...v }; todoDb.items[t.id] = t; return [201, t]; } },
+  { m: 'GET', p: '/todos/{todo_id}', sum: 'Read Todo', id: true, run: (id) => { const [e, v] = checkId(id); return e ? [e, v] : [200, todoDb.items[v]]; } },
+  { m: 'PUT', p: '/todos/{todo_id}', sum: 'Replace Todo', id: true, body: '{\n  "title": "Learn FastAPI deeply",\n  "done": true\n}', run: (id, body) => {
+      const [e, v] = checkId(id); if (e) return [e, v];
+      const [e2, b] = checkTodoBody(body); if (e2) return [e2, b];
+      todoDb.items[v] = { id: v, ...b }; return [200, todoDb.items[v]]; } },
+  { m: 'DELETE', p: '/todos/{todo_id}', sum: 'Delete Todo', id: true, run: (id) => { const [e, v] = checkId(id); if (e) return [e, v]; delete todoDb.items[v]; return [204, null]; } }
+];
+$('#swOps').innerHTML = ops.map((op, i) => `
+  <div class="op ${op.m}" data-i="${i}">
+    <div class="op-h"><span class="m ${op.m}">${op.m}</span><span class="p">${op.p}</span><span class="sum">${op.sum}</span></div>
+    <div class="op-b">
+      ${op.id ? `<label>todo_id <span style="color:var(--bad)">* required</span> <span style="font-weight:400;color:var(--muted)">integer (path)</span></label><input class="sw-id" value="1" aria-label="todo_id">` : '<div style="font-size:13px;color:var(--muted)">No parameters</div>'}
+      ${op.body ? `<label>Request body <span style="font-weight:400;color:var(--muted)">application/json</span></label><textarea class="sw-body" spellcheck="false" aria-label="request body">${op.body}</textarea>` : ''}
+      <div class="controls"><button class="btn primary sw-exec">Execute</button></div>
+      <div class="resp"></div>
+    </div>
+  </div>`).join('');
+$$('#swOps .op').forEach(el => {
+  const op = ops[+el.dataset.i];
+  $('.op-h', el).addEventListener('click', () => el.classList.toggle('open'));
+  $('.sw-exec', el).addEventListener('click', () => {
+    const id = op.id ? $('.sw-id', el).value : null;
+    const body = op.body ? $('.sw-body', el).value : null;
+    const [code, data] = op.run(id, body);
+    const url = 'http://127.0.0.1:8000' + op.p.replace('{todo_id}', encodeURIComponent(id ?? ''));
+    const curl = `curl -X '${op.m}' '${url}'` + (body ? ` -H 'Content-Type: application/json' -d '${body.replace(/\s+/g, ' ')}'` : '');
+    const cls = code < 300 ? 'ok' : code === 404 ? 'warnc' : 'err';
+    $('.resp', el).innerHTML = `
+      <label>Curl</label><div class="code"><pre><code>${hlSh(curl)}</code></pre></div>
+      <label>Server response</label><span class="status ${cls}">${code}</span>
+      <div class="code out"><pre><code>${data === null ? '<span class="c">(no content)</span>' : hlJson(JSON.stringify(data, null, 2))}</code></pre></div>`;
+  });
+});
+$('#swReset').addEventListener('click', () => { resetDb(); $$('#swOps .resp').forEach(r => r.innerHTML = ''); });
+
+/* ================= quiz ================= */
+const quiz = [
+  ['FastAPI uses which library to validate data?', ['Pydantic', 'NumPy', 'Jinja2', 'Requests'], 0, 'Pydantic models describe the shape and rules of your data.'],
+  ['Where is the interactive Swagger UI by default?', ['/swagger', '/docs', '/api', '/help'], 1, '/docs is Swagger UI; /redoc is ReDoc.'],
+  ['Which status code does FastAPI send automatically for invalid input?', ['400', '404', '422', '500'], 2, '422 Unprocessable Entity, with a detailed list of errors.'],
+  ['@app.get("/items/{item_id}") + def f(item_id: int). What is item_id?', ['A query parameter', 'A path parameter', 'A body field', 'A header'], 1, 'It is in curly braces in the path.'],
+  ['def f(q: str | None = None), and q is NOT in the path. What is q?', ['Required body', 'Optional query parameter', 'Header', 'Cookie'], 1, 'Simple types not in the path become query params; the default makes it optional.'],
+  ['Which tool shares reusable logic like DB sessions or the current user?', ['Global variables', 'Depends()', 'Cookies', 'print()'], 1, 'Depends() is FastAPI\'s dependency injection system.'],
+  ['How do you make sure a password is never sent back to the client?', ['Delete it manually every time', 'Use a response_model without that field', 'Use status_code=204', 'Use async def'], 1, 'The response model filters the output.'],
+  ['You want to send an email AFTER replying to the user. Use…', ['BackgroundTasks', 'WebSocket', 'HTTPException', 'CORSMiddleware'], 0, 'background_tasks.add_task(fn, ...) runs after the response.'],
+  ['How do you split routes into separate files?', ['APIRouter + include_router', 'import *', 'Middleware', 'Lifespan'], 0, 'Each file gets an APIRouter; main.py includes them.'],
+  ['When should you use async def?', ['Always, everywhere', 'When you await async libraries (httpx, asyncpg…)', 'For heavy CPU math', 'Never'], 1, 'Blocking code inside async def freezes the server; use plain def for blocking libraries.'],
+  ['FastAPI is built on top of…', ['Flask + Marshmallow', 'Starlette + Pydantic', 'Django + DRF', 'Express.js'], 1, 'Starlette for the web parts, Pydantic for data.'],
+  ['Your React app on localhost:3000 gets "blocked by CORS policy". Fix?', ['Add CORSMiddleware with that origin', 'Use PUT instead of GET', 'Restart Python', 'Return status 200'], 0, 'CORS tells the browser which websites may call your API.']
+];
+let answered = 0, correct = 0;
+$('#quizBox').innerHTML = quiz.map(([q, opts], i) => `
+  <div class="card q" data-i="${i}"><b>${i + 1}. ${esc(q)}</b>
+    <div class="opts">${opts.map((o, j) => `<button data-j="${j}">${esc(o)}</button>`).join('')}</div>
+    <div class="why"></div></div>`).join('');
+$$('#quizBox .q').forEach(card => {
+  const [, , ans, why] = quiz[+card.dataset.i];
+  $$('button', card).forEach(b => b.addEventListener('click', () => {
+    if (card.classList.contains('answered')) return;
+    card.classList.add('answered');
+    const j = +b.dataset.j;
+    $$('button', card).forEach((x, k) => { x.disabled = true; if (k === ans) x.classList.add('right'); });
+    if (j !== ans) b.classList.add('wrong'); else correct++;
+    answered++;
+    $('.why', card).innerHTML = (j === ans ? '✅ Correct! ' : '❌ Not quite. ') + esc(why);
+    $('#score').textContent = `Score: ${correct} / ${answered}` + (answered === quiz.length ? (correct >= 10 ? ' 🏆' : ' 👍') : '');
+  }));
+});
+</script>
+</body>
+</html>

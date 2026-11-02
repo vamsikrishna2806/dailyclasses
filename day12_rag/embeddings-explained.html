@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embeddings Explained</title>
+<style>
+:root{
+  --bg:#f5f7fb; --panel:#fff; --ink:#1b2333; --muted:#64718a; --line:#dfe5ef;
+  --accent:#4f46e5; --accent-soft:#eceeff; --pink:#db2777; --pink-soft:#fde8f2;
+  --green:#16a34a; --green-soft:#e6f7ec; --red:#dc2626; --red-soft:#fdeaea; --amber:#d97706; --amber-soft:#fff4e2;
+  --code-bg:#0f172a; --code-ink:#e2e8f0; --shadow:0 6px 22px rgba(20,30,60,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1117; --panel:#161b26; --ink:#e6eaf2; --muted:#9aa6bb; --line:#2a3242;
+    --accent:#818cf8; --accent-soft:#1f2340; --pink:#f472b6; --pink-soft:#3a1529;
+    --green:#4ade80; --green-soft:#11301e; --red:#f87171; --red-soft:#3a1717; --amber:#fbbf24; --amber-soft:#33270c;
+    --code-bg:#0a0e16; --shadow:0 6px 22px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1117; --panel:#161b26; --ink:#e6eaf2; --muted:#9aa6bb; --line:#2a3242;
+  --accent:#818cf8; --accent-soft:#1f2340; --pink:#f472b6; --pink-soft:#3a1529;
+  --green:#4ade80; --green-soft:#11301e; --red:#f87171; --red-soft:#3a1717; --amber:#fbbf24; --amber-soft:#33270c;
+  --code-bg:#0a0e16; --shadow:0 6px 22px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+nav{position:sticky;top:0;z-index:10;background:var(--bg);padding:8px 0;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line)}
+nav a{flex:0 0 auto;text-decoration:none;color:var(--muted);font-size:.8rem;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px}
+nav a:hover{color:var(--accent);border-color:var(--accent)}
+nav button{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer}
+
+.hero{text-align:center;padding:30px 10px 10px}
+.hero h1{font-size:2.1rem;margin:0}
+.hero h1 span{color:var(--accent)}
+.hero p{color:var(--muted);margin:6px 0 18px;font-size:1.05rem}
+.morph{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;min-height:90px}
+.wcard{font-size:1.6rem;font-weight:700;background:var(--panel);border:2px solid var(--accent);border-radius:14px;padding:10px 18px;box-shadow:var(--shadow);min-width:160px}
+.machine{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:700;border-radius:12px;padding:10px 14px}
+.machine.go{animation:pulse .8s}
+.nums{font-family:ui-monospace,Consolas,monospace;background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:12px 14px;font-size:.95rem;min-width:300px;text-align:left}
+.arrow{font-size:1.6rem;color:var(--muted)}
+
+section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin:18px 0;box-shadow:var(--shadow);scroll-margin-top:60px}
+.num{display:inline-flex;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;align-items:center;justify-content:center;margin-right:8px;font-size:.9rem}
+h2{margin:0 0 6px;font-size:1.3rem;display:flex;align-items:center}
+.lead{color:var(--muted);margin:0 0 14px}
+.box{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px}
+.tip{background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:.92rem}
+.key{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:.92rem}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;font-size:.9rem}
+.btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer;font-size:.88rem;transition:.2s}
+.chip:hover{border-color:var(--accent)}
+.chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip.selB{background:var(--pink);color:#fff;border-color:var(--pink)}
+select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;font-size:.88rem}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes flip{0%{transform:rotateX(90deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes blink{50%{opacity:0}}
+
+/* section 1: spelling codes */
+.spell{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.spell .lab{width:90px;font-weight:700}
+.tile{width:46px;text-align:center;border-radius:8px;padding:6px 0;font-family:ui-monospace,Consolas,monospace;font-weight:700;background:var(--panel);border:1px solid var(--line)}
+.tile.n{background:var(--code-bg);color:var(--code-ink);animation:flip .4s both}
+.verdict{margin-top:10px;font-weight:600;opacity:0}
+.verdict.show{animation:up .5s forwards}
+
+/* section 2: profile bars */
+.prof{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;font-size:.9rem;margin:5px 0}
+.track{height:18px;background:var(--line);border-radius:9px;overflow:hidden}
+.fill{height:100%;width:0;border-radius:9px;background:var(--accent);transition:width .7s cubic-bezier(.3,1.2,.5,1)}
+.vecline{margin-top:12px;font-family:ui-monospace,Consolas,monospace;background:var(--code-bg);color:var(--code-ink);padding:10px 12px;border-radius:10px;font-size:.9rem;overflow-x:auto;white-space:nowrap}
+.vecline b{color:#fbbf24}
+
+/* section 3: map */
+.map{position:relative;height:400px;border:1px solid var(--line);border-radius:12px;background:
+  linear-gradient(var(--line) 1px,transparent 1px) 0 0/10% 10%,
+  linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/10% 10%, var(--panel);margin-top:10px;overflow:hidden}
+.map .pt{position:absolute;transform:translate(-50%,-50%);font-size:1.6rem;transition:left .9s cubic-bezier(.3,1.2,.5,1),top .9s cubic-bezier(.3,1.2,.5,1);text-align:center;line-height:1;cursor:default;z-index:2}
+.map .pt small{display:block;font-size:.62rem;color:var(--ink);font-weight:600;background:var(--panel);border-radius:4px;padding:0 3px;margin-top:2px}
+.axis{position:absolute;font-size:.75rem;font-weight:700;color:var(--accent)}
+.axis.x{bottom:4px;right:10px} .axis.y{top:6px;left:10px}
+.axis.o{bottom:4px;left:10px;color:var(--muted);font-weight:500}
+
+/* section 4: compare */
+.cmp{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;font-size:.85rem;margin:4px 0}
+.dbl{display:flex;flex-direction:column;gap:2px}
+.dbl .track{height:10px}
+.fill.b{background:var(--pink)}
+.meter{height:28px;border-radius:14px;background:var(--line);overflow:hidden;position:relative;margin-top:6px}
+.meter i{display:block;height:100%;width:0;border-radius:14px;transition:width 1s,background 1s}
+.meter span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem}
+.big{font-size:2.2rem;font-weight:800;text-align:center;margin:6px 0 0}
+.nb{display:grid;grid-template-columns:28px 80px 1fr 46px;gap:6px;align-items:center;font-size:.85rem;margin:4px 0;animation:up .4s both}
+
+/* section 5: sentences */
+input[type=text]{width:100%;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:10px;font:inherit}
+.found{margin-top:6px;font-size:.82rem;color:var(--muted)}
+.found b{background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:0 5px;margin:0 2px}
+.srow{display:grid;grid-template-columns:1fr 160px 48px;gap:8px;align-items:center;font-size:.9rem;padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel);margin:5px 0;transition:transform .5s}
+.srow.top{border-color:var(--green);background:var(--green-soft)}
+.srow .track{height:10px}
+.srow .fill{background:var(--green)}
+.srow.top{animation:up .4s}
+
+/* section 6: word math */
+.wm{position:relative;height:320px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.wm svg{position:absolute;inset:0;width:100%;height:100%}
+.wm .pt{position:absolute;transform:translate(-50%,-50%);text-align:center;font-size:1.8rem;line-height:1;z-index:2}
+.wm .pt small{display:block;font-size:.72rem;font-weight:700}
+.wm .pt.ghost{opacity:0;transition:opacity .6s}
+.eq{font-size:1.15rem;font-weight:700;text-align:center;margin:10px 0;min-height:1.6em}
+.eq .s{opacity:.25;transition:opacity .4s} .eq .s.on{opacity:1}
+.mline{stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset 1s}
+.mline.go{stroke-dashoffset:0}
+
+/* section 7 */
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);padding:12px;border-radius:10px;font-size:.82rem;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+td,th{border:1px solid var(--line);padding:7px 9px;text-align:left}
+th{background:var(--bg)}
+.uses{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+@media (max-width:720px){.uses{grid-template-columns:repeat(2,1fr)}}
+.use{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:.85rem}
+.use b{display:block;font-size:1.6rem}
+
+/* quiz */
+.q{margin:12px 0}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.opt{border:2px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:1rem}
+.opt.right{border-color:var(--green);background:var(--green-soft)}
+.opt.wrong{border-color:var(--red);background:var(--red-soft)}
+.fb{font-size:.85rem;margin-top:4px;min-height:1.3em}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <a href="#s1">1 · Why numbers</a><a href="#s2">2 · Score cards</a><a href="#s3">3 · Meaning map</a>
+  <a href="#s4">4 · Similarity</a><a href="#s5">5 · Sentences</a><a href="#s6">6 · Word math</a>
+  <a href="#s7">7 · Real world</a><a href="#s8">8 · Quiz</a>
+  <button id="themeBtn">🌓</button>
+</nav>
+
+<div class="hero">
+  <h1>What are <span>Embeddings</span>?</h1>
+  <p>An embedding turns a word or a sentence into a <b>list of numbers</b> that captures its <b>meaning</b>.</p>
+  <div class="morph">
+    <div class="wcard" id="heroWord">🐕 dog</div>
+    <div class="arrow">→</div>
+    <div class="machine" id="heroMachine">🧠 Embedding model</div>
+    <div class="arrow">→</div>
+    <div class="nums" id="heroNums"></div>
+  </div>
+</div>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="num">1</span>Computers only understand numbers</h2>
+  <p class="lead">Computers can't read words. So first, let's try the simple way: turn every letter into its number code.</p>
+  <div class="box">
+    <div class="spell" id="sp1"></div>
+    <div class="spell" id="sp2"></div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="convertBtn">🔄 Convert to numbers</button></div>
+    <div class="verdict" id="verdict">😕 "dog" and "puppy" mean almost the same thing… but their numbers are completely different!<br>Letter codes only capture <b>spelling</b>, not <b>meaning</b>.</div>
+  </div>
+  <div class="key">⭐ We need numbers that describe <b>what a word means</b>, so similar words get similar numbers. That's exactly what an embedding is.</div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="num">2</span>Describe each word with scores</h2>
+  <p class="lead">Like a player card in a video game (speed, power, skill…), we give every word a score from 0 to 1 on some features. Click a word:</p>
+  <div class="chips" id="profChips"></div>
+  <div class="box" id="profBox"></div>
+  <div class="vecline" id="profVec"></div>
+  <div class="tip">🎮 Analogy: a cricket player card has Batting 0.9, Bowling 0.2, Fielding 0.7. Those 3 numbers describe the player. An embedding is the same idea for words.</div>
+  <div class="key">⭐ That list of numbers <b>is the embedding</b> (also called a <b>vector</b>). Each number is one <b>dimension</b>.</div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="num">3</span>Put the words on a map</h2>
+  <p class="lead">Pick any 2 features as the X and Y axes. Every word moves to its place. Similar words land <b>close together</b>.</p>
+  <div class="row">
+    <label>X axis <select id="axX"></select></label>
+    <label>Y axis <select id="axY"></select></label>
+    <button class="btn ghost" id="shuffleAx">🎲 Random axes</button>
+  </div>
+  <div class="map" id="map">
+    <span class="axis y" id="lblY"></span><span class="axis x" id="lblX"></span><span class="axis o">0</span>
+  </div>
+  <div class="tip">👀 Notice: with only 2 numbers, some different words pile up on top of each other (e.g. foods and vehicles both sit at 0 on "Animal"). <b>More dimensions = more room to separate meanings.</b> That's why real embeddings use hundreds of numbers.</div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="num">4</span>Close numbers = similar meaning</h2>
+  <p class="lead">Pick word <b style="color:var(--accent)">A</b> and word <b style="color:var(--pink)">B</b>. We compare all 8 numbers and get a <b>similarity score</b> (cosine similarity: 1 = same meaning, 0 = unrelated).</p>
+  <div class="two">
+    <div>
+      <div class="small"><b style="color:var(--accent)">Word A</b></div><div class="chips" id="chipA"></div>
+      <div class="small"><b style="color:var(--pink)">Word B</b></div><div class="chips" id="chipB"></div>
+      <div class="box" id="cmpBars"></div>
+    </div>
+    <div>
+      <div class="box">
+        <div style="text-align:center;font-weight:600" id="pairTitle"></div>
+        <div class="big" id="simNum">0%</div>
+        <div class="meter"><i id="simBar"></i><span id="simLbl"></span></div>
+      </div>
+      <div class="box" style="margin-top:12px">
+        <div style="font-weight:600;margin-bottom:4px">🔍 Words closest to <span id="nbWord"></span></div>
+        <div id="nbList"></div>
+      </div>
+    </div>
+  </div>
+  <div class="key">⭐ This is how search works with embeddings: find the vectors with the <b>highest similarity</b> to your query.</div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="num">5</span>Sentences get embeddings too</h2>
+  <p class="lead">A whole sentence can also become one list of numbers. Then we can find sentences with the <b>same meaning, even with different words</b>. Type or pick a search:</p>
+  <div class="chips" id="sChips"></div>
+  <input type="text" id="sInput" value="my little puppy">
+  <div class="found" id="sFound"></div>
+  <div id="sList" style="margin-top:10px;position:relative"></div>
+  <div class="tip">🔎 Search "kitten" — it finds the <b>cat</b> sentence even though the word "kitten" isn't in it. Normal keyword search (Ctrl+F) would find nothing! <span class="muted">(This demo knows about 30 words.)</span></div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2><span class="num">6</span>Magic: math with meanings</h2>
+  <p class="lead">Because meaning is stored as numbers, we can add and subtract meanings. The famous example:</p>
+  <div class="eq" id="eq"><span class="s" id="e1">👑 king</span> <span class="s" id="e2">− 👨 man</span> <span class="s" id="e3">+ 👩 woman</span> <span class="s" id="e4">≈ 👸 queen</span></div>
+  <div class="wm" id="wm"><svg viewBox="0 0 100 100" preserveAspectRatio="none" id="wmSvg"></svg></div>
+  <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="wmPlay">▶ Play</button></div>
+  <div class="tip">Axes: → <b>Royalty</b>, ↑ <b>Female</b>. "king − man" removes the "male" part and keeps "royal". Adding "woman" adds "female" → lands on <b>queen</b>.</div>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2><span class="num">7</span>Embeddings in the real world</h2>
+  <p class="lead">Our demo used 8 features with names we chose. Real embedding models are a bit different:</p>
+  <table>
+    <tr><th></th><th>Our demo</th><th>Real models</th></tr>
+    <tr><td>How many numbers</td><td>8</td><td>384 – 3072 (e.g. 384, 768, 1536)</td></tr>
+    <tr><td>Who picks the features</td><td>We did (Animal, Food…)</td><td>The model <b>learns</b> them from billions of sentences</td></tr>
+    <tr><td>Can we name each number?</td><td>Yes</td><td>No — but similar meanings still end up close</td></tr>
+  </table>
+  <div class="vecline" style="margin-top:12px">"dog" → [<b>0.021</b>, -0.134, 0.078, 0.311, -0.045, 0.196, … <b>384 numbers</b>]</div>
+  <pre style="margin-top:12px"># pip install sentence-transformers
+from sentence_transformers import SentenceTransformer, util
+
+model = SentenceTransformer("all-MiniLM-L6-v2")      # free, runs locally
+
+a = model.encode("I love my puppy")
+b = model.encode("Dogs are great pets")
+c = model.encode("The stock market fell")
+
+print(len(a))                  # 384  ← numbers per sentence
+print(util.cos_sim(a, b))      # ~0.6  similar meaning
+print(util.cos_sim(a, c))      # ~0.0  unrelated</pre>
+  <div class="uses">
+    <div class="use"><b>🔍</b>Semantic search</div>
+    <div class="use"><b>📚</b>RAG chatbots</div>
+    <div class="use"><b>🎬</b>Recommendations</div>
+    <div class="use"><b>🧹</b>Duplicate detection</div>
+  </div>
+  <div class="key">⭐ In <b>RAG</b>: we embed every document chunk and the user's question, then pick the chunks whose embeddings are closest to the question.</div>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2><span class="num">8</span>Quick quiz</h2>
+  <p class="lead">Using the meaning scores from this page — which word is closest?</p>
+  <div id="quiz"></div>
+  <div class="big" id="score" style="font-size:1.2rem"></div>
+</section>
+
+<footer>Embedding = meaning → numbers. Similar meaning → similar numbers → close together.</footer>
+</div>
+
+<script>
+/* ---------- data: 8 hand-made "meaning" features ---------- */
+const FEAT = ["🐾 Animal","🏠 Pet","🐘 Big","🍽️ Food","🍬 Sweet","🚗 Vehicle","⚡ Fast","👑 Royal"];
+const W = {
+  dog:     {e:"🐕", v:[0.9,0.9,0.4,0,0,0,0.5,0]},
+  cat:     {e:"🐱", v:[0.9,0.95,0.2,0,0,0,0.4,0]},
+  puppy:   {e:"🐶", v:[0.9,0.9,0.35,0,0.05,0,0.5,0]},
+  lion:    {e:"🦁", v:[0.95,0.05,0.8,0,0,0,0.7,0.3]},
+  elephant:{e:"🐘", v:[0.95,0,1,0,0,0,0.2,0]},
+  apple:   {e:"🍎", v:[0,0,0.1,0.95,0.7,0,0,0]},
+  mango:   {e:"🥭", v:[0,0,0.2,0.95,0.9,0,0,0]},
+  pizza:   {e:"🍕", v:[0,0,0.3,0.95,0.1,0,0,0]},
+  cake:    {e:"🍰", v:[0,0,0.2,0.9,1,0,0,0]},
+  car:     {e:"🚗", v:[0,0,0.6,0,0,0.95,0.7,0]},
+  bike:    {e:"🚲", v:[0,0,0.3,0,0,0.9,0.5,0]},
+  plane:   {e:"✈️", v:[0,0,1,0,0,0.9,1,0]},
+  king:    {e:"🤴", v:[0,0,0.4,0,0,0,0,1]},
+};
+const NAMES = Object.keys(W);
+const cos = (a,b) => { let d=0,na=0,nb=0; a.forEach((x,i)=>{d+=x*b[i];na+=x*x;nb+=b[i]*b[i]}); return na&&nb? d/Math.sqrt(na*nb) : 0; };
+const fmt = v => "[" + v.map(n=>n.toFixed(2)).join(", ") + "]";
+const $ = id => document.getElementById(id);
+const label = n => `${W[n].e} ${n}`;
+
+/* ---------- hero loop ---------- */
+(function(){
+  const seq = ["dog","puppy","pizza","car"]; let i = 0;
+  function show(){
+    const n = seq[i++ % seq.length];
+    $("heroWord").textContent = label(n);
+    $("heroMachine").classList.remove("go"); void $("heroMachine").offsetWidth; $("heroMachine").classList.add("go");
+    const nums = $("heroNums"); nums.textContent = "[ ";
+    W[n].v.forEach((x,k)=> setTimeout(()=>{ nums.textContent += x.toFixed(2) + (k<7?", ":" ]"); }, 400 + k*120));
+  }
+  show(); setInterval(show, 3200);
+})();
+
+/* ---------- 1: spelling codes ---------- */
+function drawSpell(conv){
+  [["sp1","dog"],["sp2","puppy"]].forEach(([id,w])=>{
+    $(id).innerHTML = `<span class="lab">${label(w)}</span>` + [...w].map((ch,i)=> conv
+      ? `<span class="tile n" style="animation-delay:${i*.12}s">${ch.charCodeAt(0)}</span>`
+      : `<span class="tile">${ch}</span>`).join("");
+  });
+}
+drawSpell(false);
+$("convertBtn").onclick = () => {
+  drawSpell(true); const v=$("verdict"); v.classList.remove("show"); void v.offsetWidth;
+  setTimeout(()=>v.classList.add("show"), 900);
+};
+
+/* ---------- 2: score cards ---------- */
+$("profChips").innerHTML = NAMES.map(n=>`<button class="chip" data-w="${n}">${label(n)}</button>`).join("");
+$("profBox").innerHTML = FEAT.map((f,i)=>`<div class="prof"><span>${f}</span><div class="track"><div class="fill" id="pf${i}"></div></div><b id="pv${i}">0.00</b></div>`).join("");
+function showProfile(n){
+  document.querySelectorAll("#profChips .chip").forEach(c=>c.classList.toggle("sel", c.dataset.w===n));
+  W[n].v.forEach((x,i)=>{ $("pf"+i).style.width = (x*100)+"%"; $("pv"+i).textContent = x.toFixed(2); });
+  $("profVec").innerHTML = `embedding("${n}") = <b>${fmt(W[n].v)}</b>`;
+}
+$("profChips").onclick = e => { const c=e.target.closest(".chip"); if(c) showProfile(c.dataset.w); };
+showProfile("dog");
+
+/* ---------- 3: meaning map ---------- */
+const axX=$("axX"), axY=$("axY"), map=$("map");
+[axX,axY].forEach(s => s.innerHTML = FEAT.map((f,i)=>`<option value="${i}">${f}</option>`).join(""));
+axX.value = 0; axY.value = 3;
+NAMES.forEach((n,i)=>{ const p=document.createElement("div"); p.className="pt"; p.id="pt_"+n; p.innerHTML=`${W[n].e}<small>${n}</small>`; p.style.left="50%"; p.style.top="50%"; map.appendChild(p); });
+function placeMap(){
+  const x=+axX.value, y=+axY.value;
+  $("lblX").textContent = FEAT[x] + " →"; $("lblY").textContent = "↑ " + FEAT[y];
+  NAMES.forEach((n,i)=>{
+    const jx = ((i*37)%11-5)*.7, jy = ((i*53)%11-5)*.7;   // small offset so piles stay readable
+    const p=$("pt_"+n); p.style.left = (9 + W[n].v[x]*80 + jx) + "%"; p.style.top = (86 - W[n].v[y]*74 + jy) + "%";
+  });
+}
+axX.onchange = axY.onchange = placeMap;
+$("shuffleAx").onclick = () => { const a=Math.floor(Math.random()*8); let b; do{b=Math.floor(Math.random()*8)}while(b===a); axX.value=a; axY.value=b; placeMap(); };
+setTimeout(placeMap, 300);
+
+/* ---------- 4: compare ---------- */
+let A="dog", B="cat";
+const chipsHTML = sel => NAMES.map(n=>`<button class="chip" data-w="${n}">${label(n)}</button>`).join("");
+$("chipA").innerHTML = chipsHTML(); $("chipB").innerHTML = chipsHTML();
+$("cmpBars").innerHTML = FEAT.map((f,i)=>`<div class="cmp"><span>${f}</span><div class="dbl"><div class="track"><div class="fill" id="ca${i}"></div></div><div class="track"><div class="fill b" id="cb${i}"></div></div></div></div>`).join("");
+function compare(){
+  document.querySelectorAll("#chipA .chip").forEach(c=>c.classList.toggle("sel", c.dataset.w===A));
+  document.querySelectorAll("#chipB .chip").forEach(c=>c.classList.toggle("selB", c.dataset.w===B));
+  W[A].v.forEach((x,i)=>{ $("ca"+i).style.width=(x*100)+"%"; $("cb"+i).style.width=(W[B].v[i]*100)+"%"; });
+  const s = cos(W[A].v, W[B].v), pct = Math.round(s*100);
+  $("pairTitle").textContent = `${label(A)}  vs  ${label(B)}`;
+  const col = s>.8 ? "var(--green)" : s>.4 ? "var(--amber)" : "var(--red)";
+  $("simBar").style.width = Math.max(3,pct)+"%"; $("simBar").style.background = col;
+  $("simLbl").textContent = s>.8 ? "Very similar 😍" : s>.4 ? "Somewhat related 🤔" : "Not related 🙅";
+  let cur = 0; const target = pct; clearInterval(compare.t);
+  compare.t = setInterval(()=>{ cur += Math.max(1, Math.ceil((target-cur)/6)); if(cur>=target){cur=target;clearInterval(compare.t);} $("simNum").textContent = (s).toFixed(2) + "  (" + cur + "%)"; $("simNum").style.color=col; }, 40);
+  if(!target){ $("simNum").textContent = "0.00  (0%)"; $("simNum").style.color=col; }
+  $("nbWord").textContent = label(A);
+  const nb = NAMES.filter(n=>n!==A).map(n=>[n,cos(W[A].v,W[n].v)]).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $("nbList").innerHTML = nb.map(([n,v],i)=>`<div class="nb" style="animation-delay:${i*.08}s"><span>#${i+1}</span><span>${label(n)}</span><div class="track" style="height:10px"><div class="fill" style="width:${v*100}%;background:var(--green)"></div></div><b>${v.toFixed(2)}</b></div>`).join("");
+}
+$("chipA").onclick = e => { const c=e.target.closest(".chip"); if(c){A=c.dataset.w; compare();} };
+$("chipB").onclick = e => { const c=e.target.closest(".chip"); if(c){B=c.dataset.w; compare();} };
+compare();
+
+/* ---------- 5: sentences ---------- */
+const SYN = {dogs:"dog",doggy:"dog",cats:"cat",kitten:"cat",kitty:"cat",puppies:"puppy",pup:"puppy",tiger:"lion",lions:"lion",fruit:"apple",apples:"apple",burger:"pizza",lunch:"pizza",food:"pizza",eat:"pizza",snack:"pizza",dessert:"cake",sweet:"cake",chocolate:"cake",truck:"car",cars:"car",drive:"car",drives:"car",bicycle:"bike",cycle:"bike",flight:"plane",aeroplane:"plane",airplane:"plane",fly:"plane",queen:"king",prince:"king",royal:"king",pet:"dog"};
+const SENTS = ["My dog loves to play fetch","A cat is sleeping on the sofa","The lion is the king of the jungle","I ate pizza for lunch","This chocolate cake is very sweet","Mangoes are my favourite fruit","He drives a fast car","Our plane took off on time","She rides her bicycle to college","The queen lives in a palace"];
+function sentVec(text){
+  const found=[], v=new Array(8).fill(0);
+  text.toLowerCase().replace(/[^a-z ]/g," ").split(/\s+/).forEach(w=>{
+    const k = W[w] ? w : SYN[w] || (W[w.replace(/s$/,"")] ? w.replace(/s$/,"") : (w.endsWith("oes") && W[w.slice(0,-2)] ? w.slice(0,-2) : null));
+    if(k){ found.push([w,k]); W[k].v.forEach((x,i)=>v[i]+=x); }
+  });
+  return {v, found};
+}
+const SV = SENTS.map(s=>sentVec(s).v);
+$("sChips").innerHTML = ["my little puppy","kitten","something to eat","dessert","travel by flight","a royal person"].map(s=>`<button class="chip">${s}</button>`).join("");
+$("sChips").onclick = e => { const c=e.target.closest(".chip"); if(c){ $("sInput").value=c.textContent; search(); } };
+$("sList").innerHTML = SENTS.map((s,i)=>`<div class="srow" id="sr${i}"><span>${s}</span><div class="track"><div class="fill" id="sf${i}"></div></div><b id="ss${i}">–</b></div>`).join("");
+function search(){
+  const q = $("sInput").value, {v,found} = sentVec(q);
+  $("sFound").innerHTML = found.length ? "Words understood: " + found.map(([w,k])=>`<b>${w}${w!==k?" ≈ "+k:""}</b>`).join("") : "🤷 No known words — try: dog, kitten, fruit, burger, flight, queen…";
+  const scores = SV.map(sv => cos(v, sv));
+  const order = scores.map((s,i)=>[s,i]).sort((a,b)=>b[0]-a[0]);
+  const list = $("sList");
+  order.forEach(([s,i],rank)=>{
+    const r=$("sr"+i); list.appendChild(r);   // re-order rows: best match on top
+    r.classList.toggle("top", rank===0 && s>0.3);
+    $("sf"+i).style.width = (s*100)+"%"; $("ss"+i).textContent = s.toFixed(2);
+  });
+}
+$("sInput").addEventListener("input", search);
+setTimeout(search, 300);
+
+/* ---------- 6: word math ---------- */
+const WM = { king:{e:"🤴",x:80,y:75}, man:{e:"👨",x:20,y:75}, woman:{e:"👩",x:20,y:25}, queen:{e:"👸",x:80,y:25} };
+const wm=$("wm"), wmSvg=$("wmSvg");
+function wmReset(){
+  wm.querySelectorAll(".pt").forEach(p=>p.remove()); wmSvg.innerHTML="";
+  Object.entries(WM).forEach(([n,p])=>{ const d=document.createElement("div"); d.className="pt"+(n==="queen"?" ghost":""); d.id="wm_"+n; d.style.left=p.x+"%"; d.style.top=p.y+"%"; d.innerHTML=`${p.e}<small>${n}</small>`; wm.appendChild(d); });
+  ["e1","e2","e3","e4"].forEach(id=>$(id).classList.remove("on"));
+}
+function wmLine(a,b,color,id){
+  wmSvg.insertAdjacentHTML("beforeend", `<line id="${id}" class="mline" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${color}" stroke-width="3" pathLength="100" vector-effect="non-scaling-stroke"/>`);
+  setTimeout(()=>$(id).classList.add("go"), 30);
+}
+let wmT=[];
+$("wmPlay").onclick = () => {
+  wmT.forEach(clearTimeout); wmT=[]; wmReset();
+  const T=(f,ms)=>wmT.push(setTimeout(f,ms));
+  T(()=>$("e1").classList.add("on"), 200);
+  T(()=>{ $("e2").classList.add("on"); wmLine(WM.king,{x:WM.king.x-60,y:WM.king.y},"var(--red)","l1"); }, 900);
+  T(()=>{ $("e3").classList.add("on"); wmLine({x:20,y:75},{x:20,y:25},"var(--green)","l2"); }, 2200);
+  T(()=>{ wmLine({x:20,y:25},{x:80,y:25},"var(--accent)","l3"); }, 3300);
+  T(()=>{ $("e4").classList.add("on"); $("wm_queen").style.opacity=1; }, 4300);
+};
+wmReset();
+
+/* ---------- 8: quiz ---------- */
+const QUIZ = [["dog",["cat","car","cake"]],["mango",["plane","apple","lion"]],["car",["pizza","puppy","bike"]],["lion",["elephant","apple","bike"]]];
+let right = 0, answered = 0;
+$("quiz").innerHTML = QUIZ.map(([w,opts],qi)=>`<div class="q"><b>Q${qi+1}.</b> Which is closest to <b>${label(w)}</b>?
+  <div class="opts">${opts.map(o=>`<button class="opt" data-q="${qi}" data-o="${o}">${label(o)}</button>`).join("")}</div><div class="fb" id="fb${qi}"></div></div>`).join("");
+$("quiz").onclick = e => {
+  const b=e.target.closest(".opt"); if(!b || b.parentElement.dataset.done) return;
+  const [w,opts]=QUIZ[+b.dataset.q], best=opts.reduce((a,o)=>cos(W[w].v,W[o].v)>cos(W[w].v,W[a].v)?o:a);
+  b.parentElement.dataset.done=1; answered++;
+  const ok = b.dataset.o===best; if(ok) right++;
+  b.classList.add(ok?"right":"wrong");
+  b.parentElement.querySelector(`[data-o="${best}"]`).classList.add("right");
+  $("fb"+b.dataset.q).innerHTML = (ok?"✅ Correct! ":"❌ Not quite. ") + opts.map(o=>`${o}: ${cos(W[w].v,W[o].v).toFixed(2)}`).join(" · ");
+  if(answered===QUIZ.length) $("score").textContent = `Score: ${right} / ${QUIZ.length} ${right===QUIZ.length?"🎉 You understand embeddings!":""}`;
+};
+
+$("themeBtn").onclick = () => { const r=document.documentElement; const dark=r.dataset.theme? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches; r.dataset.theme=dark?"light":"dark"; };
+</script>
+</body>
+</html>

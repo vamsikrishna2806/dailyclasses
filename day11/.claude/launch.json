@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "book-studio", "runtimeExecutable": "python", "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--app-dir", "book_genai_studio", "--port", "8765"], "port": 8765 }
+  ]
+}

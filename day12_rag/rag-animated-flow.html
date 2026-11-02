@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Step by Step</title>
+<style>
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --ink:#1b2333; --muted:#5d6b82; --line:#dfe5ef;
+  --accent:#4f46e5; --accent-soft:#eef0ff; --green:#16a34a; --green-soft:#e8f8ee;
+  --red:#dc2626; --red-soft:#fdecec; --amber:#d97706; --amber-soft:#fff5e5;
+  --c1:#6366f1; --c2:#ec4899; --c3:#0ea5e9; --c4:#14b8a6; --c5:#f59e0b; --c6:#8b5cf6;
+  --code-bg:#0f172a; --code-ink:#e2e8f0; --shadow:0 6px 24px rgba(20,30,60,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1117; --panel:#161b26; --ink:#e6eaf2; --muted:#9aa6bb; --line:#2a3242;
+    --accent:#818cf8; --accent-soft:#1f2340; --green:#4ade80; --green-soft:#12301f;
+    --red:#f87171; --red-soft:#3a1717; --amber:#fbbf24; --amber-soft:#33270c;
+    --code-bg:#0a0e16; --shadow:0 6px 24px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1117; --panel:#161b26; --ink:#e6eaf2; --muted:#9aa6bb; --line:#2a3242;
+  --accent:#818cf8; --accent-soft:#1f2340; --green:#4ade80; --green-soft:#12301f;
+  --red:#f87171; --red-soft:#3a1717; --amber:#fbbf24; --amber-soft:#33270c;
+  --code-bg:#0a0e16; --shadow:0 6px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:1.6rem;margin:0}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.95rem}
+.theme-btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer}
+
+/* pipeline nav */
+.pipeline{margin:18px 0 14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.phases{display:flex;gap:8px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;flex-wrap:wrap}
+.phase{padding:2px 8px;border-radius:6px}
+.ph0{background:var(--red-soft);color:var(--red)}
+.ph1{background:var(--amber-soft);color:var(--amber)}
+.ph2{background:var(--accent-soft);color:var(--accent)}
+.ph3{background:var(--green-soft);color:var(--green)}
+.nodes{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.node{flex:1 0 82px;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:10px;padding:6px 4px;text-align:center;cursor:pointer;font-size:.75rem;transition:.25s}
+.node b{display:block;font-size:1.1rem}
+.node.done{color:var(--ink);border-color:var(--accent)}
+.node.active{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-2px)}
+.node.p1{border-top:3px solid var(--amber)} .node.p2{border-top:3px solid var(--accent)}
+.node.p0{border-top:3px solid var(--red)} .node.p3{border-top:3px solid var(--green)}
+
+/* main layout */
+.main{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+@media (max-width:900px){.main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.stage-card{padding:16px;min-height:470px;display:flex;flex-direction:column}
+.stage-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.step-no{font-size:.78rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+.stage-title{font-size:1.3rem;margin:0}
+.stage{position:relative;flex:1;border-radius:10px;background:var(--bg);border:1px dashed var(--line);padding:14px;overflow:hidden}
+.info{padding:16px;display:flex;flex-direction:column;gap:12px}
+.info h3{margin:0 0 4px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.info p{margin:0}
+.analogy{background:var(--amber-soft);border-left:4px solid var(--amber);padding:10px 12px;border-radius:8px}
+pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);padding:10px 12px;border-radius:8px;font-size:.8rem;overflow-x:auto;white-space:pre-wrap}
+.keypt{background:var(--accent-soft);border-left:4px solid var(--accent);padding:10px 12px;border-radius:8px}
+
+.controls{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
+.btn{border:none;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;font-size:.92rem}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.progress{flex:1;height:6px;background:var(--line);border-radius:6px;overflow:hidden;min-width:80px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.hint{color:var(--muted);font-size:.8rem;text-align:center;margin-top:8px}
+
+/* animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.2)}70%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.5)}50%{box-shadow:0 0 0 12px rgba(99,102,241,0)}}
+@keyframes flyL{from{opacity:0;transform:translateX(-60px)}to{opacity:1;transform:none}}
+@keyframes drop{0%{opacity:0;transform:translate(-50%,-200%) scale(1.6)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes blink{50%{opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 3px var(--green)}50%{box-shadow:0 0 0 7px transparent}}
+.a{opacity:0;animation:fadeUp .5s forwards}
+.pop{opacity:0;animation:pop .5s forwards}
+.fly{opacity:0;animation:flyL .5s forwards}
+.cursor::after{content:"▌";animation:blink .8s infinite;color:var(--accent)}
+
+/* shared bits */
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.center{display:flex;flex-direction:column;align-items:center;gap:10px}
+.msg{padding:10px 14px;border-radius:14px;max-width:88%;font-size:.95rem}
+.msg.user{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.bot{background:var(--panel);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px;min-height:44px}
+.chat{display:flex;flex-direction:column;gap:10px}
+.badge{display:inline-block;padding:6px 10px;border-radius:8px;font-size:.85rem;font-weight:600}
+.badge.bad{background:var(--red-soft);color:var(--red)}
+.badge.good{background:var(--green-soft);color:var(--green)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.model{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;text-align:center}
+.model.pulse{animation:pulse 1s infinite}
+.arrow{font-size:1.4rem;color:var(--muted)}
+.chunk{border-radius:10px;padding:8px 10px;font-size:.85rem;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--cc)}
+.cid{display:inline-block;background:var(--cc);color:#fff;font-weight:700;font-size:.72rem;padding:1px 7px;border-radius:6px;margin-right:6px}
+.vec{font-family:ui-monospace,Consolas,monospace;font-size:.78rem;background:var(--code-bg);color:var(--code-ink);padding:6px 8px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+.rag-letters{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rag-letters .box b{font-size:1.6rem;color:var(--accent);display:block}
+@media (max-width:560px){.rag-letters{grid-template-columns:1fr}}
+
+/* embed rows */
+.erow{display:grid;grid-template-columns:1.4fr auto auto auto 1.2fr;gap:6px;align-items:center;opacity:.25;transition:.3s}
+.erow.on{opacity:1}
+.erow .mini{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-radius:8px;padding:4px 8px;font-size:.75rem;font-weight:700}
+.erow .vec{visibility:hidden}
+.erow.on .vec{visibility:visible;animation:fadeUp .4s}
+@media (max-width:560px){.erow{grid-template-columns:1fr auto 1fr}.erow .arrow.x,.erow .mini{display:none}}
+
+/* vector map */
+.map{position:relative;width:100%;height:340px;border-radius:10px;background:
+  linear-gradient(var(--line) 1px,transparent 1px) 0 0/10% 10%,
+  linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/10% 10%, var(--panel);border:1px solid var(--line)}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.dot{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--cc);color:#fff;font-weight:700;font-size:.72rem;display:flex;align-items:center;justify-content:center;opacity:0;animation:pop .5s forwards;z-index:2}
+.dot.top{animation:pop .5s forwards, glow 1.2s 1 .6s;outline:3px solid var(--green);outline-offset:3px}
+.dot.dim{opacity:.35 !important}
+.dot .lbl{position:absolute;top:38px;left:50%;transform:translateX(-50%);white-space:nowrap;color:var(--ink);font-weight:500;font-size:.68rem;background:var(--panel);padding:1px 5px;border-radius:5px;border:1px solid var(--line)}
+.qstar{position:absolute;transform:translate(-50%,-50%);font-size:1.8rem;z-index:3;opacity:0;animation:drop .7s forwards;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.cluster{position:absolute;border:2px dashed var(--cc);border-radius:50%;opacity:0;animation:fadeUp .6s forwards;color:var(--cc);font-size:.72rem;font-weight:700;display:flex;justify-content:center;padding-top:2px}
+.score{font-size:3.2px;font-weight:700}
+.line{stroke-dasharray:100;stroke-dashoffset:100;animation:draw 1s forwards}
+
+/* ranking */
+.rank{display:grid;grid-template-columns:40px 1fr 54px;gap:8px;align-items:center;font-size:.85rem;margin-top:6px}
+.bar{height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--cc);transition:width 1s}
+.toplabel{color:var(--green);font-weight:700;font-size:.75rem}
+
+/* prompt paper */
+.paper{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:ui-monospace,Consolas,monospace;font-size:.8rem;display:flex;flex-direction:column;gap:8px}
+.paper .sec{border-radius:8px;padding:8px}
+.sec.sys{background:var(--amber-soft)} .sec.ctx{background:var(--green-soft)} .sec.q{background:var(--accent-soft)}
+.sec h4{margin:0 0 4px;font-family:system-ui;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.spinner{width:22px;height:22px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+
+/* recap */
+.flow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.fnode{padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--panel);font-size:.82rem;font-weight:600;transition:.3s}
+.fnode.lit{border-color:var(--accent);background:var(--accent);color:#fff;transform:scale(1.07)}
+.lane{border-radius:10px;padding:10px;margin-bottom:10px}
+.lane h4{margin:0 0 8px;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+.lane.l1{background:var(--amber-soft)} .lane.l1 h4{color:var(--amber)}
+.lane.l2{background:var(--accent-soft)} .lane.l2 h4{color:var(--accent)}
+table.cmp{width:100%;border-collapse:collapse;font-size:.85rem}
+table.cmp td,table.cmp th{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.cmp th{background:var(--panel)}
+.src{display:inline-block;background:var(--green-soft);color:var(--green);border:1px solid var(--green);border-radius:999px;padding:2px 9px;font-size:.75rem;margin:2px}
+.muted{color:var(--muted)}
+.small{font-size:.8rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🔎 <span>RAG</span> — the complete flow, step by step</h1>
+      <p class="sub">Retrieval-Augmented Generation explained with one simple example: a company HR chatbot.</p>
+    </div>
+    <button class="theme-btn" id="themeBtn">🌓 Theme</button>
+  </header>
+
+  <div class="pipeline">
+    <div class="phases">
+      <span class="phase ph0">The problem</span>
+      <span class="phase ph1">Phase 1 · Indexing (done once)</span>
+      <span class="phase ph2">Phase 2 · Querying (every question)</span>
+      <span class="phase ph3">Recap</span>
+    </div>
+    <div class="nodes" id="nodes"></div>
+  </div>
+
+  <div class="main">
+    <div class="card stage-card">
+      <div class="stage-head">
+        <div>
+          <div class="step-no" id="stepNo"></div>
+          <h2 class="stage-title" id="stageTitle"></h2>
+        </div>
+        <button class="btn ghost" id="replayBtn">↻ Replay animation</button>
+      </div>
+      <div class="stage" id="stage"></div>
+      <div class="controls">
+        <button class="btn ghost" id="prevBtn">← Back</button>
+        <div class="progress"><i id="prog"></i></div>
+        <button class="btn ghost" id="autoBtn">▶ Auto-play</button>
+        <button class="btn primary" id="nextBtn">Next →</button>
+      </div>
+      <div class="hint">Tip: use ← → arrow keys, or click any step at the top.</div>
+    </div>
+
+    <div class="card info">
+      <div><h3>What happens</h3><p id="what"></p></div>
+      <div class="analogy"><h3>🍎 Simple analogy</h3><p id="analogy"></p></div>
+      <div><h3>💻 In code (simplified)</h3><pre class="code" id="code"></pre></div>
+      <div class="keypt"><h3>⭐ Remember</h3><p id="key"></p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- example data ---------- */
+const QUESTION = "How many sick leaves do I get, and do I need a doctor's note?";
+const CHUNKS = [
+  {id:"C1", text:"Employees get 12 casual leaves per year.", c:"var(--c1)", x:22, y:34, vec:[0.81,0.12,-0.33,0.45], score:0.71},
+  {id:"C2", text:"Sick leave: 10 days per year. A medical certificate is needed if you are absent more than 2 days in a row.", c:"var(--c2)", x:36, y:22, vec:[0.78,0.20,-0.29,0.51], score:0.92},
+  {id:"C3", text:"Office hours are 9:30 AM to 6:30 PM, Monday to Friday.", c:"var(--c3)", x:72, y:28, vec:[-0.21,0.88,0.14,-0.05], score:0.12},
+  {id:"C4", text:"Work from home is allowed 2 days a week with manager approval.", c:"var(--c4)", x:82, y:46, vec:[-0.10,0.79,0.31,0.02], score:0.21},
+  {id:"C5", text:"Salary is credited on the last working day of every month.", c:"var(--c5)", x:56, y:80, vec:[0.05,-0.32,0.90,0.11], score:0.09},
+  {id:"C6", text:"Unused casual leaves can be carried forward, up to 5 days.", c:"var(--c6)", x:16, y:52, vec:[0.74,0.09,-0.38,0.40], score:0.58},
+];
+const Q = {x:30, y:30, vec:[0.80,0.18,-0.30,0.50]};
+const ANSWER = "You get 10 sick leaves per year. Yes — if you are absent for more than 2 days in a row, you need a medical certificate (doctor's note). [Source: TechNova Handbook, C2]";
+const fmt = v => "[" + v.map(n => (n>=0?" ":"") + n.toFixed(2)).join(", ") + ", … ]";
+
+/* ---------- timer helpers (cleared on every step change) ---------- */
+let timers = [];
+const T = (fn, ms) => timers.push(setTimeout(fn, ms));
+const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+function typeText(node, text, speed = 28, done) {
+  node.textContent = ""; node.classList.add("cursor");
+  let i = 0;
+  (function tick(){
+    if (i <= text.length) { node.textContent = text.slice(0, i++); T(tick, speed); }
+    else { node.classList.remove("cursor"); done && done(); }
+  })();
+}
+const $ = id => document.getElementById(id);
+const d = s => `style="animation-delay:${s}s"`;
+
+/* ---------- map helper (used in store + search steps) ---------- */
+function mapHTML() {
+  return `<div class="map" id="map">
+    <div class="cluster" style="--cc:var(--c2);left:6%;top:8%;width:42%;height:62%;animation-delay:2.4s">Leave topics</div>
+    <div class="cluster" style="--cc:var(--c3);left:62%;top:12%;width:32%;height:48%;animation-delay:2.6s">Work timing / WFH</div>
+    <div class="cluster" style="--cc:var(--c5);left:44%;top:64%;width:24%;height:32%;animation-delay:2.8s">Salary</div>
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" id="mapSvg"></svg>
+  </div>`;
+}
+function addDots(map, delayStep = .3) {
+  CHUNKS.forEach((c, i) => {
+    const dot = document.createElement("div");
+    dot.className = "dot"; dot.id = "dot" + c.id;
+    dot.style.cssText = `--cc:${c.c};left:${c.x}%;top:${c.y}%;animation-delay:${i*delayStep}s`;
+    dot.innerHTML = `${c.id}<span class="lbl">${c.text.split(" ").slice(0,3).join(" ")}…</span>`;
+    map.appendChild(dot);
+  });
+}
+
+/* ---------- steps ---------- */
+const STEPS = [
+{
+  short:"Problem", icon:"❓", phase:0,
+  title:"The problem: an LLM alone just guesses",
+  what:"A new employee asks the company chatbot a question. A normal LLM (like ChatGPT) was trained on internet data — it has <b>never seen TechNova's private HR handbook</b>. So it gives a confident-sounding but generic (often wrong) answer. This is called a <b>hallucination</b>.",
+  analogy:"Asking a smart student a question about a book they never read. They will still answer… by guessing.",
+  code:`answer = llm.generate(question)\n# No company data given → LLM guesses`,
+  key:"LLMs don't know your private / latest data. RAG fixes this by giving them the right information at question time.",
+  draw(s){
+    s.innerHTML = `<div class="chat">
+      <div class="msg user a" ${d(.2)}>👩‍💻 ${QUESTION}</div>
+      <div class="msg bot a" ${d(.9)}>🤖 <span id="a0"></span></div>
+      <div class="a" ${d(.9)}><span class="badge bad" id="b0" style="visibility:hidden">❌ Wrong! TechNova actually gives 10 sick days & needs a note after 2 days</span></div>
+      <div id="fix" style="display:none">
+        <div class="box a" style="margin:6px 0 10px"><b>💡 The fix:</b> before the LLM answers, <b>find</b> the right paragraph from our documents and <b>give</b> it to the LLM along with the question.</div>
+        <div class="rag-letters">
+          <div class="box pop" ${d(.2)}><b>R</b>etrieval<br><span class="muted small">Find relevant info from your documents</span></div>
+          <div class="box pop" ${d(.5)}><b>A</b>ugmented<br><span class="muted small">Add that info into the prompt</span></div>
+          <div class="box pop" ${d(.8)}><b>G</b>eneration<br><span class="muted small">LLM writes the answer using it</span></div>
+        </div>
+      </div></div>`;
+    T(() => typeText($("a0"), "Most companies give around 6–12 sick days a year. A doctor's note is usually not required.", 25, () => {
+      $("b0").style.visibility = "visible";
+      T(() => $("fix").style.display = "block", 700);
+    }), 1500);
+  }
+},
+{
+  short:"Load", icon:"📄", phase:1,
+  title:"Step 1 · Load the documents",
+  what:"First we collect the company's knowledge: PDFs, Word files, web pages, databases. A <b>document loader</b> opens each file and pulls out the plain <b>text</b>. Our example has one file: <i>TechNova_Handbook.pdf</i>.",
+  analogy:"Before an open-book exam, you first gather all your textbooks and notes on the table.",
+  code:`text = load_pdf("TechNova_Handbook.pdf")\nprint(len(text))   # e.g. 48,000 characters`,
+  key:"RAG can only answer from what you load. Garbage in → garbage out.",
+  draw(s){
+    s.innerHTML = `<div class="row" style="justify-content:center;gap:18px;margin-top:10px">
+        ${["📕 PDF","📘 Word","🌐 Website","🗄️ Database"].map((t,i)=>`<div class="box pop" ${d(i*.25)}>${t}</div>`).join("")}
+      </div>
+      <div class="center" style="margin-top:14px">
+        <div class="arrow a" ${d(1.1)}>⬇</div>
+        <div class="model a" ${d(1.3)} id="loader">📥 Document Loader</div>
+        <div class="arrow a" ${d(1.6)}>⬇</div>
+        <div class="box a" ${d(1.8)} style="max-width:560px;width:100%">
+          <div class="small muted" style="margin-bottom:6px">📄 TechNova_Handbook.pdf → extracted text</div>
+          <div id="raw" style="font-size:.88rem"></div>
+        </div>
+      </div>`;
+    T(() => $("loader").classList.add("pulse"), 1300);
+    T(() => { $("loader").classList.remove("pulse"); typeText($("raw"), CHUNKS.map(c=>c.text).join(" "), 10); }, 2300);
+  }
+},
+{
+  short:"Chunk", icon:"✂️", phase:1,
+  title:"Step 2 · Split the text into chunks",
+  what:"A full handbook is too big to send to the LLM, and we only need the <b>relevant part</b> anyway. So we cut the text into small pieces called <b>chunks</b> (e.g. 200–500 words each). A little <b>overlap</b> between chunks keeps sentences from being cut in half. Here we get 6 chunks: C1 … C6.",
+  analogy:"Cutting a long textbook into flash cards — each card holds one small idea, so you can pick out exactly the card you need.",
+  code:`chunks = split_text(text,\n                    chunk_size=200,\n                    chunk_overlap=20)\n# → ["Employees get 12 casual...", "Sick leave: 10 days...", ...]`,
+  key:"Good chunks = one clear idea each. Too big → noisy; too small → loses meaning.",
+  draw(s){
+    s.innerHTML = `<div class="box" id="full" style="font-size:.9rem;transition:opacity .5s">${CHUNKS.map(c=>c.text).join(" ")}</div>
+      <div class="center"><div class="arrow a" ${d(.8)}>✂️ cutting into chunks…</div></div>
+      <div class="grid2" id="chunks"></div>`;
+    T(() => {
+      $("full").style.opacity = .35;
+      $("chunks").innerHTML = CHUNKS.map((c,i)=>`<div class="chunk fly" style="--cc:${c.c};animation-delay:${i*.35}s"><span class="cid">${c.id}</span>${c.text}</div>`).join("");
+    }, 1400);
+  }
+},
+{
+  short:"Embed", icon:"🧠", phase:1,
+  title:"Step 3 · Turn each chunk into numbers (embeddings)",
+  what:"Computers can't compare meanings of words directly, but they can compare numbers. An <b>embedding model</b> reads each chunk and outputs a list of numbers (a <b>vector</b>) that represents its <b>meaning</b>. Chunks with similar meaning get similar numbers — look at C1, C2 and C6 (all about leave): their numbers look alike!",
+  analogy:"Like giving every song GPS-style coordinates on a 'mood map': sad songs sit close together, party songs sit together somewhere else.",
+  code:`vectors = embed_model.encode(chunks)\n# C2 → [0.78, 0.20, -0.29, 0.51, ...]\n# real vectors have 384 – 3072 numbers`,
+  key:"Embedding = meaning → numbers. Similar meaning → close numbers.",
+  draw(s){
+    s.innerHTML = `<div style="display:flex;flex-direction:column;gap:7px">
+      ${CHUNKS.map(c=>`<div class="erow" id="er${c.id}">
+         <div class="chunk" style="--cc:${c.c};padding:5px 8px;font-size:.78rem"><span class="cid">${c.id}</span>${c.text.length>48?c.text.slice(0,48)+"…":c.text}</div>
+         <span class="arrow">→</span><span class="mini">🧠 Embed</span><span class="arrow x">→</span>
+         <div class="vec">${fmt(c.vec)}</div></div>`).join("")}
+      </div>
+      <div class="box a" id="simnote" style="margin-top:10px;display:none;font-size:.88rem">👀 Notice: <b style="color:var(--c1)">C1</b>, <b style="color:var(--c2)">C2</b>, <b style="color:var(--c6)">C6</b> (leave topics) all start with ≈ <b>0.8</b>, while <b style="color:var(--c5)">C5</b> (salary) looks totally different.</div>`;
+    CHUNKS.forEach((c,i) => T(() => $("er"+c.id).classList.add("on"), 400 + i*650));
+    T(() => $("simnote").style.display = "block", 400 + CHUNKS.length*650 + 300);
+  }
+},
+{
+  short:"Store", icon:"🗄️", phase:1,
+  title:"Step 4 · Store vectors in a Vector Database",
+  what:"Each vector is saved in a <b>vector database</b> (e.g. ChromaDB, FAISS, Pinecone) together with its original text. Think of it as placing every chunk as a point on a <b>meaning map</b>. Chunks about leave land close together, timing/WFH chunks in another corner, salary somewhere else. (Real vectors have hundreds of dimensions — we draw just 2 so we can see it.)",
+  analogy:"A library where books are shelved by topic, so finding related books is fast — you just walk to the right shelf.",
+  code:`vector_db.add(\n    ids=["C1", ..., "C6"],\n    embeddings=vectors,\n    documents=chunks)`,
+  key:"Phase 1 (Load → Chunk → Embed → Store) is done ONCE, ahead of time — not for every question.",
+  draw(s){
+    s.innerHTML = mapHTML() + `<div class="center" style="margin-top:10px"><span class="badge good a" ${d(3.2)}>✅ Indexing finished — the knowledge base is ready!</span></div>`;
+    addDots($("map"), .3);
+  }
+},
+{
+  short:"Ask", icon:"💬", phase:2,
+  title:"Step 5 · The user asks a question",
+  what:"Now Phase 2 begins — this happens <b>every time</b> someone asks something. The employee types their question into the chatbot.",
+  analogy:"The exam starts and you read the question. Your books (the vector DB) are already sorted and ready on the table.",
+  code:`question = "How many sick leaves do I get,\n            and do I need a doctor's note?"`,
+  key:"From here on, everything runs live in a second or two per question.",
+  draw(s){
+    s.innerHTML = `<div class="center" style="height:100%;justify-content:center;gap:16px;min-height:380px">
+      <div class="box a" style="width:min(520px,100%);padding:0;overflow:hidden">
+        <div style="background:var(--accent);color:#fff;padding:8px 12px;font-weight:600">💬 TechNova HR Assistant</div>
+        <div class="chat" style="padding:12px;min-height:110px">
+          <div class="msg bot">Hi! Ask me anything about company policies 👋</div>
+        </div>
+        <div style="border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:8px">
+          <div id="qtype" style="flex:1;font-size:.92rem"></div><span class="badge good">Send ➤</span>
+        </div>
+      </div>
+      <div class="muted small a" ${d(3.6)}>Question received → next we need to find which chunks can answer it.</div>
+    </div>`;
+    T(() => typeText($("qtype"), QUESTION, 35), 600);
+  }
+},
+{
+  short:"Embed Q", icon:"🔢", phase:2,
+  title:"Step 6 · Turn the question into numbers too",
+  what:"To search the vector DB, the question must be in the same 'language' as the chunks — numbers. So the question goes through the <b>same embedding model</b> used in Step 3. Look: the question's vector is very close to chunk C2's vector!",
+  analogy:"To find a place on the GPS map, you first convert the address into coordinates — using the same GPS system as the map.",
+  code:`q_vector = embed_model.encode(question)\n# MUST be the same model used for the chunks!`,
+  key:"Always use the SAME embedding model for documents and questions, or the numbers won't be comparable.",
+  draw(s){
+    s.innerHTML = `<div class="center" style="gap:12px;margin-top:8px">
+      <div class="msg user a" style="align-self:center" ${d(.1)}>❓ ${QUESTION}</div>
+      <div class="arrow a" ${d(.5)}>⬇</div>
+      <div class="model a" id="qm" ${d(.7)}>🧠 Same Embedding Model</div>
+      <div class="arrow a" ${d(1.6)}>⬇</div>
+      <div class="vec a" ${d(1.8)} style="font-size:.95rem;padding:10px 14px">⭐ Q = ${fmt(Q.vec)}</div>
+      <div class="box a" ${d(2.6)} style="width:min(560px,100%)">
+        <div class="small muted">Compare with stored chunks:</div>
+        <div class="row small" style="margin-top:4px"><span class="cid" style="--cc:var(--c2)">C2</span><code>${fmt(CHUNKS[1].vec)}</code> <span class="badge good">very close 🎯</span></div>
+        <div class="row small" style="margin-top:4px"><span class="cid" style="--cc:var(--c5)">C5</span><code>${fmt(CHUNKS[4].vec)}</code> <span class="badge bad">far away</span></div>
+      </div>
+    </div>`;
+    T(() => $("qm").classList.add("pulse"), 700);
+    T(() => $("qm").classList.remove("pulse"), 1700);
+  }
+},
+{
+  short:"Search", icon:"🎯", phase:2,
+  title:"Step 7 · Similarity search: find the closest chunks",
+  what:"The vector DB places the question ⭐ on the meaning map and measures how close it is to every chunk (usually with <b>cosine similarity</b>: 1.0 = same meaning, 0 = unrelated). We keep the <b>top-k</b> closest chunks — here k = 3: <b>C2, C1, C6</b>. Salary and office-hours chunks are ignored.",
+  analogy:"Dropping a pin on a map and asking: 'show me the 3 nearest restaurants'.",
+  code:`results = vector_db.search(q_vector, top_k=3)\n# → [(C2, 0.92), (C1, 0.71), (C6, 0.58)]`,
+  key:"This is the 'R' (Retrieval) in RAG — searching by MEANING, not by exact keywords.",
+  draw(s){
+    s.innerHTML = mapHTML() + `<div id="ranks" style="margin-top:10px"></div>`;
+    s.querySelectorAll(".cluster").forEach(c => c.style.animationDelay = "0s");
+    addDots($("map"), 0);
+    const map = $("map"), svg = $("mapSvg");
+    T(() => {
+      const star = document.createElement("div");
+      star.className = "qstar"; star.textContent = "⭐";
+      star.style.cssText = `left:${Q.x}%;top:${Q.y}%`;
+      map.appendChild(star);
+    }, 500);
+    const sorted = [...CHUNKS].sort((a,b)=>b.score-a.score);
+    T(() => {
+      svg.innerHTML = CHUNKS.map((c,i) => {
+        const top = sorted.indexOf(c) < 3;
+        const mx = (Q.x+c.x)/2, my = (Q.y+c.y)/2;
+        return `<line class="line" x1="${Q.x}" y1="${Q.y}" x2="${c.x}" y2="${c.y}" stroke="${top?'var(--green)':'var(--muted)'}" stroke-width="${top?2.2:1}" pathLength="100" opacity="${top?1:.6}" vector-effect="non-scaling-stroke" style="animation-delay:${i*.12}s"/>
+                <text x="${mx}" y="${my-1}" class="score" fill="${top?'var(--green)':'var(--muted)'}" text-anchor="middle">${c.score.toFixed(2)}</text>`;
+      }).join("");
+    }, 1300);
+    T(() => {
+      CHUNKS.forEach(c => { const el = $("dot"+c.id); if (sorted.indexOf(c) < 3) el.classList.add("top"); else el.classList.add("dim"); });
+      $("ranks").innerHTML = `<div class="small muted"><b>Ranking by similarity</b></div>` + sorted.map((c,i)=>`
+        <div class="rank a" style="animation-delay:${i*.15}s"><span class="cid" style="--cc:${c.c}">${c.id}</span>
+        <div class="bar"><i style="--cc:${i<3?'var(--green)':'var(--muted)'}" data-w="${c.score*100}"></i></div>
+        <span>${c.score.toFixed(2)} ${i<3?'<span class="toplabel">✓</span>':''}</span></div>`).join("");
+      T(() => $("ranks").querySelectorAll(".bar i").forEach(b => b.style.width = b.dataset.w + "%"), 200);
+    }, 2700);
+  }
+},
+{
+  short:"Augment", icon:"📝", phase:2,
+  title:"Step 8 · Augment: build the prompt with the found chunks",
+  what:"Now we create a <b>new, bigger prompt</b> for the LLM. It contains 3 parts: (1) an <b>instruction</b> telling the LLM to answer only from the given info, (2) the <b>retrieved chunks</b> as context, and (3) the user's <b>question</b>. This is the 'A' (Augmented) in RAG.",
+  analogy:"Instead of asking the student from memory, you hand them the exact page of the book and say: 'answer using this page'.",
+  code:`context = "\\n".join(top_chunks)\nprompt = f"""Answer ONLY using the context.\nIf the answer is not there, say "I don't know".\n\nContext:\n{context}\n\nQuestion: {question}"""`,
+  key:"The LLM is not retrained. We just put the right facts inside the prompt.",
+  draw(s){
+    const top = [CHUNKS[1], CHUNKS[0], CHUNKS[5]];
+    s.innerHTML = `<div class="paper">
+      <div class="small muted" style="font-family:system-ui">📝 Final prompt being built…</div>
+      <div class="sec sys fly" ${d(.3)}><h4>① Instruction</h4>You are TechNova's HR assistant. Answer ONLY using the context below. If the answer is not in the context, say "I don't know".</div>
+      <div class="sec ctx fly" ${d(1.1)}><h4>② Context (retrieved chunks)</h4>
+        ${top.map((c,i)=>`<div class="fly" style="animation-delay:${1.5+i*.45}s;margin:3px 0"><span class="cid" style="--cc:${c.c}">${c.id}</span>${c.text}</div>`).join("")}
+      </div>
+      <div class="sec q fly" ${d(3.1)}><h4>③ Question</h4>${QUESTION}</div>
+    </div>
+    <div class="center" style="margin-top:12px"><span class="badge good pop" ${d(3.8)}>📨 Augmented prompt → sent to the LLM</span></div>`;
+  }
+},
+{
+  short:"Generate", icon:"🤖", phase:2,
+  title:"Step 9 · Generate: the LLM writes the answer",
+  what:"The LLM (GPT, Claude, Llama, …) reads the instruction + context + question and writes a natural-language answer. Because the correct facts are right there in the prompt, the answer is <b>accurate</b> and can even <b>cite its source</b>. This is the 'G' (Generation) in RAG.",
+  analogy:"The student reads the page you gave them and writes the answer in their own words — correct this time!",
+  code:`answer = llm.generate(prompt)\nprint(answer)`,
+  key:"Same LLM as Step 0 — the only difference is that we gave it the right context. That's the whole magic of RAG.",
+  draw(s){
+    s.innerHTML = `<div class="chat">
+      <div class="msg user a" ${d(.1)}>👩‍💻 ${QUESTION}</div>
+      <div class="center"><div class="model a" id="llm" ${d(.4)}><span class="spinner"></span>LLM is reading the context…</div></div>
+      <div class="msg bot a" ${d(.4)} style="max-width:100%">🤖 <span id="ans"></span></div>
+      <div id="after" style="display:none">
+        <span class="badge good">✅ Correct & grounded in TechNova's documents</span>
+        <div style="margin-top:8px" class="small muted">Sources used: <span class="src">C2 · Sick leave policy</span><span class="src">C1 · Casual leave</span><span class="src">C6 · Carry forward</span></div>
+        <table class="cmp" style="margin-top:10px">
+          <tr><th>Without RAG (Step 0)</th><th>With RAG</th></tr>
+          <tr><td>"6–12 sick days, note not required" ❌</td><td>"10 sick days, note needed after 2 days" ✅</td></tr>
+        </table>
+      </div></div>`;
+    T(() => { $("llm").innerHTML = "🤖 LLM writing answer…"; typeText($("ans"), ANSWER, 22, () => $("after").style.display = "block"); }, 2000);
+  }
+},
+{
+  short:"Recap", icon:"🏁", phase:3,
+  title:"Recap · The complete RAG flow",
+  what:"<b>Phase 1 – Indexing (once):</b> Load docs → split into chunks → embed into vectors → store in vector DB.<br><b>Phase 2 – Querying (every question):</b> user asks → embed question → search for similar chunks → put them in the prompt → LLM generates the answer.",
+  analogy:"Open-book exam: prepare and organize your notes beforehand (Phase 1), then for each question find the right page and write the answer from it (Phase 2).",
+  code:`# Phase 1 — once\nchunks  = split_text(load_pdf("handbook.pdf"))\nvector_db.add(embed_model.encode(chunks), chunks)\n\n# Phase 2 — per question\nq_vec   = embed_model.encode(question)\ntop     = vector_db.search(q_vec, top_k=3)\nprompt  = build_prompt(top, question)\nanswer  = llm.generate(prompt)`,
+  key:"RAG = Retrieve the right facts + Augment the prompt + Generate the answer. No retraining needed, data can be updated anytime.",
+  draw(s){
+    const l1 = ["📄 Documents","✂️ Chunks","🧠 Embeddings","🗄️ Vector DB"];
+    const l2 = ["💬 Question","🔢 Embed Q","🎯 Search top-k","📝 Prompt + context","🤖 LLM","✅ Answer"];
+    const flow = (arr, p) => arr.map((t,i)=>`<span class="fnode" id="${p}${i}">${t}</span>${i<arr.length-1?'<span class="arrow">→</span>':''}`).join("");
+    s.innerHTML = `
+      <div class="lane l1 a"><h4>Phase 1 · Indexing — done once</h4><div class="flow">${flow(l1,"f1_")}</div></div>
+      <div class="lane l2 a" ${d(.3)}><h4>Phase 2 · Querying — every question</h4><div class="flow">${flow(l2,"f2_")}</div>
+        <div class="small muted" style="margin-top:6px">🎯 Search step reads from the 🗄️ Vector DB built in Phase 1</div></div>
+      <table class="cmp a" ${d(.6)}>
+        <tr><th>Term</th><th>Meaning in one line</th></tr>
+        <tr><td>Chunk</td><td>A small piece of a document</td></tr>
+        <tr><td>Embedding / Vector</td><td>List of numbers that represents meaning</td></tr>
+        <tr><td>Vector DB</td><td>Database that finds vectors closest to a given vector</td></tr>
+        <tr><td>Top-k</td><td>How many best-matching chunks we take (e.g. 3)</td></tr>
+        <tr><td>Augmented prompt</td><td>Instruction + retrieved chunks + question</td></tr>
+        <tr><td>Hallucination</td><td>LLM confidently making things up — RAG reduces it</td></tr>
+      </table>`;
+    const seq = [...l1.map((_,i)=>"f1_"+i), ...l2.map((_,i)=>"f2_"+i)];
+    let k = 0;
+    (function loop(){
+      document.querySelectorAll(".fnode").forEach(n => n.classList.remove("lit"));
+      const el = $(seq[k % seq.length]); if (el) el.classList.add("lit");
+      k++; T(loop, 750);
+    })();
+  }
+}
+];
+
+/* ---------- navigation ---------- */
+let cur = 0, auto = false;
+const nodes = $("nodes");
+nodes.innerHTML = STEPS.map((s,i)=>`<div class="node p${s.phase}" data-i="${i}"><b>${s.icon}</b>${i===0?'':i===STEPS.length-1?'':i+'. '}${s.short}</div>`).join("");
+nodes.addEventListener("click", e => { const n = e.target.closest(".node"); if (n) go(+n.dataset.i); });
+
+function go(i){
+  cur = Math.max(0, Math.min(STEPS.length-1, i));
+  clearTimers();
+  const s = STEPS[cur];
+  $("stepNo").textContent = `Step ${cur} of ${STEPS.length-1} · ${["The problem","Phase 1 · Indexing","Phase 2 · Querying","Recap"][s.phase]}`;
+  $("stageTitle").textContent = s.title;
+  $("what").innerHTML = s.what;
+  $("analogy").textContent = s.analogy;
+  $("code").textContent = s.code;
+  $("key").textContent = s.key;
+  const stage = $("stage"); stage.innerHTML = ""; s.draw(stage);
+  document.querySelectorAll(".node").forEach((n,k)=>{ n.classList.toggle("active",k===cur); n.classList.toggle("done",k<cur); });
+  document.querySelector(".node.active")?.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});
+  $("prog").style.width = (cur/(STEPS.length-1)*100) + "%";
+  $("prevBtn").disabled = cur === 0;
+  $("nextBtn").disabled = cur === STEPS.length-1;
+  if (auto && cur < STEPS.length-1) T(() => go(cur+1), 9000);
+  if (auto && cur === STEPS.length-1) setAuto(false);
+}
+function setAuto(on){ auto = on; $("autoBtn").textContent = on ? "⏸ Pause" : "▶ Auto-play"; }
+$("prevBtn").onclick = () => { setAuto(false); go(cur-1); };
+$("nextBtn").onclick = () => { setAuto(false); go(cur+1); };
+$("replayBtn").onclick = () => go(cur);
+$("autoBtn").onclick = () => { setAuto(!auto); go(auto && cur === STEPS.length-1 ? 0 : cur); };
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") { setAuto(false); go(cur+1); }
+  if (e.key === "ArrowLeft")  { setAuto(false); go(cur-1); }
+});
+$("themeBtn").onclick = () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+};
+go(0);
+</script>
+</body>
+</html>
