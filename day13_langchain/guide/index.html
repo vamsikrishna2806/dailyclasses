@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LangChain Concept Guide 📘</title>
+<meta name="description" content="One-page map of the 23 LangChain concepts, with a decision guide.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/lesson.css">
+<link rel="stylesheet" href="../assets/info.css">
+</head>
+<body>
+<div class="wrap info">
+
+<section class="ihero">
+  <div class="cubebox"><div class="cube3d"><div class="f1">📘</div><div class="f2">🧩</div><div class="f3">🔗</div><div class="f4">📚</div><div class="f5">🧭</div><div class="f6">🤖</div></div></div>
+  <div>
+    <h1>LangChain Concept Guide 📘</h1>
+    <p class="lead2">A one-page map of the course. Use it to see how the pieces fit, to find the right lesson, and as a cheat sheet while you build.</p>
+    <div class="btnrow">
+      <a class="btnlink alt" href="../index.html">← Course home</a>
+      <a class="btnlink" href="../01-setup/index.html">▶ Start lesson 01</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>🧭 The big picture</h2>
+  <p>Almost every LangChain app follows one of three shapes. Learn these first; every lesson fits one of them.</p>
+  <div class="grid3">
+    <div class="box" style="--bc:#3b82f6"><h3>🔗 A chain</h3><p>Fixed steps, same order every time: prompt → model → parser. Lessons 04–10.</p>
+      <pre class="pre2">chain = prompt | llm | parser</pre></div>
+    <div class="box" style="--bc:#16a34a"><h3>📚 A RAG app</h3><p>Find the right text first, then answer from it. Lessons 12–17.</p>
+      <pre class="pre2">{"context": retriever | fmt,
+ "question": passthrough}
+  | prompt | llm | parser</pre></div>
+    <div class="box" style="--bc:#8b5cf6"><h3>🤖 An agent</h3><p>The model decides which tool to use, looks at the result, and repeats. Lessons 18–19.</p>
+      <pre class="pre2">agent = create_agent(model, tools)</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>🧠 Simple mental models</h2>
+  <div class="grid3">
+    <div class="box" style="--bc:#f97316"><h3>🍳 Chain = a recipe</h3><p>Each step gives its result to the next one. Nothing runs until you cook it (<code>invoke</code>).</p></div>
+    <div class="box" style="--bc:#ec4899"><h3>📖 RAG = an open-book exam</h3><p>The model is the student. Retrieval opens the right page before it answers.</p></div>
+    <div class="box" style="--bc:#eab308"><h3>🕵️ Agent = a detective</h3><p>Think about the next clue, check it with a tool, learn, and repeat until the case is solved.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>📋 All 23 concepts at a glance</h2>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>#</th><th>Concept</th><th>What it does</th><th>Key names to remember</th></tr>
+<tr><td>01</td><td><a href="../01-setup/index.html">Setup</a></td><td>A private project box, the packages and a safe key file.</td><td><code>venv, pip, .env, load_dotenv()</code></td></tr>
+<tr><td>02</td><td><a href="../02-first-llm-call/index.html">First LLM call</a></td><td>Send a question to a chat model and read the reply.</td><td><code>ChatOpenAI(), invoke(), .content</code></td></tr>
+<tr><td>03</td><td><a href="../03-messages/index.html">Messages</a></td><td>A chat is a list of messages, each with a role.</td><td><code>SystemMessage, HumanMessage, AIMessage</code></td></tr>
+<tr><td>04</td><td><a href="../04-prompt-templates/index.html">Prompt templates</a></td><td>Reusable prompts with blanks, filled at runtime.</td><td><code>PromptTemplate, invoke(), to_string()</code></td></tr>
+<tr><td>05</td><td><a href="../05-chat-prompt-placeholders/index.html">Chat prompts &amp; placeholders</a></td><td>A chat template with slots for history and the question.</td><td><code>ChatPromptTemplate, MessagesPlaceholder</code></td></tr>
+<tr><td>06</td><td><a href="../06-output-parsers/index.html">Output parsers</a></td><td>Turn the model&#x27;s message into text, a list or a dict.</td><td><code>StrOutputParser, CommaSeparatedListOutputParser, JsonOutputParser</code></td></tr>
+<tr><td>07</td><td><a href="../07-structured-output/index.html">Structured output</a></td><td>Get a typed object, checked by Pydantic.</td><td><code>BaseModel, Field, with_structured_output()</code></td></tr>
+<tr><td>08</td><td><a href="../08-lcel-runnables/index.html">LCEL &amp; the pipe</a></td><td>Join steps so the output of one feeds the next.</td><td><code>prompt | llm | parser</code></td></tr>
+<tr><td>09</td><td><a href="../09-runnable-primitives/index.html">Runnable building blocks</a></td><td>Fork work into branches, copy input, wrap a function, pick a key.</td><td><code>RunnableParallel, RunnablePassthrough, RunnableLambda, itemgetter</code></td></tr>
+<tr><td>10</td><td><a href="../10-streaming/index.html">Streaming &amp; batching</a></td><td>Show words as they come, or process many inputs at once.</td><td><code>stream(), astream(), batch()</code></td></tr>
+<tr><td>11</td><td><a href="../11-chat-memory/index.html">Chat memory</a></td><td>Remember each turn for each user session.</td><td><code>RunnableWithMessageHistory, InMemoryChatMessageHistory</code></td></tr>
+<tr><td>12</td><td><a href="../12-document-loaders/index.html">Document loaders</a></td><td>Read files and pages into Document objects.</td><td><code>TextLoader, CSVLoader, PyPDFLoader</code></td></tr>
+<tr><td>13</td><td><a href="../13-text-splitters/index.html">Text splitters</a></td><td>Cut long text into overlapping chunks.</td><td><code>RecursiveCharacterTextSplitter</code></td></tr>
+<tr><td>14</td><td><a href="../14-embeddings/index.html">Embeddings</a></td><td>Turn text into numbers that capture meaning.</td><td><code>embed_documents(), embed_query()</code></td></tr>
+<tr><td>15</td><td><a href="../15-vector-stores/index.html">Vector stores</a></td><td>Store chunks and find the closest ones to a query.</td><td><code>InMemoryVectorStore, similarity_search()</code></td></tr>
+<tr><td>16</td><td><a href="../16-retrievers/index.html">Retrievers</a></td><td>Question in, best matching documents out.</td><td><code>as_retriever(search_type, k)</code></td></tr>
+<tr><td>17</td><td><a href="../17-rag-pipeline/index.html">RAG</a></td><td>Answer from your documents, with sources.</td><td><code>retriever | format_docs → prompt → model</code></td></tr>
+<tr><td>18</td><td><a href="../18-tools/index.html">Tools</a></td><td>Python functions the model may ask to run.</td><td><code>@tool, bind_tools(), tool_calls, ToolMessage</code></td></tr>
+<tr><td>19</td><td><a href="../19-agents/index.html">Agents</a></td><td>A think-act-observe loop that picks its own tools.</td><td><code>create_agent(model, tools, system_prompt)</code></td></tr>
+<tr><td>20</td><td><a href="../20-langgraph-intro/index.html">LangGraph</a></td><td>A workflow of nodes and edges around shared state.</td><td><code>StateGraph, add_node, add_conditional_edges</code></td></tr>
+<tr><td>21</td><td><a href="../21-callbacks-tracing/index.html">Callbacks &amp; tracing</a></td><td>Hooks at each step, and a recording of every run.</td><td><code>BaseCallbackHandler, LANGSMITH_TRACING</code></td></tr>
+<tr><td>22</td><td><a href="../22-errors-fallbacks/index.html">Errors, retries &amp; fallbacks</a></td><td>Keep the app working when a model fails.</td><td><code>max_retries, with_fallbacks(), with_retry()</code></td></tr>
+<tr><td>23</td><td><a href="../23-capstone/index.html">Capstone</a></td><td>Every concept in one study-buddy app.</td><td><code>all of the above</code></td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>🧭 Which tool should I use?</h2>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>I need to…</th><th>Use</th><th>Lesson</th></tr>
+    <tr><td>Ask a model one question</td><td><code>llm.invoke(question)</code></td><td>02</td></tr>
+    <tr><td>Reuse one prompt with different values</td><td><code>PromptTemplate</code></td><td>04</td></tr>
+    <tr><td>Keep a chat history</td><td><code>ChatPromptTemplate</code> + <code>MessagesPlaceholder</code></td><td>05, 11</td></tr>
+    <tr><td>Get a list, a dict, or a typed object</td><td>a parser, or <code>with_structured_output(Schema)</code></td><td>06, 07</td></tr>
+    <tr><td>Connect steps in order</td><td><code>prompt | llm | parser</code></td><td>08</td></tr>
+    <tr><td>Do two things on the same input</td><td><code>RunnableParallel</code></td><td>09</td></tr>
+    <tr><td>Show the answer as it is written</td><td><code>chain.stream()</code></td><td>10</td></tr>
+    <tr><td>Answer from my own files</td><td>loader → splitter → vector store → retriever → RAG chain</td><td>12–17</td></tr>
+    <tr><td>Let the model call my functions</td><td><code>@tool</code> + <code>bind_tools</code></td><td>18</td></tr>
+    <tr><td>Let the model choose its own steps</td><td><code>create_agent</code></td><td>19</td></tr>
+    <tr><td>Control a workflow with branches and loops</td><td>LangGraph <code>StateGraph</code></td><td>20</td></tr>
+    <tr><td>See why an answer was wrong</td><td>LangSmith tracing, callbacks</td><td>21</td></tr>
+    <tr><td>Survive rate limits and bad output</td><td><code>max_retries</code>, <code>with_fallbacks</code></td><td>22</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>🧾 The shape of the code</h2>
+  <p>Every lesson's <code>main.py</code> follows this order. Learn it once and the rest is repetition.</p>
+  <pre class="pre2"><span class="c"># 1. load settings (keys from .env)</span>
+load_dotenv()
+<span class="c"># 2. build the parts: model, prompt, tools, store</span>
+llm = ChatOpenAI(model="gpt-4o-mini")
+prompt = ChatPromptTemplate.from_template("...")
+<span class="c"># 3. connect them</span>
+chain = prompt | llm | StrOutputParser()
+<span class="c"># 4. run it</span>
+print(chain.invoke({"question": "..."}))</pre>
+</section>
+
+<section>
+  <div class="remember" style="background:var(--card);border-left:10px solid var(--green);border-radius:18px;padding:14px 20px;box-shadow:var(--shadow);font-size:19px">
+    📌 <b>Tip:</b> when something breaks, check the pieces in order: the key, the packages, the prompt blanks, the retrieved chunks, then the model's answer. Lesson 21 shows how to see each piece.
+  </div>
+</section>
+</div>
+</body>
+</html>

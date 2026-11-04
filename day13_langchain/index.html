@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LangChain for Kids 🦜</title>
+<meta name="description" content="A beginner course: LangChain from zero to hero, with 23 animated lessons.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/lesson.css">
+<link rel="stylesheet" href="assets/info.css">
+</head>
+<body>
+<div class="wrap info">
+
+<section class="ihero">
+  <div class="cubebox"><div class="cube3d"><div class="f1">🦜</div><div class="f2">🧠</div><div class="f3">🔗</div><div class="f4">📚</div><div class="f5">🛠️</div><div class="f6">🤖</div></div></div>
+  <div>
+    <h1>LangChain for Kids 🦜</h1>
+    <p class="lead2">A beginner course that teaches you to build AI apps with Python: from asking a model one question, to an assistant that reads your own documents and uses tools. 23 lessons, each with a 3D animation, plain-language explanation, real code and a quiz.</p>
+    <div class="btnrow">
+      <a class="btnlink" href="01-setup/index.html">▶ Start with lesson 01</a>
+      <a class="btnlink alt" href="guide/index.html">📘 Open the concept guide</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>🤔 What is LangChain?</h2>
+  <p>A large language model (LLM), such as the model behind ChatGPT, can write and answer questions, but it only knows what it was trained on. Real apps need more: your own documents, your own steps, and actions like calculations or lookups.</p>
+  <p><b>LangChain is a Python toolbox</b> that connects those pieces. It is not an AI model itself. It gives you ready-made building blocks, so you write less glue code.</p>
+  <div class="flow2" style="margin-top:18px">
+    <div class="pillbox">🧒 Your Python code<small>the app you write</small></div><span class="arrow2">→</span>
+    <div class="pillbox" style="border-color:#8b5cf6">🦜 LangChain<small>the toolbox: prompts, chains, memory, tools</small></div><span class="arrow2">→</span>
+    <div class="pillbox" style="border-color:#16a34a">🧠 LLM<small>the brain: OpenAI, Claude, or a local model</small></div>
+  </div>
+  <div class="flow2" style="margin-top:14px">
+    <div class="pillbox" style="border-color:#f97316">📚 Your documents<small>via loaders, splitters, vector stores</small></div>
+    <div class="pillbox" style="border-color:#ec4899">🔧 Your functions<small>via tools and agents</small></div>
+  </div>
+</section>
+
+<section>
+  <h2>💡 Why learn it?</h2>
+  <div class="grid3">
+    <div class="box" style="--bc:#3b82f6"><h3>🧩 Less glue code</h3><p>Prompts, models, parsers and memory fit together with one pipe <code>|</code> instead of hand-written plumbing.</p></div>
+    <div class="box" style="--bc:#16a34a"><h3>📚 Answers from your data</h3><p>Retrieval-Augmented Generation (RAG) makes the model answer from your files, with sources, instead of guessing.</p></div>
+    <div class="box" style="--bc:#8b5cf6"><h3>🤖 Agents that act</h3><p>Give the model tools, such as a calculator or a database lookup, and let it decide which one to use.</p></div>
+    <div class="box" style="--bc:#f97316"><h3>🛡️ Production habits</h3><p>Tracing, retries and fallbacks teach you to debug and keep an app working when a model fails.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>🧰 What you need before you start</h2>
+  <div class="grid3">
+    <div class="box" style="--bc:#3b82f6"><h3>🐍 Python 3.10+</h3><p>Basic Python is enough: variables, functions, lists and dictionaries. Classes help in lessons 07 and 21.</p></div>
+    <div class="box" style="--bc:#16a34a"><h3>🔑 An LLM key</h3><p>An OpenAI or Anthropic API key, or a free local model with Ollama (lesson 01 shows both).</p></div>
+    <div class="box" style="--bc:#f97316"><h3>💻 An editor and a terminal</h3><p>Any editor, such as VS Code. Windows PowerShell, Git Bash, or the Command Prompt all work.</p></div>
+  </div>
+  <div class="note2" style="margin-top:14px">💰 <b>Cost:</b> API calls are billed by use. The labs use small prompts, so a full run costs very little. Set a spending limit in your provider's dashboard. Lesson 12 and the ASCII/graph labs work offline.</div>
+</section>
+
+<section>
+  <h2>🗺️ How this course works</h2>
+  <div class="how">
+    <div><b>🎬 1. Watch</b>Press Play. Characters act out what the concept does, and messages fly between them.</div>
+    <div><b>👀 2. Follow the code</b>The yellow line in the code panel lights up as each step runs.</div>
+    <div><b>🃏 3. Read the 4W+H</b>What is it, why use it, when, where it goes, and how it works.</div>
+    <div><b>🧪 4. Run & quiz</b>Run the matching program in <code>langchain_examples</code>, then answer the quiz.</div>
+  </div>
+  <p class="lead2" style="margin-top:12px">Do the lessons in order. Each one builds on the last. Lesson 23 uses everything you have learned.</p>
+</section>
+
+<section>
+  <h2>⚙️ Set up once (virtual environment)</h2>
+  <p>A <b>virtual environment</b> (<code>.venv</code>) is a private box of packages for this course, so it does not clash with other Python projects. Run these once in a terminal:</p>
+  <pre class="pre2"><span class="c"># 1. go to the examples folder</span>
+<span class="p">&gt;</span> cd D:\getwork\day13_langchain\langchain_examples
+<span class="c"># 2. create the box (first time only)</span>
+<span class="p">&gt;</span> python -m venv .venv
+<span class="c"># 3. switch it on (do this in every new terminal)</span>
+<span class="p">&gt;</span> .venv\Scripts\activate
+<span class="c"># 4. install the course packages (first time only)</span>
+<span class="p">&gt;</span> pip install -r requirements.txt
+<span class="c"># 5. copy the key file and add your key</span>
+<span class="p">&gt;</span> copy .env.example .env</pre>
+  <p class="muted" style="font-size:16px">Your prompt should start with <code>(.venv)</code> before you run any lesson. Mac and Linux users: use <code>python3 -m venv .venv</code> and <code>source .venv/bin/activate</code>.</p>
+</section>
+
+<section>
+  <h2>🪜 The learning path</h2>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>Phase</th><th>Lessons</th><th>After this phase you can…</th></tr>
+    <tr class="phase-row"><td>🌱 Baby steps</td><td>01–03</td><td>set up a project, call a model, and send it a chat history.</td></tr>
+    <tr class="phase-row"><td>🧱 Prompts &amp; output</td><td>04–07</td><td>write reusable prompts, and get text, lists, JSON or typed objects back.</td></tr>
+    <tr class="phase-row"><td>🔗 Chains</td><td>08–11</td><td>join steps with <code>|</code>, run them in parallel, stream answers and remember conversations.</td></tr>
+    <tr class="phase-row"><td>📚 Documents &amp; RAG</td><td>12–17</td><td>load files, split them, embed them, search them, and answer from them with sources.</td></tr>
+    <tr class="phase-row"><td>🤖 Tools &amp; agents</td><td>18–20</td><td>give functions to a model, build a think-act-observe agent, and control workflows with LangGraph.</td></tr>
+    <tr class="phase-row"><td>🛡️ Production</td><td>21–23</td><td>trace and debug runs, survive errors with retries and fallbacks, and build a complete app.</td></tr>
+  </table></div>
+  <p class="muted" style="font-size:16px;margin-top:10px">Time estimate: about 2–3 hours per phase, including the labs. Go slower if you are new to Python.</p>
+</section>
+
+<section>
+  <h2>📚 All 23 lessons</h2>
+  <h3 class="catalog-head">🌱 Baby steps</h3>
+  <div class="lgrid">
+<a class="lcard" href="01-setup/index.html" style="--lc:#8b5cf6"><div class="le">🛠️</div><div class="ln2">LESSON 1</div><h3>Setup & Environment</h3><p>Build your project box, install LangChain and keep your secret key safe.</p></a>
+<a class="lcard" href="02-first-llm-call/index.html" style="--lc:#8b5cf6"><div class="le">🧠</div><div class="ln2">LESSON 2</div><h3>Your First LLM Call</h3><p>Ask a chat model one question and read the answer back.</p></a>
+<a class="lcard" href="03-messages/index.html" style="--lc:#8b5cf6"><div class="le">💬</div><div class="ln2">LESSON 3</div><h3>Messages & Roles</h3><p>A chat is a list of messages, and every message has a role.</p></a>
+  </div>
+  <h3 class="catalog-head">🧱 Prompts &amp; output</h3>
+  <div class="lgrid">
+<a class="lcard" href="04-prompt-templates/index.html" style="--lc:#8b5cf6"><div class="le">📝</div><div class="ln2">LESSON 4</div><h3>Prompt Templates</h3><p>Write the wording once with blanks, then fill the blanks at runtime.</p></a>
+<a class="lcard" href="05-chat-prompt-placeholders/index.html" style="--lc:#8b5cf6"><div class="le">🎭</div><div class="ln2">LESSON 5</div><h3>Chat Prompts & Placeholders</h3><p>A chat template with slots: the rules, the history, and the new question.</p></a>
+<a class="lcard" href="06-output-parsers/index.html" style="--lc:#8b5cf6"><div class="le">🧹</div><div class="ln2">LESSON 6</div><h3>Output Parsers</h3><p>Turn the model's message into the plain text, list or dict your code needs.</p></a>
+<a class="lcard" href="07-structured-output/index.html" style="--lc:#8b5cf6"><div class="le">📐</div><div class="ln2">LESSON 7</div><h3>Structured Output</h3><p>Ask for a form and get a typed Python object back, checked by Pydantic.</p></a>
+  </div>
+  <h3 class="catalog-head">🔗 Chains</h3>
+  <div class="lgrid">
+<a class="lcard" href="08-lcel-runnables/index.html" style="--lc:#8b5cf6"><div class="le">🧱</div><div class="ln2">LESSON 8</div><h3>LCEL & the Pipe Operator</h3><p>Snap steps together with | like Lego bricks. Every brick speaks invoke.</p></a>
+<a class="lcard" href="09-runnable-primitives/index.html" style="--lc:#8b5cf6"><div class="le">🍴</div><div class="ln2">LESSON 9</div><h3>Runnable Building Blocks</h3><p>Fork work into branches, copy input, wrap your own function, pick one key.</p></a>
+<a class="lcard" href="10-streaming/index.html" style="--lc:#8b5cf6"><div class="le">📺</div><div class="ln2">LESSON 10</div><h3>Streaming & Batching</h3><p>Show the answer as it is written, or process many inputs in one call.</p></a>
+<a class="lcard" href="11-chat-memory/index.html" style="--lc:#8b5cf6"><div class="le">📒</div><div class="ln2">LESSON 11</div><h3>Chat Memory</h3><p>Remember each turn and send it back with the next question.</p></a>
+  </div>
+  <h3 class="catalog-head">📚 Documents &amp; RAG</h3>
+  <div class="lgrid">
+<a class="lcard" href="12-document-loaders/index.html" style="--lc:#8b5cf6"><div class="le">🔌</div><div class="ln2">LESSON 12</div><h3>Document Loaders</h3><p>Turn files and web pages into Document objects: text plus metadata.</p></a>
+<a class="lcard" href="13-text-splitters/index.html" style="--lc:#8b5cf6"><div class="le">✂️</div><div class="ln2">LESSON 13</div><h3>Text Splitters</h3><p>Cut long text into overlapping chunks that are small enough to search.</p></a>
+<a class="lcard" href="14-embeddings/index.html" style="--lc:#8b5cf6"><div class="le">📍</div><div class="ln2">LESSON 14</div><h3>Embeddings</h3><p>Turn text into numbers so that similar meanings get similar numbers.</p></a>
+<a class="lcard" href="15-vector-stores/index.html" style="--lc:#8b5cf6"><div class="le">🗄️</div><div class="ln2">LESSON 15</div><h3>Vector Stores</h3><p>A shelf of chunks organised by meaning, with a search that finds the closest ones.</p></a>
+<a class="lcard" href="16-retrievers/index.html" style="--lc:#8b5cf6"><div class="le">🧑‍🏫</div><div class="ln2">LESSON 16</div><h3>Retrievers</h3><p>Give a question, get the best matching documents back. Every store can become one.</p></a>
+<a class="lcard" href="17-rag-pipeline/index.html" style="--lc:#8b5cf6"><div class="le">📖</div><div class="ln2">LESSON 17</div><h3>RAG: Chat With Your Documents</h3><p>Find the right text first, then let the model answer from only that text.</p></a>
+  </div>
+  <h3 class="catalog-head">🤖 Tools &amp; agents</h3>
+  <div class="lgrid">
+<a class="lcard" href="18-tools/index.html" style="--lc:#8b5cf6"><div class="le">🔧</div><div class="ln2">LESSON 18</div><h3>Tools & Function Calling</h3><p>Give the model hands: it asks for your Python function, and your code runs it.</p></a>
+<a class="lcard" href="19-agents/index.html" style="--lc:#8b5cf6"><div class="le">🤖</div><div class="ln2">LESSON 19</div><h3>Agents</h3><p>An agent thinks, acts with a tool, observes the result, and repeats until it can answer.</p></a>
+<a class="lcard" href="20-langgraph-intro/index.html" style="--lc:#8b5cf6"><div class="le">🗺️</div><div class="ln2">LESSON 20</div><h3>LangGraph Basics</h3><p>A workflow drawn as nodes and arrows, with one shared state that every node updates.</p></a>
+  </div>
+  <h3 class="catalog-head">🛡️ Production</h3>
+  <div class="lgrid">
+<a class="lcard" href="21-callbacks-tracing/index.html" style="--lc:#8b5cf6"><div class="le">📹</div><div class="ln2">LESSON 21</div><h3>Callbacks & Tracing</h3><p>Hooks that run at every step, and a tracing dashboard that records the whole run.</p></a>
+<a class="lcard" href="22-errors-fallbacks/index.html" style="--lc:#8b5cf6"><div class="le">🛟</div><div class="ln2">LESSON 22</div><h3>Errors, Retries & Fallbacks</h3><p>Expect failure: retry the blips, switch to a backup, and never show a crash.</p></a>
+<a class="lcard" href="23-capstone/index.html" style="--lc:#8b5cf6"><div class="le">🎓</div><div class="ln2">LESSON 23</div><h3>Capstone: Study Buddy</h3><p>Every concept in one app: notes, search, tools, an agent, memory and sources.</p></a>
+  </div>
+</section>
+
+<section>
+  <h2>🆘 Common problems and fixes</h2>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>What you see</th><th>Usual cause</th><th>Fix</th></tr>
+    <tr><td><code>ModuleNotFoundError: langchain_openai</code></td><td>The venv is not active, or packages are not installed.</td><td>Run <code>.venv\Scripts\activate</code>, then <code>pip install -r requirements.txt</code>.</td></tr>
+    <tr><td><code>AuthenticationError</code> or 401</td><td>The key is missing or wrong in <code>.env</code>.</td><td>Check <code>.env</code> is in the same folder as <code>main.py</code>. Restart the terminal after editing it.</td></tr>
+    <tr><td><code>RateLimitError</code> or 429</td><td>Too many requests in a short time.</td><td>Wait a minute, run fewer items, or add a fallback (lesson 22).</td></tr>
+    <tr><td><code>KeyError</code> in a prompt</td><td>A <code>{blank}</code> in the template has no value.</td><td>Pass a value for every blank in <code>invoke({...})</code>.</td></tr>
+    <tr><td><code>ValidationError</code></td><td>The model's answer does not match the schema.</td><td>Improve the <code>Field(description=...)</code> text, or retry (lesson 07).</td></tr>
+    <tr><td>RAG answers "I do not know" too often</td><td>Chunks are too small, <code>k</code> is too low, or the question is worded differently.</td><td>Raise <code>chunk_size</code> or <code>k</code>, and test a few wordings (lessons 13 and 16).</td></tr>
+    <tr><td>The chatbot forgets</td><td>A different <code>session_id</code> is used, or none is passed.</td><td>Pass the same <code>config</code> with the same <code>session_id</code> (lesson 11).</td></tr>
+    <tr><td><code>Recursion limit reached</code></td><td>An agent loops without finishing.</td><td>Make the tool descriptions clearer, and keep <code>recursion_limit</code> small (lesson 19).</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>📖 Words you will meet</h2>
+  <div class="glossary">
+    <div><b>LLM</b><p>Large language model: the AI that writes text.</p></div>
+    <div><b>Token</b><p>A small piece of text (about ¾ of a word). Models count and charge by tokens.</p></div>
+    <div><b>Prompt</b><p>The text you send to the model, including instructions.</p></div>
+    <div><b>Message</b><p>One turn in a chat, with a role: system, human or AI.</p></div>
+    <div><b>Chain</b><p>Steps joined with <code>|</code>, run in order.</p></div>
+    <div><b>Embedding</b><p>A list of numbers that represents the meaning of text.</p></div>
+    <div><b>Chunk</b><p>A piece of a long document, small enough to search and send.</p></div>
+    <div><b>Vector store</b><p>A store that finds the chunks closest in meaning to a question.</p></div>
+    <div><b>Retriever</b><p>A helper that takes a question and returns the best matching documents.</p></div>
+    <div><b>RAG</b><p>Retrieval-Augmented Generation: find text first, then answer from it.</p></div>
+    <div><b>Tool</b><p>A Python function the model is allowed to ask for.</p></div>
+    <div><b>Agent</b><p>A model that loops: think, use a tool, observe, repeat.</p></div>
+    <div><b>State and graph</b><p>In LangGraph: the shared data, and the nodes and edges that change it.</p></div>
+    <div><b>Callback</b><p>A hook that runs at each step, so you can watch what happens.</p></div>
+    <div><b>Trace</b><p>A recording of every step of a run, shown in LangSmith.</p></div>
+    <div><b>Pydantic</b><p>A library that checks data has the right shape and types.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="remember" style="background:var(--card);border-left:10px solid var(--green);border-radius:18px;padding:14px 20px;box-shadow:var(--shadow);font-size:19px">
+    🧠 <b>Remember:</b> the model does not remember anything between calls. Your app does: it stores the history, and sends it back.
+  </div>
+  <p class="muted center" style="text-align:center;margin-top:30px">Code for every lesson is in <code>langchain_examples</code>. Made for beginners 🚀</p>
+</section>
+</div>
+</body>
+</html>
