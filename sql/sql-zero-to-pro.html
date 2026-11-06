@@ -1,0 +1,1388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Zero to Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7fb; --panel:#ffffff; --panel2:#f0f2f8; --ink:#1b1f2e; --muted:#5d6479; --line:#e1e4ee;
+  --accent:#4f46e5; --accent-soft:#eceafd; --accent2:#f59e0b; --good:#16a34a; --bad:#dc2626;
+  --m1:#dbeafe; --m2:#fce7f3; --m3:#dcfce7; --m4:#fef3c7; --m5:#ede9fe; --mn:#f1f2f6;
+  --colhl:rgba(79,70,229,.12); --code-bg:#151827; --code-ink:#e6e8f2;
+  --k:#8ab4ff; --s:#a5e3a0; --n:#ffc66d; --f:#f0a0ff; --c:#7d8399;
+  --shadow:0 1px 2px rgba(20,24,40,.05),0 6px 24px rgba(20,24,40,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1220; --panel:#171a2b; --panel2:#1e2236; --ink:#e8eaf3; --muted:#9aa1b8; --line:#2a2f47;
+    --accent:#8b85ff; --accent-soft:#25234a; --accent2:#fbbf24; --good:#4ade80; --bad:#f87171;
+    --m1:#1e3a5f; --m2:#4a2140; --m3:#1c4430; --m4:#4a3b14; --m5:#352a5c; --mn:#23273a;
+    --colhl:rgba(139,133,255,.16); --code-bg:#0b0d18; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1220; --panel:#171a2b; --panel2:#1e2236; --ink:#e8eaf3; --muted:#9aa1b8; --line:#2a2f47;
+  --accent:#8b85ff; --accent-soft:#25234a; --accent2:#fbbf24; --good:#4ade80; --bad:#f87171;
+  --m1:#1e3a5f; --m2:#4a2140; --m3:#1c4430; --m4:#4a3b14; --m5:#352a5c; --mn:#23273a;
+  --colhl:rgba(139,133,255,.16); --code-bg:#0b0d18; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+code,pre,.mono,textarea,.tbl table{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-variant-ligatures:none}
+html,body{overflow-x:hidden}
+p code,li code,.one code,.tip code,.chip code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:5px;font-size:.88em}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer}
+
+/* ---------- layout ---------- */
+.side{position:fixed;inset:0 auto 0 0;width:290px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:18px 14px 40px;z-index:30;transition:transform .3s}
+.main{margin-left:290px;padding:0 32px 80px;max-width:1340px}
+.brand{font-weight:800;font-size:19px;display:flex;align-items:center;gap:8px;margin:0 6px 12px}
+.brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#ec4899);display:grid;place-items:center;color:#fff;font-size:15px}
+.search{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:inherit;font-size:14px;margin-bottom:10px}
+.prog{margin:4px 6px 14px;font-size:12.5px;color:var(--muted)}
+.bar{height:7px;border-radius:9px;background:var(--panel2);overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#ec4899);transition:width .5s}
+.navlvl{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 6px 4px}
+.side a.nl{display:flex;gap:8px;align-items:baseline;padding:4px 8px;border-radius:7px;color:var(--ink);text-decoration:none;font-size:13.5px}
+.side a.nl:hover{background:var(--panel2)}
+.side a.nl b{font-weight:600;color:var(--muted);font-size:11.5px;min-width:20px}
+.side a.nl.done b{color:var(--good)}
+.side a.nl.done b::after{content:" ✓"}
+.menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:40;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:8px 12px;box-shadow:var(--shadow)}
+.theme-btn{position:fixed;top:12px;right:14px;z-index:40;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:8px 12px;box-shadow:var(--shadow);font-size:14px}
+
+/* ---------- hero ---------- */
+.hero{padding:56px 0 30px;display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:center}
+.hero h1{font-size:clamp(34px,5vw,56px);line-height:1.05;margin:0 0 14px;letter-spacing:-.02em}
+.hero h1 span{background:linear-gradient(90deg,var(--accent),#ec4899,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200%;animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:200% 0}}
+.hero p{color:var(--muted);font-size:17.5px;margin:0 0 16px;max-width:560px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:13px}
+.term{background:var(--code-bg);border-radius:16px;padding:18px;color:var(--code-ink);box-shadow:var(--shadow);min-height:250px}
+.term .dots{display:flex;gap:6px;margin-bottom:12px}.term .dots i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.term .dots i:nth-child(2){background:#febc2e}.term .dots i:nth-child(3){background:#28c840}
+.term pre{margin:0 0 12px;white-space:pre-wrap;font-size:14.5px;min-height:66px}
+.term .caret{display:inline-block;width:8px;height:17px;background:var(--code-ink);vertical-align:-3px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.term table{border-collapse:collapse;font-size:13px;font-family:"JetBrains Mono",monospace}
+.term th,.term td{padding:4px 12px;border-bottom:1px solid #2a2f47;text-align:left}
+.term th{color:#8ab4ff}
+.term tr{opacity:0;transform:translateY(6px);transition:.35s}
+.term tr.show{opacity:1;transform:none}
+
+/* ---------- sections & cards ---------- */
+.lvl{margin-top:54px}
+.lvl-head{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+.lvl-badge{flex:none;width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#ec4899);color:#fff;display:grid;place-items:center;font-weight:800;font-size:20px;box-shadow:var(--shadow)}
+.lvl-head h2{margin:0;font-size:26px;letter-spacing:-.01em}
+.lvl-head p{margin:2px 0 0;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px 24px;margin:18px 0;box-shadow:var(--shadow);scroll-margin-top:20px}
+.card-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.num{font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:2px 10px;font-size:14px}
+.card h3{margin:0;font-size:21px;flex:1;min-width:200px}
+.got{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer;user-select:none;border:1px solid var(--line);border-radius:99px;padding:4px 12px}
+.got input{accent-color:var(--good)}
+.got:has(input:checked){color:var(--good);border-color:var(--good)}
+.one{font-size:17px;font-weight:600;margin:10px 0 14px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:24px}
+.text p{margin:0 0 10px}
+.like{background:var(--panel2);border-left:4px solid var(--accent2);border-radius:10px;padding:10px 14px;margin:12px 0}
+.like b{color:var(--accent2)}
+.codebox{position:relative;margin:12px 0}
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:14px 16px;margin:0;overflow-x:auto;font-size:13.6px;line-height:1.55}
+pre.code .k{color:var(--k);font-weight:600}pre.code .s{color:var(--s)}pre.code .n{color:var(--n)}pre.code .f{color:var(--f)}pre.code .c{color:var(--c);font-style:italic}
+.try{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.1);color:#e6e8f2;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:3px 10px;font-size:12px}
+.try:hover{background:rgba(255,255,255,.2)}
+.tip{background:color-mix(in srgb,var(--good) 10%,transparent);border:1px solid color-mix(in srgb,var(--good) 35%,transparent);border-radius:10px;padding:9px 13px;font-size:14.5px}
+.tip::before{content:"💡 ";}
+
+/* ---------- animation stage ---------- */
+.stage-wrap{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;min-height:300px}
+.stage{flex:1;overflow-x:auto;overflow-y:hidden;padding:4px 2px 8px}
+.cap{display:flex;align-items:center;gap:10px;border-top:1px dashed var(--line);padding-top:10px;margin-top:6px;min-height:46px}
+.cap .steps{display:flex;gap:5px;flex:none}
+.cap .steps i{width:9px;height:9px;border-radius:50%;background:var(--line);transition:.3s}
+.cap .steps i.on{background:var(--accent);transform:scale(1.25)}
+.cap .ctext{flex:1;font-size:14.5px;font-weight:500;transition:opacity .3s}
+.replay{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:5px 11px;font-size:13px}
+.replay:hover{border-color:var(--accent);color:var(--accent)}
+
+.flow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;min-height:240px}
+.fins,.fouts{display:flex;flex-direction:column;gap:12px;align-items:center}
+.fins{flex-direction:row;flex-wrap:wrap;justify-content:center}
+.farrow{width:44px;height:44px;opacity:.15;transition:.5s;color:var(--accent)}
+.farrow.go{opacity:1;animation:nudge 1.2s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateX(5px)}}
+.tbl{opacity:0;transform:scale(.96);transition:.4s}
+.tbl.show{opacity:1;transform:none}
+.tname{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 4px 2px;font-family:"JetBrains Mono",monospace}
+.tbl.out .tname{color:var(--accent)}
+.tbl table{border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13px;font-family:"JetBrains Mono",monospace}
+.tbl.out table{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tbl th{background:var(--panel2);text-align:left;padding:5px 11px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);transition:.4s;white-space:nowrap}
+.tbl td{padding:5px 11px;border-bottom:1px solid var(--line);white-space:nowrap;transition:background-color .5s,box-shadow .4s}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s,filter .45s}
+.tbl.out tbody tr{transform:translateX(-26px)}
+.tbl tbody tr.show{opacity:1;transform:none}
+.tbl tbody tr.show.drop{opacity:.25;filter:grayscale(1);text-decoration:line-through;transform:translateX(8px)}
+.tbl tbody tr.keep td:first-child{box-shadow:inset 4px 0 0 var(--good)}
+.tbl tr.m1 td{background:var(--m1)}.tbl tr.m2 td{background:var(--m2)}.tbl tr.m3 td{background:var(--m3)}.tbl tr.m4 td{background:var(--m4)}.tbl tr.m5 td{background:var(--m5)}
+.tbl tr.mn td{background:var(--mn);background-image:repeating-linear-gradient(45deg,transparent 0 6px,rgba(127,127,127,.08) 6px 12px)}
+.tbl th.col{color:var(--accent);background:var(--accent-soft)}
+.tbl td.col{background-image:linear-gradient(var(--colhl),var(--colhl))}
+.tbl td.cellhl{animation:cellpulse 1.4s ease 2;box-shadow:inset 0 0 0 2px var(--accent2)}
+@keyframes cellpulse{30%{box-shadow:inset 0 0 0 3px var(--accent2),0 0 0 4px color-mix(in srgb,var(--accent2) 30%,transparent)}}
+.tbl tr.new td{animation:newrow 1.6s ease}
+.tbl tr.new td:first-child{box-shadow:inset 4px 0 0 var(--good)}
+@keyframes newrow{0%{background:color-mix(in srgb,var(--good) 45%,transparent)}}
+.tbl tr.empty td{color:var(--muted);font-style:italic;text-align:center}
+.null{color:var(--bad);font-style:italic;font-size:.92em;opacity:.85}
+
+.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:stretch;min-height:240px;align-content:center}
+.chips.arrows{gap:6px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;max-width:220px;min-width:120px;opacity:0;transform:translateY(12px) scale(.95);transition:.45s}
+.chip.show{opacity:1;transform:none}
+.chip b{display:block;font-family:"JetBrains Mono",monospace;color:var(--accent);font-size:14px;margin-bottom:3px}
+.chip span{font-size:13px;color:var(--muted);line-height:1.45;display:block}
+.chip.lit{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);transform:translateY(-4px)}
+.chip.done{border-color:var(--accent)}
+.carr{align-self:center;color:var(--accent);font-weight:800;opacity:.6}
+
+/* intro */
+.intro{position:relative;height:250px}
+.note{position:absolute;background:#fff7c2;color:#5b4a00;border-radius:6px;padding:6px 10px;font-size:12.5px;box-shadow:0 3px 10px rgba(0,0,0,.12);transition:all 1s cubic-bezier(.6,-0.2,.3,1.2);white-space:nowrap;animation:wob 2.5s ease-in-out infinite}
+@keyframes wob{50%{rotate:3deg}}
+.note.in{left:50%!important;top:50%!important;opacity:0;transform:translate(-50%,-50%) scale(.3)}
+.dbbox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:110px;height:110px;border-radius:20px;background:var(--panel);border:2px solid var(--accent);display:grid;place-items:center;text-align:center;font-weight:700;font-size:13px;transition:.6s}
+.dbbox big{font-size:40px;display:block;line-height:1.1}
+.dbbox.pulse{animation:dbp .8s ease 3}
+@keyframes dbp{50%{transform:translate(-50%,-50%) scale(1.12);box-shadow:0 0 0 12px var(--accent-soft)}}
+.dbbox.gone{opacity:0;transform:translate(-50%,-50%) scale(.5)}
+.intro .tbl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9)}
+.intro .tbl.show{transform:translate(-50%,-50%)}
+
+/* index */
+.lanes{display:flex;flex-direction:column;gap:20px;justify-content:center;min-height:240px}
+.lane h4{margin:0 0 6px;font-size:13.5px;display:flex;justify-content:space-between}
+.lane h4 span{color:var(--muted);font-weight:500}
+.boxes{display:grid;grid-template-columns:repeat(16,1fr);gap:4px}
+.box{aspect-ratio:1;border-radius:6px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;font-family:"JetBrains Mono",monospace;transition:.25s}
+.box.scan{background:var(--m4);border-color:var(--accent2)}
+.box.jump{background:var(--m1);border-color:var(--accent);transform:translateY(-5px)}
+.box.hit{background:var(--good);color:#fff;border-color:var(--good);transform:scale(1.2)}
+
+/* injection */
+.inj{display:flex;flex-direction:column;gap:12px;justify-content:center;min-height:240px}
+.inj .field{display:flex;gap:10px;align-items:center;font-size:14px;flex-wrap:wrap}
+.inj .input{flex:1;min-width:180px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-family:"JetBrains Mono",monospace;font-size:14px;min-height:36px}
+.inj .caret{display:inline-block;width:2px;height:16px;background:var(--ink);vertical-align:-3px;animation:blink 1s steps(2) infinite}
+.inj pre{background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:12px;margin:0;font-size:13.5px;white-space:pre-wrap;border:2px solid transparent;transition:.4s}
+.inj pre.evil{border-color:var(--bad)}.inj pre.safe{border-color:var(--good)}
+.inj pre u{text-decoration:none;background:rgba(255,198,109,.25);color:#ffc66d;border-radius:3px}
+.inj pre.evil u{background:rgba(248,113,113,.3);color:#ff9b9b}
+.verdict{font-weight:600;font-size:14.5px;min-height:24px;opacity:0;transition:.4s}
+.verdict.show{opacity:1}
+
+/* sample tables + playground */
+.samples{display:flex;flex-wrap:wrap;gap:18px}
+.samples .tbl{opacity:1;transform:none}.samples .tbl tbody tr{opacity:1;transform:none}
+.play textarea{width:100%;min-height:150px;background:var(--code-bg);color:var(--code-ink);border:1px solid var(--line);border-radius:12px;padding:14px;font:14px/1.5 "JetBrains Mono",monospace;resize:vertical}
+.play .row{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap;align-items:center}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:9px 18px;font-weight:600}
+.btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.pout{display:flex;flex-direction:column;gap:14px;overflow-x:auto}
+.pout .tbl{opacity:1;transform:none}.pout .tbl tbody tr{opacity:1;transform:none}
+.perr{color:var(--bad);font-family:"JetBrains Mono",monospace;font-size:13.5px;white-space:pre-wrap}
+.muted{color:var(--muted)}
+.hidden{display:none!important}
+footer{margin-top:60px;color:var(--muted);font-size:14px;text-align:center}
+
+@media (max-width:1100px){.grid{grid-template-columns:minmax(0,1fr)}.hero{grid-template-columns:minmax(0,1fr)}}
+.hero>*,.text,.stage-wrap{min-width:0}
+@media (max-width:860px){
+  .side{transform:translateX(-100%);box-shadow:var(--shadow)}
+  .side.open{transform:none}
+  .main{margin-left:0;padding:0 16px 60px}
+  .menu-btn{display:block}
+  .hero{padding-top:64px}
+  .card{padding:16px}
+  .flow{flex-direction:column}
+  .farrow{transform:rotate(90deg)}
+  .farrow.go{animation:none}
+  .boxes{gap:2px}.box{font-size:9px;border-radius:4px}
+}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<button class="menu-btn" id="menuBtn" aria-label="Open menu">☰ Topics</button>
+<button class="theme-btn" id="themeBtn" aria-label="Switch light or dark">🌓</button>
+
+<nav class="side" id="side">
+  <div class="brand"><span class="logo">⚡</span> SQL Zero → Pro</div>
+  <input class="search" id="search" placeholder="Search a topic… (e.g. join)">
+  <div class="prog"><span id="progText">0 understood</span><div class="bar"><i id="progBar"></i></div></div>
+  <div id="nav"></div>
+  <div class="navlvl">Extras</div>
+  <a class="nl" href="#samples"><b>★</b>Sample tables</a>
+  <a class="nl" href="#playground"><b>▶</b>Live playground</a>
+</nav>
+
+<main class="main">
+  <header class="hero">
+    <div>
+      <h1>Learn <span>SQL</span><br>from zero to pro</h1>
+      <p>Every idea is broken into tiny steps: a one-line summary, plain-English explanation, an everyday comparison, a real example, and a moving picture that shows what the database actually does.</p>
+      <div class="pills" id="pills"></div>
+    </div>
+    <div class="term" aria-label="Animated SQL example">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <pre id="heroQ"></pre>
+      <div id="heroR"></div>
+    </div>
+  </header>
+
+  <section class="lvl" id="samples">
+    <div class="lvl-head"><div class="lvl-badge">★</div><div><h2>Meet the sample tables</h2><p>Almost every example uses this tiny shop. Glance at it once — it makes everything else easier.</p></div></div>
+    <div class="card"><div class="samples" id="sampleTables"></div></div>
+  </section>
+
+  <div id="content"></div>
+
+  <section class="lvl" id="playground">
+    <div class="lvl-head"><div class="lvl-badge">▶</div><div><h2>Live playground</h2><p>Type real SQL and run it on the sample tables. Click “Try it” on any example to load it here.</p></div></div>
+    <div class="card play">
+      <p class="muted" style="margin-top:0">Runs in your browser using SQLite (needs internet the first time to load it). A few examples use features from other databases (like <code>EXTRACT</code>, <code>GRANT</code> or <code>CREATE PROCEDURE</code>) and will show an error here — that's normal.</p>
+      <textarea id="pq" spellcheck="false">SELECT category, COUNT(*) AS items, SUM(price) AS total
+FROM products
+GROUP BY category
+ORDER BY total DESC;</textarea>
+      <div class="row">
+        <button class="btn" id="runBtn">▶ Run</button>
+        <button class="btn ghost" id="resetBtn">↺ Reset data</button>
+        <span class="muted" id="pstatus"></span>
+      </div>
+      <div class="pout" id="pout"></div>
+    </div>
+  </section>
+
+  <footer>Tick “Got it” on each card to track your progress. It's saved in this browser.</footer>
+</main>
+
+<script>
+/* =========================================================
+   SAMPLE DATA
+   ========================================================= */
+const T = (name, cols, rows) => ({ name, cols, rows });
+const P = T('products', ['id','name','category','price'], [
+  [1,'Pen','Office',2],[2,'Notebook','Office',5],[3,'Apple','Food',1],[4,'Headphones','Tech',40],[5,'Mouse','Tech',15]]);
+const C = T('customers', ['id','name','city'], [[1,'Asha','Delhi'],[2,'Ben','Mumbai'],[3,'Chen','Delhi'],[4,'Dia','Pune']]);
+const O = T('orders', ['id','customer_id','amount'], [[101,1,50],[102,2,20],[103,1,30],[104,5,10]]);
+const E = T('employees', ['id','name','dept','salary','manager_id'], [
+  [1,'Ravi','Sales',5000,null],[2,'Sara','Sales',4000,1],[3,'Tom','IT',6000,1],[4,'Uma','IT',4500,3]]);
+const ES = (n) => T(n, ['id','name','manager_id'], [[1,'Ravi',null],[2,'Sara',1],[3,'Tom',1],[4,'Uma',3]]);
+const K = T('contacts', ['id','name','phone'], [[1,'Asha','98123'],[2,'Ben',null],[3,'Chen','99001'],[4,'Dia',null]]);
+const SA = T('shop_a', ['name'], [['Asha'],['Ben']]);
+const SB = T('shop_b', ['name'], [['Ben'],['Chen']]);
+const R = (name, cols, rows) => T(name, cols, rows);
+const NP = [['Pen',2],['Notebook',5],['Apple',1],['Headphones',40],['Mouse',15]];
+const GRP = T('after GROUP BY', ['category','items'], [['Office',2],['Food',1],['Tech',2]]);
+
+/* =========================================================
+   LEVELS + CONCEPTS
+   ========================================================= */
+const LEVELS = [
+  ['Start here: what is all this?', 'No code skills needed. Just the big picture.'],
+  ['Reading data: asking simple questions', 'Pick columns, filter rows, sort and cut. This is 60% of daily SQL.'],
+  ['Shaping the answer', 'Do maths, change text, handle dates, make choices, fill blanks.'],
+  ['Summaries: counting and grouping', 'Turn many rows into a few useful numbers.'],
+  ['Connecting tables: joins and stacking', 'Real data lives in several tables. Here is how to combine them.'],
+  ['Changing data', 'Add, edit and remove rows.'],
+  ['Building tables', 'Create the containers and set the rules.'],
+  ['Questions inside questions', 'Subqueries, CTEs and views: break big problems into small ones.'],
+  ['Window functions: look around without squashing', 'Rankings, running totals and comparisons — the advanced favourite.'],
+  ['Pro level: speed, safety and design', 'Indexes, transactions, good table design, security.']
+];
+
+const CONCEPTS = [
+/* ---------------- LEVEL 0 ---------------- */
+{ l:0, t:'What are data and a database?',
+  one:'Data is just facts. A database is a tidy, safe home for lots of facts.',
+  body:[`Your name, the price of a pen, the date you bought it — each one is a piece of <b>data</b> (a fact).`,
+        `When you have thousands of facts, sticky notes get lost. A <b>database</b> is a program that keeps facts neat, so you can find, change and protect them quickly.`],
+  like:`A library. Books are not thrown in a pile — they sit on labelled shelves so anyone can find one in seconds.`,
+  code:`-- No code yet! Just remember:\n-- data     = facts\n-- database = an organised home for facts`,
+  a:{custom:'intro'},
+  steps:['Facts are scattered everywhere…','…so we gather them into one organised place…','…where they sit in neat tables, ready to use.'],
+  tip:`Almost every app you use — banking, shopping, chat — has a database behind it.` },
+
+{ l:0, t:'Tables, rows and columns',
+  one:'Data in a database lives in tables, which look just like spreadsheets.',
+  body:[`A <b>table</b> holds one kind of thing — for example, products.`,
+        `A <b>row</b> (going across) is one single thing: one product.`,
+        `A <b>column</b> (going down) is one detail that every thing has, like its price.`],
+  like:`A school register: each line is one student (a row). Each heading — name, age, class — is a column.`,
+  code:`-- A table called "products"\n-- columns: id, name, category, price\n-- each row = one product`,
+  a:{ins:[{t:P, mark:[0,2,0,0,0], cols:[3]}]},
+  steps:['This whole grid is the products table.','Across = a row (one product: Notebook). Down = a column (the price of every product).','Every table is just rows × columns.'] },
+
+{ l:0, t:'What is SQL?',
+  one:'SQL is the language you use to talk to a database.',
+  body:[`SQL (say “sequel” or “S-Q-L”) means Structured Query Language. A <b>query</b> is just a <b>question</b>.`,
+        `You write a short, English-like sentence. The database reads it and gives back an answer, shaped like a table.`,
+        `You say <b>what</b> you want, not <b>how</b> to find it. The database works out the how.`],
+  like:`Ordering food: you say “one pizza, no onions”. You don't tell the chef how to cook it.`,
+  code:`SELECT name\nFROM products;`,
+  a:{ins:[{t:P, cols:[1]}], outs:[{t:R('answer',['name'],NP.map(r=>[r[0]]))}]},
+  steps:['You ask: “give me the name of every product”.','The database looks at the name column.','It hands back a small answer table.'] },
+
+{ l:0, t:'Database programs (engines)',
+  one:'Many programs understand SQL — like car brands that all drive the same way.',
+  body:[`The program that stores the data and runs your SQL is called a <b>database engine</b> (also “DBMS” — Database Management System).`,
+        `About 90% of SQL is the same everywhere. A few small details differ, like how to grab only the top 5 rows.`],
+  like:`English in India, the UK and the US: the same language, with a few different words.`,
+  code:`-- Works everywhere:\nSELECT name FROM products;\n\n-- Small differences:\nSELECT name FROM products LIMIT 5;   -- MySQL, PostgreSQL, SQLite\nSELECT TOP 5 name FROM products;     -- SQL Server`,
+  a:{custom:'chips', items:[['MySQL','Very popular for websites.'],['PostgreSQL','Powerful, free, loved by developers.'],['SQLite','Tiny. Lives inside phones and apps.'],['SQL Server','Microsoft’s engine, common in companies.'],['Oracle','Used by very large businesses.']]},
+  steps:['There are many database programs…','…each good at something different…','…but they all speak SQL.'] },
+
+{ l:0, t:'How a SQL sentence looks',
+  one:'SQL is written in short parts called clauses, ends with a semicolon, and can hold notes.',
+  body:[`Each part starts with a keyword: <code>SELECT</code> (what to show), <code>FROM</code> (where to look), <code>WHERE</code> (which rows).`,
+        `Capital letters for keywords are a habit, not a rule. <code>select</code> works too.`],
+  like:`A sentence: words in a set order, ending with a full stop. The semicolon is SQL's full stop.`,
+  code:`-- This is a comment (a note for humans)\nSELECT name, price   -- what to show\nFROM products        -- where to look\nWHERE price > 10;    -- which rows\n\n/* A comment can also\n   span many lines */`,
+  a:{custom:'chips', items:[['Keywords','Special words like SELECT, FROM, WHERE.'],['Semicolon ;','Marks the end of one command.'],['-- comment','A note on one line. The database ignores it.'],['/* comment */','A note across many lines.'],['Spaces & new lines','Don’t matter. Use them to make SQL easy to read.']]},
+  steps:['A SQL command is made of a few pieces…','…each piece has a job…','…put together they make one clear question.'] },
+
+{ l:0, t:'Data types',
+  one:'Every column holds one kind of value: numbers, text, dates, or yes/no.',
+  body:[`When you make a table, you tell each column what it will hold. This stops mistakes, like typing “banana” into a price column.`,
+        `Text and dates go inside single quotes: <code>'Delhi'</code>. Numbers don't: <code>42</code>.`],
+  like:`Labelled jars in a kitchen: sugar jar, salt jar. You don't pour rice into the salt jar.`,
+  code:`CREATE TABLE people (\n  id        INTEGER,\n  name      VARCHAR(50),\n  height_m  DECIMAL(3,2),\n  birthday  DATE,\n  is_member BOOLEAN\n);`,
+  a:{custom:'chips', items:[['INTEGER','Whole numbers: 7, 42, -3'],['DECIMAL(10,2)','Numbers with a point: 9.99'],['VARCHAR(50) / TEXT',`Words, in quotes: 'Asha'`],['DATE',`A calendar day: '2026-11-06'`],['TIMESTAMP',`Day + time: '2026-11-06 14:30'`],['BOOLEAN','TRUE or FALSE']]},
+  steps:['Each column gets a type…','…like a label on a jar…','…so only the right kind of value can go in.'] },
+
+{ l:0, t:'NULL — the empty box',
+  one:'NULL means “unknown” or “nothing here”. It is not zero and not blank text.',
+  body:[`Ben has no phone number saved, so his phone is <code>NULL</code>.`,
+        `NULL is strange: it isn't equal to anything — not even another NULL. So you can't write <code>= NULL</code>. You use <code>IS NULL</code> (coming soon).`],
+  like:`A form where someone left a box empty. You don't know if they have no phone, or just didn't write it.`,
+  code:`SELECT * FROM contacts;\n-- Ben and Dia have phone = NULL`,
+  a:{ins:[{t:K, cells:[[1,2],[3,2]]}]},
+  steps:['Here are our contacts.','Two phone boxes are empty — that is NULL.','NULL = unknown. Not 0, not empty text. Just unknown.'],
+  tip:`Any maths with NULL gives NULL: <code>5 + NULL</code> is NULL.` },
+
+/* ---------------- LEVEL 1 ---------------- */
+{ l:1, t:'SELECT — choose columns',
+  one:'SELECT picks which columns you want to see.',
+  body:[`<code>SELECT</code> = which columns. <code>FROM</code> = which table.`,
+        `Put commas between column names. You get only those columns, for every row.`],
+  like:`Covering a class list with your hands so you only see the names and marks.`,
+  code:`SELECT name, price\nFROM products;`,
+  a:{ins:[{t:P, cols:[1,3]}], outs:[{t:R('result',['name','price'],NP)}]},
+  steps:['Start with the whole products table.','SELECT name, price → pick just these two columns.','Result: names and prices, every row.'] },
+
+{ l:1, t:'SELECT * — every column',
+  one:'The star * means “give me every column”.',
+  body:[`Handy for a quick look at a table.`,
+        `In real apps, list the columns by name instead. It's faster, and won't break if someone adds a column later.`],
+  like:`Saying “bring me everything on the menu”.`,
+  code:`SELECT *\nFROM products;`,
+  a:{ins:[{t:P, cols:[0,1,2,3]}], outs:[{t:R('result',P.cols,P.rows)}]},
+  steps:['The products table.','* means every column is picked.','You get a full copy of the table.'] },
+
+{ l:1, t:'AS — nicknames',
+  one:'AS gives a column or table a temporary nickname.',
+  body:[`The real table doesn't change — only the heading in your answer.`,
+        `Also used for short table names: <code>FROM customers AS c</code>, then write <code>c.name</code>. You can even skip the word AS: <code>FROM customers c</code>.`],
+  like:`Calling Robert “Bob”. Same person, shorter name.`,
+  code:`SELECT name  AS item,\n       price AS cost\nFROM products;`,
+  a:{ins:[{t:P, cols:[1,3]}], outs:[{t:R('result',['item','cost'],NP), cols:[0,1]}]},
+  steps:['We want name and price…','…but with friendlier headings.','Same data, new headings: item and cost.'] },
+
+{ l:1, t:'DISTINCT — remove repeats',
+  one:'DISTINCT shows each different value only once.',
+  body:[`The categories are Office, Office, Food, Tech, Tech.`,
+        `DISTINCT squeezes the repeats so you get each category once.`],
+  like:`Listing which cities your friends live in. You write “Delhi” once, even if three friends live there.`,
+  code:`SELECT DISTINCT category\nFROM products;`,
+  a:{ins:[{t:P, mark:[1,1,2,3,3], cols:[2]}], outs:[{t:R('result',['category'],[['Office'],['Food'],['Tech']]), mark:[1,2,3]}]},
+  steps:['Look at the category column.','Same colours = same value. Office and Tech appear twice.','DISTINCT keeps just one of each.'] },
+
+{ l:1, t:'WHERE — filter rows',
+  one:'WHERE keeps only the rows that pass your test.',
+  body:[`The database checks every row against your condition. Yes → keep it. No → throw it away.`,
+        `WHERE removes rows. It doesn't touch columns.`],
+  like:`A guard at a door checking each person: “Ticket? Come in.”`,
+  code:`SELECT *\nFROM products\nWHERE price > 10;`,
+  a:{ins:[{t:P, keep:[3,4], cols:[3]}], outs:[{t:R('result',P.cols,[P.rows[3],P.rows[4]])}]},
+  steps:['Every row lines up at the door.','Test: is price more than 10? Only Headphones and Mouse pass.','The answer keeps only those rows.'] },
+
+{ l:1, t:'Comparison signs',
+  one:'Use signs like =, <>, >, < to build your tests.',
+  body:[`<code>=</code> equal · <code>&lt;&gt;</code> or <code>!=</code> not equal`,
+        `<code>&gt;</code> bigger · <code>&lt;</code> smaller · <code>&gt;=</code> bigger or same · <code>&lt;=</code> smaller or same`,
+        `They work on numbers, text (alphabet order) and dates (earlier/later).`],
+  like:`Rules at a fair: “taller than 120 cm”, “not under 5 years old”.`,
+  code:`-- =   equal          <>  not equal (also !=)\n-- >   bigger         <   smaller\n-- >=  bigger or same <=  smaller or same\n\nSELECT name, category\nFROM products\nWHERE category <> 'Food';`,
+  a:{ins:[{t:P, drop:[2], cols:[2]}], outs:[{t:R('result',['name','category'],[['Pen','Office'],['Notebook','Office'],['Headphones','Tech'],['Mouse','Tech']])}]},
+  steps:['Check each category.','<> means “not equal”. Apple is Food, so it goes.','Everything except Food stays.'] },
+
+{ l:1, t:'AND, OR, NOT — combine tests',
+  one:'AND = both must be true. OR = at least one. NOT = flip it.',
+  body:[`<code>AND</code>: Tech <i>and</i> cheaper than 20 → only Mouse.`,
+        `<code>OR</code>: Food <i>or</i> Office → Pen, Notebook, Apple.`,
+        `<code>NOT</code>: <code>NOT category = 'Tech'</code> → everything except Tech.`,
+        `Mixing AND with OR? Use brackets ( ), just like in maths.`],
+  like:`“I'll buy it if it's red AND cheap” is pickier than “red OR cheap”.`,
+  code:`SELECT name, category, price\nFROM products\nWHERE category = 'Tech'\n  AND price < 20;\n\n-- With brackets:\n-- WHERE (category = 'Food' OR category = 'Office')\n--   AND price < 3;`,
+  a:{ins:[{t:P, keep:[4], cols:[2,3]}], outs:[{t:R('result',['name','category','price'],[['Mouse','Tech',15]])}]},
+  steps:['Each row has to pass two tests.','Tech? And under 20? Only Mouse passes both.','AND is strict — both answers must be yes.'] },
+
+{ l:1, t:'IN — match a list',
+  one:'IN checks if a value is in a list. It is a shortcut for many ORs.',
+  body:[`<code>category IN ('Food','Tech')</code> is the same as <code>category = 'Food' OR category = 'Tech'</code>.`,
+        `<code>NOT IN</code> does the opposite.`],
+  like:`A guest list. If your name is on it, you're in.`,
+  code:`SELECT name, category\nFROM products\nWHERE category IN ('Food', 'Tech');`,
+  a:{ins:[{t:P, keep:[2,3,4], cols:[2]}], outs:[{t:R('result',['name','category'],[['Apple','Food'],['Headphones','Tech'],['Mouse','Tech']])}]},
+  steps:['The list is: Food, Tech.','Is each category on the list? Office is not.','Only Food and Tech rows stay.'] },
+
+{ l:1, t:'BETWEEN — a range',
+  one:'BETWEEN picks values inside a range, including both ends.',
+  body:[`<code>price BETWEEN 2 AND 15</code> means price is 2, 15, or anything in between.`,
+        `Works for dates too: <code>BETWEEN '2026-01-01' AND '2026-01-31'</code>.`],
+  like:`“Kids aged 5 to 12 can join” — 5 and 12 are allowed.`,
+  code:`SELECT name, price\nFROM products\nWHERE price BETWEEN 2 AND 15;`,
+  a:{ins:[{t:P, keep:[0,1,4], cols:[3]}], outs:[{t:R('result',['name','price'],[['Pen',2],['Notebook',5],['Mouse',15]])}]},
+  steps:['The range is 2 to 15.','Apple (1) is too low. Headphones (40) is too high.','2 and 15 are inside the range — both ends count.'] },
+
+{ l:1, t:'LIKE — text patterns',
+  one:'LIKE finds text that matches a pattern.',
+  body:[`<code>%</code> means “any number of letters (even none)”.`,
+        `<code>_</code> means “exactly one letter”.`,
+        `<code>'A%'</code> starts with A · <code>'%e'</code> ends with e · <code>'%oo%'</code> contains “oo” · <code>'_en'</code> three letters ending in “en” (Pen, Ben).`],
+  like:`Searching your phone contacts by typing the first few letters.`,
+  code:`SELECT name\nFROM products\nWHERE name LIKE '%e';   -- ends with "e"`,
+  a:{ins:[{t:P, keep:[2,4], cols:[1]}], outs:[{t:R('result',['name'],[['Apple'],['Mouse']])}]},
+  steps:['Pattern: anything, then an “e” at the very end.','Apple and Mouse end in e. The others don’t.','Only matching names come back.'],
+  tip:`Some databases care about capital letters in LIKE, some don't. PostgreSQL has <code>ILIKE</code> to ignore case.` },
+
+{ l:1, t:'IS NULL — find empty boxes',
+  one:'Use IS NULL or IS NOT NULL to find missing values.',
+  body:[`Because NULL means “unknown”, <code>phone = NULL</code> is never true. It returns nothing.`,
+        `Always write <code>IS NULL</code> or <code>IS NOT NULL</code>.`],
+  like:`Asking “whose phone box is empty?” rather than “whose phone equals empty?”.`,
+  code:`SELECT name\nFROM contacts\nWHERE phone IS NULL;`,
+  a:{ins:[{t:K, keep:[1,3], cells:[[1,2],[3,2]]}], outs:[{t:R('result',['name'],[['Ben'],['Dia']])}]},
+  steps:['Look at the phone column.','Ben and Dia have NULL phones.','IS NULL finds exactly them.'],
+  tip:`<code>WHERE phone = NULL</code> gives zero rows. A very common beginner mistake!` },
+
+{ l:1, t:'ORDER BY — sort',
+  one:'ORDER BY sorts the answer. ASC = small to big (the default), DESC = big to small.',
+  body:[`Without ORDER BY, the order of rows is not guaranteed.`,
+        `Sort by more than one column: <code>ORDER BY category, price DESC</code> sorts by category first, then by price inside each category.`],
+  like:`Lining children up by height, tallest first.`,
+  code:`SELECT name, price\nFROM products\nORDER BY price DESC;`,
+  a:{ins:[{t:P, cols:[3]}], outs:[{t:R('result',['name','price'],[['Headphones',40],['Mouse',15],['Notebook',5],['Pen',2],['Apple',1]])}]},
+  steps:['Rows in no special order.','Look at the price of each.','Lined up from most expensive to cheapest.'] },
+
+{ l:1, t:'LIMIT and OFFSET — only a few rows',
+  one:'LIMIT keeps only the first few rows. OFFSET skips some first.',
+  body:[`<code>LIMIT 2</code> → first 2 rows. Mix it with ORDER BY to get a “top 2”.`,
+        `<code>LIMIT 2 OFFSET 2</code> → skip 2, then take 2. This is how websites show page 1, page 2…`,
+        `SQL Server writes <code>SELECT TOP 2 …</code> instead.`],
+  like:`“Show me the top 3 results” on a search page.`,
+  code:`SELECT name, price\nFROM products\nORDER BY price DESC\nLIMIT 2;`,
+  a:{ins:[{t:R('sorted by price',['name','price'],[['Headphones',40],['Mouse',15],['Notebook',5],['Pen',2],['Apple',1]]), keep:[0,1]}], outs:[{t:R('result',['name','price'],[['Headphones',40],['Mouse',15]])}]},
+  steps:['First the rows are sorted, priciest first.','LIMIT 2: keep the first two, cut the rest.','The top 2 most expensive products.'] },
+
+/* ---------------- LEVEL 2 ---------------- */
+{ l:2, t:'Maths in SELECT',
+  one:'You can do maths inside SELECT to make new columns.',
+  body:[`<code>+ - * /</code> all work. Brackets work too.`,
+        `The new column exists only in your answer. The table itself is not changed.`,
+        `<code>ROUND(price * 1.18, 2)</code> rounds to 2 decimal places.`],
+  like:`A calculator that works on every row at once.`,
+  code:`SELECT name, price,\n       price * 2 AS price_for_two\nFROM products;`,
+  a:{ins:[{t:P, cols:[3]}], outs:[{t:R('result',['name','price','price_for_two'],NP.map(r=>[r[0],r[1],r[1]*2])), cols:[2]}]},
+  steps:['Take each price…','…multiply it by 2…','…and show it in a brand-new column.'] },
+
+{ l:2, t:'Text functions',
+  one:'Functions can change text: make it bigger, measure it, join it, cut it.',
+  body:[`<code>UPPER</code> / <code>LOWER</code> — capitals / small letters`,
+        `<code>LENGTH</code> — how many letters`,
+        `<code>CONCAT(a, b)</code> or <code>a || b</code> — glue text together`,
+        `<code>SUBSTRING(name, 1, 3)</code> — first 3 letters · <code>TRIM</code> — remove spaces at the ends · <code>REPLACE</code> — swap words`],
+  like:`The tools in a word processor — but applied to every row instantly.`,
+  code:`SELECT UPPER(name)  AS shout,\n       LENGTH(name) AS letters\nFROM products;`,
+  a:{ins:[{t:P, cols:[1]}], outs:[{t:R('result',['shout','letters'],NP.map(r=>[r[0].toUpperCase(), r[0].length])), cols:[0,1]}]},
+  steps:['Take each product name.','Make it capitals, and count its letters.','Two new columns, made from one.'] },
+
+{ l:2, t:'Dates',
+  one:'Dates can be pulled apart (year, month, day), compared and counted.',
+  body:[`<code>CURRENT_DATE</code> = today.`,
+        `<code>EXTRACT(MONTH FROM order_date)</code> pulls out the month number.`,
+        `Each engine spells these a little differently — MySQL: <code>MONTH(order_date)</code>, SQLite: <code>strftime('%m', order_date)</code>.`],
+  like:`Looking at a calendar date and reading just the month.`,
+  code:`SELECT id, order_date,\n       EXTRACT(MONTH FROM order_date) AS month\nFROM orders;\n\n-- Orders from the last 30 days (PostgreSQL):\n-- WHERE order_date >= CURRENT_DATE - INTERVAL '30 days'`,
+  a:{ins:[{t:R('orders',['id','order_date','amount'],[[101,'2026-01-15',50],[102,'2026-02-03',20],[103,'2026-02-20',30],[104,'2026-03-09',10]]), cols:[1]}],
+     outs:[{t:R('result',['id','order_date','month'],[[101,'2026-01-15',1],[102,'2026-02-03',2],[103,'2026-02-20',2],[104,'2026-03-09',3]]), cols:[2]}]},
+  steps:['Each order has a date.','Look at the middle part of each date — the month.','A new column with just the month number.'] },
+
+{ l:2, t:'CASE — if this, then that',
+  one:'CASE lets SQL make choices, row by row.',
+  body:[`It checks conditions from top to bottom. The first one that's true wins.`,
+        `<code>ELSE</code> catches everything else. Always finish with <code>END</code>.`],
+  like:`A teacher turning marks into grades: 90+ is A, 75+ is B, otherwise C.`,
+  code:`SELECT name, price,\n  CASE\n    WHEN price >= 15 THEN 'Expensive'\n    WHEN price >= 5  THEN 'Medium'\n    ELSE 'Cheap'\n  END AS label\nFROM products;`,
+  a:{ins:[{t:P, cols:[3]}], outs:[{t:R('result',['name','price','label'],[['Pen',2,'Cheap'],['Notebook',5,'Medium'],['Apple',1,'Cheap'],['Headphones',40,'Expensive'],['Mouse',15,'Expensive']]), mark:[3,4,3,2,2], cols:[2]}]},
+  steps:['Look at each price.','15 or more? Expensive. 5 or more? Medium. Else Cheap.','Every row gets a label.'] },
+
+{ l:2, t:'COALESCE — fill the blanks',
+  one:'COALESCE swaps a NULL for a backup value.',
+  body:[`<code>COALESCE(phone, 'no phone')</code> → if phone has a value, use it. If it's NULL, use 'no phone'.`,
+        `You can give many options: it returns the first one that isn't NULL.`],
+  like:`“Call my mobile. If there's no mobile, call home. If no home, email me.”`,
+  code:`SELECT name,\n       COALESCE(phone, 'no phone') AS phone\nFROM contacts;`,
+  a:{ins:[{t:K, cells:[[1,2],[3,2]]}], outs:[{t:R('result',['name','phone'],[['Asha','98123'],['Ben','no phone'],['Chen','99001'],['Dia','no phone']]), cells:[[1,1],[3,1]]}]},
+  steps:['Two phones are NULL.','COALESCE spots them and uses the backup text.','No more empty boxes in the answer.'] },
+
+/* ---------------- LEVEL 3 ---------------- */
+{ l:3, t:'COUNT, SUM, AVG, MIN, MAX',
+  one:'These “aggregate” functions squash many rows into one summary number.',
+  body:[`<code>COUNT</code> how many · <code>SUM</code> add up · <code>AVG</code> average · <code>MIN</code> smallest · <code>MAX</code> biggest.`,
+        `<code>COUNT(*)</code> counts rows. <code>COUNT(phone)</code> counts only rows where phone is not NULL.`],
+  like:`The bottom line of a shopping receipt: number of items and the total.`,
+  code:`SELECT COUNT(*)   AS how_many,\n       SUM(price) AS total,\n       AVG(price) AS average,\n       MIN(price) AS cheapest,\n       MAX(price) AS priciest\nFROM products;`,
+  a:{ins:[{t:P, mark:[1,1,1,1,1], cols:[3]}], outs:[{t:R('result',['how_many','total','average','cheapest','priciest'],[[5,63,12.6,1,40]]), mark:[1]}]},
+  steps:['All five products…','…are looked at together, prices added, counted, compared…','…and squashed into ONE row of answers.'],
+  tip:`Aggregates skip NULL values. AVG of (10, NULL, 20) is 15, not 10.` },
+
+{ l:3, t:'GROUP BY — make piles',
+  one:'GROUP BY puts rows with the same value into piles, then summarises each pile.',
+  body:[`<code>GROUP BY category</code> → one pile for Office, one for Food, one for Tech.`,
+        `Then COUNT, SUM, etc. work on each pile separately. You get one row per pile.`,
+        `Rule: every column in SELECT must be either in GROUP BY, or inside an aggregate like SUM.`],
+  like:`Sorting laundry into piles by colour, then counting each pile.`,
+  code:`SELECT category,\n       COUNT(*)   AS items,\n       SUM(price) AS total\nFROM products\nGROUP BY category;`,
+  a:{ins:[{t:P, mark:[1,1,2,3,3], cols:[2]}], outs:[{t:R('result',['category','items','total'],[['Office',2,7],['Food',1,1],['Tech',2,55]]), mark:[1,2,3]}]},
+  steps:['Look at the category of each row.','Same colour = same pile: Office, Food, Tech.','Each pile becomes one row with its count and total.'] },
+
+{ l:3, t:'HAVING — filter the piles',
+  one:'HAVING filters groups after grouping. WHERE filters rows before grouping.',
+  body:[`You can't use COUNT or SUM inside WHERE, because WHERE runs before the piles exist.`,
+        `So for “only categories with 2 or more items”, use HAVING.`],
+  like:`WHERE throws out bad apples before you make baskets. HAVING throws out baskets that are too light.`,
+  code:`SELECT category, COUNT(*) AS items\nFROM products\nGROUP BY category\nHAVING COUNT(*) >= 2;`,
+  a:{ins:[{t:GRP, keep:[0,2], cols:[1]}], outs:[{t:R('result',['category','items'],[['Office',2],['Tech',2]])}]},
+  steps:['After grouping we have three piles.','Test each pile: 2 or more items? Food has only 1.','Only the big piles stay.'] },
+
+{ l:3, t:'Pivot — turn rows into columns',
+  one:'Use SUM with CASE to spread values across columns, like a summary sheet.',
+  body:[`Each CASE picks only one category's prices. SUM adds them up.`,
+        `Result: one row, one column per category. (SQL Server and Oracle also have a <code>PIVOT</code> keyword.)`],
+  like:`Turning a long shopping list into a small table: “Office total | Food total | Tech total”.`,
+  code:`SELECT\n  SUM(CASE WHEN category = 'Office' THEN price ELSE 0 END) AS office,\n  SUM(CASE WHEN category = 'Food'   THEN price ELSE 0 END) AS food,\n  SUM(CASE WHEN category = 'Tech'   THEN price ELSE 0 END) AS tech\nFROM products;`,
+  a:{ins:[{t:P, mark:[1,1,2,3,3], cols:[2,3]}], outs:[{t:R('result',['office','food','tech'],[[7,1,55]])}]},
+  steps:['Rows are coloured by category.','Each colour is added into its own column.','Three totals side by side in one row.'] },
+
+{ l:3, t:'The order SQL really runs in',
+  one:'You write SELECT first, but the database runs the parts in a different order.',
+  body:[`Knowing this order explains many confusing errors.`,
+        `Example: a nickname made with AS in SELECT can't be used in WHERE — WHERE runs first, before the nickname exists. ORDER BY runs later, so it can use it.`],
+  like:`Cooking: you write “Pizza” at the top of the recipe, but you start by getting the flour.`,
+  code:`SELECT category, COUNT(*) AS items   -- 5\nFROM products                         -- 1\nWHERE price > 1                       -- 2\nGROUP BY category                     -- 3\nHAVING COUNT(*) >= 2                  -- 4\nORDER BY items DESC                   -- 6\nLIMIT 1;                              -- 7`,
+  a:{custom:'chips', arrows:true, items:[['1 FROM','find the table(s)'],['2 WHERE','throw out rows'],['3 GROUP BY','make piles'],['4 HAVING','throw out piles'],['5 SELECT','pick columns, do maths'],['6 ORDER BY','sort'],['7 LIMIT','cut to size']]},
+  steps:['These are the steps of every query…','…they run in this order, one after another…','…so each step only sees what the steps before it left behind.'] },
+
+/* ---------------- LEVEL 4 ---------------- */
+{ l:4, t:'Primary key — the ID card',
+  one:'A primary key is a column that is unique for every row and never empty.',
+  body:[`It is how the database tells rows apart, even if two customers have the same name.`,
+        `Usually a number called <code>id</code>. A table has only one primary key.`],
+  like:`A roll number in class. Two students can share a name, never a roll number.`,
+  code:`CREATE TABLE customers (\n  id   INTEGER PRIMARY KEY,\n  name VARCHAR(50),\n  city VARCHAR(50)\n);`,
+  a:{ins:[{t:C, cols:[0]}]},
+  steps:['The customers table.','The id column is the primary key: 1, 2, 3, 4 — no repeats, no blanks.','Every row can be found by its id.'] },
+
+{ l:4, t:'Foreign key — the link',
+  one:'A foreign key is a column that points to a primary key in another table.',
+  body:[`<code>orders.customer_id</code> points to <code>customers.id</code>. That's how we know who placed each order.`,
+        `It also protects the data. Order 104 points to customer 5, who doesn't exist! A foreign key would have refused it.`,
+        `Splitting data into linked tables means each fact is stored once.`],
+  like:`A parcel label with a house number. It points to where the person lives.`,
+  code:`CREATE TABLE orders (\n  id          INTEGER PRIMARY KEY,\n  customer_id INTEGER REFERENCES customers(id),\n  amount      DECIMAL(10,2)\n);`,
+  a:{ins:[{t:O, keep:[0,1,2], mark:[1,2,1,0], cols:[1]},{t:C, mark:[1,2,0,0], cols:[0]}]},
+  steps:['Two tables: orders and customers.','Matching colours: orders 101 and 103 belong to Asha, 102 to Ben. Order 104 points to nobody.','A foreign key keeps these links honest.'] },
+
+{ l:4, t:'INNER JOIN — only matches',
+  one:'INNER JOIN glues two tables side by side, keeping only rows that match on both sides.',
+  body:[`<code>ON</code> says how rows match: <code>c.id = o.customer_id</code>.`,
+        `Chen and Dia have no orders, and order 104 has no customer — so they all drop out.`,
+        `Just writing <code>JOIN</code> means INNER JOIN.`],
+  like:`Pairing socks. Only socks with a partner go in the drawer.`,
+  code:`SELECT c.name, o.amount\nFROM customers c\nINNER JOIN orders o\n  ON c.id = o.customer_id;`,
+  a:{ins:[{t:C, keep:[0,1], mark:[1,2,0,0], cols:[0]},{t:O, keep:[0,1,2], mark:[1,2,1,0], cols:[1]}],
+     outs:[{t:R('result',['name','amount'],[['Asha',50],['Ben',20],['Asha',30]]), mark:[1,2,1]}]},
+  steps:['Two tables, side by side.','Find pairs where customer id = order’s customer_id. Same colour = a match.','Each match becomes one joined row. No partner, no row.'] },
+
+{ l:4, t:'LEFT JOIN — keep everyone on the left',
+  one:'LEFT JOIN keeps every row from the left table. Missing matches become NULL.',
+  body:[`“Left” = the table written first (after FROM).`,
+        `Chen and Dia have no orders, but they still appear — with NULL as the amount.`],
+  like:`A class photo where everyone is in it, even students whose parents didn't come.`,
+  code:`SELECT c.name, o.amount\nFROM customers c\nLEFT JOIN orders o\n  ON c.id = o.customer_id;`,
+  a:{ins:[{t:C, mark:[1,2,'n','n'], cols:[0]},{t:O, keep:[0,1,2], mark:[1,2,1,0], cols:[1]}],
+     outs:[{t:R('result',['name','amount'],[['Asha',50],['Ben',20],['Asha',30],['Chen',null],['Dia',null]]), mark:[1,2,1,'n','n'], cells:[[3,1],[4,1]]}]},
+  steps:['Every customer is kept, no matter what.','Find their orders. Chen and Dia have none.','They still show up — with NULL for the amount.'],
+  tip:`Find customers who never ordered: add <code>WHERE o.id IS NULL</code>.` },
+
+{ l:4, t:'RIGHT JOIN — keep everyone on the right',
+  one:'RIGHT JOIN is the mirror: it keeps every row from the right table.',
+  body:[`Order 104 has no matching customer, but it still appears, with a NULL name.`,
+        `People rarely use it — swapping the two tables and using LEFT JOIN does the same thing.`],
+  like:`A LEFT JOIN looked at in a mirror.`,
+  code:`SELECT c.name, o.amount\nFROM customers c\nRIGHT JOIN orders o\n  ON c.id = o.customer_id;`,
+  a:{ins:[{t:C, keep:[0,1], mark:[1,2,0,0], cols:[0]},{t:O, mark:[1,2,1,'n'], cols:[1]}],
+     outs:[{t:R('result',['name','amount'],[['Asha',50],['Ben',20],['Asha',30],[null,10]]), mark:[1,2,1,'n'], cells:[[3,0]]}]},
+  steps:['Every order is kept this time.','Order 104 can’t find its customer.','It still shows — with NULL for the name.'] },
+
+{ l:4, t:'FULL OUTER JOIN — keep everyone',
+  one:'FULL OUTER JOIN keeps all rows from both tables, matched or not.',
+  body:[`Matches are glued together. Anything without a partner still shows, with NULLs filling the gap.`,
+        `MySQL doesn't have it — combine a LEFT JOIN and a RIGHT JOIN with UNION instead.`],
+  like:`A party guest list from two friends merged: everyone invited by either friend is on it.`,
+  code:`SELECT c.name, o.amount\nFROM customers c\nFULL OUTER JOIN orders o\n  ON c.id = o.customer_id;`,
+  a:{ins:[{t:C, mark:[1,2,'n','n'], cols:[0]},{t:O, mark:[1,2,1,'n'], cols:[1]}],
+     outs:[{t:R('result',['name','amount'],[['Asha',50],['Ben',20],['Asha',30],[null,10],['Chen',null],['Dia',null]]), mark:[1,2,1,'n','n','n'], cells:[[3,0],[4,1],[5,1]]}]},
+  steps:['Nobody gets left out — from either table.','Pairs are matched; loners are noticed.','All rows appear; gaps are filled with NULL.'] },
+
+{ l:4, t:'CROSS JOIN — every combination',
+  one:'CROSS JOIN pairs every row of one table with every row of the other.',
+  body:[`2 sizes × 2 colours = 4 rows. 100 × 100 = 10,000 rows — careful!`,
+        `There's no ON part, because nothing has to match.`],
+  like:`A T-shirt shop listing every size in every colour.`,
+  code:`SELECT s.size, c.color\nFROM sizes s\nCROSS JOIN colors c;`,
+  a:{ins:[{t:R('sizes',['size'],[['S'],['M']]), mark:[1,2]},{t:R('colors',['color'],[['Red'],['Blue']])}],
+     outs:[{t:R('result',['size','color'],[['S','Red'],['S','Blue'],['M','Red'],['M','Blue']]), mark:[1,1,2,2]}]},
+  steps:['Two small lists.','Each size meets each colour.','2 × 2 = 4 combinations.'] },
+
+{ l:4, t:'SELF JOIN — a table joined to itself',
+  one:'A self join links a table to itself, using two nicknames.',
+  body:[`Each employee row has a <code>manager_id</code>, which is just another employee's id.`,
+        `We pretend there are two copies: <code>e</code> (workers) and <code>m</code> (managers), and match them.`],
+  like:`Looking at one class list twice: once to find each student, once to find their buddy.`,
+  code:`SELECT e.name AS worker,\n       m.name AS manager\nFROM employees e\nJOIN employees m\n  ON e.manager_id = m.id;`,
+  a:{ins:[{t:ES('e (workers)'), keep:[1,2,3], mark:[0,1,1,2], cols:[2]},{t:ES('m (managers)'), keep:[0,2], mark:[1,0,2,0], cols:[0]}],
+     outs:[{t:R('result',['worker','manager'],[['Sara','Ravi'],['Tom','Ravi'],['Uma','Tom']]), mark:[1,1,2]}]},
+  steps:['The same table, used twice.','A worker’s manager_id matches a manager’s id. Ravi has no manager.','Each worker paired with their boss.'] },
+
+{ l:4, t:'UNION — stack results',
+  one:'UNION stacks two results on top of each other and removes repeats.',
+  body:[`JOIN adds columns sideways. UNION adds rows downward.`,
+        `<code>UNION ALL</code> keeps repeats (and is faster).`,
+        `Both parts must have the same number of columns, with matching types.`],
+  like:`Merging two party guest lists and crossing out names that appear twice.`,
+  code:`SELECT name FROM shop_a\nUNION\nSELECT name FROM shop_b;`,
+  a:{ins:[{t:SA, mark:[0,2]},{t:SB, mark:[2,0]}], outs:[{t:R('result',['name'],[['Asha'],['Ben'],['Chen']]), mark:[0,2,0]}]},
+  steps:['Two lists of customers.','Ben is in both lists.','Stacked together, Ben appears only once.'] },
+
+{ l:4, t:'INTERSECT and EXCEPT',
+  one:'INTERSECT keeps what is in both. EXCEPT keeps what is in the first but not the second.',
+  body:[`INTERSECT → customers of both shops.`,
+        `EXCEPT → customers of shop A who never visited shop B. (Oracle calls it <code>MINUS</code>.)`],
+  like:`Two circles that overlap: INTERSECT is the middle part; EXCEPT is the left part only.`,
+  code:`-- In both shops\nSELECT name FROM shop_a\nINTERSECT\nSELECT name FROM shop_b;\n\n-- In shop_a but NOT shop_b\nSELECT name FROM shop_a\nEXCEPT\nSELECT name FROM shop_b;`,
+  a:{ins:[{t:SA, mark:[1,2]},{t:SB, mark:[2,0]}], outs:[{t:R('INTERSECT',['name'],[['Ben']]), mark:[2]},{t:R('EXCEPT',['name'],[['Asha']]), mark:[1]}]},
+  steps:['Compare the two lists.','Ben is in both. Asha is only in shop A.','INTERSECT = Ben. EXCEPT = Asha.'] },
+
+/* ---------------- LEVEL 5 ---------------- */
+{ l:5, t:'INSERT — add rows',
+  one:'INSERT INTO adds new rows to a table.',
+  body:[`List the columns, then the values in the same order.`,
+        `Add many rows at once by separating them with commas: <code>VALUES (6,…), (7,…);</code>`],
+  like:`Writing a new line at the bottom of a notebook.`,
+  code:`INSERT INTO products (id, name, category, price)\nVALUES (6, 'Lamp', 'Home', 25);`,
+  a:{ins:[{t:P}], outs:[{t:R('products',P.cols,[...P.rows,[6,'Lamp','Home',25]]), newRows:[5]}]},
+  steps:['The products table before.','We send a new row: Lamp.','It appears at the bottom.'] },
+
+{ l:5, t:'UPDATE — change values',
+  one:'UPDATE changes values in rows that already exist.',
+  body:[`<code>SET</code> says what to change. <code>WHERE</code> says which rows.`,
+        `⚠️ Forget the WHERE and EVERY row changes!`],
+  like:`Using correction fluid on one line of your notebook.`,
+  code:`UPDATE products\nSET price = 12\nWHERE name = 'Mouse';`,
+  a:{ins:[{t:P, mark:[0,0,0,0,4], cols:[3]}], outs:[{t:R('products',P.cols,P.rows.map((r,i)=>i===4?[5,'Mouse','Tech',12]:r)), cells:[[4,3]]}]},
+  steps:['Find the row: name = Mouse.','Change its price from 15…','…to 12. Every other row is untouched.'],
+  tip:`Before an UPDATE, run the same WHERE with SELECT first to see which rows will change.` },
+
+{ l:5, t:'DELETE — remove rows',
+  one:'DELETE FROM removes rows that match your WHERE.',
+  body:[`The table stays. Only the chosen rows are removed.`,
+        `⚠️ <code>DELETE FROM products;</code> with no WHERE deletes every row.`],
+  like:`Tearing one line out of a list.`,
+  code:`DELETE FROM products\nWHERE category = 'Food';`,
+  a:{ins:[{t:P, drop:[2], cols:[2]}], outs:[{t:R('products',P.cols,P.rows.filter((r,i)=>i!==2))}]},
+  steps:['Find rows where category = Food.','Apple is marked for removal.','Apple is gone; the rest stay.'] },
+
+{ l:5, t:'UPSERT — insert or update',
+  one:'Upsert means: if the row exists, update it; if not, insert it.',
+  body:[`It saves you from checking first.`,
+        `PostgreSQL / SQLite: <code>ON CONFLICT … DO UPDATE</code>. MySQL: <code>ON DUPLICATE KEY UPDATE</code>. SQL Server / Oracle: <code>MERGE</code>.`],
+  like:`Saving a contact on your phone: if the number already exists, it updates the name instead of adding a copy.`,
+  code:`INSERT INTO products (id, name, category, price)\nVALUES (5, 'Mouse', 'Tech', 18)\nON CONFLICT (id)\nDO UPDATE SET price = excluded.price;`,
+  a:{ins:[{t:P, mark:[0,0,0,0,4], cols:[0]}], outs:[{t:R('products',P.cols,P.rows.map((r,i)=>i===4?[5,'Mouse','Tech',18]:r)), cells:[[4,3]]}]},
+  steps:['We try to insert product id 5.','id 5 already exists (Mouse) — conflict!','So it updates the price instead of adding a copy.'] },
+
+/* ---------------- LEVEL 6 ---------------- */
+{ l:6, t:'CREATE TABLE — make a table',
+  one:'CREATE TABLE builds a new, empty table with columns and types.',
+  body:[`You give the table a name, then each column's name and type.`,
+        `You can add rules (like <code>NOT NULL</code>) right next to each column.`],
+  like:`Drawing the headings on a fresh page before filling it in.`,
+  code:`CREATE TABLE students (\n  id   INTEGER PRIMARY KEY,\n  name VARCHAR(50) NOT NULL,\n  age  INTEGER\n);`,
+  a:{outs:[{t:R('students',['id','name','age'],[]), cols:[0,1,2]}]},
+  steps:['We describe the table we want…','…the database builds it…','…an empty table with headings, ready for rows.'] },
+
+{ l:6, t:'Constraints — table rules',
+  one:'Constraints are rules a column must follow. The database refuses bad data.',
+  body:[`They protect your data even if an app has a bug.`,
+        `Breaking a rule gives an error and nothing is saved.`],
+  like:`A form that won't let you submit without filling your email.`,
+  code:`CREATE TABLE users (\n  id      INTEGER PRIMARY KEY,\n  email   VARCHAR(100) NOT NULL UNIQUE,\n  age     INTEGER CHECK (age >= 13),\n  country VARCHAR(30) DEFAULT 'India',\n  team_id INTEGER REFERENCES teams(id)\n);`,
+  a:{custom:'chips', items:[['NOT NULL','Must have a value. No blanks.'],['UNIQUE','No two rows can have the same value.'],['PRIMARY KEY','UNIQUE + NOT NULL. The row’s ID.'],['FOREIGN KEY','Must point to a row that exists in another table.'],['CHECK','Must pass a test, e.g. age ≥ 13.'],['DEFAULT','Used when you don’t give a value.']]},
+  steps:['Each column can carry rules…','…the database checks every new value…','…and refuses anything that breaks a rule.'] },
+
+{ l:6, t:'Auto-numbering IDs',
+  one:'An auto-increment column fills in 1, 2, 3… for you.',
+  body:[`You don't pick the id yourself — the database gives each new row the next number.`,
+        `Names differ: SQLite <code>AUTOINCREMENT</code>, MySQL <code>AUTO_INCREMENT</code>, PostgreSQL <code>SERIAL</code> or <code>GENERATED ALWAYS AS IDENTITY</code>.`],
+  like:`A ticket machine at a bank: each person gets the next number.`,
+  code:`CREATE TABLE students (\n  id   INTEGER PRIMARY KEY AUTOINCREMENT,\n  name VARCHAR(50)\n);\n\nINSERT INTO students (name) VALUES ('Asha');\nINSERT INTO students (name) VALUES ('Ben');\nINSERT INTO students (name) VALUES ('Chen');`,
+  a:{outs:[{t:R('students',['id','name'],[[1,'Asha'],[2,'Ben'],[3,'Chen']]), newRows:[0,1,2], cols:[0]}]},
+  steps:['We insert only names — no ids.','The database hands out numbers…','1, 2, 3 — filled in automatically.'] },
+
+{ l:6, t:'ALTER TABLE — change a table',
+  one:'ALTER TABLE changes a table that already exists.',
+  body:[`Add a column, rename a column, remove a column, or add a rule.`,
+        `Existing rows get NULL (or the DEFAULT) in a new column.`],
+  like:`Adding a new heading to a register that's already half full.`,
+  code:`ALTER TABLE students ADD COLUMN email VARCHAR(100);\n\n-- Other examples:\n-- ALTER TABLE students RENAME COLUMN name TO full_name;\n-- ALTER TABLE students DROP COLUMN email;`,
+  a:{ins:[{t:R('students',['id','name'],[[1,'Asha'],[2,'Ben'],[3,'Chen']])}], outs:[{t:R('students',['id','name','email'],[[1,'Asha',null],[2,'Ben',null],[3,'Chen',null]]), cols:[2]}]},
+  steps:['The students table before.','We ask for a new column: email.','It appears, empty (NULL) for existing rows.'] },
+
+{ l:6, t:'DELETE vs TRUNCATE vs DROP',
+  one:'Three ways to remove things, from gentle to total.',
+  body:[`<code>DELETE FROM t WHERE …</code> — removes chosen rows.`,
+        `<code>TRUNCATE TABLE t;</code> — removes all rows, very fast. Table stays.`,
+        `<code>DROP TABLE t;</code> — throws away the whole table. Gone.`],
+  like:`DELETE = erase a few lines. TRUNCATE = tear out all pages. DROP = throw the notebook in the bin.`,
+  code:`DELETE FROM products WHERE price < 2;   -- some rows\nTRUNCATE TABLE products;                -- all rows\nDROP TABLE products;                    -- the table itself`,
+  a:{custom:'chips', arrows:true, items:[['DELETE','Removes some (or all) rows. Table stays. Can be undone in a transaction.'],['TRUNCATE','Empties ALL rows at once. Super fast. Table stays.'],['DROP','Removes rows AND the table. Nothing left.']]},
+  steps:['Three tools, from gentle…','…to stronger…','…to total. Pick carefully!'] },
+
+/* ---------------- LEVEL 7 ---------------- */
+{ l:7, t:'Subquery — a question inside a question',
+  one:'A subquery is a query in brackets whose answer is used by the outer query.',
+  body:[`The inner query runs first: “what's the average price?” → 12.6.`,
+        `The outer query then uses that number: “which products cost more than 12.6?”.`],
+  like:`“Who is taller than the class average?” First work out the average, then compare.`,
+  code:`SELECT name, price\nFROM products\nWHERE price > (SELECT AVG(price) FROM products);`,
+  a:{ins:[{t:P, keep:[3,4], cols:[3]}], outs:[{t:R('step 1: inner query',['AVG(price)'],[[12.6]]), mark:[4]},{t:R('step 2: final answer',['name','price'],[['Headphones',40],['Mouse',15]])}]},
+  steps:['Start with all products.','Inner question first: the average price is 12.6. Who beats it?','Headphones and Mouse cost more than average.'] },
+
+{ l:7, t:'Correlated subquery — per row',
+  one:'A correlated subquery runs again for each row, using values from that row.',
+  body:[`Here, for each product, the inner query finds the average <b>of that product's own category</b>.`,
+        `Office average 3.5, Food 1, Tech 27.5. Notebook (5) and Headphones (40) beat their own category.`,
+        `It can be slow on big tables — window functions often do the same job faster.`],
+  like:`Comparing each student only with classmates in their own section.`,
+  code:`SELECT name, category, price\nFROM products p\nWHERE price > (\n  SELECT AVG(price)\n  FROM products\n  WHERE category = p.category\n);`,
+  a:{ins:[{t:P, keep:[1,3], mark:[1,1,2,3,3], cols:[3]}], outs:[{t:R('average per category',['category','avg'],[['Office',3.5],['Food',1],['Tech',27.5]]), mark:[1,2,3]},{t:R('final answer',['name','category','price'],[['Notebook','Office',5],['Headphones','Tech',40]]), mark:[1,3]}]},
+  steps:['Each row is checked against its own group.','Office avg 3.5, Food 1, Tech 27.5 — who beats their group?','Notebook and Headphones win in their categories.'] },
+
+{ l:7, t:'EXISTS — is there at least one?',
+  one:'EXISTS is true if the inner query finds at least one row.',
+  body:[`It only asks “is there any?” — it doesn't care how many or what they contain.`,
+        `<code>NOT EXISTS</code> finds the opposite: customers with no orders (Chen and Dia).`],
+  like:`“Does this person have at least one library book borrowed?” Yes or no.`,
+  code:`SELECT name\nFROM customers c\nWHERE EXISTS (\n  SELECT 1 FROM orders o\n  WHERE o.customer_id = c.id\n);`,
+  a:{ins:[{t:C, keep:[0,1], mark:[1,2,0,0]},{t:O, mark:[1,2,1,0], cols:[1]}], outs:[{t:R('result',['name'],[['Asha'],['Ben']]), mark:[1,2]}]},
+  steps:['For each customer…','…is there any order with their id? Asha: yes. Ben: yes. Chen, Dia: no.','Only customers with orders come back.'] },
+
+{ l:7, t:'Subquery in FROM (derived table)',
+  one:'You can use a query’s answer as if it were a table.',
+  body:[`The inner query builds a temporary table (category totals). The outer query treats it like any table.`,
+        `It must have a nickname — here, <code>t</code>.`],
+  like:`Making a summary sheet first, then working only from that sheet.`,
+  code:`SELECT *\nFROM (\n  SELECT category, SUM(price) AS total\n  FROM products\n  GROUP BY category\n) AS t\nWHERE total > 5;`,
+  a:{ins:[{t:R('t (temporary table)',['category','total'],[['Office',7],['Food',1],['Tech',55]]), keep:[0,2], cols:[1]}], outs:[{t:R('result',['category','total'],[['Office',7],['Tech',55]])}]},
+  steps:['The inner query makes a little table of totals.','The outer query filters it: total more than 5?','Office and Tech remain.'] },
+
+{ l:7, t:'CTE (WITH) — name a step',
+  one:'A CTE gives a query a name at the top, so you can use it like a table below.',
+  body:[`CTE means Common Table Expression — think “named step”.`,
+        `It makes long queries read top-to-bottom like a recipe. You can have many, separated by commas.`],
+  like:`Writing “Step 1: make the sauce” on its own line before “Step 2: pour sauce on pasta”.`,
+  code:`WITH spend AS (\n  SELECT customer_id, SUM(amount) AS total\n  FROM orders\n  GROUP BY customer_id\n)\nSELECT c.name, s.total\nFROM spend s\nJOIN customers c ON c.id = s.customer_id;`,
+  a:{ins:[{t:O, mark:[1,2,1,3], cols:[1,2]}], outs:[{t:R('spend (the CTE)',['customer_id','total'],[[1,80],[2,20],[5,10]]), mark:[1,2,3]},{t:R('final answer',['name','total'],[['Asha',80],['Ben',20]]), mark:[1,2]}]},
+  steps:['Start from the orders.','Step 1 (named “spend”): total per customer.','Step 2: join with customers to show names.'] },
+
+{ l:7, t:'Recursive CTE — repeat until done',
+  one:'A recursive CTE repeats itself, each time building on its last answer.',
+  body:[`It has two parts joined by <code>UNION ALL</code>: a <b>start</b> (the boss) and a <b>repeat</b> step (find people who report to someone already found).`,
+        `It stops when the repeat step finds nobody new. Great for org charts, family trees, folders inside folders.`],
+  like:`A family tree: start with grandma, find her children, then their children, until nobody’s left.`,
+  code:`WITH RECURSIVE chain AS (\n  -- start: the boss (no manager)\n  SELECT id, name, 1 AS level\n  FROM employees WHERE manager_id IS NULL\n  UNION ALL\n  -- repeat: people who report to someone found\n  SELECT e.id, e.name, c.level + 1\n  FROM employees e\n  JOIN chain c ON e.manager_id = c.id\n)\nSELECT name, level FROM chain;`,
+  a:{ins:[{t:ES('employees'), mark:[1,2,2,3], cols:[2]}], outs:[{t:R('result',['name','level'],[['Ravi',1],['Sara',2],['Tom',2],['Uma',3]]), mark:[1,2,2,3]}]},
+  steps:['Start with the boss: Ravi (no manager).','Round 2: who reports to Ravi? Sara and Tom. Round 3: who reports to Tom? Uma.','Nobody new → stop. Everyone has a level.'] },
+
+{ l:7, t:'Views — saved queries',
+  one:'A view is a saved query you can use like a table.',
+  body:[`It doesn't store data — it re-runs the query each time you use it, so it's always up to date.`,
+        `Good for hiding complicated SQL, or showing people only some columns.`],
+  like:`A saved filter in your email: “Unread from boss”. Click it any time to see the latest.`,
+  code:`CREATE VIEW tech_products AS\nSELECT name, price\nFROM products\nWHERE category = 'Tech';\n\nSELECT * FROM tech_products;`,
+  a:{ins:[{t:P, keep:[3,4], cols:[1,3]}], outs:[{t:R('tech_products (view)',['name','price'],[['Headphones',40],['Mouse',15]])}]},
+  steps:['The view is just a saved question.','When you use it, it runs on the live table.','Looks and acts like a table: tech_products.'],
+  tip:`A <b>materialized view</b> (PostgreSQL, Oracle) does store the answer, for speed — you refresh it when needed.` },
+
+/* ---------------- LEVEL 8 ---------------- */
+{ l:8, t:'Window functions — the idea',
+  one:'A window function does a calculation across rows but keeps every row.',
+  body:[`GROUP BY squashes rows into one per pile. A window function does <b>not</b> squash — each row stays and gets the answer next to it.`,
+        `<code>OVER ()</code> means “look at all rows”.`],
+  like:`Each student gets their own report card, which also shows the class average.`,
+  code:`SELECT name, price,\n       AVG(price) OVER () AS avg_all\nFROM products;`,
+  a:{ins:[{t:P, mark:[1,1,1,1,1], cols:[3]}], outs:[{t:R('result',['name','price','avg_all'],NP.map(r=>[r[0],r[1],12.6])), cols:[2]}]},
+  steps:['All rows are looked at together…','…the average (12.6) is worked out…','…and written next to EVERY row. No rows lost.'] },
+
+{ l:8, t:'PARTITION BY — windows per group',
+  one:'PARTITION BY splits rows into groups, and the window function works inside each group.',
+  body:[`Like GROUP BY, but rows are not squashed.`,
+        `Each product now shows its own category's average.`],
+  like:`Each student's report shows their own section's average, not the whole school's.`,
+  code:`SELECT name, category, price,\n       AVG(price) OVER (PARTITION BY category) AS cat_avg\nFROM products;`,
+  a:{ins:[{t:P, mark:[1,1,2,3,3], cols:[2]}], outs:[{t:R('result',['name','category','price','cat_avg'],[['Pen','Office',2,3.5],['Notebook','Office',5,3.5],['Apple','Food',1,1],['Headphones','Tech',40,27.5],['Mouse','Tech',15,27.5]]), mark:[1,1,2,3,3], cols:[3]}]},
+  steps:['Split into groups by category.','Work out the average inside each group.','Every row keeps its place, plus its group’s average.'] },
+
+{ l:8, t:'ROW_NUMBER, RANK, DENSE_RANK',
+  one:'These give each row a position number. They differ only when there is a tie.',
+  body:[`<code>ROW_NUMBER</code> — 1, 2, 3, 4. Always unique, even on ties.`,
+        `<code>RANK</code> — 1, 2, 2, 4. Ties share; then it skips.`,
+        `<code>DENSE_RANK</code> — 1, 2, 2, 3. Ties share; no skipping.`],
+  like:`A race where two runners tie for 2nd. Is the next runner 3rd or 4th? Depends who you ask!`,
+  code:`SELECT name, score,\n  ROW_NUMBER() OVER (ORDER BY score DESC) AS row_num,\n  RANK()       OVER (ORDER BY score DESC) AS rnk,\n  DENSE_RANK() OVER (ORDER BY score DESC) AS dense\nFROM scores;`,
+  a:{ins:[{t:R('scores',['name','score'],[['Asha',90],['Ben',85],['Chen',85],['Dia',70]]), mark:[0,4,4,0], cols:[1]}], outs:[{t:R('result',['name','score','row_num','rnk','dense'],[['Asha',90,1,1,1],['Ben',85,2,2,2],['Chen',85,3,2,2],['Dia',70,4,4,3]]), mark:[0,4,4,0], cells:[[3,3],[3,4]], cols:[2,3,4]}]},
+  steps:['Sorted by score. Ben and Chen tie on 85.','Three ways of numbering are worked out.','Look at Dia: RANK says 4th, DENSE_RANK says 3rd.'] },
+
+{ l:8, t:'Running total',
+  one:'SUM with OVER (ORDER BY …) adds up as it goes down the rows.',
+  body:[`Each row shows the total of itself plus every row before it.`,
+        `Add <code>PARTITION BY</code> to restart the total for each group (e.g. each customer).`],
+  like:`Your bank statement balance after each purchase.`,
+  code:`SELECT id, amount,\n       SUM(amount) OVER (ORDER BY id) AS running_total\nFROM orders;`,
+  a:{ins:[{t:O, cols:[2]}], outs:[{t:R('result',['id','amount','running_total'],[[101,50,50],[102,20,70],[103,30,100],[104,10,110]]), cols:[2]}]},
+  steps:['Orders in id order.','Keep a running sum: 50, then +20, then +30, then +10.','Each row shows the total so far.'] },
+
+{ l:8, t:'LAG and LEAD — look back, look ahead',
+  one:'LAG reads a value from the previous row. LEAD reads from the next row.',
+  body:[`Perfect for “how much did sales change since last month?”.`,
+        `The first row has nothing before it, so LAG gives NULL.`],
+  like:`Comparing today's temperature with yesterday's.`,
+  code:`SELECT month, amount,\n  LAG(amount) OVER (ORDER BY month_no) AS last_month,\n  amount - LAG(amount) OVER (ORDER BY month_no) AS change\nFROM sales;`,
+  a:{ins:[{t:R('sales',['month_no','month','amount'],[[1,'Jan',100],[2,'Feb',120],[3,'Mar',90]]), cols:[2]}], outs:[{t:R('result',['month','amount','last_month','change'],[['Jan',100,null,null],['Feb',120,100,20],['Mar',90,120,-30]]), cols:[2,3]}]},
+  steps:['Sales for three months.','Each row peeks at the row above it.','Now we see the change: +20, then −30.'] },
+
+{ l:8, t:'Top N per group',
+  one:'Number rows inside each group, then keep only number 1 (or top 3, etc.).',
+  body:[`A very common interview and real-life question: “most expensive product in each category”.`,
+        `ROW_NUMBER with PARTITION BY numbers each category separately; then filter where the number is 1.`],
+  like:`Picking the tallest kid from each class for the photo.`,
+  code:`WITH ranked AS (\n  SELECT name, category, price,\n    ROW_NUMBER() OVER (\n      PARTITION BY category ORDER BY price DESC\n    ) AS rn\n  FROM products\n)\nSELECT name, category, price\nFROM ranked\nWHERE rn = 1;`,
+  a:{ins:[{t:R('ranked',['name','category','price','rn'],[['Pen','Office',2,2],['Notebook','Office',5,1],['Apple','Food',1,1],['Headphones','Tech',40,1],['Mouse','Tech',15,2]]), keep:[1,2,3], mark:[1,1,2,3,3], cols:[3]}], outs:[{t:R('result',['name','category','price'],[['Notebook','Office',5],['Apple','Food',1],['Headphones','Tech',40]]), mark:[1,2,3]}]},
+  steps:['Each category numbers its products, priciest = 1.','Keep only rows where rn = 1.','The winner from each category.'] },
+
+/* ---------------- LEVEL 9 ---------------- */
+{ l:9, t:'Indexes — the shortcut',
+  one:'An index is a sorted lookup list that lets the database jump straight to rows.',
+  body:[`Without one, the database checks every row, one by one. With millions of rows, that's slow.`,
+        `Indexes make reading fast, but every insert or update must also update the index — so don't index everything.`,
+        `Primary keys get an index automatically. Add indexes to columns you often search or join on.`],
+  like:`The index at the back of a textbook: jump to page 214 instead of reading the whole book.`,
+  code:`CREATE INDEX idx_products_name\nON products (name);\n\n-- Now this is much faster on a big table:\nSELECT * FROM products WHERE name = 'Mouse';`,
+  a:{custom:'index'},
+  steps:['We want to find row number 13 among 16.','No index: check 1, 2, 3, 4… one by one — 13 checks.','With an index: jump to the middle, then half again — found in 4 hops.'] },
+
+{ l:9, t:'EXPLAIN — see the plan',
+  one:'EXPLAIN shows the steps the database plans to take for your query.',
+  body:[`Use it when a query is slow. Look for “scan every row” on big tables — that usually means an index is missing.`,
+        `<code>EXPLAIN ANALYZE</code> (PostgreSQL) actually runs it and shows real times. SQLite: <code>EXPLAIN QUERY PLAN</code>.`],
+  like:`Asking a map app for the route before you start driving.`,
+  code:`EXPLAIN\nSELECT * FROM products WHERE name = 'Mouse';\n\n-- PostgreSQL might reply:\n-- Index Scan using idx_products_name on products\n--   Index Cond: (name = 'Mouse')`,
+  a:{custom:'chips', items:[['Seq Scan','Reads every row. Fine for tiny tables, slow for big ones.'],['Index Scan','Jumps straight to rows using an index. Fast.'],['Hash / Nested Loop Join','How two tables are being matched.'],['cost & rows','The database’s guess of work and number of rows.']]},
+  steps:['You ask “how would you run this?”…','…the database explains each step…','…so you can spot the slow part.'] },
+
+{ l:9, t:'Transactions — all or nothing',
+  one:'A transaction groups several changes so they all happen, or none do.',
+  body:[`<code>BEGIN</code> starts. <code>COMMIT</code> saves everything. <code>ROLLBACK</code> undoes everything since BEGIN.`,
+        `If the power goes off in the middle, the half-done work is thrown away — never saved by half.`],
+  like:`Sending money: it must leave Asha's account AND arrive in Ben's. Half-done would be a disaster.`,
+  code:`BEGIN;\nUPDATE accounts SET balance = balance - 30 WHERE name = 'Asha';\nUPDATE accounts SET balance = balance + 30 WHERE name = 'Ben';\nCOMMIT;      -- save both together\n\n-- If something goes wrong in the middle:\n-- ROLLBACK;  -- undo everything since BEGIN`,
+  a:{ins:[{t:R('accounts (before)',['name','balance'],[['Asha',100],['Ben',50]]), cols:[1]}], outs:[{t:R('accounts (after COMMIT)',['name','balance'],[['Asha',70],['Ben',80]]), cells:[[0,1],[1,1]]}]},
+  steps:['BEGIN: Asha has 100, Ben has 50.','Take 30 from Asha, give 30 to Ben — not saved yet.','COMMIT: both changes saved together. Total is still 150.'] },
+
+{ l:9, t:'ACID — the four promises',
+  one:'ACID is four promises a good database makes about transactions.',
+  body:[`These promises are why banks trust databases with money.`],
+  like:`A trustworthy post office: the whole parcel arrives or none of it, nothing breaks the rules, parcels don't get mixed up, and delivered means delivered.`,
+  code:`-- A = Atomic      (all or nothing)\n-- C = Consistent  (rules always hold)\n-- I = Isolated    (no stepping on toes)\n-- D = Durable     (saved means saved)`,
+  a:{custom:'chips', items:[['A — Atomic','All changes happen, or none do.'],['C — Consistent','Rules (like “balance can’t go below 0”) are never broken.'],['I — Isolated','Two people working at the same time don’t mess each other up.'],['D — Durable','Once saved, it survives a crash or power cut.']]},
+  steps:['Four promises…','…each one protects your data in a different way…','…together they make transactions safe.'] },
+
+{ l:9, t:'Locks and isolation levels',
+  one:'When many people use the database at once, locks make them take turns.',
+  body:[`While one transaction is changing a row, others wanting the same row wait.`,
+        `Isolation levels set how strict this is. Stricter = safer, but more waiting.`,
+        `From loose to strict: READ UNCOMMITTED → READ COMMITTED (common default) → REPEATABLE READ → SERIALIZABLE.`],
+  like:`A “busy” sign on a changing-room door. Others wait until you come out.`,
+  code:`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;\nBEGIN;\nSELECT balance FROM accounts WHERE name = 'Asha';\n-- nobody can sneak a change in here\nUPDATE accounts SET balance = balance - 30 WHERE name = 'Asha';\nCOMMIT;`,
+  a:{custom:'chips', items:[['Lock','A row is “busy” while someone changes it. Others wait.'],['Dirty read','Seeing someone’s change before they save it. Loose levels allow it.'],['Deadlock','Two people each wait for the other forever. The database cancels one.'],['SERIALIZABLE','The strictest level: as if everyone took turns one at a time.']]},
+  steps:['Many people use the data at once…','…locks make them take turns on the same rows…','…isolation levels choose how strict the turns are.'] },
+
+{ l:9, t:'Normalization — store each fact once',
+  one:'Normalization means splitting data into tables so each fact is stored only once.',
+  body:[`In the messy table, “Asha lives in Delhi” is written twice. If she moves, you must fix every copy — and you'll miss one.`,
+        `<b>1NF</b>: one value per box (no “Pen, Mouse” in one cell). <b>2NF / 3NF</b>: every column should describe only that table's key. A customer's city belongs in the customers table, not repeated in orders.`],
+  like:`Keeping one address book instead of writing a friend's address on every birthday card.`,
+  code:`-- Messy: orders_messy(order_id, customer, city, product)\n\n-- Tidy:\nCREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT, city TEXT);\nCREATE TABLE orders (\n  order_id    INTEGER PRIMARY KEY,\n  customer_id INTEGER REFERENCES customers(id),\n  product     TEXT\n);`,
+  a:{ins:[{t:R('orders_messy',['order_id','customer','city','product'],[[1,'Asha','Delhi','Pen'],[2,'Asha','Delhi','Mouse'],[3,'Ben','Mumbai','Apple']]), mark:[1,1,2], cols:[1,2]}],
+     outs:[{t:R('customers',['id','name','city'],[[1,'Asha','Delhi'],[2,'Ben','Mumbai']]), mark:[1,2]},{t:R('orders',['order_id','customer_id','product'],[[1,1,'Pen'],[2,1,'Mouse'],[3,2,'Apple']]), mark:[1,1,2], cols:[1]}]},
+  steps:['One messy table. “Asha, Delhi” is repeated.','Customer details are pulled out into their own table.','Now each fact lives once; orders just point to the customer id.'] },
+
+{ l:9, t:'Stored procedures and functions',
+  one:'A stored procedure is a saved set of SQL steps you can run by name.',
+  body:[`A <b>function</b> returns a value (like a calculator button). A <b>procedure</b> does a job (like “give everyone in IT a 10% raise”).`,
+        `They live inside the database, so every app can reuse them. Syntax differs a lot between engines.`],
+  like:`A speed-dial button: press once, and a whole set of steps happens.`,
+  code:`-- PostgreSQL style\nCREATE PROCEDURE give_raise(dept_name TEXT, pct INT)\nLANGUAGE SQL\nAS $$\n  UPDATE employees\n  SET salary = salary * (100 + pct) / 100\n  WHERE dept = dept_name;\n$$;\n\nCALL give_raise('IT', 10);`,
+  a:{ins:[{t:E, mark:[0,0,1,1], cols:[3]}], outs:[{t:R('employees',E.cols,[[1,'Ravi','Sales',5000,null],[2,'Sara','Sales',4000,1],[3,'Tom','IT',6600,1],[4,'Uma','IT',4950,3]]), cells:[[2,3],[3,3]]}]},
+  steps:['CALL give_raise(\'IT\', 10)','The saved steps find everyone in IT…','…and raise their salary by 10%.'] },
+
+{ l:9, t:'Triggers — automatic reactions',
+  one:'A trigger is SQL that runs by itself when something happens to a table.',
+  body:[`“When a price changes, write a note in the price log.” You never call it — it just fires.`,
+        `<code>OLD</code> = the row before the change. <code>NEW</code> = the row after.`,
+        `Useful for history logs and checks, but too many hidden triggers make systems confusing.`],
+  like:`A doorbell camera: someone presses the bell → it starts recording automatically.`,
+  code:`CREATE TRIGGER log_price\nAFTER UPDATE OF price ON products\nFOR EACH ROW\nBEGIN\n  INSERT INTO price_log (product, old_price, new_price)\n  VALUES (OLD.name, OLD.price, NEW.price);\nEND;\n\nUPDATE products SET price = 18 WHERE name = 'Mouse';`,
+  a:{ins:[{t:P, mark:[0,0,0,0,4], cols:[3]}], outs:[{t:R('products',P.cols,P.rows.map((r,i)=>i===4?[5,'Mouse','Tech',18]:r)), cells:[[4,3]]},{t:R('price_log (filled by the trigger)',['product','old_price','new_price'],[['Mouse',15,18]]), newRows:[0]}]},
+  steps:['Someone updates Mouse’s price.','The price changes from 15 to 18…','…and the trigger quietly writes a log row by itself.'] },
+
+{ l:9, t:'Users and permissions',
+  one:'GRANT gives a user permission to do something. REVOKE takes it away.',
+  body:[`Give each person or app only what it needs — an intern may read, but not delete.`,
+        `A <b>role</b> is a named bundle of permissions you can hand to many users.`],
+  like:`Office key cards: some open every door, some open only the lobby.`,
+  code:`CREATE USER intern WITH PASSWORD 'change_me';\nGRANT SELECT ON products TO intern;     -- can read\nREVOKE SELECT ON products FROM intern;  -- not any more\n\n-- Roles = bundles of permissions\nCREATE ROLE reporter;\nGRANT SELECT ON orders TO reporter;\nGRANT reporter TO intern;`,
+  a:{custom:'chips', arrows:true, items:[['CREATE USER','Make a login.'],['GRANT','Give a key: SELECT, INSERT, UPDATE, DELETE…'],['ROLE','A key ring: many keys in one bundle.'],['REVOKE','Take a key back.']]},
+  steps:['Create a user…','…hand out only the keys they need…','…and take keys back when they’re no longer needed.'] },
+
+{ l:9, t:'SQL injection — the big danger',
+  one:'Never glue user-typed text straight into SQL. Use parameters instead.',
+  body:[`If a website builds SQL by gluing text together, a sneaky user can type SQL code into a form and change the meaning of your query.`,
+        `The fix: <b>parameters</b> (placeholders like <code>?</code>). The query and the value travel separately, so the value is always treated as plain text.`],
+  like:`A form asks for your name and someone writes “…and also open the safe”. A careful clerk treats it as a weird name, not an order.`,
+  code:`-- ❌ DANGEROUS (gluing text in your app code):\n-- "SELECT * FROM users WHERE name = '" + typed + "'"\n\n-- ✅ SAFE (a parameter / placeholder):\nSELECT * FROM users WHERE name = ?;\n-- the value is sent separately by your app`,
+  a:{custom:'inject'},
+  steps:['A normal user types “Asha”. All fine.','An attacker types a trick. The quote ends the text early and adds “OR 1=1” — always true!','With a placeholder, the trick is just a strange name. Nothing leaks.'] },
+
+{ l:9, t:'Speed tips that matter',
+  one:'A few habits make queries fast and safe on big tables.',
+  body:[`Most slow queries come from reading far more rows or columns than needed.`],
+  like:`Shopping with a list: go straight to the shelves you need instead of walking every aisle.`,
+  code:`-- 🐢 Slow habits\nSELECT * FROM orders;                         -- every column, every row\nSELECT * FROM products WHERE UPPER(name) = 'MOUSE';  -- index can't help\n\n-- 🚀 Better\nSELECT id, amount FROM orders WHERE customer_id = 1 LIMIT 50;\nSELECT id, name FROM products WHERE name = 'Mouse';`,
+  a:{custom:'chips', items:[['Pick columns','Avoid SELECT * in real apps.'],['Filter early','Use WHERE so fewer rows travel.'],['Index wisely','Index columns used in WHERE, JOIN and ORDER BY.'],['Keep columns bare','WHERE UPPER(name)=… skips the index. Compare the column directly.'],['LIMIT while testing','Don’t pull a million rows to look at ten.'],['Check EXPLAIN','Find the slow step before guessing.']]},
+  steps:['Six simple habits…','…each one cuts wasted work…','…together they keep big databases fast.'] }
+];
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = (s, r = document) => r.querySelector(s);
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+function fmt(v) { return v === null ? '<span class="null">NULL</span>' : esc(v); }
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+const KW = new Set(('SELECT FROM WHERE AND OR NOT IN BETWEEN LIKE ILIKE IS NULL ORDER BY GROUP HAVING LIMIT OFFSET AS DISTINCT JOIN INNER LEFT RIGHT FULL OUTER CROSS ON UNION ALL INTERSECT EXCEPT MINUS INSERT INTO VALUES UPDATE SET DELETE CREATE TABLE ALTER ADD COLUMN DROP TRUNCATE PRIMARY KEY FOREIGN REFERENCES UNIQUE CHECK DEFAULT CASE WHEN THEN ELSE END WITH RECURSIVE VIEW OVER PARTITION EXISTS BEGIN COMMIT ROLLBACK INDEX EXPLAIN ANALYZE GRANT REVOKE TO PROCEDURE FUNCTION TRIGGER AFTER BEFORE FOR EACH ROW CONFLICT DO DESC ASC INTEGER INT TEXT VARCHAR DECIMAL DATE TIMESTAMP BOOLEAN AUTOINCREMENT LANGUAGE CALL IF TRANSACTION ISOLATION LEVEL SERIALIZABLE NEW OLD OF USER ROLE PASSWORD RENAME TOP INTERVAL TRUE FALSE SQL').split(' '));
+const FN = new Set('COUNT SUM AVG MIN MAX UPPER LOWER LENGTH COALESCE ROW_NUMBER RANK DENSE_RANK LAG LEAD EXTRACT MONTH CONCAT SUBSTRING TRIM ROUND CURRENT_DATE NOW REPLACE STRFTIME'.split(' '));
+function hl(code) {
+  const re = /(--[^\n]*)|(\/\*[\s\S]*?\*\/)|('(?:[^']|'')*')|\b(\d+(?:\.\d+)?)\b|([A-Za-z_][A-Za-z0-9_]*)/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(code))) {
+    out += esc(code.slice(last, m.index)); last = re.lastIndex;
+    if (m[1] || m[2]) out += `<span class="c">${esc(m[0])}</span>`;
+    else if (m[3]) out += `<span class="s">${esc(m[0])}</span>`;
+    else if (m[4]) out += `<span class="n">${m[0]}</span>`;
+    else { const u = m[5].toUpperCase(); out += FN.has(u) ? `<span class="f">${m[0]}</span>` : KW.has(u) ? `<span class="k">${m[0]}</span>` : esc(m[0]); }
+  }
+  return out + esc(code.slice(last));
+}
+
+function renderTable(tb, role) {
+  const w = el('div', 'tbl ' + (role || ''));
+  w.append(el('div', 'tname', esc(tb.name)));
+  const table = el('table'), thead = el('thead'), hr = el('tr'), body = el('tbody');
+  tb.cols.forEach(c => hr.append(el('th', null, esc(c))));
+  thead.append(hr); table.append(thead);
+  if (!tb.rows.length) { const tr = el('tr', 'empty'); const td = el('td', null, '(no rows yet)'); td.colSpan = tb.cols.length; tr.append(td); body.append(tr); }
+  tb.rows.forEach(r => { const tr = el('tr'); r.forEach(v => tr.append(el('td', null, fmt(v)))); body.append(tr); });
+  table.append(body); w.append(table);
+  return w;
+}
+function applySpec(w, s) {
+  const rows = [...w.querySelectorAll('tbody tr:not(.empty)')];
+  let drop = s.drop || [];
+  if (s.keep) drop = rows.map((_, i) => i).filter(i => !s.keep.includes(i));
+  rows.forEach((tr, i) => {
+    if (drop.includes(i)) tr.classList.add('drop'); else if (s.keep) tr.classList.add('keep');
+    if (s.mark && s.mark[i]) tr.classList.add('m' + s.mark[i]);
+    if (s.newRows && s.newRows.includes(i)) tr.classList.add('new');
+  });
+  (s.cols || []).forEach(c => w.querySelectorAll(`tr > :nth-child(${c + 1})`).forEach(x => { if (!x.colSpan || x.colSpan === 1) x.classList.add('col'); }));
+  (s.cells || []).forEach(([r, c]) => { const tr = rows[r]; if (tr && tr.children[c]) tr.children[c].classList.add('cellhl'); });
+}
+function reveal(w, L) {
+  w.classList.add('show');
+  w.querySelectorAll('tbody tr').forEach((tr, i) => L(120 + i * 110, () => tr.classList.add('show')));
+}
+const ARROW = '<svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>';
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+function caption(card, i) {
+  const steps = card.c.steps || [];
+  card.dots.forEach((d, k) => d.classList.toggle('on', k === i));
+  card.ctext.style.opacity = 0;
+  setTimeout(() => { card.ctext.textContent = steps[i] || ''; card.ctext.style.opacity = 1; }, 180);
+}
+
+function runFlow(card) {
+  const a = card.c.a, st = card.stage, L = card.later;
+  const wrap = el('div', 'flow'), insEls = [], outEls = [];
+  let arrow = null;
+  if (a.ins && a.ins.length) {
+    const ins = el('div', 'fins');
+    a.ins.forEach(s => { const w = renderTable(s.t, 'in'); insEls.push([w, s]); ins.append(w); });
+    wrap.append(ins);
+  }
+  if (a.outs && a.outs.length) {
+    if (insEls.length) { arrow = el('div', 'farrow', ARROW); wrap.append(arrow); }
+    const outs = el('div', 'fouts');
+    a.outs.forEach(s => { const w = renderTable(s.t, 'out'); outEls.push([w, s]); outs.append(w); });
+    wrap.append(outs);
+  }
+  st.append(wrap);
+  caption(card, 0);
+  insEls.forEach(([w]) => reveal(w, L));
+  const T1 = insEls.length ? 1700 : 500;
+  L(T1, () => { caption(card, 1); insEls.forEach(([w, s]) => applySpec(w, s)); });
+  const T2 = T1 + (insEls.length ? 2300 : 1100);
+  L(T2, () => {
+    caption(card, 2);
+    if (arrow) arrow.classList.add('go');
+    outEls.forEach(([w, s], k) => L(k * 1100, () => {
+      reveal(w, L);
+      L(w.querySelectorAll('tbody tr').length * 110 + 450, () => applySpec(w, s));
+    }));
+  });
+}
+
+function runChips(card) {
+  const a = card.c.a, L = card.later;
+  const box = el('div', 'chips' + (a.arrows ? ' arrows' : '')), chips = [];
+  a.items.forEach(([h, p], i) => {
+    if (a.arrows && i) box.append(el('div', 'carr', '→'));
+    const c = el('div', 'chip', `<b>${esc(h)}</b><span>${p}</span>`); chips.push(c); box.append(c);
+  });
+  card.stage.append(box);
+  caption(card, 0);
+  chips.forEach((c, i) => L(100 + i * 160, () => c.classList.add('show')));
+  const T1 = 500 + chips.length * 160;
+  L(T1, () => {
+    caption(card, 1);
+    chips.forEach((c, i) => L(i * 700, () => { chips.forEach(x => x.classList.remove('lit')); c.classList.add('lit', 'done'); }));
+  });
+  L(T1 + chips.length * 700 + 400, () => { caption(card, 2); chips.forEach(x => x.classList.remove('lit')); });
+}
+
+function runIntro(card) {
+  const L = card.later;
+  const box = el('div', 'intro');
+  const notes = [['Pen ₹2', 4, 8], ['Asha, Delhi', 62, 4], ['Order #101', 8, 70], ['Ben, Mumbai', 68, 74], ['Mouse ₹15', 36, 84], ['Apple ₹1', 74, 38], ['Chen, Delhi', 2, 40]];
+  const nEls = notes.map(([txt, x, y], i) => { const n = el('div', 'note', txt); n.style.left = x + '%'; n.style.top = y + '%'; n.style.animationDelay = (i * .3) + 's'; box.append(n); return n; });
+  const db = el('div', 'dbbox', '<div><big>🗄️</big>Database</div>'); db.style.opacity = 0;
+  box.append(db);
+  card.stage.append(box);
+  caption(card, 0);
+  L(1500, () => { caption(card, 1); db.style.opacity = 1; nEls.forEach((n, i) => L(i * 160, () => n.classList.add('in'))); L(1300, () => db.classList.add('pulse')); });
+  L(4600, () => {
+    caption(card, 2); db.classList.add('gone');
+    const w = renderTable(P, 'out'); box.append(w); L(300, () => reveal(w, L));
+  });
+}
+
+function runIndex(card) {
+  const L = card.later, target = 13;
+  const wrap = el('div', 'lanes');
+  const mk = (title) => {
+    const lane = el('div', 'lane'); const h = el('h4', null, `${title} <span>checks: <b>0</b></span>`);
+    const b = el('div', 'boxes'); const boxes = [];
+    for (let i = 1; i <= 16; i++) { const x = el('div', 'box', i); boxes.push(x); b.append(x); }
+    lane.append(h, b); wrap.append(lane);
+    return { boxes, count: h.querySelector('b') };
+  };
+  const A = mk('🐢 No index: check one by one'), B = mk('🚀 With an index: jump');
+  card.stage.append(wrap);
+  caption(card, 0);
+  L(1200, () => {
+    caption(card, 1);
+    for (let i = 0; i < target; i++) L(i * 170, () => {
+      A.boxes[i].classList.add(i === target - 1 ? 'hit' : 'scan'); A.count.textContent = i + 1;
+    });
+  });
+  const T2 = 1200 + target * 170 + 900;
+  L(T2, () => {
+    caption(card, 2);
+    [8, 12, 14, 13].forEach((v, k) => L(k * 650, () => {
+      B.boxes[v - 1].classList.add(v === target ? 'hit' : 'jump'); B.count.textContent = k + 1;
+    }));
+  });
+}
+
+function runInject(card) {
+  const L = card.later;
+  const box = el('div', 'inj');
+  box.innerHTML = `<div class="field"><span>Login name:</span><div class="input"><span class="typed"></span><span class="caret"></span></div></div><pre class="q"></pre><div class="verdict"></div>`;
+  card.stage.append(box);
+  const typed = $('.typed', box), q = $('.q', box), v = $('.verdict', box);
+  const showQ = (val, cls) => { q.className = 'q ' + (cls || ''); q.innerHTML = `SELECT * FROM users\nWHERE name = '<u>${esc(val)}</u>';`; };
+  const type = (text, cb) => { typed.textContent = ''; [...text].forEach((ch, i) => L(i * 95, () => { typed.textContent += ch; showQ(typed.textContent); })); L(text.length * 95 + 200, cb); };
+  caption(card, 0); showQ('');
+  type('Asha', () => { v.textContent = '✅ Returns only Asha’s row.'; v.className = 'verdict show'; v.style.color = 'var(--good)'; });
+  L(2600, () => {
+    caption(card, 1); v.className = 'verdict';
+    const evil = "' OR '1'='1";
+    type(evil, () => {
+      q.className = 'q evil';
+      q.innerHTML = `SELECT * FROM users\nWHERE name = '<u>' OR '1'='1</u>';`;
+      v.textContent = '😱 \'1\'=\'1\' is always true → EVERY user comes back!'; v.style.color = 'var(--bad)'; v.className = 'verdict show';
+    });
+  });
+  L(6400, () => {
+    caption(card, 2); v.className = 'verdict';
+    q.className = 'q safe';
+    q.innerHTML = `SELECT * FROM users\nWHERE name = <u>?</u>;\n\n-- value sent separately: "' OR '1'='1"`;
+    L(500, () => { v.textContent = '✅ Treated as a plain (weird) name. 0 rows. Safe!'; v.style.color = 'var(--good)'; v.className = 'verdict show'; });
+  });
+}
+
+function play(card) {
+  card.run = (card.run || 0) + 1;
+  const id = card.run;
+  card.later = (ms, fn) => setTimeout(() => { if (card.run === id) fn(); }, ms);
+  card.stage.innerHTML = '';
+  const a = card.c.a;
+  if (a.custom === 'chips') runChips(card);
+  else if (a.custom === 'intro') runIntro(card);
+  else if (a.custom === 'index') runIndex(card);
+  else if (a.custom === 'inject') runInject(card);
+  else runFlow(card);
+}
+
+/* =========================================================
+   BUILD PAGE
+   ========================================================= */
+const cards = [];
+let done = store.get('sqlz-done', {});
+
+function build() {
+  const content = $('#content'), nav = $('#nav');
+  let n = 0;
+  LEVELS.forEach((lv, li) => {
+    const sec = el('section', 'lvl'); sec.id = 'level-' + li;
+    sec.innerHTML = `<div class="lvl-head"><div class="lvl-badge">L${li}</div><div><h2>${esc(lv[0])}</h2><p>${esc(lv[1])}</p></div></div>`;
+    nav.append(el('div', 'navlvl', `Level ${li} · ${esc(lv[0].split(':')[0])}`));
+    CONCEPTS.filter(c => c.l === li).forEach(c => {
+      n++; const id = 'c' + n; c.n = n;
+      const art = el('article', 'card'); art.id = id;
+      const body = c.body.map(p => `<p>${p}</p>`).join('');
+      art.innerHTML = `
+        <div class="card-head"><span class="num">${n}</span><h3>${esc(c.t)}</h3>
+          <label class="got"><input type="checkbox" ${done[id] ? 'checked' : ''}> Got it</label></div>
+        <p class="one">${c.one}</p>
+        <div class="grid">
+          <div class="text">${body}
+            <div class="like"><b>Think of it like:</b> ${c.like}</div>
+            <div class="codebox"><pre class="code">${hl(c.code)}</pre><button class="try" title="Load into the live playground">▶ Try it</button></div>
+            ${c.tip ? `<div class="tip">${c.tip}</div>` : ''}
+          </div>
+          <div class="stage-wrap">
+            <div class="stage"></div>
+            <div class="cap"><span class="steps"><i></i><i></i><i></i></span><span class="ctext"></span><button class="replay">↻ Replay</button></div>
+          </div>
+        </div>`;
+      sec.append(art);
+      const link = el('a', 'nl' + (done[id] ? ' done' : ''), `<b>${n}</b>${esc(c.t)}`); link.href = '#' + id; nav.append(link);
+      const card = { c, el: art, link, stage: $('.stage', art), dots: [...art.querySelectorAll('.cap .steps i')], ctext: $('.ctext', art), played: false };
+      cards.push(card);
+      $('.replay', art).onclick = () => play(card);
+      $('.try', art).onclick = () => { $('#pq').value = c.code; $('#playground').scrollIntoView(); setTimeout(runSQL, 400); };
+      $('.got input', art).onchange = (e) => { done[id] = e.target.checked; if (!done[id]) delete done[id]; store.set('sqlz-done', done); link.classList.toggle('done', !!done[id]); updateProgress(); };
+      link.onclick = () => $('#side').classList.remove('open');
+    });
+    content.append(sec);
+  });
+  $('#pills').innerHTML = [`${CONCEPTS.length} concepts`, `${LEVELS.length} levels`, 'Animated examples', 'Live SQL playground', 'No jargon'].map(x => `<span class="pill">${x}</span>`).join('');
+  [P, C, O, E].forEach(t => $('#sampleTables').append(renderTable(t)));
+  updateProgress();
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    const card = cards.find(k => k.stage === e.target);
+    if (e.isIntersecting && card && !card.played) { card.played = true; play(card); }
+  }), { threshold: .35 });
+  cards.forEach(k => io.observe(k.stage));
+}
+function updateProgress() {
+  const c = Object.keys(done).length, t = CONCEPTS.length;
+  $('#progText').textContent = `${c} of ${t} understood`;
+  $('#progBar').style.width = (c / t * 100) + '%';
+}
+
+/* search */
+$('#search').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  cards.forEach(k => {
+    const hit = !q || (k.c.t + ' ' + k.c.one + ' ' + k.c.body.join(' ') + ' ' + k.c.code).toLowerCase().includes(q);
+    k.el.classList.toggle('hidden', !hit); k.link.classList.toggle('hidden', !hit);
+  });
+  document.querySelectorAll('section.lvl[id^="level-"]').forEach(s => s.classList.toggle('hidden', !s.querySelector('.card:not(.hidden)')));
+});
+
+/* menu + theme */
+$('#menuBtn').onclick = () => $('#side').classList.toggle('open');
+(function () {
+  const saved = store.get('sqlz-theme', null);
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  $('#themeBtn').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next); store.set('sqlz-theme', next);
+  };
+})();
+
+/* hero typing loop */
+(function heroLoop() {
+  const demos = [
+    ['SELECT name, price\nFROM products\nWHERE price > 10;', ['name','price'], [['Headphones',40],['Mouse',15]]],
+    ['SELECT category, COUNT(*)\nFROM products\nGROUP BY category;', ['category','count'], [['Office',2],['Food',1],['Tech',2]]],
+    ['SELECT c.name, o.amount\nFROM customers c\nJOIN orders o ON c.id = o.customer_id;', ['name','amount'], [['Asha',50],['Ben',20],['Asha',30]]]
+  ];
+  let d = 0;
+  const q = $('#heroQ'), r = $('#heroR');
+  function next() {
+    const [sql, cols, rows] = demos[d % demos.length]; d++;
+    r.innerHTML = ''; let i = 0;
+    const tick = () => {
+      q.innerHTML = hl(sql.slice(0, i)) + '<span class="caret"></span>';
+      q.querySelectorAll('.k').forEach(x => x.style.color = '#8ab4ff');
+      q.querySelectorAll('.s').forEach(x => x.style.color = '#a5e3a0');
+      q.querySelectorAll('.n').forEach(x => x.style.color = '#ffc66d');
+      q.querySelectorAll('.f').forEach(x => x.style.color = '#f0a0ff');
+      if (i++ < sql.length) setTimeout(tick, 38);
+      else {
+        const t = el('table'); t.innerHTML = `<thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(rw => `<tr>${rw.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+        r.append(t);
+        t.querySelectorAll('tr').forEach((tr, k) => setTimeout(() => tr.classList.add('show'), 300 + k * 180));
+        setTimeout(next, 4200);
+      }
+    };
+    tick();
+  }
+  next();
+})();
+
+/* =========================================================
+   LIVE PLAYGROUND (SQLite in the browser via sql.js)
+   ========================================================= */
+const SEED = `
+CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, category TEXT, price REAL);
+INSERT INTO products VALUES (1,'Pen','Office',2),(2,'Notebook','Office',5),(3,'Apple','Food',1),(4,'Headphones','Tech',40),(5,'Mouse','Tech',15);
+CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT, city TEXT);
+INSERT INTO customers VALUES (1,'Asha','Delhi'),(2,'Ben','Mumbai'),(3,'Chen','Delhi'),(4,'Dia','Pune');
+CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, amount REAL, order_date TEXT);
+INSERT INTO orders VALUES (101,1,50,'2026-01-15'),(102,2,20,'2026-02-03'),(103,1,30,'2026-02-20'),(104,5,10,'2026-03-09');
+CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT, dept TEXT, salary REAL, manager_id INTEGER);
+INSERT INTO employees VALUES (1,'Ravi','Sales',5000,NULL),(2,'Sara','Sales',4000,1),(3,'Tom','IT',6000,1),(4,'Uma','IT',4500,3);
+CREATE TABLE contacts (id INTEGER PRIMARY KEY, name TEXT, phone TEXT);
+INSERT INTO contacts VALUES (1,'Asha','98123'),(2,'Ben',NULL),(3,'Chen','99001'),(4,'Dia',NULL);
+CREATE TABLE shop_a (name TEXT); INSERT INTO shop_a VALUES ('Asha'),('Ben');
+CREATE TABLE shop_b (name TEXT); INSERT INTO shop_b VALUES ('Ben'),('Chen');
+CREATE TABLE sizes (size TEXT); INSERT INTO sizes VALUES ('S'),('M');
+CREATE TABLE colors (color TEXT); INSERT INTO colors VALUES ('Red'),('Blue');
+CREATE TABLE scores (name TEXT, score INTEGER); INSERT INTO scores VALUES ('Asha',90),('Ben',85),('Chen',85),('Dia',70);
+CREATE TABLE sales (month_no INTEGER, month TEXT, amount REAL); INSERT INTO sales VALUES (1,'Jan',100),(2,'Feb',120),(3,'Mar',90);
+CREATE TABLE accounts (name TEXT PRIMARY KEY, balance REAL); INSERT INTO accounts VALUES ('Asha',100),('Ben',50);
+CREATE TABLE price_log (product TEXT, old_price REAL, new_price REAL);
+CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT); INSERT INTO users VALUES (1,'Asha'),(2,'Ben');
+`;
+let SQLlib = null, db = null, loading = null;
+function loadSQL() {
+  if (loading) return loading;
+  loading = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js';
+    s.onload = () => initSqlJs({ locateFile: f => 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/' + f }).then(L => { SQLlib = L; res(); }, rej);
+    s.onerror = () => rej(new Error('Could not load SQLite. Check your internet connection.'));
+    document.head.append(s);
+  });
+  loading.catch(() => { loading = null; });
+  return loading;
+}
+function freshDB() { db = new SQLlib.Database(); db.run(SEED); }
+async function runSQL() {
+  const out = $('#pout'), status = $('#pstatus');
+  out.innerHTML = '';
+  try {
+    if (!db) { status.textContent = 'Loading SQLite…'; await loadSQL(); freshDB(); }
+    const t0 = performance.now();
+    const res = db.exec($('#pq').value);
+    status.textContent = `Done in ${(performance.now() - t0).toFixed(1)} ms`;
+    if (!res.length) out.innerHTML = '<p class="muted">✅ Ran fine. (No rows to show — try a SELECT.)</p>';
+    res.forEach((r, i) => out.append(renderTable(T(res.length > 1 ? 'result ' + (i + 1) : 'result', r.columns, r.values), 'out')));
+  } catch (e) {
+    status.textContent = '';
+    out.append(el('div', 'perr', '⚠️ ' + esc(e.message || e)));
+  }
+}
+$('#runBtn').onclick = runSQL;
+$('#resetBtn').onclick = async () => { try { await loadSQL(); freshDB(); $('#pstatus').textContent = 'Data reset to the original sample tables.'; $('#pout').innerHTML = ''; } catch (e) { $('#pstatus').textContent = e.message; } };
+$('#pq').addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runSQL(); });
+
+build();
+</script>
+</body>
+</html>
