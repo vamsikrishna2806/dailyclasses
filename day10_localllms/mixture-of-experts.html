@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mixture of Experts</title>
+<style>
+:root {
+  --bg: #f6f7fb; --surface: #ffffff; --surface-2: #eef1f6; --text: #1b2230; --muted: #5a6476;
+  --border: #dbe0e8; --accent: #2563eb; --accent-2: #7c3aed; --accent-soft: #e7eefc;
+  --ok: #15803d; --ok-soft: #e6f5ea; --warn: #b45309; --warn-soft: #fdf2e1; --danger: #b91c1c; --danger-soft: #fdeaea;
+  --code-bg: #0f172a; --code-text: #e2e8f0; --code-dim: #8b9bb4; --code-cmd: #7dd3fc;
+  --on: #16a34a; --on-soft: #dcf5e4; --router: #db2777; --router-soft: #fce7f1;
+  --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1015; --surface: #151a21; --surface-2: #1c222b; --text: #e6e9ef; --muted: #9aa4b3; --border: #2a313b;
+    --accent: #60a5fa; --accent-2: #a78bfa; --accent-soft: #162238; --ok: #4ade80; --ok-soft: #10251a;
+    --warn: #fbbf24; --warn-soft: #2a200f; --danger: #f87171; --danger-soft: #2b1414; --code-bg: #090c11; --shadow: none;
+    --on: #4ade80; --on-soft: #10251a; --router: #f472b6; --router-soft: #2d1424;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1015; --surface: #151a21; --surface-2: #1c222b; --text: #e6e9ef; --muted: #9aa4b3; --border: #2a313b;
+  --accent: #60a5fa; --accent-2: #a78bfa; --accent-soft: #162238; --ok: #4ade80; --ok-soft: #10251a;
+  --warn: #fbbf24; --warn-soft: #2a200f; --danger: #f87171; --danger-soft: #2b1414; --code-bg: #090c11; --shadow: none;
+  --on: #4ade80; --on-soft: #10251a; --router: #f472b6; --router-soft: #2d1424;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+code, pre { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+:not(pre) > code { font-size: .88em; background: var(--surface-2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 14px; }
+pre .c { color: var(--code-dim); } pre .k { color: var(--code-cmd); }
+button { font: inherit; color: inherit; }
+h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 10px; }
+h2 { font-size: 1.55rem; line-height: 1.25; margin: 0 0 8px; }
+h3 { font-size: 1.12rem; margin: 22px 0 8px; }
+p, li { max-width: 78ch; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; }
+
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--border); }
+.topbar-inner { display: flex; align-items: center; gap: 12px; padding: 10px 16px; max-width: 980px; margin: 0 auto; }
+.brand { font-weight: 700; white-space: nowrap; }
+.prog { flex: 1; height: 6px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+.prog > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.btn { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+main { max-width: 980px; margin: 0 auto; padding: 22px 16px 80px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+.toc a { font-size: 13.5px; text-decoration: none; background: var(--surface); border: 1px solid var(--border); border-radius: 99px; padding: 4px 12px; color: var(--muted); }
+.toc a:hover { color: var(--accent); border-color: var(--accent); }
+section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 28px; margin-bottom: 20px; box-shadow: var(--shadow); scroll-margin-top: 64px; }
+.kicker { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-weight: 700; }
+.lead { color: var(--muted); font-size: 1.06rem; }
+.hero { background: linear-gradient(135deg, var(--accent-soft), var(--surface)); }
+.note, .tip, .warnbox { border-radius: 10px; padding: 12px 16px; margin: 14px 0; }
+.note { background: var(--accent-soft); } .tip { background: var(--ok-soft); } .warnbox { background: var(--warn-soft); }
+.big-idea { font-size: 1.2rem; font-weight: 700; text-align: center; padding: 18px; border-radius: 12px; background: var(--surface-2); border: 2px dashed var(--accent-2); margin: 16px 0; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.card h4 { margin: 0 0 6px; }
+
+/* hospital story */
+.story { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin: 14px 0; }
+.story .card { text-align: center; font-size: 14.5px; }
+.story .emo { font-size: 34px; }
+
+/* router demo */
+.tokens { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.tok { border: 2px solid var(--border); background: var(--surface-2); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 600; }
+.tok.sel { border-color: var(--router); background: var(--router-soft); color: var(--router); }
+.flow { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.router { text-align: center; padding: 10px; border-radius: 10px; background: var(--router-soft); color: var(--router); font-weight: 700; border: 2px solid var(--router); }
+.experts { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+.ex { border: 2px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; opacity: .45; transition: all .3s; background: var(--surface); }
+.ex .emo { font-size: 26px; }
+.ex .nm { font-weight: 700; font-size: 14px; }
+.ex .sc { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ex .meter { height: 6px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.ex .meter div { height: 100%; background: var(--muted); transition: width .3s; }
+.ex.on { opacity: 1; border-color: var(--on); background: var(--on-soft); transform: translateY(-3px); }
+.ex.on .meter div { background: var(--on); }
+.result { padding: 12px 14px; border-radius: 10px; background: var(--surface-2); font-size: 15px; }
+
+/* dense vs moe */
+.vs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.people { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; font-size: 22px; text-align: center; margin: 8px 0; }
+.people span { opacity: .25; } .people span.w { opacity: 1; }
+.dense-blob { height: 64px; border-radius: 10px; background: var(--accent); opacity: .85; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; margin: 8px 0; }
+
+/* quiz */
+.q { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+.q .opts { display: grid; gap: 6px; margin-top: 8px; }
+.q button { text-align: left; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.q button:hover:not(:disabled) { border-color: var(--accent); }
+.q button.right { background: var(--ok-soft); border-color: var(--ok); }
+.q button.wrong { background: var(--danger-soft); border-color: var(--danger); }
+.q .why { display: none; margin-top: 8px; color: var(--muted); font-size: 14.5px; }
+.q.done .why { display: block; }
+
+@media (max-width: 760px) {
+  section { padding: 20px 16px; }
+  h1 { font-size: 1.6rem; }
+  .story, .experts { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .grid2, .vs { grid-template-columns: minmax(0,1fr); }
+}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <span class="brand">🧩 Mixture of Experts</span>
+  <div class="prog"><div id="prog"></div></div>
+  <button class="btn" id="themeBtn" aria-label="Toggle dark mode">🌓</button>
+</div></div>
+
+<main>
+<nav class="toc">
+  <a href="#story">The story</a><a href="#what">What is MoE?</a><a href="#demo">Try the router</a><a href="#vs">Dense vs MoE</a>
+  <a href="#inside">Inside the model</a><a href="#numbers">Real models</a><a href="#hardware">Memory &amp; speed</a>
+  <a href="#ollama">Try in Ollama</a><a href="#myths">Myths</a><a href="#quiz">Quiz</a>
+</nav>
+
+<section class="hero" id="top">
+  <div class="kicker">Day 10 · Local LLMs</div>
+  <h1>Mixture of Experts (MoE), explained simply</h1>
+  <p class="lead">Some of the biggest AI models today, like DeepSeek-V3, Mixtral, Qwen3-30B-A3B and gpt-oss, are "Mixture of Experts" models. They have a huge brain, but each word only <b>wakes up a small part of it</b>. This page shows how that works.</p>
+  <div class="big-idea">MoE = many specialists + a receptionist who picks the right few for each word.</div>
+</section>
+
+<!-- STORY -->
+<section id="story">
+  <div class="kicker">Start with a story</div>
+  <h2>🏥 The hospital</h2>
+  <p>Picture two hospitals.</p>
+  <div class="grid2">
+    <div class="card"><h4>Hospital A: one super-doctor</h4><p>One doctor knows <i>everything</i>. Every patient, whether they have a broken leg, a toothache or a fever, is seen by that same huge brain, and the whole brain has to think about every case.</p><p><b>Smart, but slow and expensive.</b></p></div>
+    <div class="card"><h4>Hospital B: specialists + a receptionist</h4><p>There are 8 specialist doctors. A <b>receptionist</b> looks at each patient and sends them to the <b>2 best doctors</b>. The other 6 rest.</p><p><b>Same total knowledge, much less work per patient.</b></p></div>
+  </div>
+  <div class="story">
+    <div class="card"><div class="emo">🤒</div><b>Patient arrives</b><br>= a word (token)</div>
+    <div class="card"><div class="emo">💁</div><b>Receptionist</b><br>= the <b>router</b></div>
+    <div class="card"><div class="emo">👩‍⚕️👨‍⚕️</div><b>2 doctors help</b><br>= the chosen <b>experts</b></div>
+    <div class="card"><div class="emo">📝</div><b>Combined advice</b><br>= the output</div>
+  </div>
+  <div class="note">Hospital A is a normal (<b>dense</b>) model. Hospital B is a <b>Mixture of Experts</b> model.</div>
+</section>
+
+<!-- WHAT -->
+<section id="what">
+  <div class="kicker">The definition</div>
+  <h2>So what is Mixture of Experts?</h2>
+  <p>A <b>Mixture of Experts</b> model splits part of its brain into many smaller networks called <b>experts</b>. A tiny network called the <b>router</b> (or "gate") decides which few experts should handle each word.</p>
+  <h3>Three words to remember</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Word</th><th>Simple meaning</th><th>Hospital version</th></tr>
+    <tr><td><b>Expert</b></td><td>A small neural network: one of many</td><td>A specialist doctor</td></tr>
+    <tr><td><b>Router</b></td><td>A tiny network that scores the experts and picks the best few</td><td>The receptionist</td></tr>
+    <tr><td><b>Top-k</b></td><td>How many experts are picked for each word (often 2 to 8)</td><td>"See the 2 best doctors"</td></tr>
+  </table></div>
+  <h3>Step by step, for every word</h3>
+  <ol>
+    <li>A word (token) arrives as a list of numbers.</li>
+    <li>The <b>router</b> gives every expert a score: "how useful are you for this word?"</li>
+    <li>It picks the <b>top-k</b> experts (say, the top 2).</li>
+    <li>Only those experts do their math. All the others are <b>skipped</b>.</li>
+    <li>Their answers are <b>mixed together</b>, weighted by their scores. That mixing is where the name "Mixture" comes from.</li>
+  </ol>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="kicker">Try it</div>
+  <h2>🎮 Play the router</h2>
+  <p>Click a word below. The router scores all 8 experts and wakes up the <b>top 2</b> (green). The rest stay asleep.</p>
+  <div class="tokens" id="sentA"></div>
+  <div class="tokens" id="sentB"></div>
+  <div class="flow">
+    <div class="router" id="rLabel">💁 Router: pick a word above</div>
+    <div class="experts" id="experts"></div>
+    <div class="result" id="result"></div>
+  </div>
+  <div class="warnbox"><b>Toy demo:</b> real experts don't have neat names like "Math" or "Code". Those labels are only here to make the idea easy to follow. See the <a href="#myths">myths</a> section for what really happens.</div>
+</section>
+
+<!-- DENSE VS MOE -->
+<section id="vs">
+  <div class="kicker">Compare</div>
+  <h2>Dense model vs MoE model</h2>
+  <div class="vs">
+    <div class="card"><h4>Dense model (normal)</h4>
+      <div class="dense-blob">One big block: all of it works</div>
+      <p>Every word uses <b>100%</b> of the model.</p>
+      <p>Example: Llama 3.1 8B → <b>8B</b> parameters used per word.</p></div>
+    <div class="card"><h4>MoE model</h4>
+      <div class="people" id="ppl"></div>
+      <p>Every word uses only the <b>chosen experts</b> (plus shared parts like attention).</p>
+      <p>Example: Mixtral 8x7B → <b>47B</b> total, but only <b>~13B</b> used per word.</p></div>
+  </div>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Dense</th><th>MoE</th></tr>
+    <tr><td>Knowledge stored</td><td>= size of model</td><td>Large (all experts together)</td></tr>
+    <tr><td>Work per word</td><td>Whole model</td><td>Small (only the active experts)</td></tr>
+    <tr><td>Speed</td><td>Slower for the same knowledge</td><td><b>Faster</b>: runs like a much smaller model</td></tr>
+    <tr><td>Memory (RAM/VRAM) needed</td><td>= size of model</td><td><b>Still the full size</b>: every expert must be loaded</td></tr>
+    <tr><td>Training</td><td>Simpler</td><td>Trickier (experts must be kept balanced)</td></tr>
+  </table></div>
+  <div class="big-idea">MoE: a big model's knowledge, at a small model's speed.<br><span style="font-weight:400;font-size:1rem">…but you still need memory for the big model.</span></div>
+</section>
+
+<!-- INSIDE -->
+<section id="inside">
+  <div class="kicker">A little deeper</div>
+  <h2>Where the experts live inside the model</h2>
+  <p>An LLM is a stack of layers (for example, 32). Each layer has two main parts:</p>
+  <ol>
+    <li><b>Attention</b>: "Which earlier words should I look at?" This part is <b>shared</b>; every word uses it.</li>
+    <li><b>Feed-forward network (FFN)</b>: "What do I know about this?" This is the biggest part of the model. <b>In MoE, this part is replaced by many experts + a router.</b></li>
+  </ol>
+<pre><span class="c">Dense layer:</span>   word → Attention → <span class="k">[ one big FFN ]</span>                    → next layer
+<span class="c">MoE layer:</span>     word → Attention → Router → <span class="k">[E1] [E2] [E3] ... [E8]</span>  → mix → next layer
+                                    <span class="c">picks top-2 ↑    ↑</span></pre>
+  <div class="note"><b>Important:</b> the router picks experts <b>again for every word and in every layer</b>. The word "cat" might use experts 2 and 5 in layer 1, then experts 1 and 7 in layer 2. A whole sentence ends up touching lots of different experts.</div>
+  <h3>The tiny bit of math (optional)</h3>
+<pre><span class="c"># router gives a score to each of 8 experts, then softmax turns scores into %</span>
+scores = [0.1, <span class="k">0.6</span>, 0.0, 0.05, <span class="k">0.2</span>, 0.0, 0.03, 0.02]
+top-2  = expert 2 (0.6) and expert 5 (0.2)
+weights after re-scaling: 0.6/0.8 = <span class="k">75%</span>,  0.2/0.8 = <span class="k">25%</span>
+output = 0.75 × Expert2(word) + 0.25 × Expert5(word)</pre>
+</section>
+
+<!-- NUMBERS -->
+<section id="numbers">
+  <div class="kicker">Real models</div>
+  <h2>Famous MoE models in numbers</h2>
+  <p>Look at the gap between <b>total</b> parameters (what you have to store) and <b>active</b> parameters (what each word actually uses).</p>
+  <div class="tablewrap"><table>
+    <tr><th>Model</th><th>Experts per layer</th><th>Used per word</th><th>Total params</th><th>Active params</th></tr>
+    <tr><td>Mixtral 8x7B</td><td>8</td><td>2</td><td>46.7B</td><td>~12.9B</td></tr>
+    <tr><td>gpt-oss-20b</td><td>32</td><td>4</td><td>~21B</td><td>~3.6B</td></tr>
+    <tr><td>Qwen3-30B-A3B</td><td>128</td><td>8</td><td>~30B</td><td>~3B <span style="color:var(--muted)">(the "A3B")</span></td></tr>
+    <tr><td>DeepSeek-V3 / R1</td><td>256 (+1 shared)</td><td>8 (+1 shared)</td><td>671B</td><td>~37B</td></tr>
+  </table></div>
+  <div class="tip"><b>Name decoder:</b> "<b>30B-A3B</b>" means 30 billion total, <b>A</b>ctive 3 billion. "<b>8x7B</b>" means 8 experts of roughly 7B each. The total is less than 56B because the attention layers are shared between experts.</div>
+</section>
+
+<!-- HARDWARE -->
+<section id="hardware">
+  <div class="kicker">Connect to CPU / GPU / RAM / VRAM</div>
+  <h2>What MoE means for your computer</h2>
+  <p>From the <a href="cpu-gpu-ram-vram-for-local-llms.html">hardware guide</a>: <b>speed ≈ memory bandwidth ÷ bytes read per word</b>. MoE changes the "bytes read per word" part.</p>
+  <div class="grid2">
+    <div class="card"><h4>📦 Memory: needs the FULL size</h4><p>Any word might need any expert, so <b>every expert must be loaded</b> in RAM or VRAM. Qwen3-30B-A3B at 4-bit is about <b>18–19 GB</b>, the same as a dense 30B model.</p></div>
+    <div class="card"><h4>⚡ Speed: like the ACTIVE size</h4><p>Each word reads only the active experts: about <b>3B</b> parameters, roughly 2 GB. So it writes about as fast as a 3B model, even on a CPU.</p></div>
+  </div>
+<pre><span class="c"># rough example on a CPU with ~60 GB/s RAM bandwidth (4-bit)</span>
+Dense 32B   reads ~19 GB per word  →  60 ÷ 19 ≈ <span class="k">3 words/s</span>    🐢
+MoE 30B-A3B reads  ~2 GB per word  →  60 ÷ 2  ≈ <span class="k">30 words/s (max)</span>   🚀  <span class="c">real-world maybe 15–25</span></pre>
+  <div class="note"><b>Why this is great for local LLMs:</b> many laptops have lots of <b>RAM</b> (32 GB) but little or no <b>VRAM</b>. An MoE model fits in that RAM, and because only a small part is read per word, it still runs at a usable speed on the CPU.</div>
+</section>
+
+<!-- OLLAMA -->
+<section id="ollama">
+  <div class="kicker">Hands-on</div>
+  <h2>Try MoE models in Ollama</h2>
+<pre><span class="k">ollama run qwen3:30b-a3b</span>    <span class="c"># ~19 GB, 3B active: great on 32 GB RAM machines</span>
+<span class="k">ollama run gpt-oss:20b</span>      <span class="c"># ~14 GB, 3.6B active: from OpenAI, open weights</span>
+<span class="k">ollama run mixtral:8x7b</span>     <span class="c"># ~26 GB, 13B active: the classic MoE</span>
+
+<span class="k">ollama ps</span>                   <span class="c"># SIZE shows the FULL model size (all experts loaded)</span></pre>
+  <h3>Class experiment</h3>
+  <ol>
+    <li>Run a dense model of similar size, e.g. <code>ollama run qwen2.5:32b --verbose</code>, and note the <b>eval rate</b>.</li>
+    <li>Run <code>ollama run qwen3:30b-a3b --verbose</code> with the same question and note the eval rate.</li>
+    <li>Compare with <code>ollama ps</code>: <b>similar memory</b>, but the MoE model writes <b>many times faster</b>.</li>
+  </ol>
+  <p style="color:var(--muted);font-size:14px">Model tags change over time. If a tag isn't found, search the model name on ollama.com/library.</p>
+</section>
+
+<!-- MYTHS -->
+<section id="myths">
+  <div class="kicker">Clear the confusion</div>
+  <h2>Myths vs reality</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Myth</th><th>Reality</th></tr>
+    <tr><td>"Each expert is a topic expert: a math expert, a history expert…"</td><td>Not really. Researchers find experts specialize in <b>patterns</b> such as punctuation, certain word types or code syntax, not neat school subjects. Nobody assigns topics; the specialization emerges during training.</td></tr>
+    <tr><td>"MoE needs less memory."</td><td>No. All experts must be loaded. MoE saves <b>compute and speed</b>, not memory.</td></tr>
+    <tr><td>"A 47B MoE is as smart as a 47B dense model."</td><td>Usually it lands somewhere in between: smarter than a dense model of its <i>active</i> size, but often a little below a dense model of its <i>total</i> size.</td></tr>
+    <tr><td>"The router picks experts once per question."</td><td>It picks <b>per word, per layer</b>, thousands of times in one answer.</td></tr>
+    <tr><td>"Mixtral 8x7B = 8 separate 7B models glued together."</td><td>No. Only the FFN parts are separate experts. Attention and embeddings are shared, so the total is 46.7B, not 56B.</td></tr>
+  </table></div>
+  <h3>Why training MoE is tricky (one-line version)</h3>
+  <p>If the router falls in love with one or two experts, they get all the work and the others never learn. Training adds a <b>"load balancing"</b> rule that rewards spreading words fairly across experts, like a receptionist told not to send everyone to the same doctor.</p>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz">
+  <div class="kicker">Check yourself</div>
+  <h2>Quiz</h2>
+  <p>Score: <b id="qScore">0</b> / <span id="qTotal"></span></p>
+  <div id="qList"></div>
+  <div class="big-idea" style="margin-top:20px">Remember: <b>Router</b> picks → <b>few experts</b> work → answers <b>mixed</b>.<br><span style="font-weight:400;font-size:1rem">Big knowledge · small work per word · full memory still needed.</span></div>
+</section>
+</main>
+
+<script>
+/* theme + progress */
+(function () {
+  const root = document.documentElement;
+  try { const t = localStorage.getItem("moeTheme"); if (t) root.dataset.theme = t; } catch (e) {}
+  document.getElementById("themeBtn").onclick = () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("moeTheme", root.dataset.theme); } catch (e) {}
+  };
+  const bar = document.getElementById("prog");
+  const up = () => { const h = document.documentElement; bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%"; };
+  addEventListener("scroll", up, { passive: true }); up();
+})();
+
+/* router demo */
+(function () {
+  const E = [
+    ["🔢", "Numbers"], ["💻", "Code"], ["🗣️", "Grammar"], ["🐾", "Animals"],
+    ["🍕", "Food"], ["🌍", "Places"], ["❗", "Punctuation"], ["😊", "Feelings"]
+  ];
+  // toy router scores per word (index matches E)
+  const W = {
+    "The":    [1, 1, 9, 1, 1, 1, 2, 1], "cat":    [0, 0, 2, 9, 1, 1, 0, 3], "ate":     [0, 0, 4, 3, 8, 0, 0, 1],
+    "3":      [9, 2, 1, 0, 2, 0, 1, 0], "pizzas": [2, 0, 1, 1, 9, 2, 0, 1], "in":      [0, 1, 8, 0, 0, 5, 1, 0],
+    "Rome":   [0, 0, 1, 0, 3, 9, 0, 1], "!":      [0, 1, 2, 0, 0, 0, 9, 5],
+    "print(": [1, 9, 1, 0, 0, 0, 5, 0], "2":      [9, 4, 0, 0, 0, 0, 1, 0], "+":       [8, 6, 0, 0, 0, 0, 3, 0],
+    "happy":  [0, 0, 3, 1, 1, 0, 0, 9], "dog":    [0, 0, 2, 9, 0, 1, 0, 4], ")":       [0, 8, 0, 0, 0, 0, 7, 0]
+  };
+  const A = ["The", "cat", "ate", "3", "pizzas", "in", "Rome", "!"];
+  const B = ["print(", "2", "+", "2", ")", "happy", "dog"];
+  const box = document.getElementById("experts");
+  box.innerHTML = E.map((e, i) => `<div class="ex" id="ex${i}"><div class="emo">${e[0]}</div><div class="nm">Expert ${i + 1}: ${e[1]}</div><div class="sc">score —</div><div class="meter"><div style="width:0"></div></div></div>`).join("");
+  const mk = (id, arr) => document.getElementById(id).innerHTML =
+    `<span style="align-self:center;color:var(--muted);font-size:13px">${id === "sentA" ? "Sentence 1:" : "Sentence 2:"}</span>` +
+    arr.map(w => `<button class="tok" data-w="${w}">${w}</button>`).join("");
+  mk("sentA", A); mk("sentB", B);
+  function pick(w) {
+    const raw = W[w], ex = raw.map(v => Math.exp(v / 2)), sum = ex.reduce((a, b) => a + b, 0), p = ex.map(v => v / sum);
+    const top = p.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).slice(0, 2);
+    const ts = top[0][0] + top[1][0];
+    p.forEach((v, i) => {
+      const el = document.getElementById("ex" + i), on = top.some(t => t[1] === i);
+      el.classList.toggle("on", on);
+      el.querySelector(".sc").textContent = "score " + Math.round(v * 100) + "%" + (on ? " ✅" : " 💤");
+      el.querySelector(".meter div").style.width = (v * 100) + "%";
+    });
+    document.getElementById("rLabel").textContent = `💁 Router looks at "${w}" and picks the top 2 experts`;
+    const [a, b] = top;
+    document.getElementById("result").innerHTML =
+      `Output for <b>"${w}"</b> = <b>${Math.round(a[0] / ts * 100)}%</b> × ${E[a[1]][0]} Expert ${a[1] + 1} + <b>${Math.round(b[0] / ts * 100)}%</b> × ${E[b[1]][0]} Expert ${b[1] + 1}. ` +
+      `<span style="color:var(--muted)">The other 6 experts did <b>zero</b> work, which saves time.</span>`;
+  }
+  document.querySelector("main").addEventListener("click", e => {
+    const t = e.target.closest(".tok"); if (!t) return;
+    document.querySelectorAll(".tok").forEach(x => x.classList.remove("sel"));
+    t.classList.add("sel");
+    pick(t.dataset.w);
+  });
+  document.querySelector(".tok[data-w='cat']").classList.add("sel");
+  pick("cat");
+})();
+
+/* dense vs moe people */
+(function () {
+  const el = document.getElementById("ppl");
+  el.innerHTML = Array.from({ length: 8 }, () => "<span>🧑‍🔬</span>").join("");
+  const s = [...el.children];
+  let t = 0;
+  const tick = () => {
+    const a = (t * 3) % 8, b = (t * 5 + 2) % 8 === a ? (a + 1) % 8 : (t * 5 + 2) % 8;
+    s.forEach((x, i) => x.classList.toggle("w", i === a || i === b));
+    t++;
+  };
+  tick();
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(tick, 1100);
+})();
+
+/* quiz */
+(function () {
+  const Q = [
+    ["In MoE, what does the router do?", ["Stores the model on disk", "Picks which few experts handle each word", "Translates text to numbers", "Trains the model"], 1,
+      "The router scores every expert and picks the top-k for each word, like a receptionist sending patients to the right doctors."],
+    ["Mixtral 8x7B uses how many experts per word (in each layer)?", ["1", "2", "8", "All 47B"], 1,
+      "It has 8 experts per layer and picks the top 2 for every word."],
+    ["Qwen3-30B-A3B: what does 'A3B' mean?", ["Version A, 3rd build", "About 3B parameters are Active per word", "3 billion experts", "It needs 3 GB of RAM"], 1,
+      "30B total parameters, but only about 3B are Active for each word."],
+    ["Compared with a dense model of the same total size, an MoE model needs…", ["Much less memory", "About the same memory, but runs faster", "More GPU cores", "No RAM at all"], 1,
+      "All experts must be loaded (same memory), but only the active ones are read per word, so it's faster."],
+    ["Which part of a transformer layer is turned into experts?", ["The tokenizer", "Attention", "The feed-forward network (FFN)", "The SSD"], 2,
+      "The FFN, the biggest part of each layer, is split into experts. Attention stays shared."],
+    ["How often does the router choose experts?", ["Once per chat", "Once per question", "For every word in every layer", "Only during training"], 2,
+      "Routing happens per token, per layer, so a single answer involves thousands of routing decisions."],
+    ["Why is MoE good for laptops with lots of RAM but no big GPU?", ["It deletes unused experts", "Only a small part is read per word, so the CPU can keep up", "It runs on the SSD", "It doesn't need the CPU"], 1,
+      "Speed ≈ bandwidth ÷ bytes read per word. MoE reads far fewer bytes per word, so even RAM bandwidth gives decent speed."]
+  ];
+  const list = document.getElementById("qList");
+  document.getElementById("qTotal").textContent = Q.length;
+  let score = 0;
+  list.innerHTML = Q.map((q, i) => `<div class="q" id="q${i}"><b>${i + 1}. ${q[0]}</b><div class="opts">${q[1].map((o, k) => `<button data-q="${i}" data-k="${k}">${o}</button>`).join("")}</div><div class="why">${q[3]}</div></div>`).join("");
+  list.onclick = e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const i = +b.dataset.q, k = +b.dataset.k, box = document.getElementById("q" + i);
+    if (box.classList.contains("done")) return;
+    box.classList.add("done");
+    box.querySelectorAll("button").forEach((x, j) => { x.disabled = true; if (j === Q[i][2]) x.classList.add("right"); });
+    if (k === Q[i][2]) score++; else b.classList.add("wrong");
+    document.getElementById("qScore").textContent = score;
+  };
+})();
+</script>
+</body>
+</html>

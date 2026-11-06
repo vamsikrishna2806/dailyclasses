@@ -1,0 +1,171 @@
+<!--
+=============================================================================
+LAYER: Frontend Presentation Layer (templates/index.html)
+DESCRIPTION:
+  This file provides the semantic HTML structure for the Single-Page
+  Application (SPA). It renders the Neumorphic interface container, input
+  controls, counter and progress metrics, filter tabs, and dynamic task list.
+  Served by Flask's render_template() and styled by static/style.css.
+=============================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A modern Neumorphic To-Do List web application built with Vanilla JavaScript and Flask REST API.">
+  <title>Neumorph To-Do | Clean Task Manager</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans for sleek modern typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Neumorphic Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Header Section with Neumorphic Branding -->
+    <header class="app-header">
+      <div class="brand-badge">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5"></path>
+          <path d="M2 12l10 5 10-5"></path>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1 class="app-title">TaskFlow</h1>
+        <p class="app-subtitle">Neumorphic Task Management • SPA & Flask REST</p>
+      </div>
+    </header>
+
+    <!-- Main Application Card -->
+    <main class="neumorphic-card main-card">
+      
+      <!-- New Task Form Section -->
+      <section class="add-task-section" aria-label="Add new task">
+        <form id="add-task-form" class="task-form">
+          <div class="input-row">
+            <!-- Text Input with Neumorphic Inset Shadow -->
+            <div class="input-group title-group">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <input 
+                type="text" 
+                id="task-title-input" 
+                name="title" 
+                placeholder="What needs to be done today?" 
+                autocomplete="off"
+                required
+                maxlength="150"
+              />
+            </div>
+
+            <!-- Due Date Picker (Stretch Goal) -->
+            <div class="input-group date-group">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <input 
+                type="date" 
+                id="task-date-input" 
+                name="dueDate" 
+                title="Due Date (optional)"
+              />
+            </div>
+
+            <!-- Add Task Button -->
+            <button type="submit" id="add-task-btn" class="neumorphic-btn primary-btn">
+              <span class="btn-text">Add Task</span>
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <!-- Error banner for client validation feedback -->
+          <div id="form-error" class="form-error-msg hidden" role="alert"></div>
+        </form>
+      </section>
+
+      <!-- Task Statistics & Progress Bar -->
+      <section class="stats-section" aria-label="Task progress">
+        <div class="stats-header">
+          <div class="counter-container">
+            <span class="counter-label">Progress:</span>
+            <!-- Requirement 5: "3 of 5 tasks done" -->
+            <strong id="tasks-counter" class="counter-value">0 of 0 tasks done</strong>
+          </div>
+          <span id="percent-badge" class="percent-badge">0%</span>
+        </div>
+
+        <!-- Inset Neumorphic Progress Track -->
+        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+          <div id="progress-bar-fill" class="progress-bar-fill"></div>
+        </div>
+      </section>
+
+      <!-- Filter Controls (Stretch Goal: All / Active / Done) -->
+      <section class="filters-section" aria-label="Task filters">
+        <div class="filter-pills" role="tablist">
+          <button type="button" class="filter-pill active" data-filter="all" role="tab" aria-selected="true">
+            All <span id="count-all" class="pill-count">0</span>
+          </button>
+          <button type="button" class="filter-pill" data-filter="active" role="tab" aria-selected="false">
+            Active <span id="count-active" class="pill-count">0</span>
+          </button>
+          <button type="button" class="filter-pill" data-filter="done" role="tab" aria-selected="false">
+            Done <span id="count-done" class="pill-count">0</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Dynamic Task List Section -->
+      <section class="tasks-section" aria-label="Tasks list">
+        <!-- Loading Spinner -->
+        <div id="tasks-loading" class="tasks-loading">
+          <div class="spinner"></div>
+          <p>Loading tasks from database...</p>
+        </div>
+
+        <!-- The List of Tasks rendered via vanilla JavaScript -->
+        <ul id="tasks-list" class="tasks-list" role="list">
+          <!-- Dynamically populated via script.js -->
+        </ul>
+
+        <!-- Empty State Container when no tasks match filter -->
+        <div id="empty-state" class="empty-state hidden">
+          <div class="empty-icon-well">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h3 class="empty-title">All Caught Up!</h3>
+          <p id="empty-description" class="empty-description">No tasks found. Create one above to get started.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer with Layer Architecture Info -->
+    <footer class="app-footer">
+      <p>Clean 3-Layer Architecture • <strong>Frontend</strong> (SPA) ↔ <strong>Flask REST</strong> ↔ <strong>SQLite</strong></p>
+    </footer>
+
+    <!-- Toast Notification Container for interactive user feedback -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  </div>
+
+  <!-- Vanilla Client-Side JavaScript Logic -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LangChain Animated Lessons</title>
+<meta name="description" content="All 23 LangChain + Ollama lessons in one page: each program animated step by step, with every class explained in one line.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ee; --surface:#ffffff; --surface2:#f0ede4; --ink:#1d1b16; --muted:#6b665a; --line:#e2ddd0;
+  --accent:#e8590c; --accent-soft:#fff0e6; --good:#16a34a; --bad:#dc2626;
+  --code-bg:#1f2230; --code-ink:#e6e6ef; --code-hl:rgba(255,196,0,.20); --code-hl-bar:#ffc400;
+  --k:#c792ea; --s:#a5e075; --c:#7f8aa8; --d:#ffcb6b;
+  --shadow:0 2px 10px rgba(40,30,10,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15161b; --surface:#1e2027; --surface2:#262932; --ink:#ecebe6; --muted:#a19d92; --line:#33363f;
+    --accent:#ff8a3d; --accent-soft:#3a2516; --good:#4ade80; --bad:#f87171;
+    --code-bg:#101218; --shadow:0 2px 12px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15161b; --surface:#1e2027; --surface2:#262932; --ink:#ecebe6; --muted:#a19d92; --line:#33363f;
+  --accent:#ff8a3d; --accent-soft:#3a2516; --good:#4ade80; --bad:#f87171;
+  --code-bg:#101218; --shadow:0 2px 12px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Baloo 2",system-ui,sans-serif;font-size:17px;line-height:1.45}
+code,pre{font-family:"JetBrains Mono",ui-monospace,monospace}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+header.top h1{font-size:28px;margin:0;line-height:1.1}
+header.top p{margin:0;color:var(--muted);font-size:15px}
+.theme-btn{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;font:inherit;font-size:14px;cursor:pointer}
+
+/* lesson picker */
+.groups{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow)}
+.grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.grp-name{font-weight:700;font-size:14px;color:var(--muted);min-width:118px}
+.chip{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:2px 9px;font:inherit;font-size:14px;cursor:pointer;transition:transform .15s}
+.chip:hover{transform:translateY(-1px);border-color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+
+/* lesson head */
+.lesson-head{display:flex;align-items:center;gap:14px;margin:18px 0 8px;flex-wrap:wrap}
+.big-emoji{font-size:46px;line-height:1}
+.lesson-head h2{margin:0;font-size:30px;line-height:1.1}
+.lesson-head .folder{color:var(--muted);font-size:14px}
+.nutshell{background:var(--accent-soft);border-left:5px solid var(--accent);border-radius:10px;padding:10px 14px;font-size:19px;margin-bottom:6px}
+.nutshell b{color:var(--accent)}
+.analogy{color:var(--muted);font-size:16px;margin:0 0 14px}
+
+/* main grid */
+.main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.stage-card{padding:12px}
+.stage{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:14px 12px;padding:18px 6px;min-height:230px;align-content:center}
+.actor{width:122px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;transition:opacity .3s}
+.actor .bubble{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;font-size:32px;background:var(--surface2);border:3px solid var(--ac,#999);transition:transform .25s, box-shadow .25s}
+.actor .nm{font-size:12.5px;font-weight:700;line-height:1.15;overflow-wrap:break-word}
+.actor .bdg{font-size:11.5px;background:var(--good);color:#fff;border-radius:8px;padding:0 6px;margin-top:2px;max-width:110px;opacity:0;transform:scale(.6);transition:all .3s}
+.actor .bdg.show{opacity:1;transform:scale(1)}
+.actor.glow .bubble{transform:scale(1.13);box-shadow:0 0 0 6px color-mix(in srgb,var(--ac) 28%,transparent),0 0 22px var(--ac)}
+.actor.dim{opacity:.45}
+.packet{position:absolute;left:0;top:0;z-index:5;pointer-events:none;background:var(--pc,#e8590c);color:#fff;font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.25);max-width:220px;overflow:hidden;text-overflow:ellipsis;font-family:"JetBrains Mono",monospace}
+.say{min-height:74px;background:var(--surface2);border-radius:10px;padding:10px 12px;font-size:17px;margin-top:4px}
+.say code{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:0 4px;font-size:14px}
+.controls{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{border:none;background:var(--ink);color:var(--bg);border-radius:10px;padding:6px 14px;font:inherit;font-weight:700;cursor:pointer}
+.btn.alt{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:5px;margin-left:auto}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);cursor:pointer;border:none;padding:0}
+.dot.on{background:var(--accent)}
+.dot.done{background:color-mix(in srgb,var(--accent) 45%,var(--line))}
+
+/* code */
+.code-card{overflow:hidden}
+.code-title{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:14px;color:var(--muted);border-bottom:1px solid var(--line)}
+pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);font-size:12.6px;line-height:1.55;padding:8px 0;overflow-x:auto;max-height:520px;overflow-y:auto}
+pre.code .ln{display:block;padding:0 12px 0 10px;border-left:3px solid transparent;white-space:pre;transition:background .3s}
+pre.code .ln.hl{background:var(--code-hl);border-left-color:var(--code-hl-bar)}
+pre.code .ln.cls{background:rgba(120,180,255,.18);border-left-color:#5aa2ff}
+.tk-k{color:var(--k)} .tk-s{color:var(--s)} .tk-c{color:var(--c);font-style:italic} .tk-d{color:var(--d)}
+
+/* classes */
+h3.sec{font-size:22px;margin:22px 0 4px}
+.sec-sub{color:var(--muted);margin:0 0 10px;font-size:15px}
+.classes{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.cls-card{padding:12px 14px;cursor:pointer;transition:transform .2s,border-color .2s;opacity:0;transform:translateY(10px);animation:pop .45s forwards}
+.cls-card:hover,.cls-card.sel{border-color:var(--accent);transform:translateY(-2px)}
+@keyframes pop{to{opacity:1;transform:none}}
+.cls-top{display:flex;align-items:center;gap:8px}
+.cls-emoji{font-size:28px}
+.cls-name{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:14.5px;word-break:break-word}
+.kind{font-size:11px;font-weight:700;border-radius:6px;padding:0 6px;margin-left:auto;white-space:nowrap}
+.kind.class{background:#dbeafe;color:#1e40af}
+.kind.function{background:#dcfce7;color:#166534}
+.kind.method{background:#fef3c7;color:#92400e}
+.kind.decorator{background:#fae8ff;color:#86198f}
+.kind.concept{background:#e5e7eb;color:#374151}
+.cls-does{margin:6px 0 2px;font-size:15.5px}
+.cls-like{margin:0;color:var(--muted);font-size:14px}
+.cls-from{margin-top:6px;font-size:11.5px;color:var(--muted);font-family:"JetBrains Mono",monospace;word-break:break-all}
+
+.pager{display:flex;justify-content:space-between;gap:10px;margin:26px 0 30px;flex-wrap:wrap}
+.pager .btn{max-width:48%}
+footer{color:var(--muted);font-size:13px;text-align:center;padding-bottom:20px}
+@media (max-width:520px){
+  .grp-name{min-width:100%}
+  .actor{width:100px}.actor .bubble{width:54px;height:54px;font-size:26px}
+  .lesson-head h2{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>🦜🔗 LangChain in a Nutshell</h1>
+      <p>23 tiny programs · runs locally with Ollama 🦙 · press ▶ and watch the data move</p>
+    </div>
+    <button class="theme-btn" id="themeBtn">🌓 Theme</button>
+  </header>
+
+  <nav class="groups" id="nav"></nav>
+
+  <section id="lesson">
+    <div class="lesson-head">
+      <div class="big-emoji" id="lEmoji"></div>
+      <div>
+        <h2 id="lTitle"></h2>
+        <div class="folder" id="lFolder"></div>
+      </div>
+    </div>
+    <div class="nutshell" id="lNut"></div>
+    <p class="analogy" id="lAnalogy"></p>
+
+    <div class="main">
+      <div class="card stage-card">
+        <div class="stage" id="stage"></div>
+        <div class="say" id="say"></div>
+        <div class="controls">
+          <button class="btn alt" id="prevBtn">◀ Back</button>
+          <button class="btn" id="playBtn">▶ Play</button>
+          <button class="btn alt" id="nextBtn">Next ▶</button>
+          <button class="btn alt" id="replayBtn">↺</button>
+          <div class="dots" id="dots"></div>
+        </div>
+      </div>
+      <div class="card code-card">
+        <div class="code-title"><span id="codeName">main.py</span><span>yellow = running now · blue = class you clicked</span></div>
+        <pre class="code" id="code"></pre>
+      </div>
+    </div>
+
+    <h3 class="sec">🧱 Every class in this program</h3>
+    <p class="sec-sub">Tap a card to find it in the code.</p>
+    <div class="classes" id="classes"></div>
+
+    <div class="pager">
+      <button class="btn alt" id="pPrev"></button>
+      <button class="btn" id="pNext"></button>
+    </div>
+  </section>
+  <footer>Code shown is the real <code>main.py</code> from each lesson folder (docstring removed).</footer>
+</div>
+
+<script>
+const CODE = {"01_setup": "from importlib.metadata import version, PackageNotFoundError\nfrom urllib.request import urlopen\nfrom urllib.error import URLError\nfrom dotenv import load_dotenv\nimport os\n\nload_dotenv()  # optional: reads .env (for example OLLAMA_HOST)\n\nfor pkg in [\"langchain\", \"langchain-core\", \"langchain-ollama\"]:\n    try:\n        print(f\"{pkg:<20} {version(pkg)}\")\n    except PackageNotFoundError:\n        print(f\"{pkg:<20} NOT INSTALLED -> pip install {pkg}\")\n\nhost = os.getenv(\"OLLAMA_HOST\", \"http://localhost:11434\")\nprint(\"Ollama host:\", host)\n\ntry:\n    with urlopen(f\"{host}/api/tags\", timeout=3) as resp:\n        print(\"Ollama server is running, status:\", resp.status)\nexcept URLError:\n    print(\"Ollama server NOT reachable -> start Ollama, then run: ollama pull llama3.2\")\n", "02_first_llm_call": "from dotenv import load_dotenv\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\nllm = ChatOllama(model=\"llama3.2\", temperature=0)\n\nquestion = \"Explain Python in one sentence.\"\nresponse = llm.invoke(question)\n\nprint(\"Answer:\", response.content)\nprint(\"Type:\", type(response).__name__)\nprint(\"Tokens:\", response.usage_metadata)\n", "03_messages": "from dotenv import load_dotenv\nfrom langchain_core.messages import SystemMessage, HumanMessage, AIMessage\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\nllm = ChatOllama(model=\"llama3.2\", temperature=0)\n\nmessages = [\n    SystemMessage(content=\"You are a friendly tutor. Answer in 2 short sentences.\"),\n    HumanMessage(content=\"What is a variable?\"),\n]\nfirst = llm.invoke(messages)\nprint(first.content)\n\n# Keep the conversation: add the reply, then the follow-up question\nmessages.append(AIMessage(content=first.content))\nmessages.append(HumanMessage(content=\"Give me an example in Python.\"))\nsecond = llm.invoke(messages)\nprint(second.content)\n", "04_prompt_templates": "from dotenv import load_dotenv\nfrom langchain_core.prompts import PromptTemplate\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\ntemplate = PromptTemplate.from_template(\"Write a {tone} poem about {topic} in 4 lines.\")\nllm = ChatOllama(model=\"llama3.2\", temperature=0.7)\n\nfor topic in [\"Python\", \"the moon\"]:\n    prompt = template.invoke({\"tone\": \"funny\", \"topic\": topic}).to_string()\n    print(llm.invoke(prompt).content)\n    print(\"-\" * 20)\n", "05_chat_prompt_placeholders": "from dotenv import load_dotenv\nfrom langchain_core.messages import HumanMessage, AIMessage\nfrom langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\nprompt = ChatPromptTemplate.from_messages([\n    (\"system\", \"You are a friendly tutor.\"),\n    MessagesPlaceholder(variable_name=\"history\"),\n    (\"human\", \"{question}\"),\n])\nllm = ChatOllama(model=\"llama3.2\", temperature=0)\n\nhistory = [\n    HumanMessage(content=\"I am learning Python.\"),\n    AIMessage(content=\"Great! Ask me anything.\"),\n]\nmsgs = prompt.invoke({\"history\": history, \"question\": \"What is a loop?\"})\nprint(llm.invoke(msgs).content)\n", "06_output_parsers": "from dotenv import load_dotenv\nfrom langchain_core.output_parsers import StrOutputParser, CommaSeparatedListOutputParser, JsonOutputParser\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\nllm = ChatOllama(model=\"llama3.2\", temperature=0)\n\n# 1. Message -> plain string\ntext = StrOutputParser().invoke(llm.invoke(\"Say hello in one line\"))\nprint(type(text).__name__, text)\n\n# 2. Text -> Python list\nlist_parser = CommaSeparatedListOutputParser()\nraw = llm.invoke(f\"List 4 fruits. {list_parser.get_format_instructions()}\").content\nprint(list_parser.invoke(raw))\n\n# 3. Text -> dict\njson_parser = JsonOutputParser()\nraw = llm.invoke(f\"Name and age of a fictional person as JSON. {json_parser.get_format_instructions()}\").content\nprint(json_parser.invoke(raw))\n", "07_structured_output": "from dotenv import load_dotenv\nfrom pydantic import BaseModel, Field, ValidationError\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\n\nclass Person(BaseModel):\n    name: str = Field(description=\"full name of the person\")\n    age: int = Field(description=\"age in whole years\")\n    city: str | None = Field(default=None, description=\"city, if mentioned\")\n\nllm = ChatOllama(model=\"llama3.2\", temperature=0)\nperson = llm.with_structured_output(Person).invoke(\n    \"Ravi Kumar is 25 and lives in Hyderabad.\"\n)\nprint(person)\nprint(\"Next year he will be\", person.age + 1)\n\ntry:\n    Person(name=\"Ravi\", age=\"twenty\")\nexcept ValidationError as e:\n    print(\"Validation caught\", e.error_count(), \"error(s)\")\n", "08_lcel_runnables": "from dotenv import load_dotenv\nfrom langchain_core.output_parsers import StrOutputParser\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\nprompt = ChatPromptTemplate.from_template(\"Explain {topic} to a 10-year-old in 2 lines.\")\nllm = ChatOllama(model=\"llama3.2\", temperature=0)\n\nchain = prompt | llm | StrOutputParser()\n\nprint(chain.invoke({\"topic\": \"gravity\"}))\nprint(chain.batch([{\"topic\": \"rain\"}, {\"topic\": \"magnets\"}]))\nchain.get_graph().print_ascii()\n", "09_runnable_primitives": "from operator import itemgetter\nfrom dotenv import load_dotenv\nfrom langchain_core.output_parsers import StrOutputParser\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\nllm = ChatOllama(model=\"llama3.2\", temperature=0)\n\ndef make(instr):\n    return ChatPromptTemplate.from_template(instr + \" the movie {movie}.\") | llm | StrOutputParser()\n\n# Fork: three answers from one input\npanel = RunnableParallel(\n    praise=make(\"Write a 1-line praise review for\"),\n    criticism=make(\"Write a 1-line criticism for\"),\n    verdict=make(\"Give a one-word verdict for\"),\n)\n\ndef show(d: dict) -> str:\n    return \"\\n\".join(f\"== {k.upper()} ==\\n{v}\" for k, v in d.items())\n\nprint((panel | RunnableLambda(show)).invoke({\"movie\": \"Inception\"}))\n\n# Passthrough: keep the question and add its length\ndemo = RunnableParallel(question=RunnablePassthrough(), length=lambda x: len(x[\"question\"]))\nprint(demo.invoke({\"question\": \"hello\"}))\n\n# itemgetter: pick one key from a larger input\npick = {\"topic\": itemgetter(\"subject\")} | ChatPromptTemplate.from_template(\"Write a haiku about {topic}\") | llm | StrOutputParser()\nprint(pick.invoke({\"subject\": \"rain\", \"extra\": \"ignored\"}))\n", "10_streaming": "import asyncio, time\nfrom dotenv import load_dotenv\nfrom langchain_core.output_parsers import StrOutputParser\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\nchain = ChatPromptTemplate.from_template(\"Write a 4-line poem about {thing}.\") | ChatOllama(model=\"llama3.2\") | StrOutputParser()\n\n# 1. Streaming: print as tokens arrive\nstart = time.perf_counter()\nfor i, chunk in enumerate(chain.stream({\"thing\": \"the sea\"})):\n    if i == 0:\n        print(f\"[first chunk after {time.perf_counter() - start:.2f}s]\")\n    print(chunk, end=\"\", flush=True)\nprint()\n\n# 2. Async streaming (for web apps)\nasync def main():\n    async for chunk in chain.astream({\"thing\": \"the sky\"}):\n        print(chunk, end=\"\", flush=True)\n    print()\n\nasyncio.run(main())\n\n# 3. Batch: many inputs, results in the same order\nprint(chain.batch([{\"thing\": \"rain\"}, {\"thing\": \"fire\"}]))\n", "11_chat_memory": "from dotenv import load_dotenv\nfrom langchain_core.chat_history import InMemoryChatMessageHistory\nfrom langchain_core.output_parsers import StrOutputParser\nfrom langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder\nfrom langchain_core.runnables.history import RunnableWithMessageHistory\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\nstore = {}\n\ndef get_session_history(session_id: str):\n    if session_id not in store:\n        store[session_id] = InMemoryChatMessageHistory()\n    return store[session_id]\n\nprompt = ChatPromptTemplate.from_messages([\n    (\"system\", \"You are a friendly assistant.\"),\n    MessagesPlaceholder(variable_name=\"history\"),\n    (\"human\", \"{question}\"),\n])\nchain = prompt | ChatOllama(model=\"llama3.2\", temperature=0) | StrOutputParser()\nchat = RunnableWithMessageHistory(\n    chain, get_session_history,\n    input_messages_key=\"question\", history_messages_key=\"history\",\n)\n\nalice = {\"configurable\": {\"session_id\": \"alice\"}}\nbob = {\"configurable\": {\"session_id\": \"bob\"}}\n\nchat.invoke({\"question\": \"My name is Ravi.\"}, config=alice)\nprint(chat.invoke({\"question\": \"What is my name?\"}, config=alice))  # Ravi\nprint(chat.invoke({\"question\": \"What is my name?\"}, config=bob))    # does not know\n", "12_document_loaders": "from pathlib import Path\nfrom langchain_community.document_loaders import TextLoader, CSVLoader\nfrom langchain_core.documents import Document\n\n# Create two small sample files so the lesson runs anywhere\nPath(\"notes.txt\").write_text(\"Python was created by Guido van Rossum.\\nLists are ordered.\", encoding=\"utf-8\")\nPath(\"students.csv\").write_text(\"name,score\\nAsha,91\\nDev,78\\nMeera,85\\n\", encoding=\"utf-8\")\n\ndoc = Document(page_content=\"Hello world\", metadata={\"source\": \"manual\"})\nprint(doc.page_content, doc.metadata)\n\ntext_docs = TextLoader(\"notes.txt\", encoding=\"utf-8\").load()\ncsv_docs = CSVLoader(\"students.csv\").load()\n\nprint(\"text docs:\", len(text_docs), text_docs[0].metadata)\nprint(\"csv rows:\", len(csv_docs))\nprint(csv_docs[0].page_content)\n", "13_text_splitters": "from langchain_text_splitters import RecursiveCharacterTextSplitter\n\ntext = (\n    \"LangChain helps you split long documents into small pieces. \"\n    \"Good chunks keep whole ideas together. \"\n    \"A little overlap protects sentences that fall on a boundary. \"\n) * 5\n\nfor size in [100, 200, 400]:\n    splitter = RecursiveCharacterTextSplitter(chunk_size=size, chunk_overlap=size // 10)\n    chunks = splitter.split_text(text)\n    print(f\"size={size:<4} chunks={len(chunks)}  first: {chunks[0][:40]}...\")\n", "14_embeddings": "import math\nfrom dotenv import load_dotenv\nfrom langchain_ollama import OllamaEmbeddings\n\nload_dotenv()\nemb = OllamaEmbeddings(model=\"nomic-embed-text\")\n\ndef cosine(a, b):\n    dot = sum(x * y for x, y in zip(a, b))\n    return dot / (math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b)))\n\nsentences = [\n    \"The stock market fell today.\",\n    \"Shares dropped sharply.\",\n    \"I love baking cakes.\",\n    \"Bread needs flour and yeast.\",\n]\nvectors = emb.embed_documents(sentences)\nquery = emb.embed_query(\"Why are investors worried?\")\n\nfor score, s in sorted(((cosine(query, v), s) for v, s in zip(vectors, sentences)), reverse=True):\n    print(round(score, 3), s)\n", "15_vector_stores": "from dotenv import load_dotenv\nfrom langchain_core.documents import Document\nfrom langchain_core.vectorstores import InMemoryVectorStore\nfrom langchain_ollama import OllamaEmbeddings\n\nload_dotenv()\nstore = InMemoryVectorStore(OllamaEmbeddings(model=\"nomic-embed-text\"))\n\nstore.add_documents([\n    Document(page_content=\"You can return items within 30 days for a full refund.\"),\n    Document(page_content=\"Delivery takes 3 to 5 working days.\"),\n    Document(page_content=\"We accept cards, UPI and cash on delivery.\"),\n])\n\nfor q in [\"Can I send an item back?\", \"How long does shipping take?\", \"Can I pay with UPI?\"]:\n    best = store.similarity_search(q, k=1)[0]\n    print(q, \"->\", best.page_content)\n", "16_retrievers": "from dotenv import load_dotenv\nfrom langchain_core.documents import Document\nfrom langchain_core.vectorstores import InMemoryVectorStore\nfrom langchain_ollama import OllamaEmbeddings\n\nload_dotenv()\nstore = InMemoryVectorStore(OllamaEmbeddings(model=\"nomic-embed-text\"))\nstore.add_documents([\n    Document(page_content=\"Pay by card, UPI or cash on delivery.\"),\n    Document(page_content=\"Online payments are processed securely.\"),\n    Document(page_content=\"Refunds go back to the original payment method.\"),\n    Document(page_content=\"Delivery takes 3 to 5 working days.\"),\n])\n\nsimilar = store.as_retriever(search_kwargs={\"k\": 3})\nvaried = store.as_retriever(search_type=\"mmr\", search_kwargs={\"k\": 3})\n\nfor name, r in [(\"similarity\", similar), (\"mmr\", varied)]:\n    print(\"--\", name)\n    for d in r.invoke(\"How can I pay?\"):\n        print(\"  \", d.page_content)\n", "17_rag_pipeline": "from pathlib import Path\nfrom dotenv import load_dotenv\nfrom langchain_community.document_loaders import TextLoader\nfrom langchain_core.output_parsers import StrOutputParser\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.runnables import RunnablePassthrough\nfrom langchain_core.vectorstores import InMemoryVectorStore\nfrom langchain_ollama import ChatOllama, OllamaEmbeddings\nfrom langchain_text_splitters import RecursiveCharacterTextSplitter\n\nload_dotenv()\n\n# 1. Index (once)\nPath(\"handbook.txt\").write_text(\n    \"Employees get 20 days of paid leave per year.\\n\"\n    \"Sick leave is 10 days and needs a doctor's note after 2 days.\\n\"\n    \"The office is open 9am to 6pm, Monday to Friday.\\n\", encoding=\"utf-8\")\ndocs = TextLoader(\"handbook.txt\", encoding=\"utf-8\").load()\nchunks = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20).split_documents(docs)\nstore = InMemoryVectorStore(OllamaEmbeddings(model=\"nomic-embed-text\"))\nstore.add_documents(chunks)\nretriever = store.as_retriever(search_kwargs={\"k\": 2})\n\n# 2-4. Retrieve, augment, generate\nprompt = ChatPromptTemplate.from_messages([\n    (\"system\", \"Answer ONLY from the context. If it is not there, say you do not know.\\n\\nContext:\\n{context}\"),\n    (\"human\", \"{question}\"),\n])\n\ndef format_docs(docs):\n    return \"\\n\\n\".join(d.page_content for d in docs)\n\nrag = (\n    {\"context\": retriever | format_docs, \"question\": RunnablePassthrough()}\n    | prompt\n    | ChatOllama(model=\"llama3.2\", temperature=0)\n    | StrOutputParser()\n)\n\nprint(rag.invoke(\"How many leave days do I get?\"))\nprint(rag.invoke(\"What is the capital of France?\"))  # should say it does not know\n", "18_tools": "from dotenv import load_dotenv\nfrom langchain_core.messages import HumanMessage, ToolMessage\nfrom langchain_core.tools import tool\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\n\n@tool\ndef add(a: int, b: int) -> int:\n    \"\"\"Add two whole numbers and return the sum.\"\"\"\n    return a + b\n\nllm = ChatOllama(model=\"llama3.2\", temperature=0).bind_tools([add])\n\nmessages = [HumanMessage(content=\"What is 12 plus 30?\")]\nai_msg = llm.invoke(messages)\nmessages.append(ai_msg)\n\nfor call in ai_msg.tool_calls:          # the model asked for these\n    result = add.invoke(call[\"args\"])   # YOUR code runs them\n    messages.append(ToolMessage(content=str(result), tool_call_id=call[\"id\"]))\n\nprint(llm.invoke(messages).content)     # final answer\n", "19_agents": "import datetime\nfrom dotenv import load_dotenv\nfrom langchain.agents import create_agent\nfrom langchain_core.tools import tool\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\n\n@tool\ndef add(a: int, b: int) -> int:\n    \"\"\"Add two whole numbers.\"\"\"\n    return a + b\n\n@tool\ndef today() -> str:\n    \"\"\"Return today's date.\"\"\"\n    return datetime.date.today().isoformat()\n\nagent = create_agent(\n    model=ChatOllama(model=\"llama3.2\", temperature=0),\n    tools=[add, today],\n    system_prompt=\"You are a helpful assistant. Use tools when they help.\",\n)\n\nresult = agent.invoke({\"messages\": [{\"role\": \"user\", \"content\": \"What is today's date, and what is 15 + 27?\"}]})\n\nfor msg in result[\"messages\"]:   # watch every step\n    print(msg.type, \"|\", msg.content)\n", "20_langgraph_intro": "from typing import TypedDict\nfrom langgraph.graph import StateGraph, START, END\n\nclass State(TypedDict):\n    text: str\n    count: int\n\ndef clean(state: State):\n    return {\"text\": state[\"text\"].strip()}\n\ndef count_words(state: State):\n    return {\"count\": len(state[\"text\"].split())}\n\ndef route(state: State) -> str:\n    return \"long\" if state[\"count\"] > 5 else \"short\"\n\nbuilder = StateGraph(State)\nbuilder.add_node(\"clean\", clean)\nbuilder.add_node(\"count\", count_words)\nbuilder.add_edge(START, \"clean\")\nbuilder.add_edge(\"clean\", \"count\")\nbuilder.add_conditional_edges(\"count\", route, {\"long\": END, \"short\": END})\n\ngraph = builder.compile()\nprint(graph.invoke({\"text\": \"  hello big world  \", \"count\": 0}))\n", "21_callbacks_tracing": "import time\nfrom dotenv import load_dotenv\nfrom langchain_core.callbacks import BaseCallbackHandler\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\n\nclass Timer(BaseCallbackHandler):\n    def on_chat_model_start(self, serialized, messages, **kwargs):\n        self.start = time.perf_counter()\n        print(\"[start] model called\")\n\n    def on_llm_end(self, response, **kwargs):\n        print(f\"[end] took {time.perf_counter() - self.start:.2f}s\")\n\n    def on_llm_error(self, error, **kwargs):\n        print(\"[error]\", error)\n\nllm = ChatOllama(model=\"llama3.2\")\nllm.invoke(\"Explain callbacks in one line.\", config={\"callbacks\": [Timer()]})\n\n# LangSmith tracing needs no code change. Put these in .env:\n#   LANGSMITH_TRACING=true\n#   LANGSMITH_API_KEY=your-key\n#   LANGSMITH_PROJECT=langchain-zero-to-hero\n", "22_errors_fallbacks": "import json\nfrom dotenv import load_dotenv\nfrom langchain_ollama import ChatOllama\n\nload_dotenv()\n\nprimary = ChatOllama(model=\"llama3.2\", temperature=0)\nbackup = ChatOllama(model=\"qwen2.5\", temperature=0)  # any other model you have pulled\nrobust = primary.with_fallbacks([backup])\n\ndef get_json(prompt: str, attempts: int = 3) -> dict:\n    for _ in range(attempts):\n        text = robust.invoke(prompt).content\n        try:\n            return json.loads(text)\n        except json.JSONDecodeError as e:\n            prompt = f\"Your last answer was not valid JSON ({e}). Return ONLY valid JSON.\"\n    raise ValueError(\"Model never returned valid JSON\")\n\ntry:\n    print(get_json('Return JSON with keys \"city\" and \"country\" for Paris.'))\nexcept Exception as e:\n    print(\"Sorry, the assistant is busy. Please try again.\", type(e).__name__)\n", "23_capstone": "from pathlib import Path\nfrom dotenv import load_dotenv\nfrom langchain.agents import create_agent\nfrom langchain_community.document_loaders import TextLoader\nfrom langchain_core.tools import tool\nfrom langchain_core.vectorstores import InMemoryVectorStore\nfrom langchain_ollama import ChatOllama, OllamaEmbeddings\nfrom langchain_text_splitters import RecursiveCharacterTextSplitter\n\nload_dotenv()\n\n# 1. Ingest: put your .txt study notes in a folder called notes/ first\ndef build_store(folder=\"notes\"):\n    docs = []\n    for path in Path(folder).glob(\"*.txt\"):\n        docs += TextLoader(str(path), encoding=\"utf-8\").load()\n    chunks = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50).split_documents(docs)\n    store = InMemoryVectorStore(OllamaEmbeddings(model=\"nomic-embed-text\"))\n    store.add_documents(chunks)\n    return store\n\nstore = build_store()\n\n# 2. Tools\n@tool\ndef search_notes(query: str) -> str:\n    \"\"\"Search the student's study notes. Use this for any course question.\"\"\"\n    hits = store.similarity_search(query, k=3)\n    return \"\\n\\n\".join(f\"[{d.metadata.get('source')}] {d.page_content}\" for d in hits)\n\n@tool\ndef calculate(expression: str) -> str:\n    \"\"\"Evaluate simple arithmetic like '12 * (3 + 4)'.\"\"\"\n    if not set(expression) <= set(\"0123456789+-*/(). \"):\n        return \"Only numbers and + - * / ( ) are allowed.\"\n    return str(eval(expression))  # safe only because the input is filtered above\n\n# 3. Agent\nSYSTEM = (\"You are a Study Buddy. Call search_notes before answering course questions. \"\n          \"Cite the source file. If the notes do not contain the answer, say so. \"\n          \"Use calculate for arithmetic.\")\nagent = create_agent(\n    model=ChatOllama(model=\"llama3.2\", temperature=0),\n    tools=[search_notes, calculate],\n    system_prompt=SYSTEM,\n)\n\n# 4. Memory: keep the last 10 messages\nhistory = []\n\ndef ask(question: str) -> str:\n    history.append({\"role\": \"user\", \"content\": question})\n    result = agent.invoke({\"messages\": history[-10:]}, config={\"recursion_limit\": 8})\n    answer = result[\"messages\"][-1].content\n    history.append({\"role\": \"assistant\", \"content\": answer})\n    return answer\n\nprint(ask(\"What is photosynthesis?\"))\nprint(ask(\"Explain that more simply.\"))\n"};
+
+/* step keys: s = what to say, f = from actor, t = to actor(s), l = packet label(s),
+   c = code text to highlight, g = actor(s) to glow, b = [actor, badge text] */
+const LESSONS = [
+{ id:"01_setup", e:"🛠️", t:"Setup & Environment", grp:0,
+  nut:"Before any AI work, check that <b>the tools are installed</b> and <b>Ollama is awake</b>.",
+  an:"🏠 Like checking the gas, water and lights before you start cooking.",
+  actors:[["you","🧒","You","#3b82f6"],["env","🔑",".env file","#ca8a04"],["py","🐍","main.py","#8b5cf6"],["pkg","📦","Installed packages","#16a34a"],["oll","🦙","Ollama server","#e8590c"]],
+  steps:[
+    {s:"You run <code>python main.py</code>. 🐍 starts working.",f:"you",t:"py",l:"python main.py",c:"load_dotenv()"},
+    {s:"<code>load_dotenv()</code> reads settings (like <code>OLLAMA_HOST</code>) from the <code>.env</code> file.",f:"env",t:"py",l:"OLLAMA_HOST",c:"load_dotenv()"},
+    {s:"For each package, <code>version(pkg)</code> asks: are you installed? Which version?",f:"py",t:"pkg",l:"version?",c:"version(pkg)"},
+    {s:"Installed ones answer with a version. Missing ones raise <code>PackageNotFoundError</code> and we print the pip command.",f:"pkg",t:"py",l:["langchain 1.x ✅","langchain-ollama ✅"],c:"except PackageNotFoundError"},
+    {s:"<code>urlopen</code> knocks on Ollama's door at <code>localhost:11434/api/tags</code>.",f:"py",t:"oll",l:"GET /api/tags",c:"urlopen("},
+    {s:"Ollama answers <b>status 200</b>, so it is running. If not, <code>URLError</code> tells you to start it.",f:"oll",t:"py",l:"200 OK",c:"except URLError"},
+    {s:"All green! You are ready for lesson 02. 🎉",f:"py",t:"you",l:"ready ✅",b:["you","✅ ready"],c:"Ollama server is running"}
+  ],
+  cls:[
+    ["🔑","load_dotenv()","function","Reads the <code>.env</code> file and puts its values into environment variables.","A key cupboard you open once at the start.","dotenv"],
+    ["🏷️","version(pkg)","function","Returns the installed version of a package, like <code>1.0.3</code>.","Reading the label on a box.","importlib.metadata"],
+    ["🚫","PackageNotFoundError","class","The error you get when a package is not installed.","An empty shelf.","importlib.metadata"],
+    ["🚪","urlopen()","function","Opens a web address. Here it checks that the Ollama server answers.","Knocking on a door to see if someone is home.","urllib.request"],
+    ["📵","URLError","class","The error you get when the address cannot be reached (Ollama is off).","Nobody answered the door.","urllib.error"]
+  ]},
+{ id:"02_first_llm_call", e:"🧠", t:"Your First LLM Call", grp:0,
+  nut:"Make a <b>ChatOllama</b> object, give it a question with <b>.invoke()</b>, read the answer from <b>.content</b>.",
+  an:"📞 Like calling a very smart friend: you ask, they answer.",
+  actors:[["you","🧒","Your question","#3b82f6"],["llm","🤖","ChatOllama","#e8590c"],["oll","🦙","llama3.2 (local)","#8b5cf6"],["msg","💬","AIMessage","#16a34a"]],
+  steps:[
+    {s:"<code>ChatOllama(model=\"llama3.2\", temperature=0)</code> builds a messenger to the model on your PC. <code>temperature=0</code> = calm, same answer every time.",g:"llm",c:"llm = ChatOllama"},
+    {s:"<code>llm.invoke(question)</code> hands your question to the messenger.",f:"you",t:"llm",l:"Explain Python…",c:"llm.invoke(question)"},
+    {s:"ChatOllama sends it to Ollama on <code>localhost:11434</code>. Nothing goes to the internet.",f:"llm",t:"oll",l:"HTTP → localhost",c:"llm.invoke(question)"},
+    {s:"The model writes the answer and wraps it in an <b>AIMessage</b> object.",f:"oll",t:"msg",l:"AIMessage",c:"response = "},
+    {s:"<code>response.content</code> is the plain answer text.",f:"msg",t:"you",l:".content",c:"response.content"},
+    {s:"<code>usage_metadata</code> tells how many tokens (word pieces) went in and out.",g:"msg",b:["msg","🔢 tokens"],c:"usage_metadata"}
+  ],
+  cls:[
+    ["🤖","ChatOllama","class","Connects LangChain to a chat model running in Ollama. You choose <code>model</code> and <code>temperature</code>.","A phone line to the AI brain on your PC.","langchain_ollama"],
+    ["▶️","llm.invoke()","method","Sends one input and waits for one full answer.","Pressing the call button.","Runnable method"],
+    ["💬","AIMessage","class","The answer object. <code>.content</code> = text, <code>.usage_metadata</code> = token counts.","The reply envelope with the letter inside.","langchain_core.messages"],
+    ["🔑","load_dotenv()","function","Loads optional settings from <code>.env</code>.","Key cupboard.","dotenv"]
+  ]},
+{ id:"03_messages", e:"💬", t:"Messages & Roles", grp:0,
+  nut:"A chat is a <b>list of messages</b>, each with a role: <b>System</b> (rules), <b>Human</b> (you), <b>AI</b> (bot).",
+  an:"🎭 Like a play script: the director's note, then each actor's line in order.",
+  actors:[["sys","⚙️","SystemMessage","#8b5cf6"],["hum","🧑","HumanMessage","#3b82f6"],["list","📋","messages list","#ca8a04"],["llm","🤖","ChatOllama","#e8590c"],["ai","💬","AIMessage","#16a34a"]],
+  steps:[
+    {s:"<b>SystemMessage</b> sets the rules: “friendly tutor, 2 short sentences”.",f:"sys",t:"list",l:"rules",c:"SystemMessage(content"},
+    {s:"<b>HumanMessage</b> is your question: “What is a variable?”",f:"hum",t:"list",l:"What is a variable?",c:"HumanMessage(content=\"What is a variable"},
+    {s:"The whole list goes to the model.",f:"list",t:"llm",l:"[system, human]",c:"first = llm.invoke(messages)"},
+    {s:"The reply comes back as an <b>AIMessage</b>.",f:"llm",t:"ai",l:"first reply",c:"print(first.content)"},
+    {s:"We <b>append</b> the AI reply to the list, so the model remembers what it said.",f:"ai",t:"list",l:"append(AIMessage)",c:"messages.append(AIMessage"},
+    {s:"New question: “Give me an example”. Example of what? The list knows!",f:"hum",t:"list",l:"Give me an example",c:"Give me an example"},
+    {s:"All 4 messages go again, so the model knows we mean a <b>variable</b>. Models have no memory: the list IS the memory.",f:"list",t:"llm",l:"[4 messages]",b:["ai","🧠 in context"],c:"second = llm.invoke(messages)"}
+  ],
+  cls:[
+    ["⚙️","SystemMessage","class","Instructions for the bot: its job, tone and rules.","The director's note.","langchain_core.messages"],
+    ["🧑","HumanMessage","class","What the user says.","Your line in the script.","langchain_core.messages"],
+    ["💬","AIMessage","class","What the bot said. You add it back to keep the conversation going.","The bot's line in the script.","langchain_core.messages"],
+    ["🤖","ChatOllama","class","Reads the whole list and writes the next AI message.","The actor who reads the script so far.","langchain_ollama"]
+  ]},
+{ id:"04_prompt_templates", e:"📝", t:"Prompt Templates", grp:0,
+  nut:"Write the prompt <b>once</b> with <b>{blanks}</b>, then fill the blanks for each new input.",
+  an:"✉️ Like a birthday-card template: “Happy birthday, {name}!”",
+  actors:[["vals","🧩","{tone, topic}","#3b82f6"],["tpl","📝","PromptTemplate","#8b5cf6"],["pv","📄","Filled prompt","#ca8a04"],["llm","🤖","ChatOllama","#e8590c"],["out","🎤","Poem","#16a34a"]],
+  steps:[
+    {s:"<code>PromptTemplate.from_template(...)</code> makes a template with two blanks: <code>{tone}</code> and <code>{topic}</code>.",g:"tpl",c:"PromptTemplate.from_template"},
+    {s:"<code>temperature=0.7</code> makes the model more creative, good for poems.",g:"llm",c:"temperature=0.7"},
+    {s:"First loop: we give the values <code>funny</code> and <code>Python</code>.",f:"vals",t:"tpl",l:"funny · Python",c:"template.invoke"},
+    {s:"The template fills the blanks. <code>.to_string()</code> turns it into plain text.",f:"tpl",t:"pv",l:"Write a funny poem about Python…",c:"to_string()"},
+    {s:"The text goes to the model, the poem comes back.",f:"pv",t:"llm",l:"prompt",c:"llm.invoke(prompt)"},
+    {s:"",f:"llm",t:"out",l:"4-line poem 😂",c:"llm.invoke(prompt).content"},
+    {s:"Second loop: same template, new topic <code>the moon</code>. Write once, reuse forever.",f:"vals",t:"tpl",l:"funny · the moon",b:["tpl","♻️ reused"],c:"for topic in"}
+  ],
+  cls:[
+    ["📝","PromptTemplate","class","A prompt with <code>{blanks}</code>. <code>.from_template()</code> creates it, <code>.invoke({...})</code> fills it.","A fill-in-the-blanks form.","langchain_core.prompts"],
+    ["📄","PromptValue","class","What <code>template.invoke()</code> returns. <code>.to_string()</code> gives the final text.","The filled-in form.","langchain_core.prompt_values"],
+    ["🤖","ChatOllama","class","Writes the poem. Higher temperature = more surprise.","The poet.","langchain_ollama"]
+  ]},
+{ id:"05_chat_prompt_placeholders", e:"🗂️", t:"Chat Prompts & Placeholders", grp:0,
+  nut:"A <b>ChatPromptTemplate</b> is a template made of messages. A <b>MessagesPlaceholder</b> is an empty slot where you drop old chat history.",
+  an:"🥪 Like a sandwich: bread (system), any filling (history), bread (question).",
+  actors:[["hist","📜","history list","#ca8a04"],["ph","🕳️","MessagesPlaceholder","#8b5cf6"],["q","❓","{question}","#3b82f6"],["cpt","🗂️","ChatPromptTemplate","#0ea5e9"],["llm","🤖","ChatOllama","#e8590c"],["out","💬","Answer","#16a34a"]],
+  steps:[
+    {s:"The template has 3 parts: a <b>system</b> line, a <b>hole</b> called <code>history</code>, and a <b>human</b> line with <code>{question}</code>.",g:"cpt",c:"ChatPromptTemplate.from_messages"},
+    {s:"The history (2 old messages) drops into the placeholder hole.",f:"hist",t:"ph",l:"2 old messages",c:"history = ["},
+    {s:"",f:"ph",t:"cpt",l:"history filled",c:"MessagesPlaceholder(variable_name=\"history\")"},
+    {s:"The question fills <code>{question}</code>.",f:"q",t:"cpt",l:"What is a loop?",c:"\"question\": \"What is a loop?\""},
+    {s:"Out come 4 ready messages: system, human, AI, human.",f:"cpt",t:"llm",l:"[4 messages]",c:"msgs = prompt.invoke"},
+    {s:"The model answers, knowing you are learning Python.",f:"llm",t:"out",l:"A loop repeats…",c:"print(llm.invoke(msgs).content)"}
+  ],
+  cls:[
+    ["🗂️","ChatPromptTemplate","class","A template made of role messages. <code>.from_messages([...])</code> builds it.","A sandwich recipe.","langchain_core.prompts"],
+    ["🕳️","MessagesPlaceholder","class","An empty slot that takes a whole <b>list</b> of messages (any length).","The space for the filling.","langchain_core.prompts"],
+    ["🧑","HumanMessage","class","A past user message inside the history.","Old line from you.","langchain_core.messages"],
+    ["💬","AIMessage","class","A past bot message inside the history.","Old line from the bot.","langchain_core.messages"],
+    ["🤖","ChatOllama","class","Answers using the filled messages.","The one who eats the sandwich.","langchain_ollama"]
+  ]},
+{ id:"06_output_parsers", e:"🧹", t:"Output Parsers", grp:0,
+  nut:"The model always gives <b>text</b>. Output parsers turn that text into Python things: a <b>str</b>, a <b>list</b> or a <b>dict</b>.",
+  an:"🧃 Like a juicer: fruit (model text) goes in, the shape you need comes out.",
+  actors:[["llm","🤖","ChatOllama","#e8590c"],["sp","🧵","StrOutputParser","#3b82f6"],["lp","📃","CommaSeparatedList OutputParser","#ca8a04"],["jp","🧾","JsonOutputParser","#8b5cf6"],["py","🐍","Python value","#16a34a"]],
+  steps:[
+    {s:"<b>StrOutputParser</b> takes an AIMessage and keeps only the text.",f:"llm",t:"sp",l:"AIMessage",c:"StrOutputParser().invoke"},
+    {s:"Result: a plain <code>str</code>.",f:"sp",t:"py",l:"str: Hello!",c:"print(type(text)"},
+    {s:"<code>get_format_instructions()</code> adds a line to the prompt telling the model: “answer as comma-separated values”.",f:"lp",t:"llm",l:"format rules",c:"list_parser.get_format_instructions()"},
+    {s:"The model answers <code>apple, banana, mango, grape</code>. The parser splits it into a list.",f:"llm",t:"lp",l:"apple, banana, …",c:"raw = llm.invoke(f\"List 4 fruits"},
+    {s:"",f:"lp",t:"py",l:"['apple','banana',…]",c:"print(list_parser.invoke(raw))"},
+    {s:"Same idea for JSON: rules in, text out, <b>JsonOutputParser</b> turns it into a dict.",f:"llm",t:"jp",l:"{\"name\":\"Asha\",…}",c:"json_parser.get_format_instructions()"},
+    {s:"Now you can use <code>data[\"name\"]</code> like any Python dict.",f:"jp",t:"py",l:"dict ✅",b:["py","dict ✅"],c:"print(json_parser.invoke(raw))"}
+  ],
+  cls:[
+    ["🧵","StrOutputParser","class","AIMessage → plain string.","Peeling off the envelope.","langchain_core.output_parsers"],
+    ["📃","CommaSeparatedListOutputParser","class","“a, b, c” → <code>['a','b','c']</code>.","Cutting a chain of sausages.","langchain_core.output_parsers"],
+    ["🧾","JsonOutputParser","class","JSON text → Python dict.","Turning a receipt into a spreadsheet row.","langchain_core.output_parsers"],
+    ["📏","get_format_instructions()","method","Text you put in the prompt that tells the model which format to use.","The instructions on the form.","parser method"],
+    ["🤖","ChatOllama","class","Produces the raw text.","The fruit tree.","langchain_ollama"]
+  ]},
+{ id:"07_structured_output", e:"📐", t:"Structured Output (Pydantic)", grp:0,
+  nut:"Describe the shape you want as a <b>Pydantic class</b>. <b>with_structured_output</b> makes the model fill it, and you get a real Python object back.",
+  an:"📋 Like giving someone a printed form instead of asking them to write a free essay.",
+  actors:[["txt","📝","Sentence","#3b82f6"],["so","🎯","with_structured _output(Person)","#0ea5e9"],["llm","🤖","ChatOllama","#e8590c"],["per","📐","Person object","#16a34a"],["bad","😈","age=\"twenty\"","#64748b"],["ve","🚨","ValidationError","#dc2626"]],
+  steps:[
+    {s:"<code>class Person(BaseModel)</code> is the form: <code>name</code> (str), <code>age</code> (int), <code>city</code> (optional). <code>Field(description=...)</code> explains each box to the model.",g:"per",c:"class Person(BaseModel)"},
+    {s:"<code>llm.with_structured_output(Person)</code> makes a new model wrapper that must answer with a Person.",g:"so",c:"with_structured_output(Person)"},
+    {s:"The sentence goes in.",f:"txt",t:"so",l:"Ravi Kumar is 25…",c:"\"Ravi Kumar is 25"},
+    {s:"The wrapper sends the form's shape to the model and asks it to fill the boxes.",f:"so",t:"llm",l:"fill: name, age, city",c:".invoke("},
+    {s:"Back comes a real object: <code>Person(name='Ravi Kumar', age=25, city='Hyderabad')</code>.",f:"llm",t:"per",l:"Person(...)",c:"print(person)"},
+    {s:"<code>age</code> is a real <code>int</code>, so <code>person.age + 1</code> = 26 just works.",g:"per",b:["per","age+1 = 26"],c:"person.age + 1"},
+    {s:"Wrong data? <code>age=\"twenty\"</code> is not a number, so Pydantic raises <b>ValidationError</b>. Bad data is caught early.",f:"bad",t:"ve",l:"age='twenty' ❌",b:["ve","1 error caught"],c:"except ValidationError"}
+  ],
+  cls:[
+    ["📐","BaseModel","class","Parent class for your data shapes. Your class <code>Person</code> inherits from it.","The blank form design.","pydantic"],
+    ["🏷️","Field()","function","Adds a description (and default) to each box. The model reads these.","The small help text under each box.","pydantic"],
+    ["🚨","ValidationError","class","Raised when data does not match the types.","The teacher saying “that's not a number!”","pydantic"],
+    ["🎯","with_structured_output()","method","Wraps the model so it returns your Pydantic object, not text.","Making the model fill the form.","ChatOllama method"],
+    ["🤖","ChatOllama","class","Reads the sentence and fills the boxes.","The one filling in the form.","langchain_ollama"]
+  ]},
+{ id:"08_lcel_runnables", e:"⛓️", t:"LCEL & the Pipe Operator", grp:1,
+  nut:"Join steps with <b>|</b> (pipe). The output of one step becomes the input of the next: <b>prompt | llm | parser</b>.",
+  an:"🏭 Like a factory belt: each machine does one job and passes it on.",
+  actors:[["in","🧩","{topic}","#3b82f6"],["p","📝","ChatPromptTemplate","#8b5cf6"],["llm","🤖","ChatOllama","#e8590c"],["sp","🧵","StrOutputParser","#ca8a04"],["out","📄","Text","#16a34a"]],
+  steps:[
+    {s:"<code>chain = prompt | llm | StrOutputParser()</code> joins 3 parts into one chain (a <b>RunnableSequence</b>).",g:["p","llm","sp"],c:"chain = prompt | llm"},
+    {s:"<code>chain.invoke({\"topic\": \"gravity\"})</code>: the dict goes into the prompt.",f:"in",t:"p",l:"topic=gravity",c:"chain.invoke"},
+    {s:"The prompt gives a filled prompt to the model.",f:"p",t:"llm",l:"PromptValue",c:"chain.invoke"},
+    {s:"The model gives an AIMessage to the parser.",f:"llm",t:"sp",l:"AIMessage",c:"chain.invoke"},
+    {s:"The parser gives you a plain string. One call, three steps.",f:"sp",t:"out",l:"Gravity pulls…",c:"print(chain.invoke"},
+    {s:"<code>chain.batch([...])</code> runs the whole belt for many inputs at once.",f:"in",t:"p",l:["rain","magnets"],c:"chain.batch"},
+    {s:"<code>get_graph().print_ascii()</code> draws the chain as boxes in the terminal.",g:["p","llm","sp"],b:["out","📊 graph"],c:"print_ascii()"}
+  ],
+  cls:[
+    ["📝","ChatPromptTemplate","class","<code>.from_template()</code> makes a one-message chat prompt with {blanks}.","Machine 1: fills the form.","langchain_core.prompts"],
+    ["🤖","ChatOllama","class","Machine 2: writes the answer.","The thinker.","langchain_ollama"],
+    ["🧵","StrOutputParser","class","Machine 3: AIMessage → string.","The packer.","langchain_core.output_parsers"],
+    ["⛓️","RunnableSequence ( | )","concept","What <code>a | b | c</code> creates. It has <code>.invoke</code>, <code>.batch</code>, <code>.stream</code>.","The whole belt.","langchain_core.runnables"],
+    ["📦","chain.batch()","method","Runs many inputs and returns answers in the same order.","Many parcels on the belt.","Runnable method"]
+  ]},
+{ id:"09_runnable_primitives", e:"🧩", t:"Runnable Building Blocks", grp:1,
+  nut:"Small blocks for building chains: <b>RunnableParallel</b> (do many at once), <b>RunnableLambda</b> (your own function), <b>RunnablePassthrough</b> (pass input as it is), <b>itemgetter</b> (pick one key).",
+  an:"🧱 LEGO pieces: a splitter, a custom piece, a straight pipe and a picker.",
+  actors:[["in","🎬","{movie}","#3b82f6"],["par","🔱","RunnableParallel","#0ea5e9"],["pr","👍","praise","#16a34a"],["cr","👎","criticism","#dc2626"],["ve","⚖️","verdict","#ca8a04"],["lam","🧮","RunnableLambda (show)","#8b5cf6"],["pt","➡️","RunnablePassthrough","#64748b"],["ig","🔍","itemgetter","#db2777"],["out","🖥️","Output","#e8590c"]],
+  steps:[
+    {s:"<code>{\"movie\": \"Inception\"}</code> goes into <b>RunnableParallel</b>.",f:"in",t:"par",l:"Inception",c:"panel = RunnableParallel"},
+    {s:"It sends the same input to <b>3 chains at the same time</b>: praise, criticism, verdict.",f:"par",t:["pr","cr","ve"],l:"Inception",c:"praise=make"},
+    {s:"The 3 answers come back as one dict with 3 keys.",f:["pr","cr","ve"],t:"lam",l:"answer",c:"verdict=make"},
+    {s:"<b>RunnableLambda(show)</b> turns your normal function into a chain step. It formats the dict nicely.",f:"lam",t:"out",l:"== PRAISE == …",c:"RunnableLambda(show)"},
+    {s:"<b>RunnablePassthrough()</b> passes the input unchanged. Next to it, a lambda adds the length.",f:"in",t:"pt",l:"{question:'hello'}",c:"RunnablePassthrough()"},
+    {s:"Result: <code>{question: {...}, length: 5}</code>, the original plus a new key.",f:"pt",t:"out",l:"+ length: 5",c:"print(demo.invoke"},
+    {s:"<b>itemgetter(\"subject\")</b> picks just one key and ignores <code>extra</code>.",f:"in",t:"ig",l:"{subject, extra}",c:"itemgetter(\"subject\")"},
+    {s:"<code>rain</code> becomes <code>{topic}</code> and a haiku comes out.",f:"ig",t:"out",l:"topic=rain → haiku",c:"print(pick.invoke"}
+  ],
+  cls:[
+    ["🔱","RunnableParallel","class","Runs several chains on the same input at once and returns a dict of results.","One question to 3 judges.","langchain_core.runnables"],
+    ["🧮","RunnableLambda","class","Wraps a normal Python function so it can sit in a chain with <code>|</code>.","A homemade LEGO piece.","langchain_core.runnables"],
+    ["➡️","RunnablePassthrough","class","Gives back its input unchanged. Handy to keep the original input.","A straight pipe.","langchain_core.runnables"],
+    ["🔍","itemgetter","function","<code>itemgetter(\"subject\")</code> picks one key from a dict.","Picking one item from a bag.","operator"],
+    ["📝","ChatPromptTemplate","class","Used inside <code>make()</code> to build each little chain.","The form.","langchain_core.prompts"],
+    ["🧵","StrOutputParser","class","Turns each answer into a string.","The packer.","langchain_core.output_parsers"]
+  ]},
+{ id:"10_streaming", e:"🌊", t:"Streaming & Batching", grp:1,
+  nut:"<b>.stream()</b> gives the answer word by word while it is being written. <b>.astream()</b> does the same for async apps. <b>.batch()</b> runs many inputs together.",
+  an:"🚰 Streaming is a tap: water arrives right away, not after the bucket is full.",
+  actors:[["in","🧩","{thing}","#3b82f6"],["ch","⛓️","chain","#e8590c"],["scr","🖥️","Screen","#16a34a"],["web","🌐","Async web app","#8b5cf6"]],
+  steps:[
+    {s:"The chain is <code>prompt | ChatOllama | StrOutputParser</code>.",g:"ch",c:"chain = ChatPromptTemplate"},
+    {s:"<code>chain.stream(...)</code>: you get small chunks one after another. The first one arrives fast.",f:"in",t:"ch",l:"the sea",c:"chain.stream"},
+    {s:"Each chunk is printed straight away with <code>end=\"\"</code> and <code>flush=True</code>.",f:"ch",t:"scr",l:["The ","sea ","is ","deep…"],c:"print(chunk, end"},
+    {s:"<code>astream</code> is the async version with <code>async for</code>, used in web servers like FastAPI.",f:"ch",t:"web",l:["The ","sky ","is…"],c:"async for chunk in chain.astream"},
+    {s:"<code>chain.batch([...])</code> sends many inputs together.",f:"in",t:"ch",l:["rain","fire"],c:"chain.batch"},
+    {s:"Answers come back as a list in the <b>same order</b>.",f:"ch",t:"scr",l:"[poem1, poem2]",c:"chain.batch"}
+  ],
+  cls:[
+    ["🌊","chain.stream()","method","Returns the answer as a generator of small chunks.","A tap that flows.","Runnable method"],
+    ["⚡","chain.astream()","method","Async version of stream, for <code>async for</code>.","A tap that doesn't block the kitchen.","Runnable method"],
+    ["📦","chain.batch()","method","Many inputs → list of outputs, same order.","Filling many cups at once.","Runnable method"],
+    ["⏱️","asyncio","concept","Python's async engine. <code>asyncio.run(main())</code> starts the async code.","The kitchen manager.","asyncio"],
+    ["🤖","ChatOllama","class","Writes the poems token by token.","The poet.","langchain_ollama"]
+  ]},
+{ id:"11_chat_memory", e:"🧠", t:"Chat Memory", grp:1,
+  nut:"<b>RunnableWithMessageHistory</b> saves each chat into a notebook (<b>InMemoryChatMessageHistory</b>) per <b>session_id</b>, and feeds it back every time.",
+  an:"📒 Like a school register: one notebook per student, opened by name.",
+  actors:[["al","👩","alice","#db2777"],["bo","👦","bob","#3b82f6"],["rw","🧠","RunnableWith MessageHistory","#e8590c"],["st","🗄️","store dict","#64748b"],["na","📒","alice's notebook","#db2777"],["nb","📓","bob's notebook","#3b82f6"],["ch","⛓️","chain","#8b5cf6"]],
+  steps:[
+    {s:"Alice says “My name is Ravi.” with <code>session_id=\"alice\"</code>.",f:"al",t:"rw",l:"My name is Ravi",c:"chat.invoke({\"question\": \"My name is Ravi"},
+    {s:"<code>get_session_history(\"alice\")</code> looks in <code>store</code>. No notebook yet, so it makes a new <b>InMemoryChatMessageHistory</b>.",f:"rw",t:"st",l:"session alice?",c:"store[session_id] = InMemoryChatMessageHistory()"},
+    {s:"",f:"st",t:"na",l:"new notebook",c:"return store[session_id]"},
+    {s:"The notebook (empty) + question go into the chain. Question and answer are <b>saved</b> into the notebook.",f:"ch",t:"na",l:"save Q + A",c:"input_messages_key"},
+    {s:"Alice asks “What is my name?”. Her notebook fills the <code>history</code> placeholder.",f:"na",t:"ch",l:"history: Ravi",c:"config=alice))"},
+    {s:"The chain answers <b>Ravi</b>. ✅",f:"ch",t:"al",l:"Your name is Ravi",b:["al","✅ remembered"],c:"config=alice))"},
+    {s:"Bob asks the same. His notebook is empty, so the bot does not know. Sessions stay separate. 🔒",f:"nb",t:"ch",l:"history: (empty)",b:["bo","🤷 unknown"],c:"config=bob))"}
+  ],
+  cls:[
+    ["📒","InMemoryChatMessageHistory","class","A list of messages kept in RAM. Lost when the program stops.","A notebook for one chat.","langchain_core.chat_history"],
+    ["🧠","RunnableWithMessageHistory","class","Wraps a chain: loads history before, saves new messages after, using <code>session_id</code>.","The librarian who fetches the right notebook.","langchain_core.runnables.history"],
+    ["🗄️","get_session_history()","function","Your function: session_id → notebook. Creates one if missing.","The shelf of notebooks.","your code"],
+    ["🕳️","MessagesPlaceholder","class","Where the loaded history goes in the prompt.","The page the notebook is pasted on.","langchain_core.prompts"],
+    ["⚙️","config={'configurable':…}","concept","How you tell the chain which session this call belongs to.","Saying your name to the librarian.","invoke argument"]
+  ]},
+{ id:"12_document_loaders", e:"📂", t:"Document Loaders", grp:2,
+  nut:"Loaders read files and turn them into <b>Document</b> objects: <b>page_content</b> (the text) + <b>metadata</b> (where it came from).",
+  an:"📦 Like a post office: every letter goes in a standard box with a label.",
+  actors:[["txt","📄","notes.txt","#3b82f6"],["csv","📊","students.csv","#ca8a04"],["tl","🚚","TextLoader","#8b5cf6"],["cl","🚛","CSVLoader","#e8590c"],["docs","📦","Documents","#16a34a"]],
+  steps:[
+    {s:"First the program writes two sample files with <code>Path.write_text</code>.",g:["txt","csv"],c:"Path(\"notes.txt\").write_text"},
+    {s:"A <b>Document</b> by hand: <code>page_content=\"Hello world\"</code>, <code>metadata={\"source\":\"manual\"}</code>.",g:"docs",b:["docs","text + label"],c:"doc = Document("},
+    {s:"<b>TextLoader</b> reads the whole text file.",f:"txt",t:"tl",l:"2 lines",c:"TextLoader(\"notes.txt\""},
+    {s:"…and returns <b>1 Document</b> with <code>metadata={'source':'notes.txt'}</code>.",f:"tl",t:"docs",l:"1 Document",c:"print(\"text docs:\""},
+    {s:"<b>CSVLoader</b> reads the CSV.",f:"csv",t:"cl",l:"3 rows",c:"CSVLoader(\"students.csv\")"},
+    {s:"…and makes <b>one Document per row</b>: 3 Documents. First one: <code>name: Asha / score: 91</code>.",f:"cl",t:"docs",l:["row 1","row 2","row 3"],c:"print(csv_docs[0].page_content)"}
+  ],
+  cls:[
+    ["📦","Document","class","LangChain's standard text box: <code>page_content</code> + <code>metadata</code>.","A labelled parcel.","langchain_core.documents"],
+    ["🚚","TextLoader","class","Reads a .txt file → list with 1 Document. <code>.load()</code> does the work.","The parcel truck for text.","langchain_community.document_loaders"],
+    ["🚛","CSVLoader","class","Reads a .csv file → 1 Document per row.","The parcel truck for tables.","langchain_community.document_loaders"],
+    ["📁","Path","class","Python's file path helper. <code>write_text</code> makes the sample files.","A file pen.","pathlib"]
+  ]},
+{ id:"13_text_splitters", e:"✂️", t:"Text Splitters", grp:2,
+  nut:"Long text is cut into small <b>chunks</b>. <b>chunk_size</b> = max length, <b>chunk_overlap</b> = how much neighbours share.",
+  an:"🍕 Like cutting a pizza: slices small enough to eat, with a bit of crust shared at the cut.",
+  actors:[["txt","📜","Long text","#3b82f6"],["sp","✂️","RecursiveCharacter TextSplitter","#e8590c"],["ch","🧩","chunks","#16a34a"]],
+  steps:[
+    {s:"The text is 3 sentences repeated 5 times. Too long for one search box.",g:"txt",c:"text = ("},
+    {s:"<code>RecursiveCharacterTextSplitter(chunk_size=100, chunk_overlap=10)</code>. “Recursive” = it tries to cut at paragraphs, then lines, then spaces, so words stay whole.",g:"sp",c:"RecursiveCharacterTextSplitter(chunk_size=size"},
+    {s:"<code>split_text(text)</code> cuts it.",f:"txt",t:"sp",l:"long text",c:"splitter.split_text"},
+    {s:"size=100 → many small chunks.",f:"sp",t:"ch",l:["chunk 1","chunk 2","chunk 3","chunk 4","…"],c:"print(f\"size="},
+    {s:"Overlap: the end of one chunk is repeated at the start of the next, so a sentence on the edge is not lost.",g:"ch",b:["ch","🔗 overlap 10%"],c:"chunk_overlap=size // 10"},
+    {s:"size=400 → fewer, bigger chunks. Pick a size that holds one whole idea.",f:"sp",t:"ch",l:["big chunk 1","big chunk 2"],c:"for size in"}
+  ],
+  cls:[
+    ["✂️","RecursiveCharacterTextSplitter","class","Cuts text into chunks of about <code>chunk_size</code> characters, trying to keep sentences together.","A smart pizza cutter.","langchain_text_splitters"],
+    ["📏","chunk_size / chunk_overlap","concept","Max length of a chunk / characters shared between neighbours.","Slice size / shared crust.","constructor args"],
+    ["🔪","split_text()","method","String in → list of strings out. (<code>split_documents()</code> does the same for Documents.)","The cut.","splitter method"]
+  ]},
+{ id:"14_embeddings", e:"🔢", t:"Embeddings", grp:2,
+  nut:"An embedding turns text into a <b>list of numbers</b>. Texts with similar meaning get similar numbers, even with different words.",
+  an:"🗺️ Like map coordinates for meaning: “stock fell” and “shares dropped” live close together.",
+  actors:[["sen","📝","4 sentences","#3b82f6"],["q","❓","Query","#db2777"],["emb","🔢","OllamaEmbeddings","#e8590c"],["vec","📍","Vectors","#8b5cf6"],["cos","📐","cosine()","#ca8a04"],["rank","🏆","Ranking","#16a34a"]],
+  steps:[
+    {s:"<code>OllamaEmbeddings(model=\"nomic-embed-text\")</code> connects to a local embedding model.",g:"emb",c:"emb = OllamaEmbeddings"},
+    {s:"<code>embed_documents</code> turns each sentence into a vector (768 numbers).",f:"sen",t:"emb",l:"4 sentences",c:"emb.embed_documents"},
+    {s:"",f:"emb",t:"vec",l:["[0.12, -0.4, …]","[0.11, -0.3, …]","[-0.7, 0.2, …]","[-0.6, 0.3, …]"],c:"vectors = "},
+    {s:"<code>embed_query</code> turns the question into a vector too.",f:"q",t:"emb",l:"Why are investors worried?",c:"emb.embed_query"},
+    {s:"<code>cosine()</code> measures the angle between vectors: 1 = same meaning, 0 = unrelated.",f:["vec","emb"],t:"cos",l:"compare",c:"def cosine"},
+    {s:"Stock and shares sentences win, even though the query never says “stock”. Meaning, not keywords! 🎯",f:"cos",t:"rank",l:"0.71 stock · 0.65 shares · 0.31 cakes",b:["rank","🎯 by meaning"],c:"for score, s in sorted"}
+  ],
+  cls:[
+    ["🔢","OllamaEmbeddings","class","Turns text into vectors using a local Ollama model.","A GPS for meaning.","langchain_ollama"],
+    ["📚","embed_documents()","method","Many texts → many vectors (for storing).","Pinning books on the map.","embeddings method"],
+    ["❓","embed_query()","method","One question → one vector (for searching).","Pinning your question on the map.","embeddings method"],
+    ["📐","cosine()","function","Your own function. Similarity score between two vectors.","A ruler between two pins.","your code"]
+  ]},
+{ id:"15_vector_stores", e:"🗃️", t:"Vector Stores", grp:2,
+  nut:"A vector store <b>saves Documents with their vectors</b> and finds the closest ones to a question with <b>similarity_search</b>.",
+  an:"📚 A library where books are shelved by meaning, so the librarian finds the right one instantly.",
+  actors:[["docs","📄","Documents","#3b82f6"],["emb","🔢","OllamaEmbeddings","#e8590c"],["vs","🗃️","InMemoryVectorStore","#8b5cf6"],["q","❓","Question","#db2777"],["best","✅","Best match","#16a34a"]],
+  steps:[
+    {s:"<code>InMemoryVectorStore(OllamaEmbeddings(...))</code>: a store in RAM that uses this model to make vectors.",g:"vs",c:"store = InMemoryVectorStore"},
+    {s:"<code>add_documents</code>: each FAQ Document is embedded…",f:"docs",t:"emb",l:["refund","delivery","payment"],c:"store.add_documents"},
+    {s:"…and saved in the store with its vector.",f:"emb",t:"vs",l:"3 vectors saved",c:"store.add_documents"},
+    {s:"Question: “Can I send an item back?” (no word “refund”!)",f:"q",t:"vs",l:"send an item back?",c:"for q in"},
+    {s:"<code>similarity_search(q, k=1)</code> returns the 1 closest Document: the refund policy. ✅",f:"vs",t:"best",l:"return within 30 days",c:"similarity_search(q, k=1)"},
+    {s:"Same for shipping and UPI. Each question finds its matching FAQ.",f:"q",t:"vs",l:["shipping?","UPI?"],b:["best","3/3 found"],c:"print(q, \"->\""}
+  ],
+  cls:[
+    ["🗃️","InMemoryVectorStore","class","Stores Documents + vectors in RAM and searches by meaning.","A meaning-sorted library.","langchain_core.vectorstores"],
+    ["➕","add_documents()","method","Embeds and saves a list of Documents.","Putting books on shelves.","vector store method"],
+    ["🔎","similarity_search()","method","Question → <code>k</code> closest Documents.","Asking the librarian.","vector store method"],
+    ["📄","Document","class","Each FAQ answer.","A book.","langchain_core.documents"],
+    ["🔢","OllamaEmbeddings","class","Makes the vectors for docs and questions.","The shelving system.","langchain_ollama"]
+  ]},
+{ id:"16_retrievers", e:"🎣", t:"Retrievers", grp:2,
+  nut:"A <b>retriever</b> is a search tool you can put in a chain. <b>similarity</b> = closest results, <b>mmr</b> = close but <b>different</b> from each other.",
+  an:"🍽️ Similarity gives 3 slices of the same cake. MMR gives cake, fruit and juice: all on topic, but varied.",
+  actors:[["q","❓","How can I pay?","#db2777"],["vs","🗃️","InMemoryVectorStore","#8b5cf6"],["sim","🎯","similarity retriever","#3b82f6"],["mmr","🌈","mmr retriever","#ca8a04"],["out","📋","Results","#16a34a"]],
+  steps:[
+    {s:"The store has 4 docs: 3 about payment, 1 about delivery.",g:"vs",c:"store.add_documents"},
+    {s:"<code>store.as_retriever(search_kwargs={\"k\": 3})</code> makes a similarity retriever.",f:"vs",t:"sim",l:"as_retriever()",c:"similar = store.as_retriever"},
+    {s:"<code>search_type=\"mmr\"</code> makes a retriever that also cares about variety.",f:"vs",t:"mmr",l:"as_retriever(mmr)",c:"varied = store.as_retriever"},
+    {s:"Retrievers are Runnables, so you call <code>.invoke(question)</code>.",f:"q",t:["sim","mmr"],l:"How can I pay?",c:"r.invoke(\"How can I pay?\")"},
+    {s:"similarity: the 3 closest docs, even if they repeat the same idea.",f:"sim",t:"out",l:["card/UPI","online pay","refunds"],c:"(\"similarity\", similar)"},
+    {s:"mmr: still relevant, but avoids near-duplicates, so you get more different facts.",f:"mmr",t:"out",l:["card/UPI","refunds","delivery"],b:["out","🌈 varied"],c:"(\"mmr\", varied)"}
+  ],
+  cls:[
+    ["🎣","as_retriever()","method","Turns a vector store into a retriever. Options: <code>search_type</code>, <code>search_kwargs={'k':3}</code>.","Hiring a librarian for the library.","vector store method"],
+    ["🎯","VectorStoreRetriever","class","What <code>as_retriever</code> returns. <code>.invoke(text)</code> → list of Documents.","The librarian.","langchain_core.vectorstores"],
+    ["🌈","MMR","concept","Maximal Marginal Relevance: relevant AND different from each other.","A balanced plate.","search_type"],
+    ["🗃️","InMemoryVectorStore","class","Holds the 4 documents.","The library.","langchain_core.vectorstores"]
+  ]},
+{ id:"17_rag_pipeline", e:"🔍", t:"RAG End to End", grp:2,
+  nut:"<b>RAG</b> = <b>R</b>etrieve facts from your docs → <b>A</b>ugment the prompt with them → <b>G</b>enerate an answer from only those facts.",
+  an:"📖 An open-book exam: find the right page first, then answer from it.",
+  actors:[["file","📄","handbook.txt","#3b82f6"],["ld","🚚","TextLoader","#8b5cf6"],["sp","✂️","Splitter","#ca8a04"],["vs","🗃️","Vector store","#0ea5e9"],["q","❓","Question","#db2777"],["ret","🎣","Retriever","#3b82f6"],["pr","📝","Prompt","#8b5cf6"],["llm","🤖","ChatOllama","#e8590c"],["ans","💬","Answer","#16a34a"]],
+  steps:[
+    {s:"<b>Index (once):</b> load the handbook…",f:"file",t:"ld",l:"handbook",c:"docs = TextLoader"},
+    {s:"…split it into chunks…",f:"ld",t:"sp",l:"1 Document",c:"split_documents(docs)"},
+    {s:"…embed and save the chunks. The retriever will return the top 2.",f:"sp",t:"vs",l:["chunk","chunk"],c:"store.add_documents(chunks)"},
+    {s:"<b>Retrieve:</b> the question goes to the retriever. <code>format_docs</code> joins the 2 hits into one text.",f:"q",t:"ret",l:"leave days?",c:"\"context\": retriever | format_docs"},
+    {s:"<b>Augment:</b> the facts go into <code>{context}</code>, and <code>RunnablePassthrough</code> sends the question into <code>{question}</code>.",f:["ret","q"],t:"pr",l:["20 days paid leave…","question"],c:"RunnablePassthrough()}"},
+    {s:"<b>Generate:</b> the model answers ONLY from the context.",f:"pr",t:"llm",l:"system + context + question",c:"ChatOllama(model=\"llama3.2\", temperature=0)"},
+    {s:"“You get 20 days of paid leave.” ✅",f:"llm",t:"ans",l:"20 days ✅",c:"How many leave days"},
+    {s:"“Capital of France?” is not in the handbook, so it says <b>I do not know</b>. No guessing! 🙅",f:"llm",t:"ans",l:"I don't know 🙅",b:["ans","no guessing"],c:"capital of France"}
+  ],
+  cls:[
+    ["🚚","TextLoader","class","Loads handbook.txt as a Document.","Opening the book.","langchain_community.document_loaders"],
+    ["✂️","RecursiveCharacterTextSplitter","class","<code>split_documents</code> cuts Documents into chunks (metadata kept).","Cutting into pages.","langchain_text_splitters"],
+    ["🗃️","InMemoryVectorStore","class","Stores chunk vectors, gives a retriever.","The index.","langchain_core.vectorstores"],
+    ["🔢","OllamaEmbeddings","class","Embeds chunks and questions.","Meaning GPS.","langchain_ollama"],
+    ["➡️","RunnablePassthrough","class","Passes the question straight into <code>{question}</code>.","Straight pipe.","langchain_core.runnables"],
+    ["📝","ChatPromptTemplate","class","System rule “answer only from context” + the question.","Exam instructions.","langchain_core.prompts"],
+    ["🤖","ChatOllama","class","Writes the final answer.","The student.","langchain_ollama"],
+    ["🧵","StrOutputParser","class","Answer → string.","Packer.","langchain_core.output_parsers"]
+  ]},
+{ id:"18_tools", e:"🔧", t:"Tools & Function Calling", grp:3,
+  nut:"The model can't run code. It <b>asks</b> for a tool (name + arguments). <b>Your code</b> runs the tool and sends the result back as a <b>ToolMessage</b>.",
+  an:"👨‍🍳 The chef (model) shouts “blender, 12 and 30!”. The helper (your code) runs the blender and brings back the result.",
+  actors:[["you","🧑","HumanMessage","#3b82f6"],["llm","🤖","ChatOllama + bind_tools","#e8590c"],["ai","📞","AIMessage .tool_calls","#ca8a04"],["tool","🔧","add (tool)","#8b5cf6"],["tm","📬","ToolMessage","#0ea5e9"],["ans","💬","Final answer","#16a34a"]],
+  steps:[
+    {s:"<code>@tool</code> turns <code>add(a, b)</code> into a tool. The docstring + type hints tell the model what it does.",g:"tool",c:"@tool"},
+    {s:"<code>bind_tools([add])</code> shows the model the tool menu.",f:"tool",t:"llm",l:"menu: add(a,b)",c:"bind_tools([add])"},
+    {s:"Question: “What is 12 plus 30?”",f:"you",t:"llm",l:"12 plus 30?",c:"ai_msg = llm.invoke(messages)"},
+    {s:"The model does not answer yet. It returns <b>tool_calls</b>: “please run add(a=12, b=30)”.",f:"llm",t:"ai",l:"add(a=12, b=30)",c:"messages.append(ai_msg)"},
+    {s:"<b>Your loop</b> runs the tool with those args: <code>add.invoke(call[\"args\"])</code>.",f:"ai",t:"tool",l:"{a:12, b:30}",c:"add.invoke(call[\"args\"])"},
+    {s:"The result 42 is wrapped in a <b>ToolMessage</b> with the same <code>tool_call_id</code>.",f:"tool",t:"tm",l:"42",c:"ToolMessage(content"},
+    {s:"The model reads the result…",f:"tm",t:"llm",l:"ToolMessage 42",c:"print(llm.invoke(messages).content)"},
+    {s:"…and writes the final answer: “12 + 30 = 42”. 🎉",f:"llm",t:"ans",l:"12 + 30 = 42",b:["ans","✅ 42"],c:"print(llm.invoke(messages).content)"}
+  ],
+  cls:[
+    ["🔧","@tool","decorator","Turns a Python function into a tool with name, description and argument types.","Putting a label on a kitchen machine.","langchain_core.tools"],
+    ["📋","bind_tools()","method","Gives the model the list of tools it may ask for.","Handing the chef the machine list.","ChatOllama method"],
+    ["📞","AIMessage.tool_calls","concept","List of tool requests: <code>name</code>, <code>args</code>, <code>id</code>.","The chef's order slip.","AIMessage field"],
+    ["📬","ToolMessage","class","The tool's result, sent back to the model. Must match the call's <code>tool_call_id</code>.","The helper's reply slip.","langchain_core.messages"],
+    ["🧑","HumanMessage","class","The user's question.","The customer's order.","langchain_core.messages"]
+  ]},
+{ id:"19_agents", e:"🕵️", t:"Agents", grp:3,
+  nut:"An <b>agent</b> is the tool loop from lesson 18, done for you: think → call tool → read result → repeat → answer.",
+  an:"🕵️ A detective: looks at the question, uses the right gadget, checks the clue, repeats until solved.",
+  actors:[["user","🧑","User","#3b82f6"],["ag","🕵️","agent (create_agent)","#e8590c"],["llm","🤖","ChatOllama","#8b5cf6"],["td","📅","today()","#0ea5e9"],["add","➕","add()","#ca8a04"],["ans","💬","Answer","#16a34a"]],
+  steps:[
+    {s:"<code>create_agent(model, tools, system_prompt)</code> builds the agent with 2 tools: <code>add</code> and <code>today</code>.",g:"ag",c:"agent = create_agent"},
+    {s:"The user asks two things at once: date and 15 + 27.",f:"user",t:"ag",l:"date? 15+27?",c:"agent.invoke"},
+    {s:"The agent asks the model what to do.",f:"ag",t:"llm",l:"think 🤔",c:"model=ChatOllama"},
+    {s:"The model says “call <code>today()</code>”. The agent runs it.",f:"llm",t:"td",l:"call today()",c:"def today"},
+    {s:"",f:"td",t:"llm",l:"2026-11-05",c:"return datetime.date.today()"},
+    {s:"Then “call <code>add(15, 27)</code>”.",f:"llm",t:"add",l:"add(15, 27)",c:"def add"},
+    {s:"",f:"add",t:"llm",l:"42",c:"return a + b"},
+    {s:"Enough clues: final answer. <code>result[\"messages\"]</code> holds every step (human, ai, tool…).",f:"llm",t:"ans",l:"date + 42 ✅",b:["ans","🔁 loop done"],c:"for msg in result[\"messages\"]"}
+  ],
+  cls:[
+    ["🕵️","create_agent()","function","Builds an agent: a model + tools + system prompt, looping until it can answer.","Hiring a detective.","langchain.agents"],
+    ["🔧","@tool","decorator","Makes <code>add</code> and <code>today</code> usable by the agent.","The gadgets.","langchain_core.tools"],
+    ["🤖","ChatOllama","class","The agent's brain that decides the next step.","The detective's brain.","langchain_ollama"],
+    ["📜","result['messages']","concept","The full story: every message the agent produced.","The case file.","agent output"]
+  ]},
+{ id:"20_langgraph_intro", e:"🕸️", t:"LangGraph Basics", grp:3,
+  nut:"A graph of <b>nodes</b> (steps) and <b>edges</b> (arrows). A shared <b>State</b> dict moves through it, and each node updates part of it.",
+  an:"🎒 A school bag passed from desk to desk. Each student adds or fixes one thing.",
+  actors:[["st","🟢","START","#16a34a"],["cl","🧽","clean","#3b82f6"],["co","🔢","count","#8b5cf6"],["ro","🚦","route()","#ca8a04"],["end","🏁","END","#e8590c"],["bag","🎒","State","#db2777"]],
+  steps:[
+    {s:"<code>class State(TypedDict)</code>: the bag has <code>text</code> and <code>count</code>.",g:"bag",c:"class State(TypedDict)"},
+    {s:"<code>StateGraph(State)</code> + <code>add_node</code> + <code>add_edge</code> draw the map. <code>compile()</code> makes it runnable.",g:["cl","co"],c:"builder = StateGraph(State)"},
+    {s:"<code>graph.invoke(...)</code>: the bag starts at START with <code>'  hello big world  '</code>.",f:"st",t:"cl",l:"text='  hello…  '",c:"graph.invoke"},
+    {s:"<b>clean</b> strips spaces and returns only <code>{\"text\": ...}</code>. LangGraph merges it into the bag.",f:"cl",t:"co",l:"text='hello big world'",c:"def clean"},
+    {s:"<b>count</b> counts words: 3.",f:"co",t:"ro",l:"count=3",c:"def count_words"},
+    {s:"<code>add_conditional_edges</code>: <code>route()</code> picks the next arrow. 3 ≤ 5, so “short”.",f:"ro",t:"end",l:"short",c:"def route"},
+    {s:"END. The final bag is printed: <code>{'text': 'hello big world', 'count': 3}</code>.",g:"end",b:["bag","text + count=3"],c:"print(graph.invoke"}
+  ],
+  cls:[
+    ["🎒","TypedDict (State)","class","Describes the keys in the shared state.","The bag's pockets.","typing"],
+    ["🕸️","StateGraph","class","The graph builder. <code>add_node</code>, <code>add_edge</code>, <code>add_conditional_edges</code>, <code>compile</code>.","The map maker.","langgraph.graph"],
+    ["🟢","START / END","concept","Special entry and exit points.","Start line / finish line.","langgraph.graph"],
+    ["🚦","add_conditional_edges()","method","Your function decides which edge to take.","A traffic light.","StateGraph method"],
+    ["🏗️","compile()","method","Turns the builder into a runnable graph with <code>.invoke</code>.","Opening the road.","StateGraph method"]
+  ]},
+{ id:"21_callbacks_tracing", e:"📡", t:"Callbacks & Tracing", grp:4,
+  nut:"<b>Callbacks</b> are hooks LangChain calls at events like <b>start</b>, <b>end</b> and <b>error</b>. Use them to log, time or trace.",
+  an:"🔔 Like a doorbell camera: it beeps every time someone arrives or leaves.",
+  actors:[["code","🐍","llm.invoke(...)","#3b82f6"],["llm","🤖","ChatOllama","#e8590c"],["tm","⏱️","Timer (BaseCallbackHandler)","#8b5cf6"],["con","🖥️","Console","#16a34a"],["ls","☁️","LangSmith (optional)","#64748b"]],
+  steps:[
+    {s:"<code>class Timer(BaseCallbackHandler)</code> picks which events to listen to by naming methods.",g:"tm",c:"class Timer(BaseCallbackHandler)"},
+    {s:"We pass it in <code>config={\"callbacks\": [Timer()]}</code>.",f:"code",t:"llm",l:"callbacks=[Timer()]",c:"config={\"callbacks\""},
+    {s:"When the model starts, LangChain calls <code>on_chat_model_start</code>.",f:"llm",t:"tm",l:"on_chat_model_start",c:"def on_chat_model_start"},
+    {s:"",f:"tm",t:"con",l:"[start] model called",c:"print(\"[start] model called\")"},
+    {s:"When it finishes: <code>on_llm_end</code> prints the time.",f:"llm",t:"tm",l:"on_llm_end",c:"def on_llm_end"},
+    {s:"",f:"tm",t:"con",l:"[end] took 1.84s",c:"took"},
+    {s:"If it fails, <code>on_llm_error</code> runs instead.",g:"tm",b:["tm","🛑 on error"],c:"def on_llm_error"},
+    {s:"LangSmith tracing needs <b>no code</b>: set 3 lines in <code>.env</code> and every run shows up online.",f:"llm",t:"ls",l:"trace",c:"LANGSMITH_TRACING"}
+  ],
+  cls:[
+    ["⏱️","BaseCallbackHandler","class","Parent class for callbacks. Override <code>on_..._start</code>, <code>on_..._end</code>, <code>on_..._error</code>.","A doorbell you can program.","langchain_core.callbacks"],
+    ["🔔","on_chat_model_start / on_llm_end / on_llm_error","method","Event methods LangChain calls for you.","Beeps at each event.","handler methods"],
+    ["⚙️","config={'callbacks': [...]}","concept","How you attach handlers to one call.","Plugging in the camera.","invoke argument"],
+    ["☁️","LangSmith","concept","Online dashboard of every run, turned on with env variables.","CCTV recording.","env settings"]
+  ]},
+{ id:"22_errors_fallbacks", e:"🛟", t:"Errors, Retries & Fallbacks", grp:4,
+  nut:"Plan for failure: <b>with_fallbacks</b> switches to a backup model, a <b>retry loop</b> asks again, and <b>try/except</b> shows a friendly message.",
+  an:"🛟 Spare tyre (fallback), second try (retry), and a polite “sorry” sign (except).",
+  actors:[["user","🧑","get_json()","#3b82f6"],["rb","🛡️","robust (with_fallbacks)","#e8590c"],["p","🦙","primary llama3.2","#8b5cf6"],["b","🐉","backup qwen2.5","#0ea5e9"],["chk","🧪","json.loads","#ca8a04"],["ok","✅","dict","#16a34a"]],
+  steps:[
+    {s:"<code>primary.with_fallbacks([backup])</code> makes one model that tries the backup if the primary crashes.",g:"rb",c:"robust = primary.with_fallbacks"},
+    {s:"<code>get_json()</code> asks robust for JSON about Paris.",f:"user",t:"rb",l:"JSON for Paris",c:"text = robust.invoke(prompt)"},
+    {s:"robust tries the primary first…",f:"rb",t:"p",l:"try primary",c:"primary = ChatOllama"},
+    {s:"💥 If the primary errors (not pulled, crashed…), robust switches to the backup.",f:"rb",t:"b",l:"fallback!",b:["p","💥 failed"],c:"backup = ChatOllama"},
+    {s:"The text goes to <code>json.loads</code>. Not valid JSON? <code>JSONDecodeError</code> → new prompt “return ONLY valid JSON” and try again (up to 3).",f:"b",t:"chk",l:"text",c:"except json.JSONDecodeError"},
+    {s:"",f:"chk",t:"rb",l:"retry 🔁",c:"Return ONLY valid JSON"},
+    {s:"Valid JSON → a Python dict. 🎉",f:"chk",t:"ok",l:"{city:'Paris', country:'France'}",c:"return json.loads(text)"},
+    {s:"If everything fails, the outer <code>try/except</code> shows “Sorry, the assistant is busy” instead of a crash.",g:"user",b:["user","🙏 friendly"],c:"Sorry, the assistant is busy"}
+  ],
+  cls:[
+    ["🛡️","with_fallbacks()","method","Returns a <b>RunnableWithFallbacks</b>: if the first model raises an error, it tries the next.","A spare tyre.","Runnable method"],
+    ["🦙","ChatOllama (×2)","class","Two models: <code>llama3.2</code> primary, <code>qwen2.5</code> backup.","Main car / spare car.","langchain_ollama"],
+    ["🧪","json.JSONDecodeError","class","Raised when text is not valid JSON. Triggers a retry here.","The quality check failing.","json"],
+    ["🚫","ValueError","class","Raised after 3 bad tries.","Giving up.","built-in"]
+  ]},
+{ id:"23_capstone", e:"🎓", t:"Capstone: Study Buddy Agent", grp:4,
+  nut:"Everything together: <b>load + split + embed</b> your notes, give an <b>agent</b> a <b>search_notes</b> tool and a <b>calculate</b> tool, and keep the <b>last 10 messages</b> as memory.",
+  an:"🎓 A study buddy who has read your notes, can do sums, and remembers what you just asked.",
+  actors:[["notes","📚","notes/*.txt","#3b82f6"],["ix","✂️","Loader + Splitter","#ca8a04"],["vs","🗃️","Vector store","#0ea5e9"],["stu","🎓","Student","#db2777"],["his","📜","history[-10:]","#64748b"],["ag","🕵️","Study Buddy agent","#e8590c"],["sn","🔎","search_notes","#8b5cf6"],["calc","🧮","calculate","#16a34a"]],
+  steps:[
+    {s:"<code>build_store()</code>: load every .txt in <code>notes/</code>, split into 500-char chunks…",f:"notes",t:"ix",l:["bio.txt","chem.txt"],c:"def build_store"},
+    {s:"…and save them in an InMemoryVectorStore with Ollama embeddings.",f:"ix",t:"vs",l:"chunks",c:"store.add_documents(chunks)"},
+    {s:"The student asks “What is photosynthesis?”. <code>ask()</code> adds it to the history.",f:"stu",t:"his",l:"What is photosynthesis?",c:"history.append({\"role\": \"user\""},
+    {s:"Only the <b>last 10 messages</b> go to the agent. <code>recursion_limit=8</code> stops endless loops.",f:"his",t:"ag",l:"last 10 msgs",c:"recursion_limit"},
+    {s:"The system prompt says: course question → call <code>search_notes</code> first.",f:"ag",t:"sn",l:"search 'photosynthesis'",c:"def search_notes"},
+    {s:"The tool runs <code>similarity_search(k=3)</code> and returns hits with their source file.",f:"vs",t:"sn",l:"[notes/bio.txt] …",c:"store.similarity_search(query, k=3)"},
+    {s:"",f:"sn",t:"ag",l:"3 hits + sources",c:"return \"\\n\\n\".join"},
+    {s:"For sums the agent uses <code>calculate</code>. It only allows digits and + - * / ( ), so <code>eval</code> is safe.",f:"ag",t:"calc",l:"12 * (3 + 4)",c:"def calculate"},
+    {s:"The answer cites the source and is saved to history. “Explain that more simply” works because the buddy remembers. 🧠",f:"ag",t:"stu",l:"answer + [bio.txt]",b:["stu","🎉 learned"],c:"history.append({\"role\": \"assistant\""}
+  ],
+  cls:[
+    ["🕵️","create_agent()","function","Model + 2 tools + system prompt = Study Buddy.","The buddy.","langchain.agents"],
+    ["🚚","TextLoader","class","Reads each note file.","Opening the notebooks.","langchain_community.document_loaders"],
+    ["✂️","RecursiveCharacterTextSplitter","class","500-char chunks, 50 overlap.","Cutting notes into flashcards.","langchain_text_splitters"],
+    ["🗃️","InMemoryVectorStore","class","Holds the flashcards for meaning search.","The flashcard box.","langchain_core.vectorstores"],
+    ["🔢","OllamaEmbeddings","class","Embeds the chunks and searches.","Meaning GPS.","langchain_ollama"],
+    ["🔧","@tool","decorator","Makes <code>search_notes</code> and <code>calculate</code> into tools.","The buddy's gadgets.","langchain_core.tools"],
+    ["🤖","ChatOllama","class","The brain, <code>llama3.2</code>.","The buddy's brain.","langchain_ollama"],
+    ["📜","history list","concept","Your own memory: a Python list, last 10 sent each time.","Short-term memory.","your code"]
+  ]}
+];
+const GROUPS = ["🌱 Basics","⛓️ Chains","📚 RAG","🤖 Agents","🚀 Production"];
+</script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const root = document.documentElement;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const FLY = reduce ? 250 : 1000;
+
+  // theme toggle
+  const store = {get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  const saved = store.get("lc-theme"); if (saved) root.dataset.theme = saved;
+  $("themeBtn").onclick = () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark"; store.set("lc-theme", root.dataset.theme);
+  };
+
+  // nav
+  const nav = $("nav");
+  GROUPS.forEach((g, gi) => {
+    const row = document.createElement("div"); row.className = "grp";
+    row.innerHTML = `<span class="grp-name">${g}</span>`;
+    LESSONS.forEach((L, i) => {
+      if (L.grp !== gi) return;
+      const b = document.createElement("button"); b.className = "chip"; b.dataset.i = i;
+      b.textContent = `${L.e} ${i + 1}`; b.title = L.t;
+      b.onclick = () => go(i);
+      row.appendChild(b);
+    });
+    nav.appendChild(row);
+  });
+
+  // simple python highlighter
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const TOK = /(#.*$)|([fr]?"(?:[^"\\]|\\.)*"|[fr]?'(?:[^'\\]|\\.)*')|(@\w+)|\b(from|import|def|class|return|for|in|if|else|try|except|with|as|async|await|raise|not|None|True|False|lambda|and|or)\b/g;
+  function hl(line){
+    let out = "", last = 0, m; TOK.lastIndex = 0;
+    while ((m = TOK.exec(line))) {
+      out += esc(line.slice(last, m.index));
+      const cls = m[1] ? "c" : m[2] ? "s" : m[3] ? "d" : "k";
+      out += `<span class="tk-${cls}">${esc(m[0])}</span>`;
+      last = TOK.lastIndex;
+    }
+    return out + esc(line.slice(last));
+  }
+
+  let cur = 0, step = -1, playing = false, timer = null, runId = 0, lines = [];
+
+  function go(i, push = true){
+    cur = (i + LESSONS.length) % LESSONS.length;
+    if (push) { try { history.replaceState(null, "", "#" + LESSONS[cur].id); } catch(e){} }
+    render();
+    window.scrollTo({top: $("lesson").offsetTop - 8, behavior: reduce ? "auto" : "smooth"});
+  }
+
+  function render(){
+    const L = LESSONS[cur];
+    stop(); runId++; step = -1;
+    document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", +c.dataset.i === cur));
+    $("lEmoji").textContent = L.e;
+    $("lTitle").textContent = `${cur + 1}. ${L.t}`;
+    $("lFolder").textContent = `📁 langchain_example_ollama/${L.id}/main.py`;
+    $("lNut").innerHTML = "🥜 <b>In a nutshell:</b> " + L.nut;
+    $("lAnalogy").innerHTML = L.an;
+    $("codeName").textContent = `${L.id}/main.py`;
+
+    // stage
+    const st = $("stage"); st.innerHTML = "";
+    L.actors.forEach(([id, em, nm, col]) => {
+      const a = document.createElement("div"); a.className = "actor"; a.id = "a-" + id;
+      a.style.setProperty("--ac", col);
+      a.innerHTML = `<div class="bubble">${em}</div><div class="nm">${nm}</div><div class="bdg"></div>`;
+      st.appendChild(a);
+    });
+    $("say").innerHTML = "Press <b>▶ Play</b> to watch this program run, or <b>Next ▶</b> to go one step at a time.";
+
+    // code
+    lines = (CODE[L.id] || "").split("\n");
+    $("code").innerHTML = lines.map(l => `<span class="ln">${hl(l) || " "}</span>`).join("");
+
+    // dots
+    const d = $("dots"); d.innerHTML = "";
+    L.steps.forEach((_, i) => { const b = document.createElement("button"); b.className = "dot"; b.title = "Step " + (i + 1); b.onclick = () => { stop(); show(i); }; d.appendChild(b); });
+
+    // classes
+    const cc = $("classes"); cc.innerHTML = "";
+    L.cls.forEach(([em, name, kind, does, like, from], i) => {
+      const c = document.createElement("div"); c.className = "card cls-card"; c.style.animationDelay = (i * 70) + "ms";
+      c.innerHTML = `<div class="cls-top"><span class="cls-emoji">${em}</span><span class="cls-name">${esc(name)}</span><span class="kind ${kind}">${kind}</span></div>
+        <p class="cls-does">${does}</p><p class="cls-like">💡 ${like}</p><div class="cls-from">${from}</div>`;
+      c.onclick = () => findInCode(name, c);
+      cc.appendChild(c);
+    });
+
+    // pager
+    const P = LESSONS[(cur + LESSONS.length - 1) % LESSONS.length], N = LESSONS[(cur + 1) % LESSONS.length];
+    $("pPrev").textContent = `◀ ${P.e} ${P.t}`; $("pPrev").onclick = () => go(cur - 1);
+    $("pNext").textContent = `${N.e} ${N.t} ▶`; $("pNext").onclick = () => go(cur + 1);
+    updateBtns();
+  }
+
+  function findInCode(name, card){
+    document.querySelectorAll(".cls-card").forEach(c => c.classList.toggle("sel", c === card));
+    const key = name.replace(/\(.*$/, "").replace(/^@/, "@").split(/[ .\/]/).filter(Boolean);
+    let words = key.filter(w => w.length > 2 && !/^(the|list)$/i.test(w));
+    if (name.startsWith("@")) words = ["@tool"];
+    const lns = $("code").children; let first = null;
+    for (let i = 0; i < lns.length; i++) {
+      const hit = words.some(w => lines[i].includes(w));
+      lns[i].classList.toggle("cls", hit);
+      if (hit && !first) first = lns[i];
+    }
+    if (first) { const pre = $("code"); pre.scrollTo({top: first.offsetTop - 40, behavior: "smooth"}); }
+  }
+
+  const arr = x => x == null ? [] : Array.isArray(x) ? x : [x];
+
+  function highlightCode(sub){
+    const lns = $("code").children; let first = null;
+    for (let i = 0; i < lns.length; i++) {
+      const hit = !!sub && lines[i].includes(sub);
+      lns[i].classList.toggle("hl", hit && !first);
+      if (hit && !first) first = lns[i];
+    }
+    if (first) { const pre = $("code"); const top = first.offsetTop - pre.clientHeight / 2; pre.scrollTo({top, behavior: reduce ? "auto" : "smooth"}); }
+  }
+
+  function centerOf(id){
+    const st = $("stage").getBoundingClientRect();
+    const el = document.querySelector(`#a-${id} .bubble`); if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return {x: r.left - st.left + r.width / 2, y: r.top - st.top + r.height / 2};
+  }
+
+  function colorOf(id){ const a = LESSONS[cur].actors.find(x => x[0] === id); return a ? a[3] : "#e8590c"; }
+
+  function fly(from, to, label, delay, my){
+    return new Promise(res => {
+      setTimeout(() => {
+        if (my !== runId) return res();
+        const A = centerOf(from), B = centerOf(to); if (!A || !B) return res();
+        const p = document.createElement("div"); p.className = "packet"; p.textContent = label;
+        p.style.setProperty("--pc", colorOf(from));
+        $("stage").appendChild(p);
+        const w = p.offsetWidth, h = p.offsetHeight;
+        const lift = Math.min(60, Math.abs(A.x - B.x) / 4 + 20);
+        const mid = {x: (A.x + B.x) / 2, y: Math.min(A.y, B.y) - lift};
+        const T = (pt, s) => `translate(${pt.x - w / 2}px, ${pt.y - h / 2}px) scale(${s})`;
+        const an = p.animate([{transform: T(A, .5), opacity: 0},{transform: T(A, 1), opacity: 1, offset: .12},{transform: T(mid, 1.05), offset: .55},{transform: T(B, 1), opacity: 1, offset: .9},{transform: T(B, .6), opacity: 0}], {duration: FLY, easing: "ease-in-out"});
+        const target = document.getElementById("a-" + to);
+        an.onfinish = () => { p.remove(); if (target && my === runId) { target.classList.add("glow"); setTimeout(() => target.classList.remove("glow"), 650); } res(); };
+      }, delay);
+    });
+  }
+
+  function show(i){
+    const L = LESSONS[cur]; if (i < 0 || i >= L.steps.length) return;
+    step = i; const my = ++runId; const S = L.steps[i];
+    document.querySelectorAll(".packet").forEach(p => p.remove());
+    document.querySelectorAll(".actor").forEach(a => a.classList.remove("glow"));
+    $("say").innerHTML = `<b>Step ${i + 1}/${L.steps.length}.</b> ` + (S.s || "↓");
+    highlightCode(S.c);
+    [...$("dots").children].forEach((d, k) => { d.classList.toggle("on", k === i); d.classList.toggle("done", k < i); });
+
+    // badges up to this step
+    document.querySelectorAll(".actor .bdg").forEach(b => { b.classList.remove("show"); b.textContent = ""; });
+    L.steps.slice(0, i + 1).forEach(s => { if (s.b) { const b = document.querySelector(`#a-${s.b[0]} .bdg`); if (b) { b.textContent = s.b[1]; b.classList.add("show"); } } });
+
+    arr(S.g).forEach(id => { const a = document.getElementById("a-" + id); if (a) { a.classList.add("glow"); setTimeout(() => my === runId && a.classList.remove("glow"), 1500); } });
+
+    const jobs = [];
+    const froms = arr(S.f), tos = arr(S.t), labels = arr(S.l);
+    if (froms.length && tos.length) {
+      if (froms.length > 1 && tos.length === 1) froms.forEach((f, k) => jobs.push(fly(f, tos[0], labels[k] || labels[0], k * 120, my)));
+      else if (tos.length > 1) tos.forEach((t, k) => jobs.push(fly(froms[0], t, labels[k] || labels[0], k * 120, my)));
+      else labels.forEach((lb, k) => jobs.push(fly(froms[0], tos[0], lb, k * (reduce ? 120 : 380), my)));
+      if (!labels.length) jobs.push(fly(froms[0], tos[0], "→", 0, my));
+    }
+    updateBtns();
+    return Promise.all(jobs);
+  }
+
+  function updateBtns(){
+    const n = LESSONS[cur].steps.length;
+    $("prevBtn").disabled = step <= 0;
+    $("nextBtn").disabled = step >= n - 1;
+    $("playBtn").textContent = playing ? "⏸ Pause" : (step >= n - 1 ? "↺ Play again" : "▶ Play");
+  }
+
+  function stop(){ playing = false; clearTimeout(timer); updateBtns(); }
+
+  async function loop(){
+    if (!playing) return;
+    const n = LESSONS[cur].steps.length;
+    if (step >= n - 1) { stop(); return; }
+    const L0 = cur;
+    await show(step + 1);
+    if (!playing || L0 !== cur) return;
+    timer = setTimeout(loop, reduce ? 1800 : 1700);
+    updateBtns();
+  }
+
+  $("playBtn").onclick = () => {
+    if (playing) return stop();
+    if (step >= LESSONS[cur].steps.length - 1) step = -1;
+    playing = true; updateBtns(); loop();
+  };
+  $("nextBtn").onclick = () => { stop(); show(step + 1); };
+  $("prevBtn").onclick = () => { stop(); show(step - 1); };
+  $("replayBtn").onclick = () => { stop(); step = -1; playing = true; updateBtns(); loop(); };
+  document.addEventListener("keydown", e => {
+    if (e.target.closest("button") && (e.key === " " || e.key === "Enter")) return;
+    if (e.key === "ArrowRight") { stop(); show(step + 1); }
+    else if (e.key === "ArrowLeft") { stop(); show(step - 1); }
+    else if (e.key === " ") { e.preventDefault(); $("playBtn").click(); }
+  });
+
+  const startId = location.hash.slice(1);
+  const si = LESSONS.findIndex(L => L.id === startId);
+  cur = si >= 0 ? si : 0; render();
+})();
+</script>
+</body>
+</html>

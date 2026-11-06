@@ -1,0 +1,92 @@
+You are a senior full-stack developer. Build a complete, working **Student Management System** web app with NO login/authentication (anyone who opens the app has full access).
+
+## Tech Stack (strict)
+- Backend: Python 3.11+, FastAPI, SQLAlchemy 2.x ORM, Pydantic v2 for validation, Uvicorn server
+- Database: SQLite (single file `students.db`, auto-created on first run)
+- Frontend: Plain HTML + CSS + vanilla JavaScript (fetch API), served by FastAPI as static files. No React/Node build step.
+- Charts: Chart.js from CDN
+- No authentication, no JWT, no user accounts
+
+## Project Structure
+student_mgmt/
+├── backend/
+│   ├── main.py            # FastAPI app, CORS, static file mounting, router includes
+│   ├── database.py        # engine, SessionLocal, Base, get_db dependency
+│   ├── models.py          # SQLAlchemy models
+│   ├── schemas.py         # Pydantic request/response schemas
+│   ├── crud/              # one file per module (students.py, courses.py, ...)
+│   ├── routers/           # one router per module
+│   └── seed.py            # inserts sample data
+├── frontend/
+│   ├── index.html         # dashboard
+│   ├── students.html, courses.html, teachers.html, departments.html,
+│   │   enrollments.html, attendance.html, marks.html, fees.html, reports.html
+│   ├── css/style.css
+│   └── js/ (api.js shared fetch helper + one js file per page)
+├── requirements.txt
+└── README.md
+
+## Database Tables (with relationships)
+1. **departments**: id, name (unique), code (unique), description, created_at
+2. **teachers**: id, employee_id (unique), first_name, last_name, email (unique), phone, department_id (FK), qualification, joining_date, salary, status (active/inactive)
+3. **courses**: id, code (unique), name, description, credits, department_id (FK), teacher_id (FK, nullable), semester, max_capacity
+4. **students**: id, roll_number (unique, auto-generated like STU2026001), first_name, last_name, gender, date_of_birth, email (unique), phone, address, city, state, pincode, guardian_name, guardian_phone, department_id (FK), year_of_study (1–4), admission_date, blood_group, photo_url (optional), status (active/inactive/graduated/suspended), created_at, updated_at
+5. **enrollments**: id, student_id (FK), course_id (FK), enrolled_on, status (enrolled/completed/dropped). Unique (student_id, course_id)
+6. **attendance**: id, student_id (FK), course_id (FK), date, status (present/absent/late/excused), remarks. Unique (student_id, course_id, date)
+7. **marks**: id, student_id (FK), course_id (FK), exam_type (internal1/internal2/assignment/midterm/final), max_marks, obtained_marks, exam_date, remarks
+8. **fees**: id, student_id (FK), fee_type (tuition/hostel/transport/exam/library/other), amount, due_date, paid_amount, payment_date, payment_mode (cash/card/upi/bank), status (paid/partial/pending/overdue, computed), receipt_number (auto-generated)
+
+Use cascade delete where it makes sense (deleting a student removes their enrollments, attendance, marks and fees). Block deleting a department or course while it still has linked records, and return a clear error.
+
+## Backend Features (REST API, all under /api)
+For EVERY module: full CRUD
+- GET /api/{module}: list with pagination (page, page_size), search (q), sorting (sort_by, order) and module-specific filters
+- GET /api/{module}/{id}
+- POST /api/{module}
+- PUT /api/{module}/{id}
+- DELETE /api/{module}/{id}
+
+Extra endpoints:
+- Students: filter by department, year, status, gender, city; GET /api/students/{id}/profile (full profile: details, enrolled courses, attendance %, marks, GPA, fee summary)
+- Bulk: POST /api/students/import (CSV upload), GET /api/students/export (CSV download)
+- Enrollments: bulk-enroll many students into one course; enforce course max_capacity; prevent duplicates
+- Attendance: POST /api/attendance/bulk (mark a whole class for one course and date in one request); GET attendance % per student per course; list students below 75% attendance
+- Marks: bulk entry for a course and exam; auto-compute percentage and grade (A+ ≥90, A ≥80, B ≥70, C ≥60, D ≥50, F <50); GPA/CGPA per student on a 10-point scale; course toppers; class average
+- Fees: record payment (partial payments allowed); auto-update status; overdue = past due_date and not fully paid; pending-fees list; total collected vs pending
+- Reports/Dashboard: GET /api/dashboard/stats → total students, teachers, courses, departments; active vs inactive; students per department; gender ratio; average attendance; fee collection summary; recent admissions; top 5 performers
+- Report card: GET /api/reports/report-card/{student_id} (printable HTML)
+- Health check: GET /api/health
+
+Backend quality rules:
+- Pydantic validation: email format, 10-digit phone, marks ≤ max_marks, amount > 0, dates valid, DOB in the past
+- Proper HTTP status codes (201, 400, 404, 409 for duplicates, 422)
+- Consistent error JSON: {"detail": "message"}
+- CORS enabled
+- Tables auto-created on startup; `seed.py` adds about 5 departments, 10 teachers, 15 courses and 50 students with attendance, marks and fees
+- Docstrings so Swagger UI at /docs is self-explanatory
+
+## Frontend Features
+- Clean, responsive admin dashboard layout: sidebar nav + top bar + content area; works on mobile
+- Light/dark mode toggle (remembered in localStorage)
+- **Dashboard**: stat cards + Chart.js charts (students per department bar chart, gender pie chart, fee collection doughnut, attendance trend line)
+- **Every module page**: data table with search box, filters, sortable columns, pagination; Add/Edit in a modal form with client-side validation; Delete with confirmation dialog; toast notifications for success and error
+- **Student profile page**: tabs for Details, Courses, Attendance, Marks, Fees
+- **Attendance page**: pick course + date, show the enrolled students, mark each Present/Absent/Late with radio buttons, then "Mark all present" and Save
+- **Marks page**: pick course + exam type, editable grid for entering marks, auto-shown grade
+- **Fees page**: record a payment, color status badges (paid=green, partial=yellow, pending=gray, overdue=red), printable receipt
+- **Reports page**: report card (printable), low-attendance list, pending fees list, course toppers, export to CSV
+- CSV import/export buttons on the Students page
+- Loading spinners and empty-state messages
+- A single `api.js` helper with the base URL and shared error handling
+
+## Deliverables
+1. Complete code for every file. No placeholders, no "TODO", no "rest of code here".
+2. requirements.txt (fastapi, uvicorn, sqlalchemy, pydantic, email-validator, python-multipart)
+3. README.md with setup steps:
+   pip install -r requirements.txt
+   python backend/seed.py
+   uvicorn backend.main:app --reload
+   then open http://127.0.0.1:8000
+4. A short list of API endpoints with a sample request/response for each module.
+
+Generate the files one by one in a logical order (database → models → schemas → crud → routers → main → seed → frontend). Make sure everything runs on the first try with no errors.

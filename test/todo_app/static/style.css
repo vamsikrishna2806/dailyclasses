@@ -1,0 +1,788 @@
+/*
+=============================================================================
+LAYER: Frontend Presentation & Styling Layer (static/style.css)
+DESCRIPTION:
+  This stylesheet implements a complete Neumorphic (Soft UI) design system.
+  It defines design tokens, surface elevations (raised vs. sunken/inset),
+  custom neumorphic checkboxes, smooth micro-interactions, responsive form
+  layouts, strike-through task styling, and dynamic state transitions.
+=============================================================================
+*/
+
+/* -------------------------------------------------------------------------
+   Design System & Color Tokens (Neumorphic Palette)
+   ------------------------------------------------------------------------- */
+:root {
+  /* Surface and shadow colors */
+  --bg-color: #ebf0f7;
+  --surface-color: #ebf0f7;
+  --shadow-light: #ffffff;
+  --shadow-dark: #c5d0e0;
+  --shadow-dark-subtle: #d0dbe9;
+
+  /* Typography colors */
+  --text-main: #2b354f;
+  --text-muted: #718096;
+  --text-light: #94a3b8;
+
+  /* Accent colors */
+  --accent-primary: #4361ee;
+  --accent-primary-hover: #3751d6;
+  --accent-primary-glow: rgba(67, 97, 238, 0.28);
+  
+  --color-success: #10b981;
+  --color-success-bg: rgba(16, 185, 129, 0.12);
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.12);
+
+  /* Elevations */
+  --elevation-raised: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
+  --elevation-raised-sm: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+  --elevation-raised-xs: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light);
+  --elevation-inset: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+  --elevation-inset-deep: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+  
+  /* Borders & Radius */
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* -------------------------------------------------------------------------
+   CSS Reset & Base Setup
+   ------------------------------------------------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 16px 60px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Outer layout wrapper */
+.app-wrapper {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* -------------------------------------------------------------------------
+   Header & Branding
+   ------------------------------------------------------------------------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+}
+
+.brand-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+  box-shadow: var(--elevation-raised-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.brand-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+}
+
+.app-subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Main Neumorphic Card Container
+   ------------------------------------------------------------------------- */
+.neumorphic-card {
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-raised);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* -------------------------------------------------------------------------
+   Add Task Section & Form
+   ------------------------------------------------------------------------- */
+.task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-light);
+  pointer-events: none;
+  transition: color var(--transition-fast);
+}
+
+.input-group input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  background: var(--surface-color);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-inset);
+  padding: 13px 14px 13px 40px;
+  outline: none;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.input-group input::placeholder {
+  color: var(--text-light);
+}
+
+.input-group input:focus {
+  border-color: rgba(67, 97, 238, 0.4);
+  box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 3px var(--accent-primary-glow);
+}
+
+.input-group input:focus + .input-icon,
+.input-group:focus-within .input-icon {
+  color: var(--accent-primary);
+}
+
+.title-group {
+  flex: 1 1 240px;
+}
+
+.date-group {
+  flex: 0 1 160px;
+}
+
+/* Custom styling for date input */
+.date-group input[type="date"] {
+  cursor: pointer;
+  padding-right: 12px;
+  color: var(--text-muted);
+}
+
+.date-group input[type="date"]:valid {
+  color: var(--text-main);
+}
+
+/* Neumorphic Button */
+.neumorphic-btn {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: var(--surface-color);
+  box-shadow: var(--elevation-raised-sm);
+  color: var(--text-main);
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.neumorphic-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+}
+
+.neumorphic-btn:active {
+  transform: translateY(1px);
+  box-shadow: var(--elevation-inset);
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #4d6cfb 0%, #3a56e4 100%);
+  color: #ffffff;
+  box-shadow: 4px 4px 12px var(--shadow-dark), -3px -3px 10px var(--shadow-light), 0 4px 12px var(--accent-primary-glow);
+  flex-shrink: 0;
+}
+
+.primary-btn:hover {
+  background: linear-gradient(135deg, #5b78ff 0%, #4361ee 100%);
+  box-shadow: 6px 6px 16px var(--shadow-dark), -4px -4px 12px var(--shadow-light), 0 6px 16px var(--accent-primary-glow);
+}
+
+.primary-btn:active {
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.3), inset -2px -2px 6px rgba(255, 255, 255, 0.15);
+}
+
+.btn-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.form-error-msg {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-danger);
+  padding: 4px 8px;
+}
+
+/* -------------------------------------------------------------------------
+   Task Progress & Counter Section (Requirement 5)
+   ------------------------------------------------------------------------- */
+.stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-inset);
+  background: var(--surface-color);
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.counter-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.counter-label {
+  color: var(--text-muted);
+}
+
+.counter-value {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.percent-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: var(--surface-color);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--elevation-raised-xs);
+}
+
+/* Inset Progress Bar */
+.progress-track {
+  width: 100%;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--surface-color);
+  box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4361ee 0%, #06d6a0 100%);
+  border-radius: var(--radius-full);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* -------------------------------------------------------------------------
+   Filter Controls (Stretch Goal: All / Active / Done)
+   ------------------------------------------------------------------------- */
+.filters-section {
+  display: flex;
+  justify-content: center;
+}
+
+.filter-pills {
+  display: inline-flex;
+  padding: 4px;
+  background: var(--surface-color);
+  border-radius: var(--radius-full);
+  box-shadow: var(--elevation-inset);
+  gap: 4px;
+}
+
+.filter-pill {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 18px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.filter-pill:hover {
+  color: var(--text-main);
+}
+
+.filter-pill.active {
+  color: var(--accent-primary);
+  background: var(--surface-color);
+  box-shadow: var(--elevation-raised-xs);
+}
+
+.pill-count {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.05);
+  color: inherit;
+}
+
+.filter-pill.active .pill-count {
+  background: var(--accent-primary);
+  color: #ffffff;
+}
+
+/* -------------------------------------------------------------------------
+   Tasks List & Task Items
+   ------------------------------------------------------------------------- */
+.tasks-section {
+  min-height: 160px;
+}
+
+.tasks-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Individual Task Card */
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--surface-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-raised-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+  animation: slideIn 0.25s ease-out forwards;
+}
+
+.task-item:hover {
+  box-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+}
+
+.task-item.deleting {
+  opacity: 0;
+  transform: translateX(30px);
+  pointer-events: none;
+}
+
+/* Left side: checkbox + title + date */
+.task-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Custom Neumorphic Checkbox */
+.custom-checkbox-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.custom-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkbox-visual {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--surface-color);
+  box-shadow: var(--elevation-raised-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.checkbox-visual svg {
+  width: 14px;
+  height: 14px;
+  stroke: #ffffff;
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset 0.2s ease;
+}
+
+/* When Checkbox is Checked */
+.custom-checkbox-input:checked + .checkbox-visual {
+  background: var(--color-success);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.25), inset -2px -2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.custom-checkbox-input:checked + .checkbox-visual svg {
+  stroke-dashoffset: 0;
+}
+
+/* Task Info: Title and Details */
+.task-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Task Title (Strike-through when done) */
+.task-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  word-break: break-word;
+  transition: color var(--transition-fast), text-decoration var(--transition-fast), opacity var(--transition-fast);
+}
+
+/* Requirement 3: Strike-through style */
+.task-item.is-done .task-title {
+  text-decoration: line-through;
+  color: var(--text-light);
+  opacity: 0.75;
+}
+
+.task-item.is-done {
+  background: rgba(235, 240, 247, 0.6);
+  box-shadow: var(--elevation-inset);
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Due Date Badge */
+.due-badge {
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-color);
+  box-shadow: var(--elevation-raised-xs);
+  color: var(--text-muted);
+}
+
+.due-badge svg {
+  width: 11px;
+  height: 11px;
+}
+
+.due-badge.overdue {
+  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.1);
+  box-shadow: none;
+}
+
+.due-badge.today {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  box-shadow: none;
+}
+
+/* Delete Action Button */
+.delete-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-color);
+  box-shadow: var(--elevation-raised-xs);
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.delete-btn svg {
+  width: 16px;
+  height: 16px;
+  transition: stroke var(--transition-fast);
+}
+
+.delete-btn:hover {
+  color: var(--color-danger);
+  box-shadow: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light);
+  transform: scale(1.05);
+}
+
+.delete-btn:active {
+  box-shadow: var(--elevation-inset);
+  transform: scale(0.95);
+}
+
+/* -------------------------------------------------------------------------
+   Empty State & Loading States
+   ------------------------------------------------------------------------- */
+.tasks-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--shadow-dark);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 16px;
+  gap: 10px;
+}
+
+.empty-icon-well {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--surface-color);
+  box-shadow: var(--elevation-inset);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  margin-bottom: 6px;
+}
+
+.empty-icon-well svg {
+  width: 28px;
+  height: 28px;
+}
+
+.empty-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.empty-description {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 300px;
+}
+
+/* -------------------------------------------------------------------------
+   Toast Notifications
+   ------------------------------------------------------------------------- */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+  box-shadow: 6px 6px 16px var(--shadow-dark), -6px -6px 16px var(--shadow-light);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  animation: toastIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast.toast-success {
+  border-left: 4px solid var(--color-success);
+}
+
+.toast.toast-danger {
+  border-left: 4px solid var(--color-danger);
+}
+
+.toast.toast-info {
+  border-left: 4px solid var(--accent-primary);
+}
+
+/* -------------------------------------------------------------------------
+   Footer
+   ------------------------------------------------------------------------- */
+.app-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.app-footer strong {
+  color: var(--text-main);
+}
+
+/* -------------------------------------------------------------------------
+   Utility Classes & Animations
+   ------------------------------------------------------------------------- */
+.hidden {
+  display: none !important;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Responsive Adaptations
+   ------------------------------------------------------------------------- */
+@media (max-width: 580px) {
+  body {
+    padding: 20px 12px 40px;
+  }
+
+  .neumorphic-card {
+    padding: 20px 16px;
+  }
+
+  .input-row {
+    flex-direction: column;
+  }
+
+  .date-group {
+    flex: 1 1 100%;
+  }
+
+  .primary-btn {
+    width: 100%;
+    padding: 14px;
+  }
+
+  .stats-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .percent-badge {
+    align-self: flex-end;
+  }
+}

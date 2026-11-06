@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPU, GPU, RAM &amp; VRAM</title>
+<style>
+:root {
+  --bg: #f6f7fb; --surface: #ffffff; --surface-2: #eef1f6; --text: #1b2230; --muted: #5a6476;
+  --border: #dbe0e8; --accent: #2563eb; --accent-2: #7c3aed; --accent-soft: #e7eefc;
+  --ok: #15803d; --ok-soft: #e6f5ea; --warn: #b45309; --warn-soft: #fdf2e1; --danger: #b91c1c; --danger-soft: #fdeaea;
+  --code-bg: #0f172a; --code-text: #e2e8f0; --code-dim: #8b9bb4; --code-cmd: #7dd3fc;
+  --cpu: #2563eb; --gpu: #16a34a; --ram: #d97706; --vram: #9333ea; --ssd: #64748b; --bus: #db2777;
+  --cpu-soft: #e3ecfd; --gpu-soft: #e2f5e8; --ram-soft: #fcefdc; --vram-soft: #f2e6fc; --ssd-soft: #edf0f4; --bus-soft: #fce7f1;
+  --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1015; --surface: #151a21; --surface-2: #1c222b; --text: #e6e9ef; --muted: #9aa4b3; --border: #2a313b;
+    --accent: #60a5fa; --accent-2: #a78bfa; --accent-soft: #162238; --ok: #4ade80; --ok-soft: #10251a;
+    --warn: #fbbf24; --warn-soft: #2a200f; --danger: #f87171; --danger-soft: #2b1414; --code-bg: #090c11; --shadow: none;
+    --cpu: #60a5fa; --gpu: #4ade80; --ram: #fbbf24; --vram: #c084fc; --ssd: #94a3b8; --bus: #f472b6;
+    --cpu-soft: #14223a; --gpu-soft: #102519; --ram-soft: #2a200f; --vram-soft: #241532; --ssd-soft: #1c222b; --bus-soft: #2d1424;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1015; --surface: #151a21; --surface-2: #1c222b; --text: #e6e9ef; --muted: #9aa4b3; --border: #2a313b;
+  --accent: #60a5fa; --accent-2: #a78bfa; --accent-soft: #162238; --ok: #4ade80; --ok-soft: #10251a;
+  --warn: #fbbf24; --warn-soft: #2a200f; --danger: #f87171; --danger-soft: #2b1414; --code-bg: #090c11; --shadow: none;
+  --cpu: #60a5fa; --gpu: #4ade80; --ram: #fbbf24; --vram: #c084fc; --ssd: #94a3b8; --bus: #f472b6;
+  --cpu-soft: #14223a; --gpu-soft: #102519; --ram-soft: #2a200f; --vram-soft: #241532; --ssd-soft: #1c222b; --bus-soft: #2d1424;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+code, pre, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+:not(pre) > code { font-size: .88em; background: var(--surface-2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 14px; line-height: 1.55; }
+pre .c { color: var(--code-dim); } pre .k { color: var(--code-cmd); }
+button, select, input { font: inherit; color: inherit; }
+h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 10px; }
+h2 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 6px; }
+h3 { font-size: 1.15rem; margin: 26px 0 8px; }
+p, li { max-width: 80ch; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); font-weight: 600; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; }
+.tablewrap table th:first-child, .tablewrap table td:first-child { padding-left: 14px; }
+
+/* top bar */
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--border); }
+.topbar-inner { display: flex; align-items: center; gap: 12px; padding: 10px 20px; max-width: 1240px; margin: 0 auto; }
+.brand { font-weight: 700; white-space: nowrap; }
+.prog { flex: 1; height: 6px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+.prog > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.btn { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+
+/* layout */
+.wrap { display: grid; grid-template-columns: 250px minmax(0, 1fr); max-width: 1240px; margin: 0 auto; gap: 34px; padding: 0 20px; }
+nav.side { position: sticky; top: 52px; align-self: start; max-height: calc(100vh - 60px); overflow: auto; padding: 22px 0 40px; font-size: 14px; }
+nav.side a { display: block; padding: 5px 10px; border-radius: 7px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+nav.side a:hover { background: var(--surface-2); color: var(--text); }
+nav.side a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+nav.side .grp { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 16px 10px 4px; font-weight: 600; }
+details.mtoc { display: none; }
+main { padding: 26px 0 80px; min-width: 0; }
+section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 28px; margin-bottom: 22px; box-shadow: var(--shadow); scroll-margin-top: 70px; }
+.kicker { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-weight: 700; }
+.lead { color: var(--muted); font-size: 1.05rem; }
+
+/* callouts & cards */
+.note, .tip, .warnbox, .analogy { border-radius: 10px; padding: 12px 16px; margin: 14px 0; border: 1px solid var(--border); }
+.note { background: var(--accent-soft); border-color: transparent; }
+.tip { background: var(--ok-soft); border-color: transparent; }
+.warnbox { background: var(--warn-soft); border-color: transparent; }
+.analogy { background: var(--surface-2); }
+.analogy::before { content: "Analogy  "; font-weight: 700; color: var(--accent-2); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: var(--surface); }
+.card h4 { margin: 0 0 6px; font-size: 1rem; }
+.card p { margin: 4px 0; font-size: 14.5px; }
+.tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+.t-cpu { background: var(--cpu-soft); color: var(--cpu); } .t-gpu { background: var(--gpu-soft); color: var(--gpu); }
+.t-ram { background: var(--ram-soft); color: var(--ram); } .t-vram { background: var(--vram-soft); color: var(--vram); }
+.t-ssd { background: var(--ssd-soft); color: var(--ssd); } .t-bus { background: var(--bus-soft); color: var(--bus); }
+.c-cpu { border-top: 4px solid var(--cpu); } .c-gpu { border-top: 4px solid var(--gpu); }
+.c-ram { border-top: 4px solid var(--ram); } .c-vram { border-top: 4px solid var(--vram); }
+.big { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* hero */
+.hero { background: linear-gradient(135deg, var(--accent-soft), var(--surface)); }
+.hero-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-top: 18px; }
+.hero-grid .card { text-align: center; }
+.hero-grid .card .ico { font-size: 28px; }
+
+/* svg diagram */
+.diagram { width: 100%; height: auto; display: block; margin: 10px 0; }
+.diagram text { font-family: system-ui, sans-serif; fill: var(--text); }
+.diagram .sub { fill: var(--muted); font-size: 12px; }
+.box { fill: var(--surface); stroke: var(--border); stroke-width: 2; transition: all .3s; }
+.node.on .box { stroke-width: 4; }
+.node.on.cpu .box { fill: var(--cpu-soft); stroke: var(--cpu); }
+.node.on.gpu .box { fill: var(--gpu-soft); stroke: var(--gpu); }
+.node.on.ram .box { fill: var(--ram-soft); stroke: var(--ram); }
+.node.on.vram .box { fill: var(--vram-soft); stroke: var(--vram); }
+.node.on.ssd .box { fill: var(--ssd-soft); stroke: var(--ssd); }
+.node.on.bus .box { fill: var(--bus-soft); stroke: var(--bus); }
+.wire { stroke: var(--border); stroke-width: 4; fill: none; transition: stroke .3s; }
+.wire.on { stroke: var(--accent-2); stroke-dasharray: 10 6; animation: flow .8s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -16; } }
+@media (prefers-reduced-motion: reduce) { .wire.on { animation: none; } }
+
+/* stepper */
+.stepper { border: 1px solid var(--border); border-radius: 12px; padding: 16px; background: var(--surface-2); }
+.step-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.step-title { font-weight: 700; font-size: 1.1rem; margin: 6px 0; }
+.step-body { min-height: 110px; }
+.dots { display: flex; gap: 5px; flex-wrap: wrap; }
+.dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--border); cursor: pointer; }
+.dots span.on { background: var(--accent); }
+
+/* parallel demo */
+.par { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.par .card { text-align: center; }
+.cells { display: grid; grid-template-columns: repeat(32, 1fr); gap: 1px; margin: 10px 0; }
+.cells i { aspect-ratio: 1; background: var(--surface-2); border-radius: 1px; }
+.cells.cpu i.d { background: var(--cpu); } .cells.gpu i.d { background: var(--gpu); }
+
+/* calculator */
+.calc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.field select, .field input[type=number] { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.field input[type=range] { width: 100%; }
+.bar { display: flex; height: 30px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); margin: 6px 0; }
+.bar div { height: 100%; transition: width .3s; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; }
+.verdict { padding: 12px 14px; border-radius: 10px; font-weight: 600; margin: 10px 0; }
+.v-ok { background: var(--ok-soft); color: var(--ok); } .v-warn { background: var(--warn-soft); color: var(--warn); } .v-bad { background: var(--danger-soft); color: var(--danger); }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.stats .card { padding: 10px 12px; } .stats .lbl { font-size: 12.5px; color: var(--muted); }
+
+/* hierarchy */
+.pyr { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 14px 0; }
+.pyr div { text-align: center; padding: 8px 10px; border-radius: 8px; font-size: 14px; color: #fff; font-weight: 600; }
+
+/* quiz */
+.q { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+.q .opts { display: grid; gap: 6px; margin-top: 8px; }
+.q button.opt { text-align: left; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.q button.opt:hover:not(:disabled) { border-color: var(--accent); }
+.q button.opt.right { background: var(--ok-soft); border-color: var(--ok); }
+.q button.opt.wrong { background: var(--danger-soft); border-color: var(--danger); }
+.q .why { display: none; margin-top: 8px; font-size: 14.5px; color: var(--muted); }
+.q.done .why { display: block; }
+
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: minmax(0,1fr); padding: 0 16px; gap: 0; }
+  nav.side { display: none; }
+  details.mtoc { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-top: 16px; }
+  details.mtoc a { display: block; padding: 4px 0; text-decoration: none; }
+  section { padding: 20px 16px; }
+  .hero-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .grid2, .grid3, .calc, .par { grid-template-columns: minmax(0,1fr); }
+  h1 { font-size: 1.6rem; }
+  .topbar-inner { padding: 10px 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-inner">
+  <span class="brand">🧠 Hardware for Local LLMs</span>
+  <div class="prog"><div id="prog"></div></div>
+  <button class="btn" id="themeBtn" aria-label="Toggle dark mode">🌓</button>
+</div></div>
+
+<div class="wrap">
+<nav class="side" id="side">
+  <div class="grp">Basics</div>
+  <a href="#intro">Start here</a>
+  <a href="#bits">Bits, bytes &amp; transistors</a>
+  <a href="#cpu">CPU, inside out</a>
+  <a href="#gpu">GPU, inside out</a>
+  <a href="#par">CPU vs GPU demo</a>
+  <div class="grp">Memory</div>
+  <a href="#hier">The memory ladder</a>
+  <a href="#ram">RAM</a>
+  <a href="#vram">VRAM</a>
+  <a href="#bus">PCIe &amp; unified memory</a>
+  <div class="grp">LLMs on the hardware</div>
+  <a href="#model">What a model is in memory</a>
+  <a href="#quant">Quantization</a>
+  <a href="#math">The math inside a layer</a>
+  <a href="#journey">Life of a prompt</a>
+  <a href="#kv">KV cache &amp; context</a>
+  <a href="#offload">Layer offloading</a>
+  <a href="#speed">Why speed = bandwidth</a>
+  <div class="grp">Practice</div>
+  <a href="#calc">Will it fit? calculator</a>
+  <a href="#observe">Watch it live</a>
+  <a href="#setups">Real setups</a>
+  <a href="#myths">Myths</a>
+  <a href="#quiz">Quiz</a>
+  <a href="#glossary">Glossary</a>
+</nav>
+
+<main>
+<details class="mtoc"><summary><b>Contents</b></summary>
+  <a href="#intro">Start here</a><a href="#bits">Bits &amp; bytes</a><a href="#cpu">CPU</a><a href="#gpu">GPU</a><a href="#par">CPU vs GPU demo</a>
+  <a href="#hier">Memory ladder</a><a href="#ram">RAM</a><a href="#vram">VRAM</a><a href="#bus">PCIe &amp; unified memory</a>
+  <a href="#model">Model in memory</a><a href="#quant">Quantization</a><a href="#math">Math inside a layer</a><a href="#journey">Life of a prompt</a>
+  <a href="#kv">KV cache</a><a href="#offload">Offloading</a><a href="#speed">Speed = bandwidth</a><a href="#calc">Calculator</a>
+  <a href="#observe">Watch it live</a><a href="#setups">Real setups</a><a href="#myths">Myths</a><a href="#quiz">Quiz</a><a href="#glossary">Glossary</a>
+</details>
+
+<!-- ============ INTRO ============ -->
+<section id="intro" class="hero">
+  <div class="kicker">Day 10 · Local LLMs</div>
+  <h1>CPU, GPU, RAM &amp; VRAM: what really happens when a local LLM runs</h1>
+  <p class="lead">When you type <code>ollama run llama3.1:8b</code>, about 5 GB of numbers travel from your SSD into memory, then into the graphics card. Billions of multiplications run for every word the model writes. This page follows that path one step at a time, starting from what a "bit" is.</p>
+  <div class="hero-grid">
+    <div class="card c-cpu"><div class="ico">🧑‍🍳</div><b>CPU</b><p>A few very smart workers. Good at complicated, step-by-step tasks.</p></div>
+    <div class="card c-gpu"><div class="ico">🏭</div><b>GPU</b><p>Thousands of simple workers. Good at the same small task done many times at once.</p></div>
+    <div class="card c-ram"><div class="ico">🗄️</div><b>RAM</b><p>The CPU's work table. Big, but slower to read from.</p></div>
+    <div class="card c-vram"><div class="ico">⚡</div><b>VRAM</b><p>The GPU's own work table. Smaller, but much faster to read from.</p></div>
+  </div>
+  <div class="analogy">Think of a restaurant kitchen. The <b>SSD</b> is the warehouse, where everything is stored but far away. <b>RAM</b> is the kitchen's pantry. <b>VRAM</b> is the counter right next to the cooks. The <b>CPU</b> is a head chef who can cook anything, but alone. The <b>GPU</b> is a line of 10,000 helpers who can only chop, but all chop at the same time. An LLM is a recipe that needs <i>billions</i> of chops for every word, so the helpers win, as long as the ingredients are on their counter.</div>
+  <h3>What you'll be able to answer at the end</h3>
+  <ul>
+    <li>Why does an 8B model run fast on one PC and slowly on another?</li>
+    <li>Why does VRAM size matter more than how many GPU cores you have?</li>
+    <li>What does Ollama mean by <code>100% GPU</code> or <code>45%/55% CPU/GPU</code>?</li>
+    <li>Why does a longer chat use more memory?</li>
+    <li>How do I work out whether a model will fit on my computer?</li>
+  </ul>
+</section>
+
+<!-- ============ BITS ============ -->
+<section id="bits">
+  <div class="kicker">Level 0 · Foundations</div>
+  <h2>Bits, bytes &amp; transistors</h2>
+  <p>Everything in a computer, including your photos, this web page and an LLM, is stored as <b>bits</b>. A bit is a single 0 or 1. Inside the chip, a bit is a tiny switch called a <b>transistor</b>, which is either off (0) or on (1). Modern chips have <b>tens of billions</b> of transistors. An RTX 4090 GPU has about 76 billion.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Unit</th><th>Size</th><th>Example</th></tr>
+    <tr><td>1 bit</td><td>0 or 1</td><td>One switch</td></tr>
+    <tr><td>1 byte</td><td>8 bits</td><td>One letter, like "A"</td></tr>
+    <tr><td>1 KB (kilobyte)</td><td>~1,000 bytes</td><td>A short text message</td></tr>
+    <tr><td>1 MB (megabyte)</td><td>~1 million bytes</td><td>A photo</td></tr>
+    <tr><td>1 GB (gigabyte)</td><td>~1 billion bytes</td><td>A 4-bit 1.5B model; ⅕ of an 8B model</td></tr>
+    <tr><td>1 TB (terabyte)</td><td>~1,000 GB</td><td>A typical SSD</td></tr>
+  </table></div>
+  <h3>How numbers are stored</h3>
+  <p>An LLM is mostly a giant list of decimal numbers called <b>weights</b> (for example, <code>0.0213</code> or <code>-1.402</code>). How many bits each number uses decides both how accurate it is and how much memory it takes:</p>
+  <div class="tablewrap"><table>
+    <tr><th>Format</th><th>Bits per number</th><th>Bytes</th><th>Used for</th></tr>
+    <tr><td>FP32 (float 32)</td><td>32</td><td>4</td><td>Classic training, very precise</td></tr>
+    <tr><td>FP16 / BF16</td><td>16</td><td>2</td><td>Modern training and "full quality" models</td></tr>
+    <tr><td>INT8 / Q8</td><td>8</td><td>1</td><td>Nearly lossless compression</td></tr>
+    <tr><td>Q4 (4-bit)</td><td>~4.5–5</td><td>~0.6</td><td>Default for most Ollama models</td></tr>
+  </table></div>
+  <div class="note"><b>Key idea:</b> memory needed = <i>how many numbers</i> × <i>bytes per number</i>. An 8-billion-parameter model at 2 bytes each needs 16 GB. At ~0.6 bytes each (4-bit) it needs about 5 GB. Almost everything later on this page builds on this one line.</div>
+  <h3>What a "clock" is</h3>
+  <p>Chips do work in beats, like a drummer keeping time. A <b>3 GHz</b> clock means 3 billion beats per second. On each beat, every core can do one or more small operations, such as an add or a multiply.</p>
+</section>
+
+<!-- ============ CPU ============ -->
+<section id="cpu">
+  <div class="kicker">Level 1 · Processors</div>
+  <h2>The CPU, inside out</h2>
+  <p>The <b>CPU (Central Processing Unit)</b> is the general manager of your computer. It runs Windows, your browser, Python and the Ollama program itself. It is built to finish <i>one complicated task as fast as possible</i>.</p>
+  <div class="grid2">
+    <div class="card c-cpu"><h4>Cores</h4><p>Independent "brains" on one chip. Typical laptops and desktops have <b>4–24 cores</b>. Each core can run its own program.</p></div>
+    <div class="card c-cpu"><h4>Threads</h4><p>With <i>hyper-threading / SMT</i>, one core can juggle 2 instruction streams, so an 8-core CPU shows 16 threads. For LLMs, <b>physical cores</b> are what count.</p></div>
+    <div class="card c-cpu"><h4>Cache (L1 / L2 / L3)</h4><p>Tiny, ultra-fast memory built into the chip: KBs to tens of MBs. It keeps recently used data close to the cores so they don't have to wait for RAM.</p></div>
+    <div class="card c-cpu"><h4>SIMD units (AVX2, AVX-512, NEON)</h4><p>Special instructions that do <b>8–16 multiplications in one go</b>. llama.cpp (the engine inside Ollama) relies on these to run models on the CPU at a usable speed.</p></div>
+  </div>
+  <h3>How a core works: fetch → decode → execute</h3>
+  <ol>
+    <li><b>Fetch:</b> get the next instruction from memory (for example, "multiply these two numbers").</li>
+    <li><b>Decode:</b> work out what the instruction means.</li>
+    <li><b>Execute:</b> the ALU (Arithmetic Logic Unit) does the math.</li>
+    <li><b>Write back:</b> store the result in a register (the fastest memory of all, inside the core).</li>
+  </ol>
+  <p>CPU cores also do clever things like <i>branch prediction</i> (guessing which <code>if</code> branch comes next) and <i>out-of-order execution</i>. That makes them excellent for ordinary programs full of decisions. LLM math has almost no decisions. It's just multiply-and-add, billions of times over.</p>
+  <h3>What the CPU does during local LLM use</h3>
+  <ul>
+    <li>Runs the Ollama server and handles your request (HTTP on <code>localhost:11434</code>).</li>
+    <li>Reads the model file from disk and tells the GPU what to do.</li>
+    <li><b>Tokenizes</b> your text (splits it into token IDs) and turns tokens back into text.</li>
+    <li>Runs the <b>layers that didn't fit in VRAM</b>, or the whole model if there's no GPU.</li>
+  </ul>
+</section>
+
+<!-- ============ GPU ============ -->
+<section id="gpu">
+  <div class="kicker">Level 1 · Processors</div>
+  <h2>The GPU, inside out</h2>
+  <p>The <b>GPU (Graphics Processing Unit)</b> was built to color millions of screen pixels 60+ times a second. Coloring a pixel is a small, identical math job, so GPUs were built with <b>thousands of simple cores</b> that all run the same instruction on different data. This is called <b>SIMT</b> (Single Instruction, Multiple Threads). The same design turned out to be perfect for neural networks.</p>
+  <div class="grid2">
+    <div class="card c-gpu"><h4>SMs (Streaming Multiprocessors)</h4><p>The GPU is split into blocks called SMs. An RTX 4060 has 24 of them and an RTX 4090 has 128. Each SM has its own cores, cache and scheduler.</p></div>
+    <div class="card c-gpu"><h4>CUDA cores / shader cores</h4><p>Simple math units: ~3,000 on an RTX 4060, ~16,000 on an RTX 4090. Each one is weaker than a CPU core, but there are a lot of them.</p></div>
+    <div class="card c-gpu"><h4>Tensor cores</h4><p>Special units that multiply small <b>matrices</b> (for example, 16×16 blocks) in one step. This is where most AI speed comes from.</p></div>
+    <div class="card c-gpu"><h4>Warps</h4><p>Threads run in groups of 32 that execute the same instruction in lockstep. GPUs hide memory delays by quickly switching to another warp while one waits.</p></div>
+  </div>
+  <div class="tablewrap"><table>
+    <tr><th></th><th><span class="tag t-cpu">CPU</span></th><th><span class="tag t-gpu">GPU</span></th></tr>
+    <tr><td>Number of cores</td><td>4–24 powerful cores</td><td>Thousands of simple cores</td></tr>
+    <tr><td>Designed for</td><td>Low <b>latency</b>: finish one task fast</td><td>High <b>throughput</b>: finish many tasks at once</td></tr>
+    <tr><td>Good at</td><td>Decisions, branching, OS, logic</td><td>The same math on huge arrays (pixels, matrices)</td></tr>
+    <tr><td>Memory it uses</td><td>System RAM (~50–120 GB/s)</td><td>Its own VRAM (~250–1,000+ GB/s)</td></tr>
+    <tr><td>Rough math power</td><td>~1–3 TFLOPS</td><td>~15–80 TFLOPS (more with tensor cores)</td></tr>
+  </table></div>
+  <p class="lead">TFLOPS = trillions of floating-point operations per second.</p>
+</section>
+
+<!-- ============ PARALLEL DEMO ============ -->
+<section id="par">
+  <div class="kicker">Try it</div>
+  <h2>CPU vs GPU: a parallel race</h2>
+  <p>Job: do 1,024 small multiplications. The CPU has <b>8 fast cores</b>, each finishing 1 multiplication per tick. The GPU has <b>512 slower cores</b>, each needing 3 ticks per multiplication. Who wins?</p>
+  <div class="par">
+    <div class="card"><b style="color:var(--cpu)">CPU · 8 fast cores</b><div class="cells cpu" id="cellsCpu"></div><div>Ticks: <b id="tCpu">0</b></div></div>
+    <div class="card"><b style="color:var(--gpu)">GPU · 512 slow cores</b><div class="cells gpu" id="cellsGpu"></div><div>Ticks: <b id="tGpu">0</b></div></div>
+  </div>
+  <p style="text-align:center"><button class="btn primary" id="raceBtn">▶ Start race</button></p>
+  <div class="note">The GPU finishes in <b>6 ticks</b>; the CPU needs <b>128</b>. Each GPU core is slower, but 512 of them working at once win easily. One LLM layer is millions of these independent multiplications, which is why GPUs suit it so well.</div>
+</section>
+
+<!-- ============ HIERARCHY ============ -->
+<section id="hier">
+  <div class="kicker">Level 2 · Memory</div>
+  <h2>The memory ladder</h2>
+  <p>Processors are incredibly fast, and memory struggles to keep up. Computers solve this with a ladder of storage: the closer to the core, the faster and smaller it is.</p>
+  <div class="pyr">
+    <div style="width:22%;background:#7c3aed">Registers</div>
+    <div style="width:34%;background:#6d28d9">L1 / L2 cache</div>
+    <div style="width:46%;background:#4f46e5">L3 cache</div>
+    <div style="width:60%;background:var(--vram)">VRAM (GPU)</div>
+    <div style="width:74%;background:var(--ram)">RAM (system)</div>
+    <div style="width:90%;background:var(--ssd)">SSD / disk</div>
+  </div>
+  <div class="tablewrap"><table>
+    <tr><th>Level</th><th>Typical size</th><th>Time to reach</th><th>Speed (bandwidth)</th><th>Keeps data when power is off?</th></tr>
+    <tr><td>Registers</td><td>Bytes</td><td>&lt; 1 ns</td><td>—</td><td>No</td></tr>
+    <tr><td>L1 cache</td><td>32–64 KB per core</td><td>~1 ns</td><td>TB/s</td><td>No</td></tr>
+    <tr><td>L2 cache</td><td>0.5–2 MB per core</td><td>~4 ns</td><td>TB/s</td><td>No</td></tr>
+    <tr><td>L3 cache</td><td>8–64 MB shared</td><td>~10–20 ns</td><td>Hundreds of GB/s</td><td>No</td></tr>
+    <tr><td><span class="tag t-vram">VRAM</span></td><td>4–24 GB (consumer)</td><td>~200–400 ns</td><td><b>250–1,000+ GB/s</b></td><td>No</td></tr>
+    <tr><td><span class="tag t-ram">RAM</span></td><td>8–128 GB</td><td>~80–100 ns</td><td><b>40–120 GB/s</b></td><td>No</td></tr>
+    <tr><td><span class="tag t-ssd">NVMe SSD</span></td><td>0.5–4 TB</td><td>~50–100 µs</td><td>2–7 GB/s</td><td><b>Yes</b></td></tr>
+  </table></div>
+  <div class="note"><b>Two different "speeds":</b> <b>Latency</b> is how long until the <i>first</i> byte arrives (like how long the delivery truck takes to show up). <b>Bandwidth</b> is how many bytes per second once the data is flowing (how big the truck is). LLM generation depends almost entirely on <b>bandwidth</b>, because every word needs the whole model read through. That's why VRAM wins, even though its latency is no better than RAM's.</div>
+</section>
+
+<!-- ============ RAM ============ -->
+<section id="ram">
+  <div class="kicker">Level 2 · Memory</div>
+  <h2>RAM: the system's working memory</h2>
+  <p><b>RAM (Random Access Memory)</b> holds everything currently running: Windows, Chrome, VS Code, Python and the model weights the CPU is using. It is <b>volatile</b>, meaning it is wiped when the power goes off. That's why the model has to be loaded from SSD every time.</p>
+  <h3>How RAM works</h3>
+  <p>System RAM is <b>DRAM</b>. Each bit is a tiny capacitor that holds a charge (1) or not (0). The capacitors leak, so they are refreshed thousands of times a second. The memory sticks (DIMMs) connect to the CPU through <b>memory channels</b>, and each channel is a 64-bit-wide road.</p>
+  <h3>Calculating RAM bandwidth</h3>
+  <pre><span class="c"># bandwidth = transfers per second × 8 bytes per channel × number of channels</span>
+DDR4-3200, dual channel: 3200 MT/s × 8 B × 2 = <span class="k">51.2 GB/s</span>
+DDR5-5600, dual channel: 5600 MT/s × 8 B × 2 = <span class="k">89.6 GB/s</span>
+DDR5-6000, single stick: 6000 MT/s × 8 B × 1 = <span class="k">48 GB/s</span>   <span class="c">← one stick halves your LLM speed!</span></pre>
+  <div class="tip"><b>Practical tip:</b> for CPU-only LLMs, use <b>two matching RAM sticks</b> (dual channel), not one big stick. Two 8 GB sticks give about twice the LLM speed of one 16 GB stick.</div>
+  <h3>What RAM holds while Ollama runs</h3>
+  <ul>
+    <li>Your operating system and apps: often 4–8 GB already in use.</li>
+    <li>The Ollama server program.</li>
+    <li>The model file, <b>memory-mapped</b> (mmap): the OS loads parts of the file into RAM as they are needed.</li>
+    <li>Any layers running on the CPU, plus their share of the KV cache.</li>
+  </ul>
+  <div class="warnbox"><b>When RAM runs out,</b> Windows starts using the SSD as fake RAM (the page file, also called "swap"). The SSD is about 20× slower than RAM, so generation drops to a crawl: maybe 1 word every few seconds.</div>
+</section>
+
+<!-- ============ VRAM ============ -->
+<section id="vram">
+  <div class="kicker">Level 2 · Memory</div>
+  <h2>VRAM: the GPU's private, high-speed memory</h2>
+  <p><b>VRAM (Video RAM)</b> is memory soldered onto the graphics card, right around the GPU chip. The GPU cores can only work at full speed on data that is <b>in VRAM</b>.</p>
+  <h3>Why VRAM is so much faster than RAM</h3>
+  <ul>
+    <li><b>Much wider road:</b> system RAM is 128 bits wide (dual channel). A GPU uses a 128–384-bit bus, and HBM (data-center GPUs) uses 4096+ bits.</li>
+    <li><b>Faster signaling:</b> GDDR6/GDDR6X/GDDR7 chips send 14–28+ Gbit/s on each wire.</li>
+    <li><b>Very short distance:</b> the chips sit a few centimeters from the GPU on the same board.</li>
+  </ul>
+  <pre><span class="c"># bandwidth = bus width (bits) ÷ 8 × data rate per pin</span>
+RTX 4060   (128-bit, 17 Gbps):  128/8 × 17 = <span class="k">272 GB/s</span>
+RTX 3060   (192-bit, 15 Gbps):  192/8 × 15 = <span class="k">360 GB/s</span>
+RTX 4090   (384-bit, 21 Gbps):  384/8 × 21 = <span class="k">1008 GB/s</span>
+<span class="c"># compare: dual-channel DDR4 system RAM ≈ 51 GB/s</span></pre>
+  <h3>What lives in VRAM during inference</h3>
+  <div class="grid3">
+    <div class="card c-vram"><h4>1. Model weights</h4><p>The biggest part: every layer that was offloaded to the GPU.</p></div>
+    <div class="card c-vram"><h4>2. KV cache</h4><p>The model's "memory" of the conversation so far. It grows with context length.</p></div>
+    <div class="card c-vram"><h4>3. Compute buffers</h4><p>Scratch space for in-between results, plus the CUDA/driver context (~0.5–1 GB).</p></div>
+  </div>
+  <div class="note"><b>Why VRAM size is the #1 spec for local LLMs:</b> GPU cores are useless if the weights aren't in VRAM. Whatever doesn't fit gets pushed back to the CPU and RAM, which are about 5–20× slower.</div>
+</section>
+
+<!-- ============ BUS ============ -->
+<section id="bus">
+  <div class="kicker">Level 2 · Connections</div>
+  <h2>PCIe and unified memory</h2>
+  <p>On a normal PC, the CPU+RAM side and the GPU+VRAM side are <b>two separate worlds</b>, connected by the <b>PCIe bus</b> (the slot your graphics card plugs into).</p>
+  <svg class="diagram" viewBox="0 0 760 210" role="img" aria-label="PC layout: SSD and RAM connect to the CPU; CPU connects over PCIe to the GPU, which connects to VRAM">
+    <rect class="box" x="10" y="80" width="110" height="60" rx="10"/><text x="65" y="108" text-anchor="middle" font-weight="700">SSD</text><text class="sub" x="65" y="126" text-anchor="middle">3–7 GB/s</text>
+    <rect class="box" x="170" y="20" width="130" height="60" rx="10"/><text x="235" y="48" text-anchor="middle" font-weight="700">RAM</text><text class="sub" x="235" y="66" text-anchor="middle">50–100 GB/s</text>
+    <rect class="box" x="170" y="140" width="130" height="60" rx="10"/><text x="235" y="168" text-anchor="middle" font-weight="700">CPU</text><text class="sub" x="235" y="186" text-anchor="middle">8–16 cores</text>
+    <rect class="box" x="350" y="80" width="120" height="60" rx="10"/><text x="410" y="108" text-anchor="middle" font-weight="700">PCIe x16</text><text class="sub" x="410" y="126" text-anchor="middle">16–32 GB/s</text>
+    <rect class="box" x="520" y="140" width="130" height="60" rx="10"/><text x="585" y="168" text-anchor="middle" font-weight="700">GPU</text><text class="sub" x="585" y="186" text-anchor="middle">thousands of cores</text>
+    <rect class="box" x="520" y="20" width="130" height="60" rx="10"/><text x="585" y="48" text-anchor="middle" font-weight="700">VRAM</text><text class="sub" x="585" y="66" text-anchor="middle">270–1000 GB/s</text>
+    <path class="wire" d="M120 110 H145 V170 H170"/><path class="wire" d="M235 80 V140"/><path class="wire" d="M300 170 H325 V110 H350"/>
+    <path class="wire" d="M470 110 H495 V170 H520"/><path class="wire" d="M585 80 V140"/>
+    <text class="sub" x="700" y="110" text-anchor="middle">Graphics</text><text class="sub" x="700" y="126" text-anchor="middle">card</text>
+  </svg>
+  <ul>
+    <li><b>PCIe 3.0 x16</b> ≈ 16 GB/s, <b>PCIe 4.0 x16</b> ≈ 32 GB/s. That is fine for <i>loading</i> a model once (5 GB in under a second), but far too slow to stream weights for every token.</li>
+    <li>That's why the model is <b>copied into VRAM once</b> and then <b>stays there</b>. Ollama keeps it loaded for 5 minutes after your last message by default (<code>OLLAMA_KEEP_ALIVE</code>).</li>
+    <li>While generating, only tiny data crosses PCIe: token IDs going in, and a few numbers coming out per token.</li>
+  </ul>
+  <h3>Unified memory (Apple Silicon Macs, some new AI laptops)</h3>
+  <p>On an M1–M4 Mac, the CPU and GPU share <b>one pool of memory</b> on the same chip package. There's no PCIe copy and no separate VRAM, so a 32 GB Mac can give roughly 20–24 GB to the GPU. Bandwidth ranges from ~100 GB/s (base M-series) to 400–800 GB/s (Max and Ultra chips). This is why Macs with lots of memory are popular for running big models.</p>
+  <div class="note"><b>Integrated graphics</b> (Intel/AMD laptop GPUs) also share system RAM, but at normal RAM speed (~50–100 GB/s), so they speed up math but not memory reads. Ollama mostly uses NVIDIA (CUDA), AMD (ROCm) and Apple (Metal) GPUs. On other machines it falls back to the CPU.</div>
+</section>
+
+<!-- ============ MODEL IN MEMORY ============ -->
+<section id="model">
+  <div class="kicker">Level 3 · LLMs</div>
+  <h2>What a model actually is in memory</h2>
+  <p>A model file (Ollama uses the <b>GGUF</b> format) is basically:</p>
+  <ol>
+    <li><b>A header:</b> the architecture, number of layers, vocabulary, chat template and so on.</li>
+    <li><b>The tokenizer:</b> a list of ~32k–256k text pieces (tokens), each with an ID.</li>
+    <li><b>Tensors:</b> big grids of numbers (the weights), grouped into <b>layers</b>.</li>
+  </ol>
+  <h3>Example: Llama 3.1 8B</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Part</th><th>Shape / count</th><th>What it does</th></tr>
+    <tr><td>Token embedding</td><td>128,256 tokens × 4,096 numbers</td><td>Turns a token ID into a vector of 4,096 numbers</td></tr>
+    <tr><td>32 transformer layers</td><td>~218M weights each</td><td>Attention (which earlier words matter?) + feed-forward network (what do I know about this?)</td></tr>
+    <tr><td>Output head</td><td>4,096 × 128,256</td><td>Turns the final vector into a score for every possible next token</td></tr>
+    <tr><td><b>Total</b></td><td><b>~8.0 billion parameters</b></td><td></td></tr>
+  </table></div>
+  <div class="analogy">The layers are like 32 stations on an assembly line. Each token's vector passes through station 1, then 2, all the way to 32. At each station it gets refined a bit more. To make <b>one</b> new token, the vector has to pass through <b>every</b> station, so <b>every weight is read once per token</b>.</div>
+</section>
+
+<!-- ============ QUANT ============ -->
+<section id="quant">
+  <div class="kicker">Level 3 · LLMs</div>
+  <h2>Quantization: shrinking the model to fit</h2>
+  <p>Quantization stores each weight with fewer bits. For example, instead of 16 bits per weight, you store 4-bit values plus a small "scale" number for each block of 32 weights. The quality loss is small, and the memory saving is huge. When you <code>ollama pull llama3.1:8b</code>, you get a <b>Q4_K_M</b> version by default.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Quantization</th><th>≈ bits / weight</th><th>8B model size</th><th>70B model size</th><th>Quality</th></tr>
+    <tr><td>FP16</td><td>16</td><td>16 GB</td><td>141 GB</td><td>Original</td></tr>
+    <tr><td>Q8_0</td><td>8.5</td><td>8.5 GB</td><td>75 GB</td><td>Almost the same as FP16</td></tr>
+    <tr><td>Q5_K_M</td><td>5.7</td><td>5.7 GB</td><td>50 GB</td><td>Very good</td></tr>
+    <tr><td><b>Q4_K_M</b> (Ollama default)</td><td>4.8</td><td><b>4.9 GB</b></td><td>43 GB</td><td>Good: the best balance</td></tr>
+    <tr><td>Q2_K / Q3</td><td>2.6–3.9</td><td>3–4 GB</td><td>26–34 GB</td><td>Noticeably worse</td></tr>
+  </table></div>
+  <pre><span class="c"># rule of thumb</span>
+model size (GB) ≈ parameters (billions) × bits per weight ÷ 8
+8B × 4.8 ÷ 8 ≈ <span class="k">4.8 GB</span>      <span class="c">(+ KV cache + ~1 GB overhead to run)</span></pre>
+  <div class="tip">Quantization helps twice: the model <b>fits</b> in less memory, and it runs <b>faster</b>, because fewer bytes have to be read for every token.</div>
+</section>
+
+<!-- ============ MATH ============ -->
+<section id="math">
+  <div class="kicker">Level 3 · LLMs</div>
+  <h2>The math inside a layer: why it's all matrix multiplication</h2>
+  <p>Each layer mostly multiplies the token's vector (4,096 numbers) by big weight matrices. For example:</p>
+  <pre>[ x1 x2 ... x4096 ]  ×  W (4096 × 14336)  =  [ y1 y2 ... y14336 ]
+<span class="c"># each output y = x1·w1 + x2·w2 + ... + x4096·w4096   → 4,096 multiply-adds
+# 14,336 outputs × 4,096 = ~58.7 million multiply-adds for just ONE matrix</span></pre>
+  <p>All of those outputs are <b>independent</b>, so they can be computed at the same time. That's exactly the job thousands of GPU cores and tensor cores are built for.</p>
+  <h3>How much math per token?</h3>
+  <p>A useful rule: <b>about 2 operations per parameter per token</b> (one multiply and one add). So an 8B model needs <b>~16 billion operations</b> for every token it writes.</p>
+  <h3>Two phases, two different bottlenecks</h3>
+  <div class="grid2">
+    <div class="card c-gpu"><h4>⚡ Prefill (reading your prompt)</h4>
+      <p>All prompt tokens are processed <b>together</b>: a matrix × matrix multiply. Each weight is loaded once and reused for hundreds of tokens.</p>
+      <p><b>Bottleneck: compute (TFLOPS).</b> This is fast: often hundreds to thousands of tokens per second on a GPU.</p></div>
+    <div class="card c-vram"><h4>🐢 Decode (writing the answer)</h4>
+      <p>Tokens come out <b>one at a time</b>, because each new token depends on the previous one. That's a matrix × vector multiply: each weight is loaded and used only <b>once</b>.</p>
+      <p><b>Bottleneck: memory bandwidth (GB/s).</b> The cores spend most of their time waiting for weights to arrive.</p></div>
+  </div>
+  <div class="note"><b>Worked example</b> (8B Q4 on an RTX 3060): each token reads ~4.9 GB of weights and does ~16 GFLOP of math. The GPU could do that math in ~1 ms (at ~13 TFLOPS), but reading 4.9 GB at 360 GB/s takes ~14 ms. <b>Memory is about 14× slower than the math</b>, so decode speed depends on bandwidth, not core count.</div>
+</section>
+
+<!-- ============ JOURNEY ============ -->
+<section id="journey">
+  <div class="kicker">Level 4 · The full picture</div>
+  <h2>Life of a prompt: step by step through the hardware</h2>
+  <p>Follow <code>ollama run llama3.1:8b "Why is the sky blue?"</code> on a PC with an 8–12 GB NVIDIA GPU. The highlighted parts are the ones working at each step.</p>
+  <div class="stepper">
+    <svg class="diagram" viewBox="0 0 760 230" id="jdiag" role="img" aria-label="Hardware diagram that highlights the active parts for each step">
+      <g class="node ssd" id="n-ssd"><rect class="box" x="10" y="85" width="110" height="60" rx="10"/><text x="65" y="113" text-anchor="middle" font-weight="700">💾 SSD</text><text class="sub" x="65" y="131" text-anchor="middle">model file</text></g>
+      <g class="node ram" id="n-ram"><rect class="box" x="170" y="15" width="130" height="64" rx="10"/><text x="235" y="43" text-anchor="middle" font-weight="700">🗄️ RAM</text><text class="sub" x="235" y="62" text-anchor="middle">system memory</text></g>
+      <g class="node cpu" id="n-cpu"><rect class="box" x="170" y="150" width="130" height="64" rx="10"/><text x="235" y="178" text-anchor="middle" font-weight="700">🧑‍🍳 CPU</text><text class="sub" x="235" y="197" text-anchor="middle">Ollama, tokenizer</text></g>
+      <g class="node bus" id="n-bus"><rect class="box" x="350" y="85" width="120" height="60" rx="10"/><text x="410" y="113" text-anchor="middle" font-weight="700">🔌 PCIe</text><text class="sub" x="410" y="131" text-anchor="middle">CPU ↔ GPU link</text></g>
+      <g class="node gpu" id="n-gpu"><rect class="box" x="520" y="150" width="130" height="64" rx="10"/><text x="585" y="178" text-anchor="middle" font-weight="700">🏭 GPU</text><text class="sub" x="585" y="197" text-anchor="middle">tensor cores</text></g>
+      <g class="node vram" id="n-vram"><rect class="box" x="520" y="15" width="130" height="64" rx="10"/><text x="585" y="43" text-anchor="middle" font-weight="700">⚡ VRAM</text><text class="sub" x="585" y="62" text-anchor="middle">weights + KV cache</text></g>
+      <path class="wire" id="w-ssd-ram" d="M120 115 H145 V47 H170"/>
+      <path class="wire" id="w-ram-cpu" d="M235 79 V150"/>
+      <path class="wire" id="w-ram-bus" d="M300 47 H325 V115 H350"/>
+      <path class="wire" id="w-cpu-bus" d="M300 182 H325 V115"/>
+      <path class="wire" id="w-bus-vram" d="M470 115 H495 V47 H520"/>
+      <path class="wire" id="w-bus-gpu" d="M495 115 V182 H520"/>
+      <path class="wire" id="w-vram-gpu" d="M585 79 V150"/>
+    </svg>
+    <div class="step-head">
+      <div class="dots" id="jdots"></div>
+      <div><button class="btn" id="jprev">◀ Back</button> <button class="btn primary" id="jnext">Next ▶</button></div>
+    </div>
+    <div class="step-body"><div class="step-title" id="jtitle"></div><div id="jtext"></div></div>
+  </div>
+</section>
+
+<!-- ============ KV ============ -->
+<section id="kv">
+  <div class="kicker">Level 4 · Memory that grows</div>
+  <h2>The KV cache: why long chats eat memory</h2>
+  <p>In <b>attention</b>, each new token "looks back" at every earlier token. To avoid redoing work, the model saves two vectors for every token in every layer: a <b>Key</b> and a <b>Value</b>. That saved data is the <b>KV cache</b>, and it lives next to the weights, in VRAM if possible.</p>
+  <pre><span class="c"># KV cache size</span>
+bytes = 2 (K and V) × layers × KV-heads × head-size × bytes-per-number × tokens
+
+Llama 3.1 8B, FP16 cache:  2 × 32 × 8 × 128 × 2 B = <span class="k">128 KB per token</span>
+   4,096-token context  →  <span class="k">0.5 GB</span>
+  32,768-token context  →  <span class="k">4 GB</span>
+ 131,072-token context  →  <span class="k">16 GB</span>   <span class="c">← bigger than the model itself!</span></pre>
+  <ul>
+    <li><b>Context length</b> (<code>num_ctx</code>) is how many tokens the model can remember. Ollama reserves KV space for the whole context when the model loads.</li>
+    <li>Raise it with <code>/set parameter num_ctx 16384</code> in chat, or the <code>OLLAMA_CONTEXT_LENGTH</code> environment variable. More context means more VRAM.</li>
+    <li>Save memory with <code>OLLAMA_FLASH_ATTENTION=1</code> together with <code>OLLAMA_KV_CACHE_TYPE=q8_0</code>. This stores the cache in 8 bits and roughly halves it.</li>
+  </ul>
+  <div class="warnbox">A classic surprise: a model runs at <code>100% GPU</code>. You raise <code>num_ctx</code> to 32k, and suddenly <code>ollama ps</code> shows <code>30%/70% CPU/GPU</code> and speed drops a lot. The bigger KV cache pushed some layers out of VRAM.</div>
+</section>
+
+<!-- ============ OFFLOAD ============ -->
+<section id="offload">
+  <div class="kicker">Level 4 · Splitting the work</div>
+  <h2>Layer offloading: when the model doesn't fit in VRAM</h2>
+  <p>Ollama's engine (built on llama.cpp / GGML) can <b>split a model by layers</b>. When a model loads, the scheduler:</p>
+  <ol>
+    <li>Checks how much VRAM is free (your desktop and browser already use some).</li>
+    <li>Works out the memory needed per layer, plus KV cache and buffers.</li>
+    <li>Puts as many layers as fit on the <b>GPU</b>, and the rest on the <b>CPU + RAM</b>.</li>
+  </ol>
+  <pre><span class="k">ollama ps</span>
+NAME           ID            SIZE      PROCESSOR          UNTIL
+llama3.1:8b    46e0c10c039e  6.9 GB    100% GPU           4 minutes from now
+qwen2.5:32b    9f13ba1299af  22 GB     48%/52% CPU/GPU    4 minutes from now</pre>
+  <p>For each token, the data flows: <b>GPU layers</b> (fast) → a small vector crosses PCIe → <b>CPU layers</b> (slow) → result. Total time = GPU time + CPU time, so <b>the slow part dominates</b>.</p>
+  <div class="analogy">A relay race where one runner is a sprinter (GPU) and one is walking (CPU). If the walker has to cover even 30% of the track, the team's time is mostly the walker's time.</div>
+  <div class="note">Control it yourself with <code>/set parameter num_gpu 20</code> (the number of layers to put on the GPU). <code>num_gpu 0</code> forces CPU-only, which is useful for comparing speeds in class.</div>
+</section>
+
+<!-- ============ SPEED ============ -->
+<section id="speed">
+  <div class="kicker">Level 4 · Performance</div>
+  <h2>Why tokens per second ≈ bandwidth ÷ model size</h2>
+  <p>During decode, every token needs (almost) all the weights read once. So the speed limit is:</p>
+  <pre>max tokens/second ≈ memory bandwidth (GB/s) ÷ model size (GB)
+<span class="c"># real-world speed is usually ~60–75% of this limit</span></pre>
+  <div class="tablewrap"><table>
+    <tr><th>Hardware</th><th>Bandwidth</th><th>8B Q4 (4.9 GB) limit</th><th>Typical real speed</th></tr>
+    <tr><td>Laptop CPU, DDR4 dual channel</td><td>~51 GB/s</td><td>~10 tok/s</td><td>~6–8 tok/s</td></tr>
+    <tr><td>Desktop CPU, DDR5 dual channel</td><td>~90 GB/s</td><td>~18 tok/s</td><td>~10–14 tok/s</td></tr>
+    <tr><td>Apple M2 (unified)</td><td>100 GB/s</td><td>~20 tok/s</td><td>~14–18 tok/s</td></tr>
+    <tr><td>RTX 4060 8 GB</td><td>272 GB/s</td><td>~55 tok/s</td><td>~38–45 tok/s</td></tr>
+    <tr><td>RTX 3060 12 GB</td><td>360 GB/s</td><td>~73 tok/s</td><td>~45–55 tok/s</td></tr>
+    <tr><td>RTX 4090 24 GB</td><td>1,008 GB/s</td><td>~205 tok/s</td><td>~120–150 tok/s</td></tr>
+  </table></div>
+  <p class="lead">Numbers are rough and vary with drivers, Ollama version and context length. The pattern is what matters.</p>
+  <div class="tip"><b>Takeaways:</b> (1) A smaller or more quantized model is faster on <i>any</i> hardware. (2) An older GPU with more VRAM bandwidth (RTX 3060, 360 GB/s) can beat a newer one with less (RTX 4060, 272 GB/s) at LLMs. (3) More CPU cores help only until RAM bandwidth runs out, usually around 6–8 cores.</div>
+</section>
+
+<!-- ============ CALCULATOR ============ -->
+<section id="calc">
+  <div class="kicker">Try it</div>
+  <h2>Will it fit? Memory &amp; speed calculator</h2>
+  <p>Pick a model and a computer. The calculator estimates memory use, how many layers fit on the GPU, and a rough speed, using the same formulas as above.</p>
+  <div class="calc">
+    <div>
+      <div class="field"><label for="cModel">Model</label><select id="cModel"></select></div>
+      <div class="field"><label for="cQuant">Quantization</label><select id="cQuant"></select></div>
+      <div class="field"><label for="cCtx">Context length: <span id="cCtxV"></span> tokens</label><input type="range" id="cCtx" min="0" max="6" step="1" value="1"></div>
+      <div class="field"><label for="cKv">KV cache type</label><select id="cKv"><option value="2">f16 (default)</option><option value="1.0625">q8_0 (needs flash attention)</option><option value="0.5625">q4_0 (needs flash attention)</option></select></div>
+      <div class="field"><label for="cGpu">GPU</label><select id="cGpu"></select></div>
+      <div class="field"><label for="cRamBw">System RAM type</label><select id="cRamBw"><option value="40">DDR4, single stick (~25 GB/s)</option><option value="51" selected>DDR4-3200 dual channel (~51 GB/s)</option><option value="90">DDR5-5600 dual channel (~90 GB/s)</option></select></div>
+      <div class="field"><label for="cRam">System RAM size (GB)</label><input type="number" id="cRam" min="4" max="512" value="16"></div>
+    </div>
+    <div>
+      <div id="cVerdict" class="verdict"></div>
+      <div><b>Memory needed</b></div>
+      <div class="bar" id="cBar"></div>
+      <div style="font-size:13px;color:var(--muted)"><span class="tag t-vram">weights</span> <span class="tag t-ram">KV cache</span> <span class="tag t-ssd">overhead</span></div>
+      <div class="stats" style="margin-top:12px">
+        <div class="card"><div class="lbl">Weights</div><div class="big" id="sW"></div></div>
+        <div class="card"><div class="lbl">KV cache</div><div class="big" id="sK"></div></div>
+        <div class="card"><div class="lbl">Layers on GPU</div><div class="big" id="sL"></div></div>
+        <div class="card"><div class="lbl">Ollama would show</div><div class="big" id="sP" style="font-size:1.15rem"></div></div>
+        <div class="card"><div class="lbl">RAM needed (incl. ~4 GB for the OS)</div><div class="big" id="sR"></div></div>
+        <div class="card"><div class="lbl">Rough speed</div><div class="big" id="sT"></div></div>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">These are teaching estimates. Real numbers depend on drivers, other apps using VRAM and the Ollama version.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OBSERVE ============ -->
+<section id="observe">
+  <div class="kicker">Hands-on lab</div>
+  <h2>Watch the hardware work, live</h2>
+  <h3>Lab 1: see where the model lives</h3>
+  <pre><span class="k">ollama run llama3.1:8b "hello"</span>       <span class="c"># load the model</span>
+<span class="k">ollama ps</span>                            <span class="c"># SIZE and PROCESSOR (GPU %, CPU %)</span>
+<span class="k">nvidia-smi</span>                           <span class="c"># NVIDIA: VRAM used, GPU utilization</span>
+<span class="k">nvidia-smi -l 1</span>                      <span class="c"># refresh every second while chatting</span></pre>
+  <h3>Lab 2: Windows Task Manager</h3>
+  <ol>
+    <li>Press <code>Ctrl + Shift + Esc</code> → <b>Performance</b> tab.</li>
+    <li><b>GPU</b>: watch "Dedicated GPU memory" jump when the model loads (that's VRAM). Change one graph to <b>"Cuda"</b> or <b>"Compute"</b> to see the GPU working during generation.</li>
+    <li><b>Memory</b>: system RAM usage.</li>
+    <li><b>CPU</b>: during GPU inference, CPU usage should stay low. With <code>num_gpu 0</code>, all cores max out.</li>
+  </ol>
+  <h3>Lab 3: measure GPU vs CPU speed</h3>
+  <pre><span class="k">ollama run llama3.1:8b --verbose</span>
+>>> Write a 100-word story about a robot.
+<span class="c">...
+prompt eval rate:   1200 tokens/s   ← prefill (compute-bound)
+eval rate:            48 tokens/s   ← decode  (bandwidth-bound)</span>
+
+>>> /set parameter num_gpu 0          <span class="c"># force CPU only</span>
+>>> Write a 100-word story about a robot.
+<span class="c">eval rate:             7 tokens/s   ← same model, RAM bandwidth instead of VRAM</span></pre>
+  <h3>Lab 4: see the scheduler's decisions</h3>
+  <pre><span class="c"># PowerShell: restart the server with debug logs</span>
+<span class="k">$env:OLLAMA_DEBUG="1"; ollama serve</span>
+<span class="c"># look for lines like: "offloaded 33/33 layers to GPU", "total memory", "kv cache"</span></pre>
+  <div class="tip">Ask students to fill in a table for 3 models (e.g. <code>llama3.2:1b</code>, <code>llama3.1:8b</code>, <code>qwen2.5:14b</code>): size, PROCESSOR from <code>ollama ps</code>, and eval rate. Then compare the results with the calculator above.</div>
+</section>
+
+<!-- ============ SETUPS ============ -->
+<section id="setups">
+  <div class="kicker">Real world</div>
+  <h2>What happens on common setups</h2>
+  <div class="grid2">
+    <div class="card c-cpu"><h4>💻 Laptop, no dedicated GPU, 16 GB RAM</h4>
+      <p>Everything runs on the <b>CPU + RAM</b>. 1B–3B models feel smooth (15–30 tok/s), 7–8B models are usable (~5–8 tok/s), and 14B+ is slow.</p>
+      <p><b>Best picks:</b> <code>llama3.2:3b</code>, <code>qwen2.5:3b</code>, <code>gemma3:4b</code>.</p></div>
+    <div class="card c-gpu"><h4>🎮 Gaming PC, 8 GB GPU (RTX 4060 / 3060 Ti)</h4>
+      <p>7–8B Q4 models fit <b>100% on the GPU</b>: 35–50 tok/s. 14B models split between CPU and GPU (~8–15 tok/s).</p>
+      <p><b>Best picks:</b> <code>llama3.1:8b</code>, <code>qwen2.5:7b</code>; keep the context at ~8k.</p></div>
+    <div class="card c-vram"><h4>🚀 24 GB GPU (RTX 3090 / 4090)</h4>
+      <p>Up to ~32B Q4 models fit entirely in VRAM. 70B models need ~43 GB, so more than half runs on the CPU and it gets slow.</p>
+      <p><b>Best picks:</b> <code>qwen2.5:32b</code>, <code>gemma3:27b</code>.</p></div>
+    <div class="card c-ram"><h4>🍎 Mac with 32–64 GB unified memory</h4>
+      <p>No PCIe copy; the GPU can use most of the memory. Mid-range bandwidth, but huge capacity, so 32B–70B models load fine.</p>
+      <p><b>Best picks:</b> 14B–32B models; 70B Q4 on 64 GB+.</p></div>
+  </div>
+  <h3>Upgrade priority for local LLMs</h3>
+  <ol>
+    <li><b>VRAM size</b>: it decides which models run fast at all.</li>
+    <li><b>Memory bandwidth</b>: it decides how fast they generate.</li>
+    <li><b>System RAM size</b>: the overflow space for bigger models (32 GB is comfortable).</li>
+    <li><b>GPU compute and CPU cores</b>: these matter mostly for long prompts (prefill) and many users at once.</li>
+    <li><b>A fast NVMe SSD</b>: only affects how quickly a model loads.</li>
+  </ol>
+</section>
+
+<!-- ============ MYTHS ============ -->
+<section id="myths">
+  <div class="kicker">Clear the confusion</div>
+  <h2>Common myths</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Myth</th><th>Reality</th></tr>
+    <tr><td>"More CPU cores = much faster LLM."</td><td>Decode is limited by RAM bandwidth. After ~6–8 cores, extra cores just wait for memory.</td></tr>
+    <tr><td>"The model runs from the SSD."</td><td>The SSD only stores the file. Weights are loaded into RAM/VRAM first; running from disk would be ~100× slower.</td></tr>
+    <tr><td>"Shared GPU memory counts as VRAM."</td><td>Windows' "shared GPU memory" is ordinary system RAM reached over PCIe, which is very slow for LLMs.</td></tr>
+    <tr><td>"A 7B model needs 7 GB."</td><td>It depends on the format: ~14 GB at FP16, ~7.5 GB at Q8, ~4.5 GB at Q4, plus KV cache and overhead.</td></tr>
+    <tr><td>"If it fits in VRAM, context length doesn't matter."</td><td>The KV cache grows with context. A large <code>num_ctx</code> can push layers back onto the CPU.</td></tr>
+    <tr><td>"100% GPU usage in Task Manager means it's working well."</td><td>During decode the GPU is mostly <i>waiting for memory</i>. The utilization number doesn't show that.</td></tr>
+  </table></div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="quiz">
+  <div class="kicker">Check yourself</div>
+  <h2>Quiz</h2>
+  <p>Score: <b id="qScore">0</b> / <span id="qTotal"></span></p>
+  <div id="qList"></div>
+</section>
+
+<!-- ============ GLOSSARY ============ -->
+<section id="glossary">
+  <div class="kicker">Reference</div>
+  <h2>Glossary</h2>
+  <div class="tablewrap"><table>
+    <tr><td><b>Bandwidth</b></td><td>How many bytes per second memory can deliver. The main factor in LLM speed.</td></tr>
+    <tr><td><b>Latency</b></td><td>How long until the first byte of data arrives.</td></tr>
+    <tr><td><b>Core</b></td><td>An independent processing unit inside a CPU or GPU.</td></tr>
+    <tr><td><b>CUDA / ROCm / Metal</b></td><td>The software that lets programs use NVIDIA, AMD and Apple GPUs.</td></tr>
+    <tr><td><b>Tensor core</b></td><td>A GPU unit that does small matrix multiplications in one step.</td></tr>
+    <tr><td><b>SIMD / AVX2</b></td><td>CPU instructions that do the same math on several numbers at once.</td></tr>
+    <tr><td><b>DRAM / GDDR / HBM</b></td><td>Types of memory chips: system RAM, graphics VRAM, and stacked high-bandwidth memory on data-center GPUs.</td></tr>
+    <tr><td><b>PCIe</b></td><td>The connection between the motherboard (CPU/RAM) and the graphics card.</td></tr>
+    <tr><td><b>Unified memory</b></td><td>One memory pool shared by the CPU and GPU (Apple Silicon).</td></tr>
+    <tr><td><b>Parameter / weight</b></td><td>One learned number in the model. An 8B model has 8 billion of them.</td></tr>
+    <tr><td><b>Quantization</b></td><td>Storing weights with fewer bits (e.g. 4-bit) to save memory and gain speed.</td></tr>
+    <tr><td><b>GGUF</b></td><td>The model file format used by llama.cpp and Ollama.</td></tr>
+    <tr><td><b>Token</b></td><td>A piece of text (often part of a word) that the model reads or writes.</td></tr>
+    <tr><td><b>Prefill</b></td><td>Processing the whole prompt in parallel. Limited by compute.</td></tr>
+    <tr><td><b>Decode</b></td><td>Generating one token at a time. Limited by memory bandwidth.</td></tr>
+    <tr><td><b>KV cache</b></td><td>Saved keys and values for past tokens, so attention doesn't recompute them.</td></tr>
+    <tr><td><b>Context length (num_ctx)</b></td><td>The maximum number of tokens the model can remember in a chat.</td></tr>
+    <tr><td><b>Offloading (num_gpu)</b></td><td>How many layers are placed on the GPU; the rest run on the CPU.</td></tr>
+    <tr><td><b>mmap</b></td><td>Memory-mapping: the OS loads parts of a file into RAM as they are needed.</td></tr>
+    <tr><td><b>Swap / page file</b></td><td>Disk space used as emergency RAM. Very slow.</td></tr>
+  </table></div>
+</section>
+</main>
+</div>
+
+<script>
+/* theme */
+(function () {
+  const root = document.documentElement;
+  try { const t = localStorage.getItem("hwTheme"); if (t) root.dataset.theme = t; } catch (e) {}
+  document.getElementById("themeBtn").onclick = () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("hwTheme", root.dataset.theme); } catch (e) {}
+  };
+})();
+
+/* scroll progress + active nav */
+(function () {
+  const bar = document.getElementById("prog");
+  const links = [...document.querySelectorAll("nav.side a")];
+  const secs = links.map(a => document.querySelector(a.getAttribute("href")));
+  function onScroll() {
+    const h = document.documentElement;
+    bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%";
+    let i = 0;
+    secs.forEach((s, k) => { if (s.getBoundingClientRect().top < 120) i = k; });
+    links.forEach((a, k) => a.classList.toggle("active", k === i));
+  }
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+})();
+
+/* CPU vs GPU race */
+(function () {
+  const N = 1024;
+  const mk = id => { const el = document.getElementById(id); el.innerHTML = "<i></i>".repeat(N); return [...el.children]; };
+  const cc = mk("cellsCpu"), gc = mk("cellsGpu");
+  const tC = document.getElementById("tCpu"), tG = document.getElementById("tGpu");
+  let timer = null;
+  document.getElementById("raceBtn").onclick = () => {
+    clearInterval(timer);
+    cc.concat(gc).forEach(c => c.classList.remove("d"));
+    let tick = 0; tC.textContent = tG.textContent = 0;
+    timer = setInterval(() => {
+      tick++;
+      const cpuDone = Math.min(N, tick * 8);
+      const gpuDone = Math.min(N, Math.floor(tick / 3) * 512);
+      for (let i = 0; i < cpuDone; i++) cc[i].classList.add("d");
+      for (let i = 0; i < gpuDone; i++) gc[i].classList.add("d");
+      if (cpuDone < N) tC.textContent = tick; else tC.textContent = 128;
+      if (gpuDone < N) tG.textContent = tick; else tG.textContent = 6;
+      if (cpuDone >= N) clearInterval(timer);
+    }, 40);
+  };
+})();
+
+/* Life of a prompt */
+(function () {
+  const steps = [
+    { t: "1 · You press Enter", n: ["cpu", "ram"], w: ["ram-cpu"],
+      x: "The <b>CPU</b> runs the <code>ollama</code> command. It sends an HTTP request to the Ollama server (also on the CPU) at <code>localhost:11434</code>. The server checks whether <code>llama3.1:8b</code> is already loaded. It isn't, so loading begins." },
+    { t: "2 · Read the model file from SSD", n: ["ssd", "ram", "cpu"], w: ["ssd-ram", "ram-cpu"],
+      x: "The GGUF file (~4.9 GB) lives on the <b>SSD</b>. Ollama <b>memory-maps</b> it, so the OS pulls it into <b>RAM</b> (the page cache). At 3 GB/s that's ~2 seconds; a second load is faster because it's already cached in RAM." },
+    { t: "3 · The scheduler plans the memory", n: ["cpu", "vram"], w: ["cpu-bus", "bus-vram"],
+      x: "The CPU asks the GPU driver: <i>how much VRAM is free?</i> Say 7.2 of 8 GB (Windows and your browser use the rest). It adds up weights (4.9 GB) + KV cache for 4k context (0.5 GB) + buffers (~0.8 GB) = 6.2 GB → <b>all 33 layers fit</b>." },
+    { t: "4 · Copy the weights into VRAM", n: ["ram", "bus", "vram"], w: ["ram-bus", "bus-vram"],
+      x: "The weights stream from <b>RAM</b> across <b>PCIe</b> (16–32 GB/s) into <b>VRAM</b>. This is the delay you feel the first time you run a model. It happens <b>once</b>; afterwards the model stays in VRAM (5 minutes by default)." },
+    { t: "5 · Reserve the KV cache and buffers", n: ["vram"], w: [],
+      x: "Empty space for the <b>KV cache</b> (every token's keys and values, for all 32 layers) and scratch buffers is set aside in <b>VRAM</b>. Its size depends on <code>num_ctx</code>." },
+    { t: "6 · Tokenize the prompt", n: ["cpu", "ram"], w: ["ram-cpu"],
+      x: "The <b>CPU</b> applies the chat template and splits the text into tokens: <code>\"Why is the sky blue?\"</code> → <code>[10445, 374, 279, 13180, 6437, 30]</code>. That's text in, numbers out. It takes microseconds." },
+    { t: "7 · Send the token IDs to the GPU", n: ["cpu", "bus", "gpu"], w: ["cpu-bus", "bus-gpu"],
+      x: "Only a few bytes (the token IDs) cross <b>PCIe</b>. On the GPU, each ID is looked up in the embedding table and becomes a vector of 4,096 numbers." },
+    { t: "8 · Prefill: process the whole prompt at once", n: ["gpu", "vram"], w: ["vram-gpu"],
+      x: "All prompt tokens go through all 32 layers <b>in parallel</b> (matrix × matrix on the <b>tensor cores</b>). Each layer's weights are read once from VRAM and reused for every prompt token, so this phase is limited by <b>compute</b>. Keys and values for every token are written into the KV cache." },
+    { t: "9 · Decode: produce ONE token", n: ["gpu", "vram"], w: ["vram-gpu"],
+      x: "To produce the next token, its vector passes through all 32 layers. That means reading <b>all ~4.9 GB of weights</b> from VRAM plus the KV cache, for just one token. The math is tiny compared to the reading, so this phase is limited by <b>memory bandwidth</b>: 360 GB/s ÷ 4.9 GB ≈ 70 tokens/s at most." },
+    { t: "10 · Pick the next word (sampling)", n: ["gpu", "cpu"], w: ["bus-gpu", "cpu-bus"],
+      x: "The output head gives a score (<b>logit</b>) for each of the 128,256 possible tokens. Softmax turns the scores into probabilities. <b>Temperature</b>, <b>top-k</b> and <b>top-p</b> shape them, and one token is chosen, say <code>\"The\"</code>. Its ID is the only thing that needs to go back to the CPU." },
+    { t: "11 · Detokenize and stream to you", n: ["cpu", "ram"], w: ["ram-cpu"],
+      x: "The <b>CPU</b> turns the token ID back into text and streams it to your terminal. The new token is fed back in at step 9, and the loop repeats until the model emits an end-of-turn token or hits the limit." },
+    { t: "12 · Idle: the model stays warm", n: ["vram"], w: [],
+      x: "When the reply is done, the weights <b>stay in VRAM</b> so your next question starts instantly. After <code>OLLAMA_KEEP_ALIVE</code> (5 min by default) with no requests, Ollama unloads the model and frees VRAM. <code>ollama stop llama3.1:8b</code> unloads it right away." }
+  ];
+  const dots = document.getElementById("jdots");
+  dots.innerHTML = steps.map((_, i) => `<span data-i="${i}" title="Step ${i + 1}"></span>`).join("");
+  let cur = 0;
+  function show(i) {
+    cur = Math.max(0, Math.min(steps.length - 1, i));
+    const s = steps[cur];
+    document.querySelectorAll("#jdiag .node").forEach(n => n.classList.toggle("on", s.n.includes(n.id.slice(2))));
+    document.querySelectorAll("#jdiag .wire").forEach(w => w.classList.toggle("on", s.w.includes(w.id.slice(2))));
+    document.getElementById("jtitle").textContent = s.t;
+    document.getElementById("jtext").innerHTML = s.x;
+    [...dots.children].forEach((d, k) => d.classList.toggle("on", k <= cur));
+    document.getElementById("jprev").disabled = cur === 0;
+    document.getElementById("jnext").disabled = cur === steps.length - 1;
+  }
+  dots.onclick = e => { if (e.target.dataset.i) show(+e.target.dataset.i); };
+  document.getElementById("jprev").onclick = () => show(cur - 1);
+  document.getElementById("jnext").onclick = () => show(cur + 1);
+  show(0);
+})();
+
+/* Calculator */
+(function () {
+  const models = [
+    { n: "Llama 3.2 1B", p: 1.24, L: 16, kv: 8, hd: 64 },
+    { n: "Llama 3.2 3B", p: 3.2, L: 28, kv: 8, hd: 128 },
+    { n: "Llama 3.1 8B", p: 8.0, L: 32, kv: 8, hd: 128 },
+    { n: "Qwen 2.5 14B", p: 14.8, L: 48, kv: 8, hd: 128 },
+    { n: "Qwen 2.5 32B", p: 32.8, L: 64, kv: 8, hd: 128 },
+    { n: "Llama 3.3 70B", p: 70.6, L: 80, kv: 8, hd: 128 }
+  ];
+  const quants = [["Q4_K_M (Ollama default)", 4.85], ["Q5_K_M", 5.7], ["Q8_0", 8.5], ["FP16", 16]];
+  const gpus = [
+    { n: "No GPU (CPU only)", v: 0, bw: 0 },
+    { n: "RTX 3050 · 6 GB · 224 GB/s", v: 6, bw: 224 },
+    { n: "RTX 4060 · 8 GB · 272 GB/s", v: 8, bw: 272 },
+    { n: "RTX 3060 · 12 GB · 360 GB/s", v: 12, bw: 360 },
+    { n: "RTX 4070 Ti Super · 16 GB · 672 GB/s", v: 16, bw: 672 },
+    { n: "RTX 3090 · 24 GB · 936 GB/s", v: 24, bw: 936 },
+    { n: "RTX 4090 · 24 GB · 1008 GB/s", v: 24, bw: 1008 },
+    { n: "Apple M2 · 16 GB unified · 100 GB/s", v: 16, bw: 100, uni: true },
+    { n: "Apple M3 Pro · 36 GB unified · 150 GB/s", v: 36, bw: 150, uni: true },
+    { n: "Apple M4 Max · 64 GB unified · 546 GB/s", v: 64, bw: 546, uni: true }
+  ];
+  const ctxs = [2048, 4096, 8192, 16384, 32768, 65536, 131072];
+  const $ = id => document.getElementById(id);
+  $("cModel").innerHTML = models.map((m, i) => `<option value="${i}" ${i === 2 ? "selected" : ""}>${m.n}</option>`).join("");
+  $("cQuant").innerHTML = quants.map((q, i) => `<option value="${i}">${q[0]}</option>`).join("");
+  $("cGpu").innerHTML = gpus.map((g, i) => `<option value="${i}" ${i === 3 ? "selected" : ""}>${g.n}</option>`).join("");
+  const f = x => x >= 10 ? x.toFixed(0) : x.toFixed(1);
+
+  function calc() {
+    const m = models[$("cModel").value], q = quants[$("cQuant").value][1];
+    const g = gpus[$("cGpu").value], ctx = ctxs[$("cCtx").value];
+    const kvB = +$("cKv").value, ramBw = +$("cRamBw").value;
+    $("cCtxV").textContent = ctx.toLocaleString();
+    const isUni = !!g.uni;
+    $("cRam").disabled = isUni;
+    const ramGB = isUni ? g.v : +$("cRam").value || 16;
+
+    const W = m.p * q / 8;
+    const K = 2 * m.L * m.kv * m.hd * kvB * ctx / 1e9;
+    const over = g.v > 0 ? 0.9 : 0.4;
+    const total = W + K + over;
+    const perLayer = (W + K) / m.L;
+
+    let usable = 0;
+    if (g.v > 0) usable = isUni ? g.v * 0.7 - over : g.v * 0.92 - 0.4 - over;
+    const layers = Math.max(0, Math.min(m.L, Math.floor(usable / perLayer)));
+    const fr = layers / m.L;
+    const cpuPart = (1 - fr) * (W + K);
+    const ramNeed = isUni ? total + 4 : cpuPart + 4 + (g.v > 0 ? 0 : over);
+
+    // decode time per token: read weights + about half the KV cache
+    const bytes = W + K * 0.5;
+    const gpuBw = g.bw || 1, cpuBw = isUni ? g.bw : ramBw * (ramBw === 40 ? 0.62 : 1);
+    let t = fr * bytes / (gpuBw * 0.72) + (1 - fr) * bytes / (cpuBw * 0.6);
+    let tps = 1 / t;
+
+    let label;
+    if (g.v === 0) label = "100% CPU";
+    else if (fr >= 1) label = "100% GPU";
+    else if (fr <= 0) label = "100% CPU";
+    else { const gp = Math.round(fr * 100); label = `${100 - gp}%/${gp}% CPU/GPU`; }
+
+    const swap = ramNeed > ramGB;
+    if (swap) tps = Math.min(tps, 0.5);
+
+    $("sW").textContent = f(W) + " GB";
+    $("sK").textContent = f(K) + " GB";
+    $("sL").textContent = g.v === 0 ? "0 / " + m.L : `${layers} / ${m.L}`;
+    $("sP").textContent = label;
+    $("sR").textContent = f(ramNeed) + " GB";
+    $("sR").style.color = swap ? "var(--danger)" : "";
+    $("sT").textContent = (swap ? "< " : "~") + (tps >= 10 ? Math.round(tps) : tps.toFixed(1)) + " tok/s";
+
+    const tot = Math.max(total, 0.01);
+    const pct = x => (x / tot * 100) + "%";
+    $("cBar").innerHTML = `<div style="width:${pct(W)};background:var(--vram)">${f(W)} GB</div><div style="width:${pct(K)};background:var(--ram)">${K > tot * 0.08 ? f(K) + " GB" : ""}</div><div style="width:${pct(over)};background:var(--ssd)"></div>`;
+
+    const v = $("cVerdict");
+    if (swap) { v.className = "verdict v-bad"; v.textContent = `❌ Needs ~${f(ramNeed)} GB of RAM but you have ${ramGB} GB. It will swap to disk or fail to load. Pick a smaller model or quantization.`; }
+    else if (g.v > 0 && fr >= 1) { v.className = "verdict v-ok"; v.textContent = `✅ Fits entirely in ${isUni ? "GPU-usable unified memory" : "VRAM"}. Full GPU speed. Total ≈ ${f(total)} GB.`; }
+    else if (g.v > 0 && fr > 0) { v.className = "verdict v-warn"; v.textContent = `⚠️ Only ${layers} of ${m.L} layers fit in VRAM. The rest run on the CPU, which slows every token down.`; }
+    else if (g.v > 0) { v.className = "verdict v-warn"; v.textContent = "⚠️ Not even one layer fits in VRAM, so it runs on the CPU only."; }
+    else { v.className = "verdict v-warn"; v.textContent = `🧑‍🍳 CPU-only: weights stay in RAM and speed depends on RAM bandwidth (~${ramBw === 40 ? 25 : ramBw} GB/s).`; }
+  }
+  ["cModel", "cQuant", "cCtx", "cKv", "cGpu", "cRamBw", "cRam"].forEach(id => $(id).addEventListener("input", calc));
+  calc();
+})();
+
+/* Quiz */
+(function () {
+  const Q = [
+    ["Which component holds the model weights so GPU cores can use them at full speed?", ["RAM", "VRAM", "SSD", "L3 cache"], 1,
+      "GPU cores read weights from VRAM at 250–1000+ GB/s. Weights in system RAM have to be processed by the CPU instead."],
+    ["Generating tokens one by one (decode) is mainly limited by…", ["Number of CPU cores", "GPU clock speed", "Memory bandwidth", "SSD speed"], 2,
+      "Every token reads (almost) the whole model from memory, and the math is tiny in comparison. So bytes per second sets the speed."],
+    ["About how big is an 8B model at Q4 (~4.8 bits per weight)?", ["~1 GB", "~5 GB", "~8 GB", "~16 GB"], 1,
+      "8 billion × 4.8 bits ÷ 8 ≈ 4.8 GB. At FP16 it would be 16 GB."],
+    ["`ollama ps` shows `40%/60% CPU/GPU`. What does that mean?", ["The GPU is 60% busy", "60% of the model's layers are in VRAM and 40% run on the CPU", "The CPU is overheating", "The model is 60% downloaded"], 1,
+      "It's the layer split. The model didn't fully fit in VRAM, so some layers run on the CPU from system RAM, which slows down every token."],
+    ["You raise num_ctx from 4k to 32k and the model gets slower. Why?", ["The model got dumber", "The KV cache grew and pushed layers out of VRAM", "The SSD is full", "The CPU needed more threads"], 1,
+      "The KV cache grows in step with context (~128 KB per token for Llama 3.1 8B). A bigger cache leaves less VRAM for weights."],
+    ["Why is the GPU better than the CPU at LLM math?", ["It has a higher clock speed", "It runs Windows faster", "It has thousands of cores doing independent multiply-adds at the same time", "It stores data permanently"], 2,
+      "Matrix multiplication is millions of independent multiply-adds, which is perfect for thousands of parallel cores and tensor cores."],
+    ["What does the CPU still do when the model is 100% on the GPU?", ["Nothing at all", "Tokenizing, detokenizing, running the Ollama server and coordinating the GPU", "Storing the KV cache", "Computing the attention layers"], 1,
+      "The CPU handles the program, text ↔ token conversion, the HTTP API and launching GPU work."],
+    ["For a CPU-only setup, which upgrade helps LLM speed most?", ["One bigger RAM stick → two matching sticks (dual channel)", "A faster SSD", "A bigger monitor", "More USB ports"], 0,
+      "Dual channel doubles RAM bandwidth, and on the CPU, bandwidth is the speed limit."],
+    ["Why is loading a model slow the first time but chatting is fast afterwards?", ["The model is downloaded on every message", "Weights are copied SSD → RAM → PCIe → VRAM once, then stay in VRAM", "The GPU warms up physically", "Ollama compiles the model"], 1,
+      "Loading is a one-time copy. After that the weights stay in VRAM (OLLAMA_KEEP_ALIVE, 5 minutes by default)."],
+    ["Which phase can process hundreds of tokens per second because it is compute-bound?", ["Decode", "Prefill (reading the prompt)", "Detokenizing", "Unloading"], 1,
+      "Prefill handles all prompt tokens together, so each weight that's loaded is reused many times. That shifts the limit from memory to compute."]
+  ];
+  const list = document.getElementById("qList");
+  document.getElementById("qTotal").textContent = Q.length;
+  let score = 0;
+  list.innerHTML = Q.map((q, i) => `<div class="q" id="q${i}"><b>${i + 1}. ${q[0].replace(/`([^`]+)`/g, "<code>$1</code>")}</b><div class="opts">${q[1].map((o, k) => `<button class="opt" data-q="${i}" data-k="${k}">${o}</button>`).join("")}</div><div class="why">${q[3]}</div></div>`).join("");
+  list.onclick = e => {
+    const b = e.target.closest("button.opt"); if (!b) return;
+    const i = +b.dataset.q, k = +b.dataset.k, box = document.getElementById("q" + i);
+    if (box.classList.contains("done")) return;
+    box.classList.add("done");
+    box.querySelectorAll("button").forEach((x, j) => { x.disabled = true; if (j === Q[i][2]) x.classList.add("right"); });
+    if (k === Q[i][2]) score++; else b.classList.add("wrong");
+    document.getElementById("qScore").textContent = score;
+  };
+})();
+</script>
+</body>
+</html>
