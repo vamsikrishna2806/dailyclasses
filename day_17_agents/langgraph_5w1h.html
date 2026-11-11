@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangGraph in 5W+H</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1020; --panel:#141a2e; --panel2:#1b2340; --line:#2a3458;
+  --text:#e9edf8; --muted:#9aa5c4;
+  --c1:#3ad6ff; --c2:#b18cff; --c3:#ff9f5a; --c4:#4ade80; --c5:#f472b6; --c6:#facc15;
+  --bad:#f87171;
+  --kw:#c792ea; --str:#a5e075; --com:#6b7799; --fn:#82aaff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f5f7fc; --panel:#ffffff; --panel2:#eef2fb; --line:#d6ddef;
+    --text:#151a2c; --muted:#5b6585;
+    --c1:#0a95c4; --c2:#7c4ddb; --c3:#e8742a; --c4:#16a34a; --c5:#db2777; --c6:#b48300;
+    --bad:#dc2626;
+    --kw:#7c3aed; --str:#15803d; --com:#8a93ad; --fn:#2563eb;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1020; --panel:#141a2e; --panel2:#1b2340; --line:#2a3458;
+  --text:#e9edf8; --muted:#9aa5c4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+.wrap{max-width:1150px;margin:0 auto;padding:0 16px}
+section{padding:70px 0;border-bottom:1px solid var(--line)}
+h1{font-size:clamp(2.2rem,6vw,3.8rem);font-weight:800;line-height:1.05}
+h2{font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:800;margin-bottom:8px}
+h3{font-size:1.05rem;margin-bottom:6px}
+.sub{color:var(--muted);max-width:740px;margin-bottom:32px}
+.tag{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.tag b{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;color:#fff;font-size:.95rem}
+code,.mono{font-family:"JetBrains Mono",monospace}
+.inl{font-family:"JetBrains Mono",monospace;font-size:.88em;background:var(--panel2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:9px 16px;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;font-size:.92rem}
+.btn:hover{border-color:var(--c2);transform:translateY(-1px)}
+.btn.primary{background:var(--c2);color:#fff;border-color:var(--c2)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.say{background:var(--panel2);border-left:4px solid var(--c2);border-radius:10px;padding:14px 16px;margin-top:22px}
+.say b{color:var(--c2)}
+svg text{font-family:Inter,system-ui,sans-serif}
+
+/* reveal on scroll */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.12s}.d2{transition-delay:.24s}.d3{transition-delay:.36s}.d4{transition-delay:.48s}.d5{transition-delay:.6s}
+
+/* shared motion */
+.flow{stroke-dasharray:5 7;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.pulse{animation:pulse 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.float{animation:float 3.2s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
+
+/* ---------- HERO ---------- */
+.hero{padding:56px 0 50px;text-align:center}
+.hero p{color:var(--muted);max-width:660px;margin:16px auto 0;font-size:1.1rem}
+.grad{background:linear-gradient(90deg,var(--c1),var(--c2),var(--c5));-webkit-background-clip:text;background-clip:text;color:transparent}
+.heroSvg{width:min(640px,100%);margin:30px auto 0;display:block}
+.nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:30px}
+.nav a{color:var(--text);text-decoration:none;font-size:.9rem;font-weight:600;border:1px solid var(--line);padding:7px 14px;border-radius:99px;background:var(--panel);transition:.2s}
+.nav a:hover{transform:translateY(-2px)}
+.nav a span{font-weight:800;margin-right:4px}
+
+/* ---------- WHAT ---------- */
+.blocks .panel{text-align:center}
+.blocks .ico{font-size:2.4rem;display:block;margin-bottom:6px}
+.blocks .an{font-size:.88rem;color:var(--muted)}
+.blocks .term{font-weight:800;font-size:1.15rem}
+.metro{width:100%;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:10px;font-size:.88rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+/* ---------- WHY ---------- */
+.why svg{width:100%;display:block}
+.whyMsg{min-height:52px;font-size:.92rem;margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--panel2);color:var(--muted);transition:.3s}
+.whyMsg.bad{color:var(--bad);border:1px solid var(--bad)}
+.whyMsg.good{color:var(--c4);border:1px solid var(--c4)}
+.xmark{opacity:0;transition:.3s}
+.xmark.on{opacity:1}
+.loopPath{opacity:.25;transition:.4s}
+.loopPath.on{opacity:1}
+.needs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+.needs .panel{padding:14px;font-size:.9rem}
+.needs .panel b{display:block;font-size:1.6rem}
+
+/* ---------- WHO ---------- */
+.who .panel{position:relative;overflow:hidden}
+.who .big{font-size:2.6rem;display:block;margin-bottom:8px}
+.who ul{padding-left:18px;color:var(--muted);font-size:.92rem}
+.who .panel::after{content:"";position:absolute;inset:auto -40px -40px auto;width:120px;height:120px;border-radius:50%;background:var(--glow);opacity:.14}
+
+/* ---------- WHEN ---------- */
+.tl{position:relative;margin:10px 0 40px;padding-left:34px}
+.tl::before{content:"";position:absolute;left:11px;top:4px;bottom:4px;width:3px;background:var(--line);border-radius:3px}
+.tl .bar{position:absolute;left:11px;top:4px;width:3px;height:0;background:linear-gradient(var(--c1),var(--c2),var(--c5));border-radius:3px;transition:height 2.2s ease}
+.tl.in .bar{height:calc(100% - 8px)}
+.tl .ev{position:relative;margin-bottom:22px}
+.tl .ev::before{content:"";position:absolute;left:-29px;top:6px;width:15px;height:15px;border-radius:50%;background:var(--bg);border:3px solid var(--c2)}
+.tl .ev .yr{font-weight:800;color:var(--c2);font-family:"JetBrains Mono",monospace;font-size:.9rem}
+.tl .ev p{color:var(--muted);font-size:.93rem}
+.check label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:.2s;font-size:.93rem}
+.check label:hover{border-color:var(--c2)}
+.check input{margin-top:4px;accent-color:var(--c2);width:16px;height:16px}
+.meter{height:14px;border-radius:99px;background:var(--panel2);overflow:hidden;border:1px solid var(--line);margin:14px 0 10px}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c4),var(--c1),var(--c2));transition:width .5s ease}
+.verdict{font-weight:800;font-size:1.1rem;min-height:30px}
+.verdictSub{color:var(--muted);font-size:.9rem}
+
+/* ---------- WHERE ---------- */
+.stack{display:flex;flex-direction:column;gap:10px}
+.layer{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;border:1px solid var(--line);background:var(--panel);transform:translateX(-40px);opacity:0;transition:.6s ease}
+.stack.in .layer{transform:none;opacity:1}
+.stack.in .layer:nth-child(2){transition-delay:.15s}
+.stack.in .layer:nth-child(3){transition-delay:.3s}
+.stack.in .layer:nth-child(4){transition-delay:.45s}
+.stack.in .layer:nth-child(5){transition-delay:.6s}
+.layer .em{font-size:1.6rem}
+.layer b{display:block}
+.layer small{color:var(--muted)}
+.layer.hi{border:2px solid var(--c2);box-shadow:0 0 0 4px color-mix(in srgb,var(--c2) 18%,transparent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{border:1px solid var(--line);background:var(--panel2);border-radius:99px;padding:6px 12px;font-size:.88rem}
+
+/* ---------- HOW ---------- */
+.steps5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:30px}
+.steps5 .panel{padding:14px;text-align:center;font-size:.86rem}
+.steps5 .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--c2);color:#fff;font-weight:800;margin-bottom:6px}
+.steps5 b{display:block;font-size:.98rem}
+.steps5 small{color:var(--muted)}
+.sim{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;align-items:start}
+.sim svg{width:100%;display:block}
+.node rect,.node circle,.node polygon{fill:var(--panel2);stroke:var(--line);stroke-width:2;transition:.3s}
+.node text{fill:var(--text);font-weight:700;font-size:15px;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
+.node.on rect,.node.on circle,.node.on polygon{stroke:var(--c2);fill:color-mix(in srgb,var(--c2) 22%,var(--panel2));stroke-width:3}
+.edge{fill:none;stroke:var(--line);stroke-width:2.5;transition:.3s}
+.edge.on{stroke:var(--c2)}
+.edge.dash{stroke-dasharray:6 5}
+.elabel{fill:var(--muted);font-size:12px;font-weight:600;text-anchor:middle}
+.ctrls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.narr{background:var(--panel2);border-radius:12px;padding:12px 14px;font-size:.93rem;min-height:70px;border-left:4px solid var(--c2)}
+.narr .stepNo{font-weight:800;color:var(--c2);margin-right:6px}
+.state{margin-top:14px}
+.state h3{display:flex;align-items:center;gap:8px}
+.kv{display:grid;grid-template-columns:90px 1fr;gap:6px 10px;font-family:"JetBrains Mono",monospace;font-size:.84rem}
+.kv .k{color:var(--c1)}
+.kv .v{background:var(--panel2);border-radius:6px;padding:2px 8px;min-height:24px;word-break:break-word;transition:background .4s}
+.kv .v.flash{background:color-mix(in srgb,var(--c4) 35%,var(--panel2))}
+.code{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:auto;font-family:"JetBrains Mono",monospace;font-size:.8rem;line-height:1.65;padding:10px 0;max-height:640px}
+.code .ln{display:block;padding:0 14px 0 0;white-space:pre;transition:background .3s;border-left:3px solid transparent}
+.code .ln::before{content:attr(data-n);display:inline-block;width:34px;text-align:right;margin-right:14px;color:var(--com);user-select:none}
+.code .ln.on{background:color-mix(in srgb,var(--c2) 20%,transparent);border-left-color:var(--c2)}
+.code .kw{color:var(--kw)} .code .s{color:var(--str)} .code .c{color:var(--com);font-style:italic} .code .f{color:var(--fn)}
+.copyRow{display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px;gap:10px;flex-wrap:wrap}
+.extras{margin-top:34px}
+.extras .panel{font-size:.9rem}
+.extras .panel p{color:var(--muted)}
+
+/* ---------- RECAP ---------- */
+.recap{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.recap .panel{padding:16px}
+.recap .q{font-weight:800;font-size:1.05rem}
+.recap .panel p{color:var(--muted);font-size:.9rem}
+.oneline{margin-top:30px;text-align:center;font-size:clamp(1.05rem,2.6vw,1.35rem);font-weight:700;padding:26px 18px;border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 18%,var(--panel)),color-mix(in srgb,var(--c2) 22%,var(--panel)))}
+footer{padding:30px 0;text-align:center;color:var(--muted);font-size:.85rem}
+
+@media (max-width:900px){
+  .grid2,.grid3,.sim,.recap{grid-template-columns:1fr}
+  .needs{grid-template-columns:1fr 1fr}
+  .steps5{grid-template-columns:1fr 1fr}
+}
+@media (max-width:480px){
+  .steps5{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1;transform:none}
+  .layer{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero wrap">
+  <div class="tag" style="justify-content:center;color:var(--c2)">AI Agents · Day 17</div>
+  <h1><span class="grad">LangGraph</span><br>explained with 5W+H</h1>
+  <p>What it is, why it exists, who uses it, when to reach for it, where it fits, and how to build your first graph. Made for freshers: no prior agent experience needed.</p>
+
+  <svg class="heroSvg" viewBox="0 0 640 220" aria-label="Animated graph of nodes connected by edges, with a dot travelling around a loop">
+    <defs>
+      <marker id="arrH" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+    </defs>
+    <path id="heroPath" d="M70 110 L210 110 L360 60 L520 110 L360 160 L210 110" fill="none" stroke="none"/>
+    <line x1="92" y1="110" x2="180" y2="110" class="flow" stroke="var(--c1)" stroke-width="3" marker-end="url(#arrH)"/>
+    <line x1="238" y1="100" x2="330" y2="68" class="flow" stroke="var(--c2)" stroke-width="3" marker-end="url(#arrH)"/>
+    <line x1="392" y1="66" x2="490" y2="100" class="flow" stroke="var(--c5)" stroke-width="3" marker-end="url(#arrH)"/>
+    <line x1="490" y1="120" x2="392" y2="154" class="flow" stroke="var(--c3)" stroke-width="3" marker-end="url(#arrH)"/>
+    <line x1="330" y1="152" x2="238" y2="120" class="flow" stroke="var(--c4)" stroke-width="3" marker-end="url(#arrH)"/>
+    <line x1="548" y1="110" x2="596" y2="110" class="flow" stroke="var(--muted)" stroke-width="3" marker-end="url(#arrH)"/>
+    <g class="pulse"><circle cx="70" cy="110" r="22" fill="var(--panel2)" stroke="var(--c1)" stroke-width="3"/><text x="70" y="114" text-anchor="middle" font-size="11" font-weight="800" fill="var(--text)">START</text></g>
+    <g><circle cx="210" cy="110" r="28" fill="var(--panel2)" stroke="var(--c2)" stroke-width="3"/><text x="210" y="115" text-anchor="middle" font-size="20">🧠</text></g>
+    <g><circle cx="360" cy="60" r="28" fill="var(--panel2)" stroke="var(--c5)" stroke-width="3"/><text x="360" y="66" text-anchor="middle" font-size="20">🔧</text></g>
+    <g><circle cx="520" cy="110" r="28" fill="var(--panel2)" stroke="var(--c3)" stroke-width="3"/><text x="520" y="116" text-anchor="middle" font-size="20">🔍</text></g>
+    <g><circle cx="360" cy="160" r="28" fill="var(--panel2)" stroke="var(--c4)" stroke-width="3"/><text x="360" y="166" text-anchor="middle" font-size="20">✅</text></g>
+    <g class="pulse"><circle cx="618" cy="110" r="18" fill="var(--panel2)" stroke="var(--muted)" stroke-width="3"/><text x="618" y="114" text-anchor="middle" font-size="10" font-weight="800" fill="var(--text)">END</text></g>
+    <circle r="8" fill="var(--c6)">
+      <animateMotion dur="5s" repeatCount="indefinite" rotate="auto"><mpath href="#heroPath"/></animateMotion>
+    </circle>
+  </svg>
+
+  <nav class="nav">
+    <a href="#what" style="border-color:var(--c1)"><span style="color:var(--c1)">❓</span>What</a>
+    <a href="#why" style="border-color:var(--c2)"><span style="color:var(--c2)">💡</span>Why</a>
+    <a href="#who" style="border-color:var(--c3)"><span style="color:var(--c3)">👥</span>Who</a>
+    <a href="#when" style="border-color:var(--c4)"><span style="color:var(--c4)">⏰</span>When</a>
+    <a href="#where" style="border-color:var(--c5)"><span style="color:var(--c5)">📍</span>Where</a>
+    <a href="#how" style="border-color:var(--c6)"><span style="color:var(--c6)">🛠️</span>How</a>
+  </nav>
+</header>
+
+<!-- ================= WHAT ================= -->
+<section id="what">
+<div class="wrap">
+  <div class="tag" style="color:var(--c1)"><b style="background:var(--c1)">W</b>What is LangGraph?</div>
+  <h2>A way to draw your AI app as a <span style="color:var(--c1)">map</span></h2>
+  <p class="sub">LangGraph is a Python (and JavaScript) library for building AI agents as a <b>graph</b>: boxes connected by arrows. Each box does one job, each arrow says where to go next, and a shared notebook carries information along the way. The arrows can branch and loop back, which lets an agent retry or keep working until the job is done.</p>
+
+  <div class="grid3 blocks">
+    <div class="panel rv"><span class="ico float">📒</span><div class="term" style="color:var(--c1)">State</div><p>The shared notebook. Every step can read it and write to it.</p><p class="an">Like your bag on a train trip: it travels with you.</p></div>
+    <div class="panel rv d1"><span class="ico float" style="animation-delay:.4s">🧑‍🍳</span><div class="term" style="color:var(--c2)">Nodes</div><p>The workers. Each one is a plain Python function: call an LLM, search, run a tool.</p><p class="an">Like stations where something happens.</p></div>
+    <div class="panel rv d2"><span class="ico float" style="animation-delay:.8s">➡️</span><div class="term" style="color:var(--c5)">Edges</div><p>The arrows. A normal edge always goes to the same place. A <b>conditional edge</b> picks the next stop based on the state.</p><p class="an">Like train tracks, plus a junction signal.</p></div>
+  </div>
+
+  <div class="panel rv" style="margin-top:24px">
+    <h3>The metro-map picture 🚇</h3>
+    <svg class="metro" viewBox="0 0 900 230" aria-label="Metro map where a train travels from Start through stations, loops back at a junction, then reaches End">
+      <path id="metroMain" d="M60 120 H300 H520 H760" fill="none" stroke="var(--c1)" stroke-width="10" stroke-linecap="round"/>
+      <path d="M520 120 C520 30, 300 30, 300 120" fill="none" stroke="var(--c5)" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 16"/>
+      <path id="metroRide" d="M60 120 H520 C520 30, 300 30, 300 120 H760" fill="none" stroke="none"/>
+      <g>
+        <circle cx="60" cy="120" r="18" fill="var(--bg)" stroke="var(--text)" stroke-width="5"/>
+        <text x="60" y="168" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">START</text>
+      </g>
+      <g>
+        <circle cx="300" cy="120" r="18" fill="var(--bg)" stroke="var(--c2)" stroke-width="5"/>
+        <text x="300" y="168" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">Node: Think</text>
+      </g>
+      <g>
+        <rect x="502" y="102" width="36" height="36" rx="6" transform="rotate(45 520 120)" fill="var(--bg)" stroke="var(--c6)" stroke-width="5"/>
+        <text x="520" y="168" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">Junction: done yet?</text>
+      </g>
+      <g>
+        <circle cx="760" cy="120" r="18" fill="var(--bg)" stroke="var(--text)" stroke-width="5"/>
+        <text x="760" y="168" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">END</text>
+      </g>
+      <text x="410" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="var(--c5)">"not yet" → loop back</text>
+      <text x="640" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="var(--c1)">"yes" →</text>
+      <g>
+        <rect x="-20" y="-11" width="40" height="22" rx="8" fill="var(--c6)"/>
+        <text x="0" y="5" text-anchor="middle" font-size="13">📒</text>
+        <animateMotion dur="7s" repeatCount="indefinite"><mpath href="#metroRide"/></animateMotion>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i style="background:var(--c2)"></i>Station = Node</span>
+      <span><i style="background:var(--c1)"></i>Track = Edge</span>
+      <span><i style="background:var(--c6)"></i>Junction = Conditional edge</span>
+      <span><i style="background:var(--c6);border-radius:3px"></i>Train carrying the notebook = State</span>
+    </div>
+  </div>
+
+  <div class="say rv"><b>One-liner:</b> LangGraph = <b>State</b> (notebook) + <b>Nodes</b> (workers) + <b>Edges</b> (arrows, which can loop). You draw the map, and LangGraph runs it.</div>
+</div>
+</section>
+
+<!-- ================= WHY ================= -->
+<section id="why">
+<div class="wrap">
+  <div class="tag" style="color:var(--c2)"><b style="background:var(--c2)">W</b>Why do we need it?</div>
+  <h2>Chains only go forward. Real work needs <span style="color:var(--c2)">loops</span>.</h2>
+  <p class="sub">With plain LangChain you build a <b>chain</b>: step A, then B, then C, always in a straight line. That's fine for simple tasks. But an agent often has to try something, check the result, and go back if it failed. A straight line can't go back. A graph can.</p>
+
+  <div class="grid2 why">
+    <div class="panel rv">
+      <h3>⛓️ Chain (straight line)</h3>
+      <svg viewBox="0 0 420 150" aria-label="Chain: Ask, Search, Answer in a straight line">
+        <defs><marker id="arrW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+        <path id="chainPath" d="M60 80 H360" fill="none" stroke="none"/>
+        <line x1="95" y1="80" x2="170" y2="80" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#arrW)"/>
+        <line x1="250" y1="80" x2="325" y2="80" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#arrW)"/>
+        <g class="node"><rect x="20" y="58" width="76" height="44" rx="10"/><text x="58" y="80">Ask</text></g>
+        <g class="node"><rect x="172" y="58" width="78" height="44" rx="10"/><text x="211" y="80">Search</text></g>
+        <g class="node"><rect x="326" y="58" width="78" height="44" rx="10"/><text x="365" y="80">Answer</text></g>
+        <g id="chainX" class="xmark"><circle cx="211" cy="36" r="14" fill="var(--bad)"/><text x="211" y="41" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">✕</text></g>
+        <circle id="chainDot" r="9" fill="var(--c6)" cx="58" cy="80"/>
+      </svg>
+      <div id="chainMsg" class="whyMsg">Press the button below to see what happens when the search returns nothing useful.</div>
+    </div>
+    <div class="panel rv d1">
+      <h3>🕸️ Graph (can loop back)</h3>
+      <svg viewBox="0 0 420 150" aria-label="Graph: Ask, Search, Check, with a loop back to Search">
+        <path id="graphFwd" d="M58 95 H211 H340" fill="none" stroke="none"/>
+        <path id="graphLoop" d="M340 73 C340 10, 211 10, 211 73" fill="none" stroke="none"/>
+        <path id="graphEnd" d="M340 95 H404" fill="none" stroke="none"/>
+        <line x1="95" y1="95" x2="170" y2="95" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#arrW)"/>
+        <line x1="250" y1="95" x2="300" y2="95" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#arrW)"/>
+        <path class="loopPath" id="loopVis" d="M340 73 C340 10, 211 10, 211 71" fill="none" stroke="var(--c2)" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrW)"/>
+        <text x="276" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="var(--c2)">retry</text>
+        <g class="node"><rect x="20" y="73" width="76" height="44" rx="10"/><text x="58" y="95">Ask</text></g>
+        <g class="node"><rect x="172" y="73" width="78" height="44" rx="10"/><text x="211" y="95">Search</text></g>
+        <g class="node"><polygon points="340,68 376,95 340,122 304,95"/><text x="340" y="95" style="font-size:12px">OK?</text></g>
+        <g class="node" id="gAns"><rect x="380" y="127" width="36" height="20" rx="6"/><text x="398" y="137" style="font-size:10px">END</text></g>
+        <circle id="graphDot" r="9" fill="var(--c6)" cx="58" cy="95"/>
+      </svg>
+      <div id="graphMsg" class="whyMsg">Same question, but this time the app is a graph that can loop back.</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:16px"><button class="btn primary" id="whyBtn">▶ Run both with a failed search 😬</button></div>
+
+  <div class="needs">
+    <div class="panel rv"><b>🔁</b>Loops &amp; retries<br><span style="color:var(--muted)">Try again until it's right</span></div>
+    <div class="panel rv d1"><b>🔀</b>Branching<br><span style="color:var(--muted)">Pick a path from the result</span></div>
+    <div class="panel rv d2"><b>💾</b>Memory<br><span style="color:var(--muted)">Save progress and resume later</span></div>
+    <div class="panel rv d3"><b>🙋</b>Human-in-the-loop<br><span style="color:var(--muted)">Pause for a person to approve</span></div>
+  </div>
+  <div class="say rv"><b>Why in one line:</b> LangGraph gives you <b>control</b>. You decide exactly which steps run, in what order, how many times, and where a human can step in, instead of hoping one giant prompt gets it right.</div>
+</div>
+</section>
+
+<!-- ================= WHO ================= -->
+<section id="who">
+<div class="wrap">
+  <div class="tag" style="color:var(--c3)"><b style="background:var(--c3)">W</b>Who made it &amp; who uses it?</div>
+  <h2>From the <span style="color:var(--c3)">LangChain</span> team, for anyone building agents</h2>
+  <p class="sub">LangGraph is open source (MIT license) and free to use.</p>
+  <div class="grid3 who">
+    <div class="panel rv" style="--glow:var(--c3)"><span class="big float">🏗️</span><h3>Who built it</h3><ul><li><b>LangChain Inc.</b>, the company behind LangChain</li><li>Built because LangChain users kept asking for agents they could control better</li><li>Lives on GitHub as <span class="inl">langchain-ai/langgraph</span></li></ul></div>
+    <div class="panel rv d1" style="--glow:var(--c2)"><span class="big float" style="animation-delay:.4s">👩‍💻</span><h3>Who uses it</h3><ul><li>AI / ML engineers building chatbots, copilots and agents</li><li>Backend developers adding AI steps to products</li><li>Companies such as Klarna, Replit, LinkedIn and Uber have spoken publicly about using it</li></ul></div>
+    <div class="panel rv d2" style="--glow:var(--c4)"><span class="big float" style="animation-delay:.8s">🎓</span><h3>Who should learn it (you!)</h3><ul><li>Freshers who know <b>basic Python</b> (functions, dicts)</li><li>Have tried a <b>LangChain</b> prompt or chain (days 13–15)</li><li>Want "AI agent developer" skills on their resume</li></ul></div>
+  </div>
+</div>
+</section>
+
+<!-- ================= WHEN ================= -->
+<section id="when">
+<div class="wrap">
+  <div class="tag" style="color:var(--c4)"><b style="background:var(--c4)">W</b>When did it come &amp; when should I use it?</div>
+  <h2>A short history, then a quick <span style="color:var(--c4)">"do I need it?"</span> test</h2>
+  <p class="sub">Two kinds of "when": when it appeared, and when it's the right tool for your project.</p>
+  <div class="grid2">
+    <div>
+      <div class="tl rv" id="timeline">
+        <div class="bar"></div>
+        <div class="ev"><div class="yr">Oct 2022</div><h3>LangChain launches</h3><p>A toolkit to connect LLMs with prompts, tools and data, mostly as straight-line chains.</p></div>
+        <div class="ev"><div class="yr">Jan 2024</div><h3>LangGraph is released</h3><p>Adds graphs with loops, so agents can repeat steps and make decisions.</p></div>
+        <div class="ev"><div class="yr">2024</div><h3>Studio &amp; Platform</h3><p>A visual tool to watch your graph run step by step, plus hosting for graphs in production.</p></div>
+        <div class="ev"><div class="yr">Oct 2025</div><h3>LangGraph 1.0</h3><p>The first stable major version, with a promise of no breaking changes until 2.0.</p></div>
+        <div class="ev"><div class="yr">Today</div><h3>A common choice for agents</h3><p>LangChain's own agents are built on top of LangGraph.</p></div>
+      </div>
+    </div>
+    <div class="panel check rv d1">
+      <h3>🧪 Do I need LangGraph? Tick what your app needs:</h3>
+      <label><input type="checkbox"> It must <b>retry or loop</b> until a condition is met</label>
+      <label><input type="checkbox"> The LLM must <b>choose between tools</b> (search, calculator, DB…)</label>
+      <label><input type="checkbox"> Different inputs should take <b>different paths</b></label>
+      <label><input type="checkbox"> A human must <b>approve</b> before some step runs</label>
+      <label><input type="checkbox"> It must <b>remember</b> the conversation or resume after a crash</label>
+      <label><input type="checkbox"> <b>Several agents</b> must work together</label>
+      <div class="meter"><i id="meterFill"></i></div>
+      <div class="verdict" id="verdict">Nothing ticked: a single prompt or simple chain is enough.</div>
+      <div class="verdictSub" id="verdictSub">Don't add a graph just because it's trendy.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ================= WHERE ================= -->
+<section id="where">
+<div class="wrap">
+  <div class="tag" style="color:var(--c5)"><b style="background:var(--c5)">W</b>Where does it fit &amp; where does it run?</div>
+  <h2>The <span style="color:var(--c5)">orchestration</span> layer of your AI stack</h2>
+  <p class="sub">Think of a movie set. The LLM is the actor, LangChain gives the props and scripts, and LangGraph is the <b>director</b> saying who does what, and when.</p>
+  <div class="grid2">
+    <div class="stack" id="stack">
+      <div class="layer"><span class="em">📊</span><div><b>LangSmith</b><small>Watch, trace and debug every run (optional)</small></div></div>
+      <div class="layer hi"><span class="em">🎬</span><div><b>LangGraph</b> <span style="color:var(--c2);font-weight:800">← you are here</span><small>Controls the flow: steps, loops, branches, memory</small></div></div>
+      <div class="layer"><span class="em">🧰</span><div><b>LangChain</b><small>Building blocks: prompts, model wrappers, tools, retrievers</small></div></div>
+      <div class="layer"><span class="em">🧠</span><div><b>LLM</b><small>Ollama (llama3.2), OpenAI, Claude, Gemini…</small></div></div>
+      <div class="layer"><span class="em">🗄️</span><div><b>Your data &amp; tools</b><small>Databases, APIs, vector stores, files</small></div></div>
+    </div>
+    <div>
+      <div class="panel rv">
+        <h3>Where it runs</h3>
+        <div class="chips">
+          <span class="chip">💻 Your laptop (with Ollama, fully offline)</span>
+          <span class="chip">🐍 Any Python script or Jupyter notebook</span>
+          <span class="chip">⚡ Inside a FastAPI backend (day 8–9!)</span>
+          <span class="chip">☁️ Any cloud server or container</span>
+          <span class="chip">🚀 LangGraph Platform (managed hosting)</span>
+        </div>
+      </div>
+      <div class="panel rv d1" style="margin-top:16px">
+        <h3>Where you'll see it in real apps</h3>
+        <div class="chips">
+          <span class="chip">🎧 Customer-support bots that escalate to humans</span>
+          <span class="chip">📚 RAG apps that re-search when the answer is weak</span>
+          <span class="chip">🧑‍💻 Coding agents that write, test, fix, repeat</span>
+          <span class="chip">📝 Research assistants that plan, search, then summarise</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section id="how">
+<div class="wrap">
+  <div class="tag" style="color:var(--c6)"><b style="background:var(--c6)">H</b>How does it work?</div>
+  <h2>Build a graph in <span style="color:var(--c6)">5 steps</span>, then watch it run</h2>
+  <p class="sub">Example: a <b>poem writer with a reviewer</b>. One node writes a poem, another reviews it. If the review isn't "GOOD", we loop back and rewrite (at most 3 tries).</p>
+
+  <div class="steps5">
+    <div class="panel rv"><span class="n">1</span><b>State</b><small>Define the notebook with a <span class="inl">TypedDict</span></small></div>
+    <div class="panel rv d1"><span class="n">2</span><b>Nodes</b><small>Write functions that return updates</small></div>
+    <div class="panel rv d2"><span class="n">3</span><b>Edges</b><small><span class="inl">add_edge</span> and <span class="inl">add_conditional_edges</span></small></div>
+    <div class="panel rv d3"><span class="n">4</span><b>Compile</b><small><span class="inl">g.compile()</span> checks and builds it</small></div>
+    <div class="panel rv d4"><span class="n">5</span><b>Invoke</b><small><span class="inl">app.invoke({...})</span> runs it</small></div>
+  </div>
+
+  <div class="sim">
+    <div>
+      <div class="panel">
+        <h3>▶ Live simulator</h3>
+        <svg viewBox="0 0 600 250" aria-label="Graph simulator: START, write, review, router, END">
+          <defs><marker id="arrS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+          <path id="e1" class="edge" d="M72 160 H150" marker-end="url(#arrS)"/>
+          <path id="e2" class="edge" d="M250 160 H318" marker-end="url(#arrS)"/>
+          <path id="e3" class="edge" d="M418 160 H446" marker-end="url(#arrS)"/>
+          <path id="e4" class="edge dash" d="M506 160 H536" marker-end="url(#arrS)"/>
+          <path id="loop" class="edge dash" d="M476 132 C476 30, 200 30, 200 134" marker-end="url(#arrS)"/>
+          <text class="elabel" x="338" y="56">"rewrite"</text>
+          <text class="elabel" x="522" y="148">"end"</text>
+          <g class="node" id="n-start"><circle cx="50" cy="160" r="22"/><text x="50" y="160" style="font-size:11px">START</text></g>
+          <g class="node" id="n-write"><rect x="150" y="136" width="100" height="48" rx="12"/><text x="200" y="160">✍️ write</text></g>
+          <g class="node" id="n-review"><rect x="318" y="136" width="100" height="48" rx="12"/><text x="368" y="160">🧐 review</text></g>
+          <g class="node" id="n-router"><polygon points="476,132 506,160 476,188 446,160"/><text x="476" y="160" style="font-size:11px">done?</text></g>
+          <g class="node" id="n-end"><circle cx="560" cy="160" r="22"/><text x="560" y="160" style="font-size:11px">END</text></g>
+          <text x="476" y="210" class="elabel">is_done()</text>
+          <circle id="tok" r="9" fill="var(--c6)" cx="50" cy="160" opacity="0"/>
+        </svg>
+        <div class="ctrls">
+          <button class="btn primary" id="playBtn">▶ Play</button>
+          <button class="btn" id="stepBtn">⏭ Next step</button>
+          <button class="btn" id="resetBtn">↺ Reset</button>
+        </div>
+        <div class="narr" id="narr"><span class="stepNo">Ready.</span>Press <b>Play</b> or <b>Next step</b>. Watch the yellow dot move, the state fill up, and the code light up on the right.</div>
+        <div class="state">
+          <h3>📒 State (the shared notebook)</h3>
+          <div class="kv">
+            <span class="k">topic</span><span class="v" id="s-topic"></span>
+            <span class="k">draft</span><span class="v" id="s-draft"></span>
+            <span class="k">feedback</span><span class="v" id="s-feedback"></span>
+            <span class="k">tries</span><span class="v" id="s-tries"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="code" id="code"></div>
+    </div>
+  </div>
+
+  <div class="copyRow">
+    <span style="color:var(--muted);font-size:.9rem">Run it yourself (needs <a href="https://ollama.com" style="color:var(--c1)">Ollama</a> with <span class="inl">ollama pull llama3.2</span>):</span>
+    <button class="btn" id="copyBtn">📋 Copy code</button>
+  </div>
+  <div class="code" style="max-height:none"><span class="ln" data-n="$">pip install langgraph langchain-ollama</span></div>
+
+  <div class="grid3 extras">
+    <div class="panel rv"><h3>💾 Checkpointer = memory</h3><p>Pass <span class="inl">checkpointer=MemorySaver()</span> to <span class="inl">compile()</span> and the graph saves state after every step. Chats remember earlier turns and runs can resume after a crash.</p></div>
+    <div class="panel rv d1"><h3>🙋 Human-in-the-loop</h3><p>Call <span class="inl">interrupt()</span> inside a node to pause the graph, show something to a person, and continue once they approve.</p></div>
+    <div class="panel rv d2"><h3>🔧 Prebuilt agents</h3><p>LangChain's <span class="inl">create_agent</span> gives you a ready-made "LLM ↔ tools" loop built on LangGraph, so you don't have to wire it by hand.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ================= RECAP ================= -->
+<section id="recap">
+<div class="wrap">
+  <div class="tag" style="color:var(--c2)">🧾 Recap</div>
+  <h2>LangGraph on one screen</h2>
+  <div class="recap" style="margin-top:20px">
+    <div class="panel rv"><div class="q" style="color:var(--c1)">❓ What</div><p>A library to build AI agents as graphs of State, Nodes and Edges.</p></div>
+    <div class="panel rv d1"><div class="q" style="color:var(--c2)">💡 Why</div><p>Chains can't loop. Agents need retries, branches, memory and human approval.</p></div>
+    <div class="panel rv d2"><div class="q" style="color:var(--c3)">👥 Who</div><p>Made by LangChain Inc. Used by AI engineers. Learn it once you know Python and LangChain basics.</p></div>
+    <div class="panel rv"><div class="q" style="color:var(--c4)">⏰ When</div><p>Released Jan 2024, 1.0 in Oct 2025. Use it when your app loops, branches or uses tools.</p></div>
+    <div class="panel rv d1"><div class="q" style="color:var(--c5)">📍 Where</div><p>The orchestration layer above LangChain. Runs on a laptop, a server or the cloud.</p></div>
+    <div class="panel rv d2"><div class="q" style="color:var(--c6)">🛠️ How</div><p>State → Nodes → Edges → <span class="inl">compile()</span> → <span class="inl">invoke()</span>.</p></div>
+  </div>
+  <div class="oneline rv">🎯 LangChain gives you the <b>pieces</b>. LangGraph decides the <b>path</b>: which piece runs next, and whether to loop back.</div>
+</div>
+</section>
+
+<footer class="wrap">LangGraph 5W+H · Day 17 · Made for freshers</footer>
+
+<script>
+(function(){
+  // ---------- reveal on scroll ----------
+  const revealEls = document.querySelectorAll('.rv, #stack, #timeline');
+  if ('IntersectionObserver' in window){
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    }), {threshold: .15});
+    revealEls.forEach(el => io.observe(el));
+  } else revealEls.forEach(el => el.classList.add('in'));
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // move a circle along an SVG path, returns a promise
+  function moveAlong(dot, path, ms){
+    return new Promise(res => {
+      const len = path.getTotalLength();
+      if (reduce){ const p = path.getPointAtLength(len); dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); return res(); }
+      const t0 = performance.now();
+      function tick(now){
+        const k = Math.min(1,(now - t0)/ms);
+        const e = k<.5 ? 2*k*k : 1 - Math.pow(-2*k+2,2)/2;
+        const p = path.getPointAtLength(len*e);
+        dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y);
+        k < 1 ? requestAnimationFrame(tick) : res();
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+  const wait = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+
+  // ---------- WHY demo ----------
+  const whyBtn = document.getElementById('whyBtn');
+  const chainDot = document.getElementById('chainDot'), graphDot = document.getElementById('graphDot');
+  const chainX = document.getElementById('chainX'), loopVis = document.getElementById('loopVis');
+  const chainMsg = document.getElementById('chainMsg'), graphMsg = document.getElementById('graphMsg');
+  function partPath(d){ const p = document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',d); return p; }
+  whyBtn.addEventListener('click', async () => {
+    whyBtn.disabled = true;
+    chainX.classList.remove('on'); loopVis.classList.remove('on');
+    chainMsg.className = 'whyMsg'; graphMsg.className = 'whyMsg';
+    chainDot.setAttribute('cx',58); chainDot.setAttribute('cy',80);
+    graphDot.setAttribute('cx',58); graphDot.setAttribute('cy',95);
+    chainMsg.textContent = 'Ask → Search…'; graphMsg.textContent = 'Ask → Search…';
+
+    const chain = (async () => {
+      await moveAlong(chainDot, partPath('M58 80 H211'), 1100);
+      await wait(400);
+      chainX.classList.add('on');
+      chainMsg.className = 'whyMsg';
+      chainMsg.textContent = 'Search returned junk… but a chain can only move forward.';
+      await wait(900);
+      await moveAlong(chainDot, partPath('M211 80 H318'), 1000);
+      chainMsg.className = 'whyMsg bad';
+      chainMsg.textContent = '❌ It answers using the bad search result. No way to go back and try again.';
+    })();
+
+    const graph = (async () => {
+      await moveAlong(graphDot, partPath('M58 95 H211'), 1100);
+      await moveAlong(graphDot, partPath('M211 95 H340'), 800);
+      graphMsg.textContent = 'Check node: "Result is junk. Not OK."';
+      loopVis.classList.add('on');
+      await wait(600);
+      await moveAlong(graphDot, document.getElementById('graphLoop'), 1300);
+      graphMsg.textContent = '🔁 Looped back. Searching again with a better query…';
+      await wait(500);
+      await moveAlong(graphDot, partPath('M211 95 H340'), 800);
+      graphMsg.textContent = 'Check node: "Looks good now."';
+      await wait(400);
+      await moveAlong(graphDot, partPath('M340 95 L372 130'), 700);
+      graphMsg.className = 'whyMsg good';
+      graphMsg.textContent = '✅ Correct answer, thanks to the loop.';
+    })();
+
+    await Promise.all([chain, graph]);
+    whyBtn.disabled = false;
+    whyBtn.textContent = '↺ Run again';
+  });
+
+  // ---------- WHEN checker ----------
+  const boxes = document.querySelectorAll('.check input');
+  const meter = document.getElementById('meterFill'), verdict = document.getElementById('verdict'), vsub = document.getElementById('verdictSub');
+  boxes.forEach(b => b.addEventListener('change', () => {
+    const n = [...boxes].filter(x => x.checked).length;
+    meter.style.width = (n / boxes.length * 100) + '%';
+    if (n === 0){ verdict.textContent = 'Nothing ticked: a single prompt or simple chain is enough.'; verdict.style.color='var(--text)'; vsub.textContent = "Don't add a graph just because it's trendy."; }
+    else if (n <= 2){ verdict.textContent = '🙂 LangGraph will help here.'; verdict.style.color='var(--c1)'; vsub.textContent = 'You could hack it with a chain and some if-statements, but a graph keeps it clean and easy to change.'; }
+    else { verdict.textContent = '🚀 LangGraph is the right tool.'; verdict.style.color='var(--c2)'; vsub.textContent = 'Loops, tools, memory and human approval are exactly what it was built for.'; }
+  }));
+
+  // ---------- HOW: code block ----------
+  const CODE = [
+'from typing import TypedDict',
+'from langgraph.graph import StateGraph, START, END',
+'from langchain_ollama import ChatOllama',
+'',
+'llm = ChatOllama(model="llama3.2")',
+'',
+'# 1. STATE - the shared notebook every node reads and writes',
+'class State(TypedDict):',
+'    topic: str',
+'    draft: str',
+'    feedback: str',
+'    tries: int',
+'',
+'# 2. NODES - plain Python functions that return updates',
+'def write(state: State):',
+'    tip = state.get("feedback", "")',
+'    msg = llm.invoke(f"Write a 2-line poem about {state[\'topic\']}. {tip}")',
+'    return {"draft": msg.content, "tries": state.get("tries", 0) + 1}',
+'',
+'def review(state: State):',
+'    msg = llm.invoke(f"Reply GOOD, or give one short tip:\\n{state[\'draft\']}")',
+'    return {"feedback": msg.content}',
+'',
+'# 3. ROUTER - reads the state and picks the next stop',
+'def is_done(state: State):',
+'    if "GOOD" in state["feedback"] or state["tries"] >= 3:',
+'        return "end"',
+'    return "rewrite"',
+'',
+'# 4. GRAPH - connect the dots',
+'g = StateGraph(State)',
+'g.add_node("write", write)',
+'g.add_node("review", review)',
+'g.add_edge(START, "write")',
+'g.add_edge("write", "review")',
+'g.add_conditional_edges("review", is_done, {"rewrite": "write", "end": END})',
+'',
+'# 5. COMPILE & RUN',
+'app = g.compile()',
+'result = app.invoke({"topic": "monsoon rain"})',
+'print(result["draft"])'
+  ];
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const KW = /\b(from|import|class|def|return|if|or|in|and|not|str|int)\b/g;
+  const FN = /\b(StateGraph|ChatOllama|TypedDict|START|END|print|add_node|add_edge|add_conditional_edges|compile|invoke|get)\b/g;
+  function hl(line){
+    if (line.trim().startsWith('#')) return '<span class="c">'+esc(line)+'</span>';
+    return line.split(/(f?"(?:[^"\\]|\\.)*")/).map((part,i) => {
+      if (i % 2) return '<span class="s">'+esc(part)+'</span>';
+      return esc(part).replace(KW,'<span class="kw">$1</span>').replace(FN,'<span class="f">$1</span>');
+    }).join('');
+  }
+  const codeEl = document.getElementById('code');
+  codeEl.innerHTML = CODE.map((l,i) => '<span class="ln" data-n="'+(i+1)+'">'+(hl(l)||' ')+'</span>').join('');
+  const lines = codeEl.querySelectorAll('.ln');
+  function lightCode(ranges){
+    lines.forEach(l => l.classList.remove('on'));
+    let first = null;
+    ranges.forEach(([a,b]) => { for (let i=a;i<=b;i++){ lines[i-1].classList.add('on'); if(!first) first = lines[i-1]; } });
+    if (first){ codeEl.scrollTo({top: first.offsetTop - codeEl.offsetTop - 40, behavior: reduce ? 'auto' : 'smooth'}); }
+  }
+  document.getElementById('copyBtn').addEventListener('click', e => {
+    const done = () => { e.target.textContent = '✅ Copied'; setTimeout(()=>e.target.textContent='📋 Copy code',1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(CODE.join('\n')).then(done, ()=>{ e.target.textContent='Select the code to copy'; });
+  });
+
+  // ---------- HOW: simulator ----------
+  const tok = document.getElementById('tok');
+  const narr = document.getElementById('narr');
+  const S = {topic:'s-topic', draft:'s-draft', feedback:'s-feedback', tries:'s-tries'};
+  const STEPS = [
+    {node:'start', code:[[39,40]], state:{topic:'"monsoon rain"'},
+     msg:'We call <span class="inl">app.invoke()</span> with a topic. The notebook starts with only <b>topic</b> filled in.'},
+    {edge:'e1', node:'write', code:[[15,18]], state:{draft:'"Clouds roll in grey, / rain falls all day."', tries:'1'},
+     msg:'<b>write</b> node runs. It asks the LLM for a poem and <i>returns</i> <span class="inl">draft</span> and <span class="inl">tries</span>. LangGraph merges them into the state.'},
+    {edge:'e2', node:'review', code:[[20,22]], state:{feedback:'"Tip: make the lines rhyme better."'},
+     msg:'<b>review</b> node reads the draft and writes <b>feedback</b>. It isn\'t "GOOD" yet.'},
+    {edge:'e3', node:'router', code:[[25,28],[36,36]], state:{},
+     msg:'The conditional edge calls <span class="inl">is_done()</span>. No "GOOD", and tries = 1 &lt; 3, so it returns <b>"rewrite"</b>.'},
+    {edge:'loop', node:'write', code:[[15,18]], state:{draft:'"Monsoon sings on every tin roof, / the thirsty earth drinks the proof."', tries:'2'},
+     msg:'🔁 <b>The loop!</b> We go back to <b>write</b>. This time it reads the feedback tip and writes a better poem.'},
+    {edge:'e2', node:'review', code:[[20,22]], state:{feedback:'"GOOD"'},
+     msg:'<b>review</b> is happy and replies <b>"GOOD"</b>.'},
+    {edge:'e3', node:'router', code:[[25,28],[36,36]], state:{},
+     msg:'<span class="inl">is_done()</span> finds "GOOD" and returns <b>"end"</b>.'},
+    {edge:'e4', node:'end', code:[[41,41]], state:{},
+     msg:'🏁 We reach <b>END</b>. <span class="inl">invoke()</span> returns the final state, and we print the draft. Done!'}
+  ];
+  let idx = -1, busy = false, playing = false;
+  function clearState(){ Object.values(S).forEach(id => document.getElementById(id).textContent=''); }
+  function setNode(name){
+    document.querySelectorAll('.sim .node').forEach(n => n.classList.remove('on'));
+    const n = document.getElementById('n-'+name); if (n) n.classList.add('on');
+  }
+  function placeTok(name){
+    const pos = {start:[50,160], write:[200,160], review:[368,160], router:[476,160], end:[560,160]}[name];
+    tok.setAttribute('cx',pos[0]); tok.setAttribute('cy',pos[1]);
+  }
+  async function step(){
+    if (busy || idx >= STEPS.length-1) return;
+    busy = true; idx++;
+    const s = STEPS[idx];
+    document.querySelectorAll('.sim .edge').forEach(e => e.classList.remove('on'));
+    tok.setAttribute('opacity',1);
+    if (s.edge){
+      const ed = document.getElementById(s.edge);
+      ed.classList.add('on');
+      const from = STEPS[idx-1].node;
+      const start = {start:'M72 160',write:'M250 160',review:'M418 160',router:'M506 160'}[from];
+      let path;
+      if (s.edge === 'loop') path = ed;
+      else path = partPath(start + ' L' + {write:'200 160',review:'368 160',router:'476 160',end:'560 160'}[s.node]);
+      if (s.edge === 'loop') placeTok('router');
+      await moveAlong(tok, path, 900);
+    } else placeTok(s.node);
+    setNode(s.node);
+    lightCode(s.code);
+    Object.entries(s.state).forEach(([k,v]) => {
+      const el = document.getElementById(S[k]); el.textContent = v;
+      el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),700);
+    });
+    narr.innerHTML = '<span class="stepNo">Step '+(idx+1)+'/'+STEPS.length+'</span>'+s.msg;
+    busy = false;
+    if (idx >= STEPS.length-1){ playing = false; playBtn.textContent='▶ Play'; playBtn.disabled = true; stepBtn.disabled = true; }
+  }
+  const playBtn = document.getElementById('playBtn'), stepBtn = document.getElementById('stepBtn');
+  async function play(){
+    playing = !playing;
+    playBtn.textContent = playing ? '⏸ Pause' : '▶ Play';
+    while (playing && idx < STEPS.length-1){ await step(); await wait(1600); }
+  }
+  function reset(){
+    playing = false; idx = -1;
+    playBtn.textContent='▶ Play'; playBtn.disabled=false; stepBtn.disabled=false;
+    clearState(); setNode(''); lightCode([]);
+    document.querySelectorAll('.sim .edge').forEach(e => e.classList.remove('on'));
+    tok.setAttribute('opacity',0); placeTok('start');
+    narr.innerHTML = '<span class="stepNo">Ready.</span>Press <b>Play</b> or <b>Next step</b>. Watch the yellow dot move, the state fill up, and the code light up on the right.';
+  }
+  playBtn.addEventListener('click', play);
+  stepBtn.addEventListener('click', () => { playing=false; playBtn.textContent='▶ Play'; step(); });
+  document.getElementById('resetBtn').addEventListener('click', () => { if(!busy) reset(); });
+})();
+</script>
+</body>
+</html>

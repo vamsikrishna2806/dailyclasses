@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Human vs AI Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1020; --panel:#141a2e; --panel2:#1b2340; --line:#2a3458;
+  --text:#e9edf8; --muted:#9aa5c4;
+  --human:#ff9f5a; --human-soft:rgba(255,159,90,.16);
+  --agent:#3ad6ff; --agent-soft:rgba(58,214,255,.14);
+  --accent:#b18cff; --good:#4ade80; --warn:#facc15;
+  --skin:#ffd9b8;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f5f7fc; --panel:#ffffff; --panel2:#eef2fb; --line:#d6ddef;
+    --text:#151a2c; --muted:#5b6585;
+    --human:#e8742a; --human-soft:rgba(232,116,42,.12);
+    --agent:#0a95c4; --agent-soft:rgba(10,149,196,.12);
+    --accent:#7c4ddb; --good:#16a34a; --warn:#b48300; --skin:#ffd2ad;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1020; --panel:#141a2e; --panel2:#1b2340; --line:#2a3458;
+  --text:#e9edf8; --muted:#9aa5c4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+.wrap{max-width:1150px;margin:0 auto;padding:0 16px}
+section{padding:70px 0;border-bottom:1px solid var(--line)}
+h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;line-height:1.1}
+h2{font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:800;margin-bottom:8px}
+.sub{color:var(--muted);max-width:720px;margin-bottom:32px}
+.h{color:var(--human)} .a{color:var(--agent)} .p{color:var(--accent)}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+code,.mono{font-family:"JetBrains Mono",monospace}
+.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:9px 16px;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ---------- HERO ---------- */
+.hero{padding:60px 0 50px;text-align:center}
+.hero p{color:var(--muted);max-width:640px;margin:16px auto 0;font-size:1.1rem}
+.vs{display:flex;align-items:center;justify-content:center;gap:clamp(10px,4vw,60px);margin-top:40px}
+.vs .fig{width:min(180px,36vw)}
+.vs .badge{font-weight:800;font-size:clamp(1.4rem,4vw,2.4rem);color:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{50%{transform:scale(1.15);opacity:.7}}
+.nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:36px}
+.nav a{color:var(--muted);text-decoration:none;font-size:.9rem;border:1px solid var(--line);padding:6px 12px;border-radius:99px}
+.nav a:hover{color:var(--text);border-color:var(--accent)}
+
+/* ---------- FIGURE ANIMATIONS ---------- */
+.breathe{animation:breathe 3.5s ease-in-out infinite;transform-origin:100px 300px}
+@keyframes breathe{50%{transform:scale(1.015,1.025)}}
+.blink{animation:blink 4s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.antenna{animation:ant 1.2s infinite}
+@keyframes ant{50%{fill:var(--accent);opacity:.4}}
+.scan{animation:scan 2.4s ease-in-out infinite}
+@keyframes scan{50%{opacity:.35}}
+.flow{stroke-dasharray:4 6;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-20}}
+.float{animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-4px)}}
+
+/* ---------- BODY MAP ---------- */
+.map{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:20px;align-items:start}
+.figbox{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;text-align:center;position:sticky;top:16px}
+.figbox h3{font-size:1rem;margin-bottom:4px}
+.hs{fill:transparent;stroke:transparent;stroke-width:2;transition:.3s;cursor:pointer}
+.hs.on{stroke-dasharray:4 3;animation:ring 1s linear infinite}
+#humanFig .hs.on{stroke:var(--human);fill:var(--human-soft)}
+#robotFig .hs.on{stroke:var(--agent);fill:var(--agent-soft)}
+@keyframes ring{to{stroke-dashoffset:-14}}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:.25s;font-size:.85rem}
+.card b{display:block;font-size:.92rem}
+.card .arrow{color:var(--muted)}
+.card:hover{border-color:var(--accent)}
+.card.on{border-color:var(--accent);background:var(--panel2);box-shadow:0 0 0 3px rgba(177,140,255,.18)}
+.info{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;min-height:250px}
+.info .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.pill{padding:5px 12px;border-radius:99px;font-weight:700;font-size:.9rem}
+.pill.h{background:var(--human-soft);color:var(--human)}
+.pill.a{background:var(--agent-soft);color:var(--agent)}
+.info .eq{font-size:1.3rem;color:var(--accent);animation:pulse 1.5s infinite}
+.info p{margin:6px 0;color:var(--text)}
+.info .note{margin-top:10px;font-size:.85rem;color:var(--muted);border-left:3px solid var(--accent);padding-left:10px}
+.info pre{margin-top:10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:.78rem;overflow-x:auto;color:var(--good)}
+.fade{animation:fadeUp .45s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}}
+.ctrl{display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:.85rem;color:var(--muted)}
+
+/* ---------- JAR vs ROBOT ---------- */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
+.box h3{margin-bottom:6px}
+.box ul{margin:10px 0 0 18px;color:var(--muted)}
+.box li{margin:4px 0}
+.box svg{width:100%;height:auto;max-height:220px;display:block;margin:10px auto}
+
+/* ---------- LOOP ---------- */
+.loopgrid{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start}
+.ring svg{width:100%;height:auto}
+.node circle{fill:var(--panel2);stroke:var(--line);stroke-width:2;transition:.3s}
+.node text{fill:var(--muted);font-size:13px;font-weight:700;text-anchor:middle;transition:.3s}
+.node.on circle{fill:var(--accent);stroke:var(--accent)}
+.node.on text{fill:#fff}
+#orbit{transition:transform .8s cubic-bezier(.6,.05,.3,1);transform-origin:170px 170px}
+.mem.on circle{fill:var(--good);stroke:var(--good)}
+.story{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;min-height:340px}
+.col h4{margin-bottom:10px}
+.step{opacity:.18;padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:.88rem;transition:.4s;border:1px solid transparent}
+.step.seen{opacity:.7}
+.step.now{opacity:1;background:var(--panel2);border-color:var(--accent);transform:translateX(4px)}
+.step small{display:block;font-size:.7rem;font-weight:700;letter-spacing:.06em;color:var(--accent)}
+.col.agent .step{font-family:"JetBrains Mono",monospace;font-size:.78rem}
+.task{background:var(--panel2);border:1px dashed var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+
+/* ---------- MEMORY ---------- */
+.memgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ctxwin{display:flex;flex-direction:column;gap:6px;min-height:270px;border:2px dashed var(--agent);border-radius:12px;padding:10px;position:relative}
+.ctxwin::after{content:"context window (max 6 messages)";position:absolute;top:-11px;left:12px;background:var(--panel);padding:0 6px;font-size:.72rem;color:var(--agent)}
+.msg{padding:6px 10px;border-radius:8px;background:var(--panel2);font-size:.8rem;animation:slideIn .4s ease;display:flex;justify-content:space-between;gap:8px}
+.msg.imp{border-left:3px solid var(--good)}
+.msg.out{animation:dropOut .5s forwards}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}}
+@keyframes dropOut{to{opacity:0;transform:translateX(-40px);height:0;padding:0;margin:0}}
+.shelf{display:flex;flex-wrap:wrap;gap:6px;min-height:90px;border:2px solid var(--good);border-radius:12px;padding:10px;margin-top:16px;align-content:flex-start;position:relative}
+.shelf::after{content:"long-term memory (vector DB)";position:absolute;top:-11px;left:12px;background:var(--panel);padding:0 6px;font-size:.72rem;color:var(--good)}
+.chip{font-size:.72rem;background:rgba(74,222,128,.15);color:var(--good);padding:3px 8px;border-radius:99px;animation:pop .4s}
+@keyframes pop{from{transform:scale(0)}}
+.forgot{font-size:.8rem;color:var(--muted);margin-top:8px}
+
+/* ---------- FORMULA ---------- */
+.formula{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;font-size:clamp(1rem,2.6vw,1.5rem);font-weight:800}
+.formula span{padding:10px 16px;border-radius:12px;background:var(--panel);border:1px solid var(--line);opacity:0;transform:translateY(30px) scale(.8);transition:.6s cubic-bezier(.2,1.4,.4,1)}
+.formula span.op{background:none;border:none;color:var(--muted)}
+.formula.in span{opacity:1;transform:none}
+.formula span.res{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ---------- TABLE ---------- */
+table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:14px;overflow:hidden;font-size:.9rem}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--panel2);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.tablewrap{overflow-x:auto}
+
+/* ---------- CODE ---------- */
+.code{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;font-family:"JetBrains Mono",monospace;font-size:.82rem;overflow-x:auto;white-space:pre;line-height:1.7}
+.code .k{color:var(--accent)} .code .c{color:var(--muted);font-style:italic} .code .s{color:var(--good)} .code .f{color:var(--agent)} .code .hh{color:var(--human)}
+
+/* ---------- QUIZ ---------- */
+.quiz{display:grid;gap:12px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.opt{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 14px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:.88rem}
+.opt.right{background:rgba(74,222,128,.2);border-color:var(--good)}
+.opt.wrong{background:rgba(248,113,113,.18);border-color:#f87171}
+.why{font-size:.85rem;color:var(--muted);margin-top:8px;display:none}
+.why.show{display:block;animation:fadeUp .4s}
+
+.reveal{opacity:0;transform:translateY(24px);transition:.7s ease}
+.reveal.in{opacity:1;transform:none}
+footer{text-align:center;color:var(--muted);padding:40px 16px;font-size:.85rem}
+
+@media (max-width:900px){
+  .map{grid-template-columns:1fr 1fr}
+  .map .mid{grid-column:1/-1;order:3}
+  .figbox{position:static}
+  .loopgrid{grid-template-columns:1fr}
+  .ring{max-width:320px;margin:0 auto}
+}
+@media (max-width:640px){
+  .two,.memgrid,.story{grid-template-columns:1fr}
+  .cards{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .reveal,.formula span{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Reusable figures -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <g id="humanBody">
+      <g class="breathe">
+        <!-- legs -->
+        <line x1="86" y1="215" x2="80" y2="322" stroke="var(--human)" stroke-width="16" stroke-linecap="round"/>
+        <line x1="114" y1="215" x2="120" y2="322" stroke="var(--human)" stroke-width="16" stroke-linecap="round"/>
+        <!-- arms -->
+        <path d="M66 126 Q40 172 36 226" stroke="var(--human)" stroke-width="14" fill="none" stroke-linecap="round"/>
+        <path d="M134 126 Q160 172 164 226" stroke="var(--human)" stroke-width="14" fill="none" stroke-linecap="round"/>
+        <circle cx="36" cy="234" r="10" fill="var(--skin)" stroke="var(--human)" stroke-width="2"/>
+        <circle cx="164" cy="234" r="10" fill="var(--skin)" stroke="var(--human)" stroke-width="2"/>
+        <!-- torso -->
+        <rect x="60" y="112" width="80" height="110" rx="26" fill="var(--human-soft)" stroke="var(--human)" stroke-width="2.5"/>
+        <!-- nerves -->
+        <line x1="100" y1="114" x2="100" y2="218" stroke="var(--human)" stroke-width="2" class="flow"/>
+        <!-- heart -->
+        <path d="M115 158 l-8 -8 a5 5 0 0 1 8 -6 a5 5 0 0 1 8 6 z" fill="#ff5a7a"/>
+        <!-- neck + head -->
+        <rect x="92" y="98" width="16" height="16" fill="var(--skin)"/>
+        <circle cx="100" cy="62" r="40" fill="var(--skin)" stroke="var(--human)" stroke-width="2.5"/>
+        <path d="M60 58 Q64 18 100 20 Q138 18 140 58 Q128 36 100 38 Q72 36 60 58Z" fill="#4a2e1d"/>
+        <ellipse class="blink" cx="86" cy="64" rx="4" ry="4.5" fill="#222"/>
+        <ellipse class="blink" cx="114" cy="64" rx="4" ry="4.5" fill="#222"/>
+        <path d="M88 84 Q100 94 112 84" stroke="#a24a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </g>
+      <!-- thought bubble -->
+      <g class="float">
+        <circle cx="146" cy="30" r="3" fill="var(--muted)"/>
+        <circle cx="154" cy="20" r="5" fill="var(--muted)"/>
+        <ellipse cx="172" cy="12" rx="16" ry="10" fill="var(--panel2)" stroke="var(--muted)"/>
+        <text x="172" y="16" font-size="11" text-anchor="middle">🤔</text>
+      </g>
+    </g>
+
+    <g id="robotBody">
+      <!-- legs -->
+      <rect x="78" y="220" width="16" height="100" rx="4" fill="var(--panel2)" stroke="var(--agent)" stroke-width="2"/>
+      <rect x="106" y="220" width="16" height="100" rx="4" fill="var(--panel2)" stroke="var(--agent)" stroke-width="2"/>
+      <!-- arms -->
+      <rect x="36" y="122" width="16" height="100" rx="4" fill="var(--panel2)" stroke="var(--agent)" stroke-width="2"/>
+      <rect x="148" y="122" width="16" height="100" rx="4" fill="var(--panel2)" stroke="var(--agent)" stroke-width="2"/>
+      <!-- grippers with tools -->
+      <path d="M30 226 h28 v8 l-6 8 h-16 l-6 -8z" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="2"/>
+      <path d="M142 226 h28 v8 l-6 8 h-16 l-6 -8z" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="2"/>
+      <text x="44" y="262" font-size="13" text-anchor="middle">🔍</text>
+      <text x="156" y="262" font-size="13" text-anchor="middle">🧮</text>
+      <!-- torso -->
+      <rect x="60" y="112" width="80" height="110" rx="10" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="2.5"/>
+      <!-- system prompt doc -->
+      <rect x="104" y="138" width="22" height="26" rx="3" fill="var(--panel)" stroke="var(--agent)"/>
+      <line x1="108" y1="145" x2="122" y2="145" stroke="var(--agent)"/>
+      <line x1="108" y1="151" x2="122" y2="151" stroke="var(--agent)"/>
+      <line x1="108" y1="157" x2="118" y2="157" stroke="var(--agent)"/>
+      <!-- data bus -->
+      <line x1="90" y1="114" x2="90" y2="218" stroke="var(--agent)" stroke-width="2" class="flow"/>
+      <circle cx="90" cy="200" r="6" fill="var(--panel)" stroke="var(--agent)"/>
+      <text x="90" y="203" font-size="7" text-anchor="middle" fill="var(--agent)">↻</text>
+      <!-- neck + head -->
+      <rect x="92" y="100" width="16" height="14" fill="var(--panel2)" stroke="var(--agent)"/>
+      <line x1="100" y1="22" x2="100" y2="8" stroke="var(--agent)" stroke-width="2"/>
+      <circle class="antenna" cx="100" cy="6" r="4" fill="var(--agent)"/>
+      <rect x="58" y="22" width="84" height="80" rx="12" fill="var(--panel)" stroke="var(--agent)" stroke-width="2.5"/>
+      <!-- LLM chip -->
+      <rect x="68" y="34" width="24" height="16" rx="3" fill="var(--accent)" opacity=".85"/>
+      <text x="80" y="45" font-size="8" font-weight="800" fill="#fff" text-anchor="middle">LLM</text>
+      <!-- memory disk -->
+      <rect x="108" y="34" width="24" height="16" rx="3" fill="var(--good)" opacity=".8"/>
+      <text x="120" y="45" font-size="7" font-weight="800" fill="#08210f" text-anchor="middle">MEM</text>
+      <!-- planner gear -->
+      <circle cx="100" cy="30" r="4" fill="none" stroke="var(--warn)" stroke-width="2"/>
+      <!-- camera eyes -->
+      <rect x="78" y="57" width="16" height="14" rx="3" fill="var(--bg)" stroke="var(--agent)"/>
+      <rect x="106" y="57" width="16" height="14" rx="3" fill="var(--bg)" stroke="var(--agent)"/>
+      <circle class="scan" cx="86" cy="64" r="3.5" fill="var(--agent)"/>
+      <circle class="scan" cx="114" cy="64" r="3.5" fill="var(--agent)"/>
+      <!-- speaker -->
+      <line x1="88" y1="84" x2="112" y2="84" stroke="var(--agent)" stroke-width="2"/>
+      <line x1="88" y1="89" x2="112" y2="89" stroke="var(--agent)" stroke-width="2"/>
+      <!-- reflection bubble -->
+      <g class="float">
+        <circle cx="146" cy="30" r="3" fill="var(--muted)"/>
+        <circle cx="154" cy="20" r="5" fill="var(--muted)"/>
+        <ellipse cx="172" cy="12" rx="16" ry="10" fill="var(--panel2)" stroke="var(--muted)"/>
+        <text x="172" y="16" font-size="10" text-anchor="middle" fill="var(--agent)">✓?</text>
+      </g>
+    </g>
+
+    <g id="hotspots">
+      <circle class="hs" data-part="planning" cx="100" cy="28" r="10"/>
+      <circle class="hs" data-part="brain" cx="80" cy="44" r="13"/>
+      <circle class="hs" data-part="memory" cx="120" cy="44" r="13"/>
+      <ellipse class="hs" data-part="eyes" cx="100" cy="64" rx="26" ry="10"/>
+      <ellipse class="hs" data-part="mouth" cx="100" cy="87" rx="17" ry="8"/>
+      <circle class="hs" data-part="values" cx="115" cy="152" r="16"/>
+      <ellipse class="hs" data-part="loop" cx="94" cy="175" rx="12" ry="48"/>
+      <circle class="hs" data-part="hands" cx="40" cy="240" r="20"/>
+      <circle class="hs" data-part="hands" cx="160" cy="240" r="20"/>
+      <ellipse class="hs" data-part="reflection" cx="168" cy="14" rx="22" ry="14"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ================= HERO ================= -->
+<header class="hero wrap">
+  <span class="tag">AI Engineering for Freshers · Day 17</span>
+  <h1>You already know how an <span class="a">AI Agent</span> works.<br>You <span class="h">are</span> one.</h1>
+  <p>An AI agent is built like a person doing a job: a brain to think, hands to use tools, memory to remember, and a habit of checking its own work. This page goes through it one body part at a time.</p>
+  <div class="vs">
+    <svg class="fig" viewBox="0 0 200 340"><use href="#humanBody"/></svg>
+    <div class="badge">≈</div>
+    <svg class="fig" viewBox="0 0 200 340"><use href="#robotBody"/></svg>
+  </div>
+  <nav class="nav">
+    <a href="#map">1 · Body map</a>
+    <a href="#jar">2 · LLM vs Agent</a>
+    <a href="#loop">3 · The agent loop</a>
+    <a href="#memory">4 · Memory</a>
+    <a href="#formula">5 · The formula</a>
+    <a href="#code">6 · Code</a>
+    <a href="#quiz">7 · Quiz</a>
+  </nav>
+</header>
+
+<!-- ================= BODY MAP ================= -->
+<section id="map">
+<div class="wrap">
+  <span class="tag">Part 1</span>
+  <h2>Body map: <span class="h">human</span> part → <span class="a">agent</span> part</h2>
+  <p class="sub">Click any card, or a glowing spot on either figure. Both figures light up the matching part. It cycles on its own until you click.</p>
+
+  <div class="map">
+    <div class="figbox">
+      <h3 class="h">🧑 Human</h3>
+      <svg id="humanFig" viewBox="0 0 200 340"><use href="#humanBody"/><use href="#hotspots"/></svg>
+    </div>
+
+    <div class="mid">
+      <div class="ctrl">
+        <button class="btn" id="mapToggle">⏸ Pause tour</button>
+        <span id="mapCount"></span>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="info" id="info"></div>
+    </div>
+
+    <div class="figbox">
+      <h3 class="a">🤖 AI Agent</h3>
+      <svg id="robotFig" viewBox="0 0 200 340"><use href="#robotBody"/><use href="#hotspots"/></svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ================= JAR vs ROBOT ================= -->
+<section id="jar">
+<div class="wrap">
+  <span class="tag">Part 2</span>
+  <h2>An LLM alone is a <span class="p">brain in a jar</span></h2>
+  <p class="sub">This is the main idea on the page. ChatGPT, Claude or Llama on their own can only <b>talk</b>. Give the brain a body (tools, memory and a loop) and it can <b>do things</b>. That is an agent.</p>
+
+  <div class="two reveal">
+    <div class="box">
+      <h3>🫙 LLM / Chatbot</h3>
+      <svg viewBox="0 0 300 200">
+        <rect x="100" y="40" width="100" height="130" rx="20" fill="var(--agent-soft)" stroke="var(--muted)" stroke-width="2"/>
+        <rect x="92" y="28" width="116" height="16" rx="6" fill="var(--panel2)" stroke="var(--muted)"/>
+        <g class="float"><text x="150" y="118" font-size="44" text-anchor="middle">🧠</text></g>
+        <!-- bubbles -->
+        <circle cx="125" cy="150" r="3" fill="var(--agent)"><animate attributeName="cy" values="160;60" dur="2.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.5s" repeatCount="indefinite"/></circle>
+        <circle cx="172" cy="150" r="2" fill="var(--agent)"><animate attributeName="cy" values="160;60" dur="3.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="3.2s" repeatCount="indefinite"/></circle>
+        <text x="20" y="100" font-size="12" fill="var(--muted)">question</text>
+        <text x="225" y="100" font-size="12" fill="var(--muted)">answer</text>
+        <line x1="70" y1="106" x2="98" y2="106" stroke="var(--muted)" stroke-width="2" class="flow"/>
+        <line x1="202" y1="106" x2="230" y2="106" stroke="var(--muted)" stroke-width="2" class="flow"/>
+        <text x="150" y="192" font-size="11" text-anchor="middle" fill="var(--muted)">text in → text out. One shot. Then done.</text>
+      </svg>
+      <ul>
+        <li>Knows only what it saw during training (old data)</li>
+        <li>Can't check today's weather, send an email or run code</li>
+        <li>Forgets everything once the chat ends</li>
+        <li>Answers once and doesn't check its own work</li>
+      </ul>
+    </div>
+    <div class="box" style="border-color:var(--agent)">
+      <h3>🤖 AI Agent</h3>
+      <svg viewBox="0 0 300 200">
+        <circle cx="150" cy="95" r="34" fill="var(--accent)" opacity=".9"/>
+        <text x="150" y="101" font-size="15" font-weight="800" text-anchor="middle" fill="#fff">LLM</text>
+        <g font-size="20" text-anchor="middle">
+          <text x="60" y="40">🔍</text><text x="240" y="40">📧</text>
+          <text x="40" y="150">🐍</text><text x="260" y="150">🗄️</text>
+          <text x="150" y="190">💾</text>
+        </g>
+        <g stroke="var(--agent)" stroke-width="1.5" class="flow" fill="none">
+          <path id="p1" d="M122 78 L70 42"/><path id="p2" d="M178 78 L230 42"/>
+          <path id="p3" d="M118 108 L52 142"/><path id="p4" d="M182 108 L248 142"/>
+          <path id="p5" d="M150 130 L150 170"/>
+        </g>
+        <circle r="4" fill="var(--agent)"><animateMotion dur="1.6s" repeatCount="indefinite" path="M122 78 L70 42 L122 78"/></circle>
+        <circle r="4" fill="var(--good)"><animateMotion dur="2s" repeatCount="indefinite" path="M182 108 L248 142 L182 108"/></circle>
+        <circle r="4" fill="var(--warn)"><animateMotion dur="2.4s" repeatCount="indefinite" path="M118 108 L52 142 L118 108"/></circle>
+        <circle r="4" fill="var(--human)"><animateMotion dur="1.8s" repeatCount="indefinite" path="M178 78 L230 42 L178 78"/></circle>
+        <circle r="44" cx="150" cy="95" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 6"><animateTransform attributeName="transform" type="rotate" from="0 150 95" to="360 150 95" dur="6s" repeatCount="indefinite"/></circle>
+      </svg>
+      <ul>
+        <li><b class="a">Tools:</b> search, code, APIs, databases, email</li>
+        <li><b class="a">Memory:</b> remembers past chats and facts about you</li>
+        <li><b class="a">Loop:</b> think → act → look at the result → repeat</li>
+        <li><b class="a">Goal-driven:</b> keeps going until the task is done</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ================= LOOP ================= -->
+<section id="loop">
+<div class="wrap">
+  <span class="tag">Part 3</span>
+  <h2>The agent loop: <span class="h">how you</span> and <span class="a">an agent</span> solve the same task</h2>
+  <p class="sub">Every agent (LangChain, LangGraph, CrewAI, Claude Code) runs the same cycle: <b>Perceive → Think → Act → Observe</b>, repeated until the job is done. Step through it below and compare the two columns.</p>
+
+  <div class="task">🎯 <b>Task:</b> "What's the weather in Hyderabad today? Should I carry an umbrella?"</div>
+
+  <div class="loopgrid">
+    <div class="ring">
+      <svg viewBox="0 0 340 340">
+        <circle cx="170" cy="170" r="120" fill="none" stroke="var(--line)" stroke-width="3"/>
+        <circle cx="170" cy="170" r="120" fill="none" stroke="var(--accent)" stroke-width="3" class="flow" opacity=".5"/>
+        <g class="node" data-n="0"><circle cx="170" cy="50" r="38"/><text x="170" y="48">👀</text><text x="170" y="64" style="font-size:11px">Perceive</text></g>
+        <g class="node" data-n="1"><circle cx="290" cy="170" r="38"/><text x="290" y="168">🧠</text><text x="290" y="184" style="font-size:11px">Think</text></g>
+        <g class="node" data-n="2"><circle cx="170" cy="290" r="38"/><text x="170" y="288">🛠️</text><text x="170" y="304" style="font-size:11px">Act</text></g>
+        <g class="node" data-n="3"><circle cx="50" cy="170" r="38"/><text x="50" y="168">🔎</text><text x="50" y="184" style="font-size:11px">Observe</text></g>
+        <g class="node mem" data-n="4"><circle cx="170" cy="170" r="34"/><text x="170" y="168">💾</text><text x="170" y="184" style="font-size:11px">Memory</text></g>
+        <g id="orbit"><circle cx="170" cy="8" r="7" fill="var(--warn)" stroke="var(--bg)" stroke-width="2"/></g>
+      </svg>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+        <button class="btn" id="prevBtn">◀ Back</button>
+        <button class="btn primary" id="playBtn">▶ Play</button>
+        <button class="btn" id="nextBtn">Next ▶</button>
+      </div>
+    </div>
+
+    <div class="story">
+      <div class="col">
+        <h4 class="h">🧑 You (human)</h4>
+        <div id="hSteps"></div>
+      </div>
+      <div class="col agent">
+        <h4 class="a">🤖 Agent (behind the scenes)</h4>
+        <div id="aSteps"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ================= MEMORY ================= -->
+<section id="memory">
+<div class="wrap">
+  <span class="tag">Part 4</span>
+  <h2>Memory: <span class="h">whiteboard</span> vs <span class="h">diary</span></h2>
+  <p class="sub">You have two kinds of memory: what you're thinking about right now, and things stored for years. Agents have the same two. Watch new messages push old ones out of the context window. Only messages marked ⭐ important get saved to long-term memory.</p>
+
+  <div class="memgrid reveal">
+    <div class="box">
+      <h3>⚡ Short-term memory = Context window</h3>
+      <p style="color:var(--muted);font-size:.9rem">🧑 Like holding a phone number in your head while you dial it.<br>🤖 The chat messages sent to the LLM on every call. It has a size limit (tokens), so old messages fall out.</p>
+      <div style="margin-top:22px" class="ctxwin" id="ctx"></div>
+      <div class="forgot" id="forgot">🗑️ Forgotten: 0 messages</div>
+    </div>
+    <div class="box">
+      <h3>📚 Long-term memory = Vector database</h3>
+      <p style="color:var(--muted);font-size:.9rem">🧑 Like your diary, or remembering your best friend's birthday.<br>🤖 Facts saved as <i>embeddings</i> in a vector DB (Chroma, FAISS, Pinecone). When needed, the agent <b>searches</b> by meaning and puts the results back into its context. This is <b>RAG</b>.</p>
+      <div class="shelf" id="shelf" style="margin-top:28px"></div>
+      <div class="note" style="margin-top:16px;font-size:.85rem;color:var(--muted);border-left:3px solid var(--accent);padding-left:10px">
+        <b>Engineer's note:</b> the LLM itself is <u>stateless</u>. It remembers nothing between calls. Every bit of "memory" is your code putting the right text back into the prompt each time.
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ================= FORMULA ================= -->
+<section id="formula">
+<div class="wrap" style="text-align:center">
+  <span class="tag">Part 5</span>
+  <h2>The one formula to remember</h2>
+  <p class="sub" style="margin:0 auto 32px">Write it on the first page of your notebook.</p>
+  <div class="formula" id="formulaEl">
+    <span class="res">🤖 Agent</span><span class="op">=</span>
+    <span>🧠 LLM</span><span class="op">+</span>
+    <span>🛠️ Tools</span><span class="op">+</span>
+    <span>💾 Memory</span><span class="op">+</span>
+    <span>🗺️ Planning</span><span class="op">+</span>
+    <span>🔁 Loop</span>
+  </div>
+
+  <div class="tablewrap reveal" style="margin-top:44px;text-align:left">
+  <table>
+    <tr><th>Part</th><th>🧑 Human</th><th>🤖 Agent</th><th>Real tech you'll use</th></tr>
+    <tr><td><b>Brain</b></td><td>Understands, reasons, decides</td><td>LLM</td><td>GPT, Claude, Llama, Qwen (via Ollama)</td></tr>
+    <tr><td><b>Senses</b></td><td>Eyes, ears</td><td>Input: prompt, files, images, events</td><td>Chat UI, file loaders, webhooks</td></tr>
+    <tr><td><b>Hands</b></td><td>Uses a phone, calculator, pen</td><td>Tools / function calling</td><td><code>@tool</code>, APIs, MCP servers</td></tr>
+    <tr><td><b>Short-term memory</b></td><td>What you're thinking right now</td><td>Context window / chat history</td><td>Message list, buffer memory</td></tr>
+    <tr><td><b>Long-term memory</b></td><td>Diary, experience</td><td>Vector DB + retrieval (RAG)</td><td>Chroma, FAISS, pgvector</td></tr>
+    <tr><td><b>Planning</b></td><td>"First this, then that"</td><td>Reasoning, task breakdown</td><td>ReAct, chain-of-thought, planner nodes</td></tr>
+    <tr><td><b>Values / job role</b></td><td>Conscience, company rules</td><td>System prompt + guardrails</td><td>System message, output validators</td></tr>
+    <tr><td><b>Nervous system</b></td><td>Connects brain to body</td><td>Orchestrator / agent loop</td><td>LangChain, LangGraph, CrewAI</td></tr>
+    <tr><td><b>Self-check</b></td><td>"Let me double-check that"</td><td>Reflection / evaluation</td><td>Critic step, retries, evals</td></tr>
+  </table>
+  </div>
+</div>
+</section>
+
+<!-- ================= CODE ================= -->
+<section id="code">
+<div class="wrap">
+  <span class="tag">Part 6</span>
+  <h2>What the agent loop looks like in code</h2>
+  <p class="sub">Simplified Python. Frameworks like LangChain or LangGraph hide this, but underneath they all do roughly this. The comments link each line back to the human.</p>
+<div class="code reveal"><span class="c"># 🧑 job description / values</span>
+system_prompt = <span class="s">"You are a helpful weather assistant. Be honest."</span>
+
+<span class="c"># 🧑 hands  → 🤖 tools</span>
+tools = { <span class="s">"get_weather"</span>: get_weather, <span class="s">"search_web"</span>: search_web }
+
+<span class="c"># 🧑 short-term memory → 🤖 context window</span>
+messages = [system_prompt, user_question]          <span class="c"># 👀 PERCEIVE</span>
+
+<span class="k">while</span> True:                                        <span class="c"># 🔁 the loop (nervous system)</span>
+    reply = <span class="f">llm</span>(messages, tools=tools)              <span class="c"># 🧠 THINK  (brain = LLM)</span>
+
+    <span class="k">if</span> reply.tool_call:                            <span class="c"># LLM decided: "I need a tool"</span>
+        result = tools[reply.tool_call.name](**reply.tool_call.args)   <span class="c"># 🛠️ ACT</span>
+        messages.append(result)                      <span class="c"># 🔎 OBSERVE → back into memory</span>
+        <span class="k">continue</span>                                     <span class="c"># go round again</span>
+
+    <span class="f">vector_db</span>.save(important_facts(messages))      <span class="c"># 💾 long-term memory</span>
+    <span class="k">return</span> reply.text                              <span class="c"># 👄 SPEAK final answer</span></div>
+  <p class="sub" style="margin-top:16px">💡 Key point: <b>the LLM never runs the tool itself.</b> It only <i>says</i> which tool to call and with what inputs. <b>Your code</b> runs the tool and gives the result back. The brain decides, the hands do the work.</p>
+</div>
+</section>
+
+<!-- ================= QUIZ ================= -->
+<section id="quiz">
+<div class="wrap">
+  <span class="tag">Part 7</span>
+  <h2>Quick check ✅</h2>
+  <p class="sub">Click an answer.</p>
+  <div class="quiz" id="quizEl"></div>
+</div>
+</section>
+
+<footer>Made for freshers learning AI engineering · LLM 🧠 + Tools 🛠️ + Memory 💾 + Planning 🗺️ + Loop 🔁 = Agent 🤖</footer>
+
+<script>
+/* ===================== BODY MAP ===================== */
+const parts = [
+  {id:"brain", h:"🧠 Brain", a:"LLM (Large Language Model)",
+   d:"Your brain understands language, reasons and makes decisions. In an agent the LLM does this job. It reads the situation and decides what to do next: answer directly, or use a tool.",
+   note:"An LLM predicts the next word. It doesn't 'know' things the way you do, but it's good enough at reasoning to act as the decision-maker.",
+   code:"llm = ChatOllama(model=\"llama3.1\")\nreply = llm.invoke(messages)"},
+  {id:"eyes", h:"👀 Eyes & Ears", a:"Input / Perception",
+   d:"You take in the world through your senses. An agent takes in the user's prompt, uploaded files, images, web pages and system events. If it isn't in the input, the agent can't see it.",
+   note:"Multimodal models can 'see' images. Agents can also be triggered by events like a new email or a webhook, not only chat.",
+   code:"messages.append({\"role\":\"user\", \"content\": question})"},
+  {id:"hands", h:"✋ Hands", a:"Tools (function calling)",
+   d:"Your brain can't get the weather by thinking. Your hands pick up a phone. Agents use tools for the same reason: web search, calculator, Python, databases, sending email, calling APIs.",
+   note:"The LLM only outputs JSON like {tool:'get_weather', args:{city:'Hyderabad'}}. Your code runs the function. MCP is a standard way to plug in tools.",
+   code:"@tool\ndef get_weather(city: str) -> str:\n    \"\"\"Get today's weather for a city\"\"\"\n    return weather_api(city)"},
+  {id:"memory", h:"📓 Memory", a:"Context window + Vector DB",
+   d:"Short-term: what's in your head right now, which is the context window (chat history). Long-term: your diary, which is a vector database the agent searches to recall facts (RAG).",
+   note:"LLMs are stateless. Each call starts fresh. 'Memory' is your code putting old messages or retrieved facts back into the prompt.",
+   code:"docs = vector_db.similarity_search(question, k=3)\nmessages.insert(1, docs)"},
+  {id:"planning", h:"🗺️ Planning", a:"Reasoning / Planner",
+   d:"Before cooking you think: buy veggies, then chop, then cook. Agents split big goals into steps the same way, using patterns like ReAct (Reason + Act) or a separate planner step.",
+   note:"ReAct format: Thought → Action → Observation → Thought → ... → Final Answer.",
+   code:"Thought: I need today's weather\nAction: get_weather(\"Hyderabad\")\nObservation: 80% rain\nThought: I can answer now"},
+  {id:"values", h:"❤️ Values & job role", a:"System prompt + Guardrails",
+   d:"At work you follow your role and company rules, and your conscience stops you doing bad things. The agent's system prompt gives it a role and rules, and guardrails block unsafe actions.",
+   note:"Good system prompts state the role, goal, allowed tools, output format and what NOT to do.",
+   code:"system = \"You are a support agent for ACME.\\nNever share passwords.\\nAnswer in under 100 words.\""},
+  {id:"loop", h:"⚡ Nervous system", a:"Orchestrator / Agent loop",
+   d:"Nerves carry signals between brain and hands, over and over. The orchestrator is the code that runs the loop: send to LLM, run the tool, feed the result back, repeat until done.",
+   note:"LangChain's AgentExecutor, LangGraph's state graph and CrewAI are all orchestrators. You can also write one in about 20 lines of Python.",
+   code:"while not done:\n    step = llm(messages)\n    messages += run(step)"},
+  {id:"mouth", h:"👄 Mouth", a:"Output / Response",
+   d:"You speak or write the final answer. The agent returns text, or structured output such as JSON, a file, a database update or an email it sent.",
+   note:"For apps, use structured output (JSON with Pydantic) so other code can read it reliably.",
+   code:"return {\"umbrella\": True, \"reason\": \"80% rain\"}"},
+  {id:"reflection", h:"🤔 Self-check", a:"Reflection / Evaluation",
+   d:"Good students re-check answers before submitting. Agents can review their own output, spot mistakes and retry. A second 'critic' LLM call often improves quality a lot.",
+   note:"Patterns: Reflexion, self-critique, LLM-as-judge, retries on tool errors.",
+   code:"critique = llm(\"Check this answer for errors: \" + draft)\nif \"error\" in critique: retry()"}
+];
+
+const cardsEl = document.getElementById("cards");
+const infoEl = document.getElementById("info");
+let mapIdx = 0, mapTimer = null, mapPlaying = true;
+
+parts.forEach((p,i)=>{
+  const c = document.createElement("div");
+  c.className = "card"; c.dataset.i = i;
+  c.innerHTML = `<b><span class="h">${p.h}</span></b><span class="arrow">→</span> <span class="a">${p.a.split(" (")[0]}</span>`;
+  c.onclick = ()=>{ stopTour(); setPart(i); };
+  cardsEl.appendChild(c);
+});
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function setPart(i){
+  mapIdx = i; const p = parts[i];
+  document.querySelectorAll(".card").forEach(c=>c.classList.toggle("on", +c.dataset.i===i));
+  // <use> clones can't be styled individually, so the hotspots are inlined per figure (see buildHotspots)
+  document.querySelectorAll(".hs").forEach(h=>h.classList.toggle("on", h.dataset.part===p.id));
+  infoEl.innerHTML = `<div class="fade">
+    <div class="row"><span class="pill h">${p.h}</span><span class="eq">⇄</span><span class="pill a">🤖 ${p.a}</span></div>
+    <p>${p.d}</p>
+    <div class="note"><b>Engineer's note:</b> ${p.note}</div>
+    <pre>${esc(p.code)}</pre></div>`;
+  document.getElementById("mapCount").textContent = `${i+1} / ${parts.length}`;
+}
+function startTour(){ mapPlaying=true; document.getElementById("mapToggle").textContent="⏸ Pause tour";
+  clearInterval(mapTimer); mapTimer=setInterval(()=>setPart((mapIdx+1)%parts.length),4500); }
+function stopTour(){ mapPlaying=false; clearInterval(mapTimer); document.getElementById("mapToggle").textContent="▶ Resume tour"; }
+document.getElementById("mapToggle").onclick=()=> mapPlaying?stopTour():startTour();
+
+// Inline the hotspots into each figure so they can be highlighted and clicked
+function buildHotspots(){
+  const tpl = document.getElementById("hotspots");
+  ["humanFig","robotFig"].forEach(id=>{
+    const svg = document.getElementById(id);
+    svg.querySelector("use[href='#hotspots']").remove();
+    const g = tpl.cloneNode(true); g.removeAttribute("id");
+    svg.appendChild(g);
+  });
+  document.querySelectorAll("#humanFig .hs, #robotFig .hs").forEach(h=>{
+    h.addEventListener("click",()=>{ stopTour(); setPart(parts.findIndex(p=>p.id===h.dataset.part)); });
+    const t = document.createElementNS("http://www.w3.org/2000/svg","title");
+    t.textContent = parts.find(p=>p.id===h.dataset.part).h; h.appendChild(t);
+  });
+}
+buildHotspots(); setPart(0); startTour();
+
+/* ===================== AGENT LOOP ===================== */
+const steps = [
+  {n:0, label:"PERCEIVE", h:"Your friend asks you the question. You hear it. 👂",
+   a:'user: "Weather in Hyderabad? Umbrella?"\n→ added to messages[]'},
+  {n:1, label:"THINK", h:"\"I don't know today's weather. I should check my phone.\" 🤔",
+   a:"LLM Thought: I lack live data.\nI should call get_weather."},
+  {n:2, label:"ACT", h:"You pick up your phone and open the weather app. 📱",
+   a:'tool_call: get_weather(\n  city="Hyderabad")'},
+  {n:3, label:"OBSERVE", h:"You see: 80% chance of rain, 27°C. 🌧️",
+   a:'tool_result: {"rain":0.8,\n  "temp_c":27}  → appended'},
+  {n:1, label:"THINK AGAIN", h:"\"80% is high. Yes, an umbrella makes sense.\"",
+   a:"LLM Thought: I have enough\ninfo. Write the final answer."},
+  {n:2, label:"ACT (RESPOND)", h:"\"Yes! 80% rain today, take an umbrella ☂️\"",
+   a:'final_answer: "Yes, 80% rain\n in Hyderabad. Carry one ☂️"'},
+  {n:4, label:"REMEMBER", h:"You remember: my friend lives in Hyderabad. 🧠",
+   a:'memory.save("user city =\n Hyderabad")  → vector DB'}
+];
+const hS = document.getElementById("hSteps"), aS = document.getElementById("aSteps");
+steps.forEach((s,i)=>{
+  hS.insertAdjacentHTML("beforeend",`<div class="step" data-i="${i}"><small>${i+1}. ${s.label}</small>${s.h}</div>`);
+  aS.insertAdjacentHTML("beforeend",`<div class="step" data-i="${i}"><small>${i+1}. ${s.label}</small>${esc(s.a).replace(/\n/g,"<br>")}</div>`);
+});
+let cur=-1, angle=0, loopTimer=null;
+const orbit=document.getElementById("orbit");
+function showStep(i){
+  if(i<0||i>=steps.length) return;
+  const s=steps[i];
+  if(s.n<4){ // move orbit dot clockwise to node
+    const target=s.n*90; let delta=((target-(angle%360))+360)%360;
+    if(i<cur) delta = delta-360; // go back
+    angle+=delta; orbit.style.transform=`rotate(${angle}deg)`; orbit.style.opacity=1;
+  } else orbit.style.opacity=.3;
+  cur=i;
+  document.querySelectorAll(".node").forEach(nd=>nd.classList.toggle("on",+nd.dataset.n===s.n));
+  document.querySelectorAll(".story .step").forEach(el=>{
+    const k=+el.dataset.i; el.classList.toggle("now",k===i); el.classList.toggle("seen",k<i);
+  });
+}
+function play(){
+  const btn=document.getElementById("playBtn");
+  if(loopTimer){clearInterval(loopTimer);loopTimer=null;btn.textContent="▶ Play";return;}
+  btn.textContent="⏸ Pause";
+  if(cur>=steps.length-1){cur=-1;angle=0;orbit.style.transform="rotate(0deg)";}
+  showStep(cur+1);
+  loopTimer=setInterval(()=>{ if(cur>=steps.length-1){clearInterval(loopTimer);loopTimer=null;btn.textContent="↺ Replay";return;} showStep(cur+1); },2600);
+}
+document.getElementById("playBtn").onclick=play;
+document.getElementById("nextBtn").onclick=()=>showStep(Math.min(cur+1,steps.length-1));
+document.getElementById("prevBtn").onclick=()=>showStep(Math.max(cur-1,0));
+
+/* ===================== MEMORY SIM ===================== */
+const msgs=[
+  ["Hi, I'm Ravi",true],["What's 2+2?",false],["I'm vegetarian",true],["Tell me a joke",false],
+  ["Thanks 😂",false],["I live in Hyderabad",true],["What's the time?",false],["ok cool",false],
+  ["My exam is on Friday",true],["Suggest a movie",false],["I prefer Python",true],["bye",false]
+];
+const ctx=document.getElementById("ctx"), shelf=document.getElementById("shelf"), forgotEl=document.getElementById("forgot");
+let mi=0, forgot=0;
+function tick(){
+  if(mi>=msgs.length){ mi=0; forgot=0; ctx.innerHTML=""; shelf.innerHTML=""; }
+  const [txt,imp]=msgs[mi++];
+  const d=document.createElement("div"); d.className="msg"+(imp?" imp":"");
+  d.innerHTML=`<span>💬 ${txt}</span><span>${imp?"⭐":""}</span>`;
+  ctx.appendChild(d);
+  if(imp){ const c=document.createElement("span"); c.className="chip"; c.textContent="📌 "+txt.replace(/^I'm |^I /,""); shelf.appendChild(c); }
+  const live=[...ctx.querySelectorAll(".msg:not(.out)")];
+  if(live.length>6){ const old=live[0]; old.classList.add("out"); forgot++; setTimeout(()=>old.remove(),500); }
+  forgotEl.textContent=`🗑️ Dropped from context: ${forgot} message${forgot===1?"":"s"} (gone unless saved ⭐)`;
+}
+let memTimer=null;
+
+/* ===================== QUIZ ===================== */
+const quiz=[
+  {q:"Which part of an agent is like the human brain?", o:["Vector DB","LLM","Tools","System prompt"], r:1, w:"The LLM reasons and decides what to do next."},
+  {q:"Your agent needs today's stock price. What does it use?", o:["A bigger LLM","Long-term memory","A tool (API call)","A longer system prompt"], r:2, w:"Live data is outside the LLM's training, so it needs 'hands', meaning a tool or API."},
+  {q:"Who actually runs the tool function?", o:["The LLM itself","Your code / the orchestrator","The vector DB","The user"], r:1, w:"The LLM only asks for the call (as JSON). Your code runs it and returns the result."},
+  {q:"A user told the agent their name 50 messages ago and now it has forgotten. Why?", o:["The LLM is broken","It fell out of the context window","Tools failed","The system prompt is wrong"], r:1, w:"Short-term memory is limited. Save important facts to long-term memory (a vector DB)."},
+  {q:"What makes an agent different from a plain chatbot?", o:["Nicer UI","It loops: think → act → observe until the goal is done","It uses more GPUs","It speaks more languages"], r:1, w:"The loop, plus tools and memory, turns a talker into a doer."}
+];
+const qEl=document.getElementById("quizEl");
+quiz.forEach((x,qi)=>{
+  const div=document.createElement("div"); div.className="q";
+  div.innerHTML=`<b>Q${qi+1}. ${x.q}</b><div class="opts"></div><div class="why">💡 ${x.w}</div>`;
+  x.o.forEach((o,oi)=>{
+    const b=document.createElement("button"); b.className="opt"; b.textContent=o;
+    b.onclick=()=>{ div.querySelectorAll(".opt").forEach((bb,k)=>{ if(k===x.r) bb.classList.add("right"); });
+      if(oi!==x.r) b.classList.add("wrong"); div.querySelector(".why").classList.add("show"); };
+    div.querySelector(".opts").appendChild(b);
+  });
+  qEl.appendChild(div);
+});
+
+/* ===================== SCROLL REVEALS ===================== */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting) return;
+  const t=e.target;
+  if(t.id==="formulaEl"){ [...t.children].forEach((s,i)=>s.style.transitionDelay=(i*0.12)+"s"); }
+  if(t.id==="memory" && !memTimer){ tick(); memTimer=setInterval(tick,1400); }
+  if(t.id==="loop" && cur===-1 && !loopTimer){ play(); }
+  t.classList.add("in");
+}),{threshold:.25});
+document.querySelectorAll(".reveal,#formulaEl,#memory,#loop").forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

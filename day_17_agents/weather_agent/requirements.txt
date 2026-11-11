@@ -1,0 +1,7 @@
+langchain
+langchain-core
+langchain-ollama
+langgraph
+requests
+# 1.13.1 is blocked by Windows Smart App Control on this PC; 1.13.0 works
+ormsgpack==1.13.0

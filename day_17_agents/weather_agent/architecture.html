@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weather Agent Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7fb; --surface:#ffffff; --surface2:#eef1f7; --text:#141826; --muted:#5d6579; --border:#d9deea;
+  --accent:#2f6bff; --green:#0f9d6b; --purple:#7a4dff; --orange:#e2700f; --pink:#d6336c;
+  --term-bg:#0f1320; --term-text:#d7e0f5; --glow:0.35;
+  --node:#ffffff; --node-stroke:#c4cbdc; --edge:#b7bfd2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b0e17; --surface:#131828; --surface2:#1a2033; --text:#e8ecf7; --muted:#97a0b8; --border:#262e45;
+    --accent:#5b8cff; --green:#2fd197; --purple:#a78bff; --orange:#ff9d47; --pink:#ff6b9a;
+    --term-bg:#070910; --term-text:#d7e0f5; --glow:0.6;
+    --node:#161c2e; --node-stroke:#2c3550; --edge:#34405f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e17; --surface:#131828; --surface2:#1a2033; --text:#e8ecf7; --muted:#97a0b8; --border:#262e45;
+  --accent:#5b8cff; --green:#2fd197; --purple:#a78bff; --orange:#ff9d47; --pink:#ff6b9a;
+  --term-bg:#070910; --term-text:#d7e0f5; --glow:0.6;
+  --node:#161c2e; --node-stroke:#2c3550; --edge:#34405f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+section{padding:56px 0}
+h1{font-size:clamp(30px,5vw,52px);line-height:1.08;margin:0 0 14px;letter-spacing:-0.02em}
+h2{font-size:clamp(22px,3vw,32px);margin:0 0 8px;letter-spacing:-0.01em}
+.lead{color:var(--muted);font-size:18px;max-width:760px;margin:0}
+.eyebrow{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.sub{color:var(--muted);margin:0 0 24px;max-width:780px}
+.theme-btn{position:fixed;top:14px;right:14px;z-index:20;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 12px;font:600 13px Inter;cursor:pointer}
+
+/* HERO */
+.hero{padding-top:72px;position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px}
+.part{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;opacity:0;transform:translateY(18px);animation:rise .7s cubic-bezier(.2,.8,.2,1) forwards}
+.part:nth-child(2){animation-delay:.12s}.part:nth-child(3){animation-delay:.24s}.part:nth-child(4){animation-delay:.36s}
+.part .ic{font-size:28px}
+.part h3{margin:6px 0 4px;font-size:17px}
+.part p{margin:0;color:var(--muted);font-size:14px}
+.part code{font-size:12px;white-space:normal;word-break:break-word;background:var(--surface2);padding:2px 6px;border-radius:6px;display:inline-block;margin-top:8px;color:var(--text)}
+@keyframes rise{to{opacity:1;transform:none}}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.toc a{font-size:13px;font-weight:600;color:var(--text);text-decoration:none;border:1px solid var(--border);background:var(--surface);padding:7px 12px;border-radius:999px}
+.toc a:hover{border-color:var(--accent);color:var(--accent)}
+.sun{position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,170,60,.45),rgba(255,170,60,0) 70%);animation:pulse 6s ease-in-out infinite;pointer-events:none}
+@keyframes pulse{50%{transform:scale(1.15)}}
+
+/* STAGE */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px}
+.stage{padding:10px}
+.svg-scroll{overflow-x:auto}
+#arch{width:100%;min-width:720px;display:block}
+.node rect{fill:var(--node);stroke:var(--node-stroke);stroke-width:1.5;transition:stroke .3s, filter .3s}
+.node text{fill:var(--text);font-family:Inter;font-size:14px;font-weight:600}
+.node text.s{fill:var(--muted);font-size:11.5px;font-weight:500}
+.node text.m{font-family:"JetBrains Mono";font-size:11.5px;font-weight:500;fill:var(--muted)}
+.node.hot rect.box{stroke:var(--hc,var(--accent));stroke-width:2.5;filter:drop-shadow(0 0 10px var(--hc,var(--accent)))}
+.edge{fill:none;stroke:var(--edge);stroke-width:2;stroke-dasharray:5 6}
+.edge.on{stroke:var(--ec,var(--accent));stroke-dasharray:none;stroke-width:3}
+.zone{fill:none;stroke:var(--border);stroke-width:1.5;stroke-dasharray:8 6}
+.zone-label{fill:var(--muted);font:700 11px Inter;letter-spacing:.12em}
+.packet-label{font:600 11px "JetBrains Mono";paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.chip-in{fill:var(--surface2);stroke:var(--node-stroke)}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 6px 4px}
+.btn{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:10px;padding:8px 14px;font:600 14px Inter;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.speed{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;margin-left:auto}
+.dots{display:flex;gap:6px;flex-wrap:wrap;padding:8px 6px 0}
+.dot{flex:1;min-width:28px;height:6px;border-radius:4px;background:var(--surface2);border:0;cursor:pointer;padding:0;position:relative;overflow:hidden}
+.dot.done{background:var(--accent);opacity:.45}
+.dot.cur{background:var(--accent)}
+
+.panels{display:grid;grid-template-columns:1.1fr 1.2fr .8fr;gap:12px;margin-top:12px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;min-width:0}
+.panel h4{margin:0 0 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+#stepTitle{font-size:19px;font-weight:700;margin:0 0 6px}
+#stepNum{color:var(--accent);font-weight:800}
+#stepText{color:var(--muted);margin:0 0 10px;font-size:14.5px}
+#hopNote{font-size:13px;min-height:22px;color:var(--text);font-weight:600}
+#hopNote span{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+pre.code{margin:10px 0 0;background:var(--surface2);border-radius:10px;padding:12px;font-size:12px;line-height:1.55;overflow-x:auto;white-space:pre;color:var(--text)}
+.term{background:var(--term-bg);color:var(--term-text);border-radius:12px;padding:12px 14px;font:12px/1.6 "JetBrains Mono";height:330px;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
+.term .ln{opacity:0;animation:fadeIn .35s forwards}
+.term .cmd{color:#7ee2b8}.term .think{color:#c4a8ff}.term .obs{color:#ffc88a}.term .ans{color:#8fd3ff}.term .dim{color:#7d87a3}
+@keyframes fadeIn{to{opacity:1}}
+.cursor{display:inline-block;width:7px;height:14px;background:var(--term-text);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.msgs{display:flex;flex-direction:column;gap:7px}
+.msg{border-radius:10px;padding:8px 10px;font-size:12.5px;border-left:4px solid;background:var(--surface2);opacity:0;transform:translateX(16px);animation:slideIn .45s forwards}
+.msg b{display:block;font-size:12px}
+.msg small{color:var(--muted);font-family:"JetBrains Mono";font-size:11px}
+@keyframes slideIn{to{opacity:1;transform:none}}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);padding:6px 6px 2px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+
+/* LOOP */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center}
+#loop{width:100%;max-width:460px;display:block;margin:0 auto}
+.loop-node circle{fill:var(--node);stroke-width:2.5}
+.loop-node text{fill:var(--text);font:700 14px Inter;text-anchor:middle}
+.loop-node text.s{fill:var(--muted);font:500 11px Inter}
+.mapping{display:flex;flex-direction:column;gap:10px}
+.map-row{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.map-row .k{font-weight:800}
+.map-row code{font-size:12px;color:var(--muted)}
+
+/* TREND */
+#trend{width:100%;display:block}
+.trend-steps{display:flex;flex-direction:column;gap:10px}
+.ts{padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);opacity:.45;transition:opacity .4s,border-color .4s,transform .4s}
+.ts.on{opacity:1;border-color:var(--accent);transform:translateX(4px)}
+.ts b{display:block}
+.ts code{font-size:12px;color:var(--muted)}
+.ax{stroke:var(--border);stroke-width:1}
+.ax-t{fill:var(--muted);font:500 11px Inter}
+.pt{fill:var(--accent);opacity:0;transform-box:fill-box;transform-origin:center;transform:scale(0);transition:opacity .35s,transform .35s cubic-bezier(.3,1.6,.5,1)}
+.pt.on{opacity:1;transform:scale(1)}
+.fade{opacity:0;transition:opacity .6s}
+.fade.on{opacity:1}
+#regLine{stroke:var(--pink);stroke-width:3;fill:none;stroke-linecap:round}
+#nextPt{fill:var(--pink)}
+.ring{fill:none;stroke:var(--pink);stroke-width:2;animation:ring 1.6s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes ring{from{transform:scale(.6);opacity:1}to{transform:scale(2.4);opacity:0}}
+
+/* WHY */
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.why .panel p{margin:0;color:var(--muted);font-size:14px}
+.why .panel h3{margin:0 0 6px;font-size:16px}
+footer{padding:30px 0 50px;color:var(--muted);font-size:13px;text-align:center}
+
+@media (max-width:900px){
+  .hero-grid{grid-template-columns:repeat(2,1fr)}
+  .panels{grid-template-columns:1fr}
+  .two{grid-template-columns:1fr}
+  .why{grid-template-columns:1fr}
+  .speed{margin-left:0}
+}
+@media (max-width:520px){ .hero-grid{grid-template-columns:1fr} }
+@media (prefers-reduced-motion: reduce){ *{animation-duration:.01ms!important;transition-duration:.01ms!important} }
+</style>
+</head>
+<body>
+<button class="theme-btn" id="themeBtn" aria-label="Toggle colour theme">◐ Theme</button>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="sun"></div>
+  <div class="wrap">
+    <span class="eyebrow">day_17 · weather_agent · main.py</span>
+    <h1>Weather Prediction Agent<br>architecture, in motion</h1>
+    <p class="lead">A LangChain agent that runs <b>llama3.2 locally through Ollama</b>, pulls the last 7 days of real temperatures from <b>Open-Meteo</b> (free, no API key), works out the trend, predicts tomorrow's max, then checks itself against the official forecast.</p>
+    <div class="hero-grid">
+      <div class="part"><div class="ic">🧠</div><h3>Brain</h3><p>Decides what to do next and writes the final answer.</p><code>ChatOllama("llama3.2", temperature=0)</code></div>
+      <div class="part"><div class="ic">✋</div><h3>Hands</h3><p>Two tools that fetch real data and do the maths.</p><code>get_past_temperatures · temperature_trend</code></div>
+      <div class="part"><div class="ic">📜</div><h3>Rules</h3><p>System prompt: call tool 1, then tool 2, never invent numbers.</p><code>system_prompt="You are a weather analyst…"</code></div>
+      <div class="part"><div class="ic">🔁</div><h3>Loop</h3><p>LangGraph runs think → act → observe until there are no more tool calls.</p><code>create_agent(model, tools, system_prompt)</code></div>
+    </div>
+    <nav class="toc">
+      <a href="#flow">▶ Architecture &amp; flow</a>
+      <a href="#loop-sec">🔁 The agent loop</a>
+      <a href="#trend-sec">📈 Trend maths</a>
+      <a href="#why">💡 Design choices</a>
+    </nav>
+  </div>
+</header>
+
+<!-- FLOW -->
+<section id="flow">
+  <div class="wrap">
+    <span class="eyebrow">01 · System map + request flow</span>
+    <h2>One run of <code>python main.py Hyderabad</code></h2>
+    <p class="sub">Press play to watch each message travel between components. The terminal shows what gets printed and the right panel shows the agent's message list growing. Numbers are from an example run.</p>
+
+    <div class="card stage">
+      <div class="svg-scroll">
+      <svg id="arch" viewBox="0 0 1180 610" role="img" aria-label="Architecture diagram of the weather agent">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--edge)"/></marker>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+
+        <!-- zones -->
+        <rect class="zone" x="12" y="14" width="930" height="582" rx="18"/>
+        <text class="zone-label" x="30" y="38">💻 YOUR PC · LOCAL</text>
+        <rect class="zone" x="956" y="300" width="212" height="296" rx="18"/>
+        <text class="zone-label" x="972" y="324">🌐 INTERNET</text>
+
+        <!-- edges -->
+        <path id="e_user_main" class="edge" d="M162 320 L208 320"/>
+        <path id="e_main_agent" class="edge" d="M362 320 L418 320"/>
+        <path id="e_agent_llm" class="edge" d="M530 250 L530 162"/>
+        <path id="e_agent_tools" class="edge" d="M642 300 L718 300"/>
+        <path id="e_tools_helpers" class="edge" d="M820 352 L820 408"/>
+        <path id="e_helpers_geo" class="edge" d="M922 440 L976 392"/>
+        <path id="e_helpers_fc" class="edge" d="M922 486 L976 520"/>
+        <path id="e_main_helpers" class="edge" d="M285 362 L285 562 L800 562 L800 512"/>
+
+        <!-- nodes -->
+        <g class="node" id="n_user">
+          <rect class="box" x="22" y="276" width="140" height="88" rx="14"/>
+          <text x="40" y="306">🧑 You</text>
+          <text class="s" x="40" y="326">terminal / CLI</text>
+          <text class="m" x="40" y="346">arg: "Hyderabad"</text>
+        </g>
+        <g class="node" id="n_main">
+          <rect class="box" x="208" y="276" width="154" height="88" rx="14"/>
+          <text x="224" y="306">📄 main.py</text>
+          <text class="s" x="224" y="326">__main__ block</text>
+          <text class="m" x="224" y="346">agent.stream(…)</text>
+        </g>
+        <g class="node" id="n_agent">
+          <rect class="box" x="418" y="250" width="224" height="150" rx="16"/>
+          <text x="436" y="278">🔁 Agent loop</text>
+          <text class="s" x="436" y="297">create_agent · LangGraph</text>
+          <rect class="chip-in" x="434" y="310" width="192" height="34" rx="8"/>
+          <text class="m" x="444" y="331">📜 system_prompt (rules)</text>
+          <rect class="chip-in" x="434" y="352" width="192" height="34" rx="8"/>
+          <text class="m" x="444" y="373">🗂 state: messages[ ]</text>
+        </g>
+        <g class="node" id="n_llm">
+          <rect class="box" x="418" y="56" width="224" height="106" rx="16"/>
+          <text x="436" y="86">🧠 ChatOllama</text>
+          <text class="s" x="436" y="106">Ollama server · localhost:11434</text>
+          <text class="m" x="436" y="128">model = llama3.2 (3B)</text>
+          <text class="m" x="436" y="146">temperature = 0</text>
+        </g>
+        <g class="node" id="n_tools">
+          <rect class="box" x="718" y="230" width="204" height="122" rx="16"/>
+          <text x="734" y="258">✋ Tools (@tool)</text>
+          <rect class="chip-in" x="730" y="270" width="180" height="32" rx="8"/>
+          <text class="m" x="740" y="290">get_past_temperatures</text>
+          <rect class="chip-in" x="730" y="308" width="180" height="32" rx="8"/>
+          <text class="m" x="740" y="328">temperature_trend</text>
+        </g>
+        <g class="node" id="n_helpers">
+          <rect class="box" x="718" y="408" width="204" height="104" rx="16"/>
+          <text x="734" y="436">⚙️ Helpers</text>
+          <text class="s" x="734" y="455">plain Python, uses requests</text>
+          <text class="m" x="734" y="476">fetch_daily()</text>
+          <text class="m" x="734" y="496">find_city()</text>
+        </g>
+        <g class="node" id="n_geo">
+          <rect class="box" x="976" y="342" width="182" height="96" rx="14"/>
+          <text x="990" y="370">📍 Geocoding API</text>
+          <text class="s" x="990" y="390">city → lat / lon</text>
+          <text class="m" x="990" y="412">/v1/search</text>
+        </g>
+        <g class="node" id="n_fc">
+          <rect class="box" x="976" y="470" width="182" height="104" rx="14"/>
+          <text x="990" y="498">🌡 Forecast API</text>
+          <text class="s" x="990" y="518">daily max / min °C</text>
+          <text class="m" x="990" y="540">/v1/forecast</text>
+          <text class="m" x="990" y="558">past / forecast_days</text>
+        </g>
+        <text class="ax-t" x="300" y="586">official_forecast(city) · runs after the agent finishes</text>
+
+        <g id="packets"></g>
+      </svg>
+      </div>
+
+      <div class="legend">
+        <span><i style="background:var(--accent)"></i>call / request</span>
+        <span><i style="background:var(--purple)"></i>LLM decision</span>
+        <span><i style="background:var(--orange)"></i>HTTP to Open-Meteo</span>
+        <span><i style="background:var(--green)"></i>data coming back</span>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="playBtn">▶ Play</button>
+        <button class="btn" id="prevBtn" aria-label="Previous step">⏮ Prev</button>
+        <button class="btn" id="nextBtn" aria-label="Next step">Next ⏭</button>
+        <button class="btn" id="resetBtn">↺ Restart</button>
+        <label class="speed">Speed
+          <input type="range" id="speed" min="0.5" max="2.5" step="0.25" value="1">
+          <span id="speedVal">1×</span>
+        </label>
+      </div>
+      <div class="dots" id="dots"></div>
+    </div>
+
+    <div class="panels">
+      <div class="panel">
+        <h4>What's happening</h4>
+        <p id="stepTitle"><span id="stepNum">0</span> · Ready</p>
+        <p id="stepText">Press <b>Play</b> or <b>Next</b> (or use the ← → keys).</p>
+        <div id="hopNote"></div>
+        <pre class="code" id="code"># main.py
+python main.py Hyderabad</pre>
+      </div>
+      <div class="panel">
+        <h4>Terminal output</h4>
+        <div class="term" id="term"><span class="cursor"></span></div>
+      </div>
+      <div class="panel">
+        <h4>Agent state · messages[ ]</h4>
+        <div class="msgs" id="msgs"></div>
+        <p class="note">Every turn of the loop adds a message. The LLM sees the whole list each time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOOP -->
+<section id="loop-sec">
+  <div class="wrap">
+    <span class="eyebrow">02 · The ReAct loop</span>
+    <h2>Think → Act → Observe, until the LLM stops asking for tools</h2>
+    <p class="sub"><code>create_agent</code> builds a LangGraph with two nodes: the <b>model</b> and the <b>tools</b>. After each model reply it checks for <code>tool_calls</code>. If there are any, it runs them and goes back to the model. If not, the loop ends.</p>
+    <div class="two">
+      <svg id="loop" viewBox="0 0 460 420" aria-label="ReAct loop animation">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+        </defs>
+        <path id="orbit" d="M230 60 A150 150 0 1 1 229.9 60" fill="none" stroke="var(--border)" stroke-width="2" stroke-dasharray="6 7"/>
+        <circle r="9" fill="var(--accent)" filter="url(#glow)">
+          <animateMotion dur="6s" repeatCount="indefinite" rotate="auto"><mpath href="#orbit"/></animateMotion>
+        </circle>
+        <g class="loop-node"><circle cx="230" cy="60" r="46" stroke="var(--purple)"/><text x="230" y="58">🧠 THINK</text><text class="s" x="230" y="76">llama3.2</text></g>
+        <g class="loop-node"><circle cx="360" cy="285" r="46" stroke="var(--accent)"/><text x="360" y="283">🛠 ACT</text><text class="s" x="360" y="301">run tool</text></g>
+        <g class="loop-node"><circle cx="100" cy="285" r="46" stroke="var(--orange)"/><text x="100" y="283">🔎 OBSERVE</text><text class="s" x="100" y="301">ToolMessage</text></g>
+        <path d="M230 106 L230 175" stroke="var(--muted)" stroke-width="2" marker-end="url(#arr2)" stroke-dasharray="4 4"/>
+        <text x="240" y="150" class="ax-t">no tool_calls?</text>
+        <g class="loop-node"><rect x="168" y="180" width="124" height="44" rx="12" fill="var(--node)" stroke="var(--green)" stroke-width="2.5"/><text x="230" y="208">🤖 ANSWER</text></g>
+        <text x="230" y="395" class="ax-t" text-anchor="middle">In this app: 2 tool rounds, then a final answer (3 LLM calls)</text>
+      </svg>
+      <div class="mapping">
+        <div class="map-row"><span class="k" style="color:var(--purple)">🧠 THINK</span><div>LLM reads the rules + all messages and replies with an <b>AIMessage</b> holding <code>tool_calls</code>.<br><code>msg.type == "ai" and msg.tool_calls</code></div></div>
+        <div class="map-row"><span class="k" style="color:var(--accent)">🛠 ACT</span><div>LangGraph runs the matching Python <code>@tool</code> function with the arguments the LLM chose, e.g. <code>{'city': 'Hyderabad'}</code>.</div></div>
+        <div class="map-row"><span class="k" style="color:var(--orange)">🔎 OBSERVE</span><div>The tool's return string becomes a <b>ToolMessage</b> added to state, and the loop goes back to THINK.<br><code>msg.type == "tool"</code></div></div>
+        <div class="map-row"><span class="k" style="color:var(--green)">🤖 ANSWER</span><div>An AIMessage with no tool calls ends the loop. <code>main.py</code> prints it as the prediction.<br><code>msg.type == "ai"</code></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TREND -->
+<section id="trend-sec">
+  <div class="wrap">
+    <span class="eyebrow">03 · Inside temperature_trend</span>
+    <h2>Least-squares line through 8 daily maxima</h2>
+    <p class="sub">The tool does the maths in Python so the 3B model never has to. It fits a straight line to the last 7 days + today and extends it one day forward. Example data shown.</p>
+    <div class="two">
+      <div class="card" style="padding:10px">
+        <svg id="trend" viewBox="0 0 600 330" aria-label="Trend line chart"></svg>
+        <div class="controls" style="padding:4px 6px"><button class="btn" id="trendReplay">↺ Replay</button></div>
+      </div>
+      <div class="trend-steps">
+        <div class="ts" data-s="0"><b>1 · Fetch 8 max temperatures</b><code>fetch_daily(city, past_days=7, forecast_days=1)</code></div>
+        <div class="ts" data-s="1"><b>2 · Find the averages</b><code>x̄ = mean(0…7) = 3.5 · ȳ = <span id="ymean"></span> °C</code></div>
+        <div class="ts" data-s="2"><b>3 · Slope (°C per day)</b><code>slope = Σ(x−x̄)(y−ȳ) / Σ(x−x̄)² = <span id="slopeV"></span></code></div>
+        <div class="ts" data-s="3"><b>4 · Extend the line to tomorrow (x = 8)</b><code>next = ȳ + slope·(n − x̄) = <span id="nextV"></span> °C</code></div>
+        <div class="ts" data-s="4"><b>5 · Sanity check: last-3-day average</b><code>avg_last3 = <span id="avg3V"></span> °C → returned to the LLM as text</code></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section id="why">
+  <div class="wrap">
+    <span class="eyebrow">04 · Design choices in the code</span>
+    <h2>Why it's built this way</h2>
+    <p class="sub">A few small choices make the agent work reliably with a small local model.</p>
+    <div class="why">
+      <div class="panel"><h3>🧮 Tools fetch their own data</h3><p><code>temperature_trend</code> takes only a city, not a list of numbers. Small models like llama3.2 3B often garble long number lists when copying them into a tool call.</p></div>
+      <div class="panel"><h3>🎯 temperature = 0</h3><p>Deterministic output: the same data gives the same decisions and answer every run, which suits a step-by-step recipe.</p></div>
+      <div class="panel"><h3>📜 A strict recipe</h3><p>The system prompt lists the exact order (tool 1, tool 2, answer) and forbids invented numbers, so the model only reasons over tool output.</p></div>
+      <div class="panel"><h3>🧱 Helpers vs tools</h3><p><code>find_city</code> and <code>fetch_daily</code> are plain functions the LLM can't see. Only <code>@tool</code> functions are exposed, keeping its choices small.</p></div>
+      <div class="panel"><h3>📡 Built-in fact check</h3><p><code>official_forecast</code> runs outside the agent and prints Open-Meteo's own forecast for tomorrow, so you can judge the prediction.</p></div>
+      <div class="panel"><h3>🔒 Local brain, free data</h3><p>The LLM runs on your PC through Ollama, so no prompts leave the machine. Only the city name and coordinates go to Open-Meteo, which needs no key.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>weather_agent · LangChain + LangGraph + Ollama (llama3.2) + Open-Meteo · example values for illustration</footer>
+
+<script>
+(() => {
+/* ---------- theme ---------- */
+const root = document.documentElement;
+document.getElementById('themeBtn').onclick = () => {
+  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('wa-theme', root.dataset.theme); } catch(e){}
+};
+try { const t = localStorage.getItem('wa-theme'); if (t) root.dataset.theme = t; } catch(e){}
+
+/* ---------- example data ---------- */
+const DATES = ['2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07','2026-11-08','2026-11-09'];
+const MAX = [30.1, 29.4, 30.6, 31.0, 30.2, 30.8, 31.3, 31.0];
+const MIN = [19.8, 19.2, 20.1, 20.4, 19.6, 20.0, 20.6, 20.3];
+const n = MAX.length, xm = (n - 1) / 2, ym = MAX.reduce((a, b) => a + b) / n;
+let sxy = 0, sxx = 0;
+MAX.forEach((y, x) => { sxy += (x - xm) * (y - ym); sxx += (x - xm) ** 2; });
+const SLOPE = sxy / sxx, NEXT = ym + SLOPE * (n - xm), AVG3 = MAX.slice(-3).reduce((a, b) => a + b) / 3;
+const sgn = v => (v >= 0 ? '+' : '') + v.toFixed(2);
+const pastLines = ['Hyderabad, India:'].concat(DATES.map((d, i) => `${d}: max ${MAX[i]}°C, min ${MIN[i]}°C`));
+const trendLine = `trend: ${sgn(SLOPE)} °C per day | straight-line next value: ${NEXT.toFixed(1)} °C | average of last 3 days: ${AVG3.toFixed(1)} °C`;
+
+/* ---------- colors ---------- */
+const C = { req:'var(--accent)', llm:'var(--purple)', http:'var(--orange)', back:'var(--green)' };
+const EDGES = {
+  e_user_main:['n_user','n_main'], e_main_agent:['n_main','n_agent'], e_agent_llm:['n_agent','n_llm'],
+  e_agent_tools:['n_agent','n_tools'], e_tools_helpers:['n_tools','n_helpers'], e_helpers_geo:['n_helpers','n_geo'],
+  e_helpers_fc:['n_helpers','n_fc'], e_main_helpers:['n_main','n_helpers']
+};
+
+/* hop: e=edge, r=reverse, c=color, t=label on packet, note=caption, term=[[cls,text]], msg=[type,title,detail] */
+const fetchHops = (pd, fd, count, toTools = true) => [
+  { e:'e_helpers_geo', c:C.http, t:'GET /v1/search?name=Hyderabad', note:'find_city() asks the Geocoding API for coordinates' },
+  { e:'e_helpers_geo', r:1, c:C.back, t:'lat 17.38, lon 78.46', note:'Gets back latitude / longitude (+ name, country)' },
+  { e:'e_helpers_fc', c:C.http, t:`GET /v1/forecast past_days=${pd} forecast_days=${fd}`, note:`fetch_daily() requests daily max/min with past_days=${pd}, forecast_days=${fd}` },
+  { e:'e_helpers_fc', r:1, c:C.back, t:`${count} days of max/min °C`, note:`Open-Meteo returns ${count} days of temperatures` },
+];
+
+const STEPS = [
+  { title:'You start the app', text:'The CLI reads the city from the command line (or asks for it) and builds the question.',
+    code:`city = " ".join(sys.argv[1:]) or input("City: ")\nquestion = f"Predict tomorrow's maximum\n            temperature in {city}."`,
+    hops:[{ e:'e_user_main', c:C.req, t:'python main.py Hyderabad', note:'Command typed in the terminal',
+      term:[['cmd','$ python main.py Hyderabad'],['', ''],['',"🧑 You: Predict tomorrow's maximum temperature in Hyderabad."]] }] },
+
+  { title:'main.py starts the agent', text:'agent.stream() runs the LangGraph loop and yields the full state after every step (stream_mode="values").',
+    code:`for step in agent.stream(\n    {"messages": [{"role": "user",\n                   "content": question}]},\n    stream_mode="values"):`,
+    hops:[{ e:'e_main_agent', c:C.req, t:'messages = [question]', note:'The question becomes the first message in state',
+      msg:['human','HumanMessage','"Predict tomorrow\'s max…"'] }] },
+
+  { title:'THINK · 1st LLM call', text:'The loop sends the system prompt, the messages and the JSON schemas of both tools to llama3.2 running in Ollama.',
+    code:`model=ChatOllama(model="llama3.2", temperature=0)\ntools=[get_past_temperatures, temperature_trend]\nsystem_prompt="1. Call get_past_temperatures…"`,
+    hops:[
+      { e:'e_agent_llm', c:C.req, t:'rules + messages + tool schemas', note:'POST to Ollama at localhost:11434 (stays on your PC)' },
+      { e:'e_agent_llm', r:1, c:C.llm, t:'tool_call: get_past_temperatures', note:'llama3.2 follows rule 1 and asks for a tool call',
+        term:[['think',"🧠 THINK → 🛠️ ACT: call get_past_temperatures({'city': 'Hyderabad'})"]],
+        msg:['ai','AIMessage','tool_calls: get_past_temperatures'] } ] },
+
+  { title:'ACT · get_past_temperatures', text:'LangGraph runs the Python tool. It calls fetch_daily(), which calls find_city() and then the forecast API.',
+    code:`@tool\ndef get_past_temperatures(city: str) -> str:\n    data = fetch_daily(city, past_days=7,\n                       forecast_days=1)`,
+    hops:[
+      { e:'e_agent_tools', c:C.req, t:"{'city': 'Hyderabad'}", note:'Tool node runs get_past_temperatures(city="Hyderabad")' },
+      { e:'e_tools_helpers', c:C.req, t:'fetch_daily(city, 7, 1)', note:'The tool calls the plain-Python helper' },
+      ...fetchHops(7, 1, 8),
+      { e:'e_tools_helpers', r:1, c:C.back, t:'{place, daily}', note:'Helper hands the raw JSON back to the tool' },
+      { e:'e_agent_tools', r:1, c:C.back, t:'"2026-11-02: max 30.1°C…"', note:'Tool formats one line per day and returns a string',
+        term:[['obs','🔎 OBSERVE (get_past_temperatures):'], ...pastLines.map(l => ['obs', l]), ['', '']],
+        msg:['tool','ToolMessage','get_past_temperatures → 8 lines'] } ] },
+
+  { title:'THINK · 2nd LLM call', text:'The LLM now sees the real temperatures. Rule 2 says: call temperature_trend next.',
+    code:`"2. Call temperature_trend for the same city."`,
+    hops:[
+      { e:'e_agent_llm', c:C.req, t:'messages (3) + rules', note:'The whole conversation so far goes back to llama3.2' },
+      { e:'e_agent_llm', r:1, c:C.llm, t:'tool_call: temperature_trend', note:'The model asks for the trend maths',
+        term:[['think',"🧠 THINK → 🛠️ ACT: call temperature_trend({'city': 'Hyderabad'})"]],
+        msg:['ai','AIMessage','tool_calls: temperature_trend'] } ] },
+
+  { title:'ACT · temperature_trend', text:'The tool re-fetches the 8 maxima itself (no numbers copied by the LLM) and fits a least-squares line.',
+    code:`slope = Σ(x-x̄)(y-ȳ) / Σ(x-x̄)²\nnext_value = y_mean + slope * (n - x_mean)\navg_last3 = sum(max_temps[-3:]) / 3`,
+    hops:[
+      { e:'e_agent_tools', c:C.req, t:"{'city': 'Hyderabad'}", note:'Tool node runs temperature_trend(city="Hyderabad")' },
+      { e:'e_tools_helpers', c:C.req, t:'fetch_daily(city, 7, 1)', note:'Same helper, same data' },
+      ...fetchHops(7, 1, 8),
+      { e:'e_tools_helpers', r:1, c:C.back, t:'8 max temps', note:'Tool computes slope, next value and 3-day average' },
+      { e:'e_agent_tools', r:1, c:C.back, t:`slope ${sgn(SLOPE)} · next ${NEXT.toFixed(1)}`, note:'Result string returned to the loop',
+        term:[['obs','🔎 OBSERVE (temperature_trend):'],['obs', trendLine],['', '']],
+        msg:['tool','ToolMessage',`trend ${sgn(SLOPE)} °C/day`] } ] },
+
+  { title:'THINK · final answer', text:'With both observations, the LLM writes the prediction. No tool_calls, so the loop stops and main.py prints it.',
+    code:`"3. Answer with: the predicted max temperature\n   for tomorrow (one number in °C) and one or\n   two short sentences explaining why."`,
+    hops:[
+      { e:'e_agent_llm', c:C.req, t:'messages (5) + rules', note:'Third and last call to llama3.2' },
+      { e:'e_agent_llm', r:1, c:C.llm, t:'final text, no tool_calls', note:'Plain answer → LangGraph ends the loop',
+        msg:['final','AIMessage (final)',`≈ ${NEXT.toFixed(1)} °C`] },
+      { e:'e_main_agent', r:1, c:C.back, t:'stream ends', note:'main.py prints the last AI message',
+        term:[['ans',"🤖 Agent's prediction:"],['ans',`Tomorrow's max temperature in Hyderabad: about ${NEXT.toFixed(1)} °C.`],
+              ['ans',`Max temps have risen ${sgn(SLOPE)} °C per day this week and the last 3 days averaged ${AVG3.toFixed(1)} °C.`],['', '']] } ] },
+
+  { title:'Fact check · official_forecast', text:'Outside the agent, main.py asks Open-Meteo for its own forecast (past_days=0, forecast_days=2) and prints tomorrow (index 1).',
+    code:`def official_forecast(city):\n    d = fetch_daily(city, past_days=0,\n                    forecast_days=2)["daily"]\n    return f"{d['time'][1]}: max …"`,
+    hops:[
+      { e:'e_main_helpers', c:C.req, t:'fetch_daily(city, 0, 2)', note:'Plain function call, no LLM involved' },
+      ...fetchHops(0, 2, 2),
+      { e:'e_main_helpers', r:1, c:C.back, t:'today + tomorrow', note:'Takes element [1] = tomorrow' },
+      { e:'e_user_main', r:1, c:C.back, t:'printed comparison', note:'You compare the agent with the official forecast',
+        term:[['ans','📡 Official Open-Meteo forecast for tomorrow → 2026-11-10: max 31.2°C, min 20.4°C'],['dim','✔ done']] } ] },
+];
+
+/* ---------- elements ---------- */
+const $ = id => document.getElementById(id);
+const svg = $('arch'), packets = $('packets'), term = $('term'), msgs = $('msgs');
+const dotsEl = $('dots');
+STEPS.forEach((s, i) => {
+  const b = document.createElement('button'); b.className = 'dot'; b.title = `${i + 1}. ${s.title}`;
+  b.setAttribute('aria-label', `Go to step ${i + 1}: ${s.title}`);
+  b.onclick = () => { stop(); goTo(i, false); }; dotsEl.appendChild(b);
+});
+
+let cur = -1, playing = false, run = 0, speed = 1, paused = false;
+$('speed').oninput = e => { speed = +e.target.value; $('speedVal').textContent = speed + '×'; };
+
+function clearHot(){ svg.querySelectorAll('.node.hot').forEach(n => n.classList.remove('hot')); svg.querySelectorAll('.edge.on').forEach(e => e.classList.remove('on')); }
+function heat(id, color){ const n = $(id); n.style.setProperty('--hc', color); n.classList.add('hot'); }
+
+function addTerm(lines, animate = true){
+  const cursor = term.querySelector('.cursor'); if (cursor) cursor.remove();
+  lines.forEach(([cls, txt], i) => {
+    const d = document.createElement('div'); d.className = 'ln ' + cls; d.textContent = txt || ' ';
+    if (animate) d.style.animationDelay = (i * 60) + 'ms'; else d.style.animation = 'none', d.style.opacity = 1;
+    term.appendChild(d);
+  });
+  const c = document.createElement('span'); c.className = 'cursor'; term.appendChild(c);
+  term.scrollTop = term.scrollHeight;
+}
+const MSG_COL = { human:'var(--accent)', ai:'var(--purple)', tool:'var(--orange)', final:'var(--green)' };
+function addMsg([type, title, detail], animate = true){
+  const d = document.createElement('div'); d.className = 'msg'; d.style.borderLeftColor = MSG_COL[type];
+  d.innerHTML = `<b></b><small></small>`; d.querySelector('b').textContent = title; d.querySelector('small').textContent = detail;
+  if (!animate) { d.style.animation = 'none'; d.style.opacity = 1; d.style.transform = 'none'; }
+  msgs.appendChild(d);
+}
+function applyEffects(h, animate){ if (h.term) addTerm(h.term, animate); if (h.msg) addMsg(h.msg, animate); }
+
+function setPanel(i){
+  const s = STEPS[i];
+  $('stepTitle').innerHTML = ''; const num = document.createElement('span'); num.id = 'stepNum'; num.textContent = i + 1;
+  $('stepTitle').append(num, ' · ' + s.title);
+  $('stepText').textContent = s.text;
+  $('code').textContent = s.code;
+  [...dotsEl.children].forEach((d, k) => { d.className = 'dot' + (k < i ? ' done' : k === i ? ' cur' : ''); });
+}
+function setNote(h){ const el = $('hopNote'); el.innerHTML = '<span></span>'; el.firstChild.style.background = h.c; el.append(h.note); }
+
+/* packet travelling along a path */
+function hop(h, myRun){
+  return new Promise(resolve => {
+    const path = $(h.e), L = path.getTotalLength();
+    const [a, b] = EDGES[h.e]; const from = h.r ? b : a, to = h.r ? a : b;
+    clearHot(); heat(from, h.c); path.style.setProperty('--ec', h.c); path.classList.add('on'); setNote(h);
+    const ns = 'http://www.w3.org/2000/svg';
+    const g = document.createElementNS(ns, 'g');
+    const dot = document.createElementNS(ns, 'circle'); dot.setAttribute('r', 8); dot.setAttribute('fill', h.c); dot.setAttribute('filter', 'url(#glow)');
+    const lab = document.createElementNS(ns, 'text'); lab.setAttribute('class', 'packet-label'); lab.setAttribute('fill', h.c); lab.textContent = h.t;
+    g.append(dot, lab); packets.appendChild(g);
+    const dur = Math.max(900, 300 + L * 6) ; let el = 0, last = performance.now();
+    const vb = 1180;
+    function frame(now){
+      if (myRun !== run) { g.remove(); return resolve(false); }
+      const dt = now - last; last = now; if (!paused) el += dt * speed;
+      const t = Math.min(1, el / dur), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const p = path.getPointAtLength(h.r ? L * (1 - e) : L * e);
+      dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+      const w = h.t.length * 6.9; let lx = p.x + 12; if (lx + w > vb - 6) lx = p.x - 12 - w; if (lx < 6) lx = 6;
+      lab.setAttribute('x', lx); lab.setAttribute('y', p.y - 12);
+      if (t < 1) requestAnimationFrame(frame);
+      else { heat(to, h.c); applyEffects(h, true); setTimeout(() => { g.remove(); resolve(myRun === run); }, 380 / speed); }
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+async function playStep(i){
+  const myRun = ++run; cur = i; setPanel(i);
+  for (const h of STEPS[i].hops) { const ok = await hop(h, myRun); if (!ok) return; await wait(180, myRun); if (myRun !== run) return; }
+  if (playing && myRun === run) {
+    await wait(900, myRun); if (myRun !== run || !playing) return;
+    if (i + 1 < STEPS.length) playStep(i + 1); else { playing = false; updatePlayBtn(); }
+  }
+}
+function wait(ms, myRun){ return new Promise(r => { let el = 0, last = performance.now();
+  (function f(now){ if (myRun !== run) return r(); const dt = now - last; last = now; if (!paused) el += dt * speed; el >= ms ? r() : requestAnimationFrame(f); })(last); }); }
+
+/* jump: rebuild terminal + messages instantly for all earlier steps */
+function goTo(i, animate = true){
+  run++; packets.innerHTML = ''; clearHot();
+  term.innerHTML = '<span class="cursor"></span>'; msgs.innerHTML = '';
+  for (let k = 0; k < i; k++) STEPS[k].hops.forEach(h => applyEffects(h, false));
+  paused = false; playStep(i);
+}
+function stop(){ playing = false; paused = false; updatePlayBtn(); }
+function updatePlayBtn(){ $('playBtn').textContent = playing && !paused ? '⏸ Pause' : '▶ Play'; }
+
+$('playBtn').onclick = () => {
+  if (playing && !paused) { paused = true; }
+  else if (playing && paused) { paused = false; }
+  else { playing = true; paused = false; goTo(cur < 0 || cur >= STEPS.length - 1 ? 0 : cur + 1); }
+  updatePlayBtn();
+};
+$('nextBtn').onclick = () => { stop(); goTo(Math.min(STEPS.length - 1, cur + 1)); };
+$('prevBtn').onclick = () => { stop(); goTo(Math.max(0, cur - 1)); };
+$('resetBtn').onclick = () => { stop(); run++; cur = -1; packets.innerHTML=''; clearHot(); term.innerHTML = '<span class="cursor"></span>'; msgs.innerHTML='';
+  $('stepTitle').innerHTML = '<span id="stepNum">0</span> · Ready'; $('stepText').innerHTML = 'Press <b>Play</b> or <b>Next</b> (or use the ← → keys).';
+  $('hopNote').innerHTML=''; $('code').textContent = '# main.py\npython main.py Hyderabad'; [...dotsEl.children].forEach(d => d.className = 'dot'); };
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') $('nextBtn').click();
+  if (e.key === 'ArrowLeft') $('prevBtn').click();
+});
+
+/* autoplay once the diagram is on screen */
+let auto = false;
+new IntersectionObserver(es => { es.forEach(en => { if (en.isIntersecting && !auto) { auto = true; setTimeout(() => { if (cur < 0) $('playBtn').click(); }, 600); } }); }, { threshold: .45 }).observe(svg);
+
+/* ---------- trend chart ---------- */
+$('ymean').textContent = ym.toFixed(2); $('slopeV').textContent = sgn(SLOPE) + ' °C/day';
+$('nextV').textContent = NEXT.toFixed(1); $('avg3V').textContent = AVG3.toFixed(1);
+const T = $('trend'), ns = 'http://www.w3.org/2000/svg';
+const X0 = 56, X1 = 570, Y0 = 280, Y1 = 30, ymin = 28.5, ymax = 32.5;
+const sx = x => X0 + (X1 - X0) * x / 8, sy = y => Y0 - (Y0 - Y1) * (y - ymin) / (ymax - ymin);
+const mk = (tag, attrs, parent = T) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+for (let v = 29; v <= 32; v++) { mk('line', { class:'ax', x1:X0, x2:X1, y1:sy(v), y2:sy(v) }); mk('text', { class:'ax-t', x:X0 - 8, y:sy(v) + 4, 'text-anchor':'end' }).textContent = v + '°'; }
+DATES.concat(['2026-11-10']).forEach((d, i) => { const t = mk('text', { class:'ax-t', x:sx(i), y:Y0 + 20, 'text-anchor':'middle' }); t.textContent = i === 8 ? 'tmrw' : 'Nov ' + (+d.slice(8)); if (i === 8) t.style.fill = 'var(--pink)'; });
+const gMean = mk('g', { class:'fade' });
+mk('line', { x1:X0, x2:X1, y1:sy(ym), y2:sy(ym), stroke:'var(--muted)', 'stroke-dasharray':'5 5' }, gMean);
+mk('text', { class:'ax-t', x:X1 - 4, y:sy(ym) + 15, 'text-anchor':'end' }, gMean).textContent = `ȳ = ${ym.toFixed(2)}°`;
+mk('line', { x1:sx(xm), x2:sx(xm), y1:Y1, y2:Y0, stroke:'var(--muted)', 'stroke-dasharray':'5 5' }, gMean);
+mk('text', { class:'ax-t', x:sx(xm) + 5, y:Y1 + 10 }, gMean).textContent = 'x̄ = 3.5';
+const reg = mk('path', { id:'regLine', d:`M${sx(0)} ${sy(ym - SLOPE * xm)} L${sx(8)} ${sy(NEXT)}` });
+const regLen = Math.hypot(sx(8) - sx(0), sy(NEXT) - sy(ym - SLOPE * xm));
+reg.style.strokeDasharray = regLen; reg.style.strokeDashoffset = regLen;
+const slopeLab = mk('text', { class:'ax-t fade', x:sx(5.25), y:sy(ym + SLOPE * (6 - xm)) + 32 }); slopeLab.textContent = `slope ${sgn(SLOPE)} °C/day`; slopeLab.style.fill = 'var(--pink)';
+const pts = MAX.map((y, x) => { const c = mk('circle', { class:'pt', cx:sx(x), cy:sy(y), r:6 }); c.style.transitionDelay = (x * 90) + 'ms'; return c; });
+const gNext = mk('g', { class:'fade' });
+mk('circle', { class:'ring', cx:sx(8), cy:sy(NEXT), r:8 }, gNext);
+mk('circle', { id:'nextPt', cx:sx(8), cy:sy(NEXT), r:7 }, gNext);
+mk('text', { class:'ax-t', x:sx(8) - 10, y:sy(NEXT) - 16, 'text-anchor':'end' }, gNext).textContent = `next ≈ ${NEXT.toFixed(1)} °C`;
+const gAvg = mk('g', { class:'fade' });
+mk('rect', { x:sx(5) - 14, y:sy(31.6), width:sx(7) - sx(5) + 28, height:sy(30.4) - sy(31.6), rx:10, fill:'none', stroke:'var(--green)', 'stroke-width':2, 'stroke-dasharray':'4 4' }, gAvg);
+mk('text', { class:'ax-t', x:sx(6), y:sy(31.6) - 6, 'text-anchor':'middle' }, gAvg).textContent = `avg last 3 = ${AVG3.toFixed(1)}°`;
+
+const tsEls = [...document.querySelectorAll('.ts')];
+let trendRun = 0;
+function trendPlay(){
+  const my = ++trendRun;
+  pts.forEach(p => p.classList.remove('on')); [gMean, slopeLab, gNext, gAvg].forEach(g => g.classList.remove('on'));
+  reg.style.transition = 'none'; reg.style.strokeDashoffset = regLen; tsEls.forEach(t => t.classList.remove('on'));
+  const seq = [
+    () => { tsEls[0].classList.add('on'); pts.forEach(p => p.classList.add('on')); },
+    () => { tsEls[1].classList.add('on'); gMean.classList.add('on'); },
+    () => { tsEls[2].classList.add('on'); reg.getBoundingClientRect(); reg.style.transition = 'stroke-dashoffset 1.6s ease'; reg.style.strokeDashoffset = regLen * 0.125; slopeLab.classList.add('on'); },
+    () => { tsEls[3].classList.add('on'); reg.style.strokeDashoffset = 0; gNext.classList.add('on'); },
+    () => { tsEls[4].classList.add('on'); gAvg.classList.add('on'); },
+  ];
+  seq.forEach((f, i) => setTimeout(() => { if (my === trendRun) f(); }, 300 + i * 1700));
+}
+$('trendReplay').onclick = trendPlay;
+let trendSeen = false;
+new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting && !trendSeen) { trendSeen = true; trendPlay(); } }), { threshold: .4 }).observe(T);
+})();
+</script>
+</body>
+</html>
