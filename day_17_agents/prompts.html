@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Prompts — Reverse Engineered</title>
+<style>
+  :root {
+    --bg: #0a0c14;
+    --panel: #0f1420;
+    --panel2: #131926;
+    --border: #1e2d4a;
+    --accent1: #3b82f6;
+    --accent2: #06b6d4;
+    --accent3: #8b5cf6;
+    --accent4: #10b981;
+    --accent5: #f59e0b;
+    --accent6: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d1117;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  /* ── header ── */
+  header {
+    text-align: center;
+    padding: 44px 24px 28px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,.12) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  header h1 {
+    font-size: clamp(1.5rem,3.5vw,2.4rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: .02em;
+  }
+  header p { color: var(--muted); margin-top: 8px; font-size: .9rem; max-width: 640px; margin-inline: auto; }
+  .header-badges { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  .hb {
+    padding: 4px 12px; border-radius: 20px; font-size: .72rem;
+    font-weight: 600; border: 1px solid; letter-spacing: .05em;
+  }
+  .hb-blue   { background:rgba(59,130,246,.12); border-color:var(--accent1); color:var(--accent1); }
+  .hb-cyan   { background:rgba(6,182,212,.12);  border-color:var(--accent2); color:var(--accent2); }
+  .hb-purple { background:rgba(139,92,246,.12); border-color:var(--accent3); color:var(--accent3); }
+  .hb-green  { background:rgba(16,185,129,.12); border-color:var(--accent4); color:var(--accent4); }
+  .hb-amber  { background:rgba(245,158,11,.12); border-color:var(--accent5); color:var(--accent5); }
+  .hb-red    { background:rgba(239,68,68,.12);  border-color:var(--accent6); color:var(--accent6); }
+
+  /* ── layout ── */
+  .main { max-width: 1060px; margin: 0 auto; padding: 36px 24px 60px; display:flex; flex-direction:column; gap:48px; }
+
+  /* ── agent section ── */
+  .agent-section { display:flex; flex-direction:column; gap:20px; }
+  .agent-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 1.5px solid;
+    background: var(--panel);
+    position: relative;
+    overflow: hidden;
+  }
+  .agent-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.02) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .agent-emoji { font-size: 2.4rem; flex-shrink: 0; }
+  .agent-title { flex: 1; }
+  .agent-title h2 { font-size: 1.25rem; font-weight: 700; }
+  .agent-title p  { font-size: .82rem; color: var(--muted); margin-top: 3px; }
+  .agent-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .meta-tag {
+    padding: 3px 10px; border-radius: 12px; font-size: .68rem;
+    font-weight: 600; border: 1px solid;
+  }
+
+  /* per-agent colour schemes */
+  .s-weather .agent-header { border-color: rgba(6,182,212,.5); }
+  .s-weather .agent-title h2 { color: var(--accent2); }
+  .s-weather .meta-tag { background:rgba(6,182,212,.1); border-color:rgba(6,182,212,.4); color:var(--accent2); }
+
+  .s-travel .agent-header { border-color: rgba(16,185,129,.5); }
+  .s-travel .agent-title h2 { color: var(--accent4); }
+  .s-travel .meta-tag { background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.4); color:var(--accent4); }
+
+  .s-political .agent-header { border-color: rgba(239,68,68,.5); }
+  .s-political .agent-title h2 { color: var(--accent6); }
+  .s-political .meta-tag { background:rgba(239,68,68,.1); border-color:rgba(239,68,68,.4); color:var(--accent6); }
+
+  /* ── prompt card ── */
+  .prompt-card {
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .prompt-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel2);
+  }
+  .prompt-card-header .ph-left { display:flex; align-items:center; gap:8px; }
+  .prompt-type {
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; padding: 3px 10px; border-radius: 10px; border: 1px solid;
+  }
+  .pt-system { background:rgba(139,92,246,.12); border-color:var(--accent3); color:var(--accent3); }
+  .pt-build  { background:rgba(59,130,246,.12);  border-color:var(--accent1); color:var(--accent1); }
+  .pt-tool   { background:rgba(245,158,11,.12);  border-color:var(--accent5); color:var(--accent5); }
+
+  .ph-title { font-size: .82rem; color: var(--muted); font-weight: 500; }
+
+  .copy-btn {
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: .72rem;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: inherit;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,.1); color: var(--text); border-color: rgba(255,255,255,.2); }
+  .copy-btn.copied { background:rgba(16,185,129,.15); border-color:var(--accent4); color:var(--accent4); }
+
+  /* ── code block ── */
+  .prompt-body {
+    padding: 20px 22px;
+    font-family: 'Consolas', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: .82rem;
+    line-height: 1.75;
+    color: #c9d1d9;
+    background: var(--code-bg);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 420px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .prompt-body::-webkit-scrollbar { width: 5px; }
+  .prompt-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* syntax-ish highlights */
+  .kw   { color: #ff7b72; }   /* keywords / section markers */
+  .str  { color: #a5d6ff; }   /* string values */
+  .cmt  { color: #8b949e; font-style: italic; }   /* comments */
+  .num  { color: #79c0ff; }   /* numbers */
+  .fn   { color: #d2a8ff; }   /* function/tool names */
+  .hl   { color: #ffa657; }   /* highlights / labels */
+
+  /* ── divider ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 4px 0;
+  }
+
+  /* ── comparison table ── */
+  .table-wrap {
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .table-title {
+    padding: 14px 20px;
+    background: var(--panel2);
+    border-bottom: 1px solid var(--border);
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px 16px; font-size: .82rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--panel2); color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  td:first-child { font-weight: 600; }
+
+  /* ── footer ── */
+  footer { text-align:center; color:var(--muted); font-size:.75rem; padding:20px; border-top:1px solid var(--border); }
+
+  /* ── fade-in animation ── */
+  .agent-section { opacity:0; transform:translateY(16px); animation: fadeUp .5s ease forwards; }
+  .agent-section:nth-child(1) { animation-delay: .1s; }
+  .agent-section:nth-child(2) { animation-delay: .25s; }
+  .agent-section:nth-child(3) { animation-delay: .4s; }
+  .agent-section:nth-child(4) { animation-delay: .55s; }
+  @keyframes fadeUp { to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔁 Reverse-Engineered Agent Prompts</h1>
+  <p>Every system prompt, build prompt, and tool contract extracted directly from the three agents in <code>day_17_agents/</code>.</p>
+  <div class="header-badges">
+    <span class="hb hb-cyan">🌦 Weather Agent</span>
+    <span class="hb hb-green">🌍 Travel Agent</span>
+    <span class="hb hb-red">🏛️ Political Agent</span>
+    <span class="hb hb-purple">LangGraph ReAct</span>
+    <span class="hb hb-blue">Ollama llama3.2</span>
+    <span class="hb hb-amber">Free APIs Only</span>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════════
+     AGENT 1 — WEATHER
+════════════════════════════════════════════════ -->
+<div class="agent-section s-weather">
+
+  <div class="agent-header">
+    <div class="agent-emoji">🌦️</div>
+    <div class="agent-title">
+      <h2>Weather Prediction Agent</h2>
+      <p>weather_agent/main.py · Predicts tomorrow's max temperature from 7-day history</p>
+      <div class="agent-meta">
+        <span class="meta-tag">LangChain create_agent</span>
+        <span class="meta-tag">Ollama llama3.2</span>
+        <span class="meta-tag">Open-Meteo API</span>
+        <span class="meta-tag">2 tools</span>
+        <span class="meta-tag">CLI streaming</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Prompt -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-system">System Prompt</span>
+        <span class="ph-title">Runtime instruction given to the LLM inside main.py</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'sp-weather')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="sp-weather"><span class="kw">You are a weather analyst.</span> To predict tomorrow's max temperature:
+
+<span class="num">1.</span> Call <span class="fn">get_past_temperatures</span> for the city.
+<span class="num">2.</span> Call <span class="fn">temperature_trend</span> for the same city.
+<span class="num">3.</span> Answer with: the predicted max temperature for tomorrow
+   (<span class="str">one number in °C</span>), and one or two short sentences
+   explaining why, based on the data.
+
+<span class="cmt">Never invent temperatures. Only use numbers that came from the tools.</span></div>
+  </div>
+
+  <!-- Build Prompt -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-build">Build Prompt</span>
+        <span class="ph-title">Prompt to recreate this agent from scratch</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'bp-weather')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="bp-weather"><span class="cmt"># ── GOAL ──────────────────────────────────────────────────────────</span>
+Build a CLI weather prediction agent in Python using LangChain
+and LangGraph that predicts tomorrow's max temperature from
+7-day historical data.
+
+<span class="cmt"># ── STACK ─────────────────────────────────────────────────────────</span>
+<span class="hl">LLM       :</span> <span class="str">Ollama llama3.2</span>, temperature=0 (via langchain-ollama)
+<span class="hl">Framework :</span> LangChain <span class="fn">create_agent</span> with LangGraph backend
+<span class="hl">API       :</span> Open-Meteo (free, no API key)
+  Geocoding : https://geocoding-api.open-meteo.com/v1/search
+  Weather   : https://api.open-meteo.com/v1/forecast
+
+<span class="cmt"># ── TOOLS (2) ─────────────────────────────────────────────────────</span>
+<span class="fn">get_past_temperatures</span>(<span class="kw">city</span>: str) → str
+  - Geocode city → lat/lon
+  - Fetch past_days=7, forecast_days=1, daily max+min temps
+  - Return: "City, Country:\nDATE: max X°C, min Y°C\n..."
+
+<span class="fn">temperature_trend</span>(<span class="kw">city</span>: str) → str
+  - Fetch last 7 days of max temperatures (same API call)
+  - Compute linear regression slope (°C per day)
+  - Compute straight-line next value and 3-day moving average
+  - Return: "trend: ±X.XX °C/day | next: Y.Y°C | avg3: Z.Z°C"
+
+<span class="cmt"># ── ENTRY POINT ───────────────────────────────────────────────────</span>
+File: main.py  (single file — tools + agent together)
+- Accept city via sys.argv or interactive input(), default "Hyderabad"
+- Build question: <span class="str">"Predict tomorrow's maximum temperature in {city}."</span>
+- Stream agent with stream_mode="values"
+- Print each step: 🧠 THINK→ACT (tool calls) | 🔎 OBSERVE | 🤖 Answer
+- After agent finishes, fetch Open-Meteo official forecast and print
+  for comparison
+
+<span class="cmt"># ── FILES ─────────────────────────────────────────────────────────</span>
+main.py           ← tools + agent + main logic
+requirements.txt  ← langchain, langchain-ollama, langgraph, requests
+.venv/</div>
+  </div>
+
+  <!-- Tool Contract -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-tool">Tool Contracts</span>
+        <span class="ph-title">Exact docstrings the LLM reads to decide when to call each tool</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'tc-weather')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="tc-weather"><span class="fn">get_past_temperatures</span>(<span class="kw">city</span>: str) → str
+<span class="str">"""Get the real daily max and min temperatures (°C) for the last 7 days
+in a city, plus today. Use this first to see recent weather."""</span>
+
+<span class="fn">temperature_trend</span>(<span class="kw">city</span>: str) → str
+<span class="str">"""Calculate the trend of the last 7 days of max temperatures in a city:
+how much it changes per day and the next value on the trend line.
+Use this to do the maths instead of guessing."""</span></div>
+  </div>
+
+</div><!-- /weather -->
+
+
+<!-- ═══════════════════════════════════════════════
+     AGENT 2 — TRAVEL
+════════════════════════════════════════════════ -->
+<div class="agent-section s-travel">
+
+  <div class="agent-header">
+    <div class="agent-emoji">🌍</div>
+    <div class="agent-title">
+      <h2>Travel Assistant Agent</h2>
+      <p>travel_agent/agent.py · Real-time destination weather + travel advice</p>
+      <div class="agent-meta">
+        <span class="meta-tag">LangGraph create_react_agent</span>
+        <span class="meta-tag">Ollama llama3.2</span>
+        <span class="meta-tag">Open-Meteo API</span>
+        <span class="meta-tag">1 tool</span>
+        <span class="meta-tag">Interactive CLI</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Prompt -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-system">System Prompt</span>
+        <span class="ph-title">Runtime instruction from travel_agent/agent.py → SYSTEM_PROMPT</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'sp-travel')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="sp-travel"><span class="kw">You are a friendly and knowledgeable travel assistant.</span>
+
+When a user asks about a travel destination, use the
+<span class="fn">get_destination_info</span> tool to fetch real-time weather and conditions.
+
+Based on the data, give helpful, concise travel advice:
+  • <span class="str">What to pack</span>
+  • <span class="str">Best activities</span>
+  • <span class="str">Anything relevant for the trip</span>
+
+<span class="cmt">Always be encouraging and practical.</span></div>
+  </div>
+
+  <!-- Build Prompt -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-build">Build Prompt</span>
+        <span class="ph-title">Prompt to recreate this agent from scratch</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'bp-travel')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="bp-travel"><span class="cmt"># ── GOAL ──────────────────────────────────────────────────────────</span>
+Build a conversational travel assistant CLI agent in Python
+using LangChain and LangGraph with one real-time weather tool.
+
+<span class="cmt"># ── STACK ─────────────────────────────────────────────────────────</span>
+<span class="hl">LLM       :</span> <span class="str">Ollama llama3.2</span>, temperature=0.3 (via langchain-ollama)
+<span class="hl">Framework :</span> LangGraph <span class="fn">create_react_agent</span> (prebuilt ReAct loop)
+<span class="hl">API       :</span> Open-Meteo Geocoding + Weather (free, no API key)
+
+<span class="cmt"># ── TOOL (1) ──────────────────────────────────────────────────────</span>
+<span class="fn">get_destination_info</span>(<span class="kw">city</span>: str) → str
+  Step 1 — Geocode:
+    GET geocoding-api.open-meteo.com/v1/search?name={city}&count=1
+    Extract lat, lon, country
+
+  Step 2 — Weather:
+    GET api.open-meteo.com/v1/forecast with:
+      current  = temperature_2m, apparent_temperature,
+                 relative_humidity_2m, wind_speed_10m, weathercode
+      daily    = temperature_2m_max, temperature_2m_min,
+                 precipitation_probability_max, weathercode
+      forecast_days=3, timezone=auto
+
+  Step 3 — Format:
+    Map WMO weathercode → human label (dict of ~20 codes)
+    Apply travel tip from temperature thresholds:
+      <5°C → "Very cold — pack heavy winter clothing."
+      <15  → "Cool weather — bring a jacket."
+      ≤28  → "Pleasant weather — great for sightseeing!"
+      ≤35  → "Warm — stay hydrated and use sunscreen."
+      >35  → "Extremely hot — limit outdoor activities midday."
+    Return multi-line string: header, current, 3-day table, tip
+
+<span class="cmt"># ── ENTRY POINT ───────────────────────────────────────────────────</span>
+Interactive while-loop CLI chat (agent.py):
+  - Print header with model + tool name on startup
+  - Exit on "quit" / "exit" / "q" / Ctrl+C
+  - Wrap each turn: SystemMessage + HumanMessage → agent.invoke()
+  - Print result["messages"][-1].content
+
+<span class="cmt"># ── FILES ─────────────────────────────────────────────────────────</span>
+tools.py          ← get_destination_info tool
+agent.py          ← build_agent(), ask(), main()
+requirements.txt  ← langchain, langchain-ollama, langgraph, requests
+.venv/</div>
+  </div>
+
+  <!-- Tool Contract -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-tool">Tool Contract</span>
+        <span class="ph-title">Exact docstring the LLM reads from travel_agent/tools.py</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'tc-travel')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="tc-travel"><span class="fn">get_destination_info</span>(<span class="kw">city</span>: str) → str
+<span class="str">"""
+Get current weather and 3-day travel forecast for any destination city.
+Returns temperature, conditions, humidity, wind speed, and travel tips.
+Uses free Open-Meteo API — no API key required.
+"""</span></div>
+  </div>
+
+</div><!-- /travel -->
+
+
+<!-- ═══════════════════════════════════════════════
+     AGENT 3 — POLITICAL
+════════════════════════════════════════════════ -->
+<div class="agent-section s-political">
+
+  <div class="agent-header">
+    <div class="agent-emoji">🏛️</div>
+    <div class="agent-title">
+      <h2>Political Scenario Agent</h2>
+      <p>political_scenario_agent/agent.py · Real-time web search + geopolitical analysis</p>
+      <div class="agent-meta">
+        <span class="meta-tag">LangGraph create_react_agent</span>
+        <span class="meta-tag">Ollama llama3.2</span>
+        <span class="meta-tag">DuckDuckGo Search</span>
+        <span class="meta-tag">1 tool</span>
+        <span class="meta-tag">Multi-search loop</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Prompt -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-system">System Prompt</span>
+        <span class="ph-title">Runtime instruction from political_scenario_agent/agent.py → SYSTEM_PROMPT</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'sp-political')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="sp-political"><span class="kw">You are an expert political analyst and geopolitical strategist.</span>
+
+Your role is to analyze political scenarios, current events,
+elections, policy decisions, international relations, and world
+affairs with clarity and balance.
+
+When analyzing a scenario:
+<span class="num">1.</span> Use the <span class="fn">web_search</span> tool to find current, factual information.
+<span class="num">2.</span> Present multiple perspectives without personal bias.
+<span class="num">3.</span> Explain the key players, their motivations, and likely outcomes.
+<span class="num">4.</span> Highlight risks, opportunities, and historical context where relevant.
+<span class="num">5.</span> Keep your analysis concise, structured, and evidence-based.
+
+<span class="cmt">Always cite your sources by mentioning where you found the information.</span></div>
+  </div>
+
+  <!-- Build Prompt -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-build">Build Prompt</span>
+        <span class="ph-title">Prompt to recreate this agent from scratch</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'bp-political')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="bp-political"><span class="cmt"># ── GOAL ──────────────────────────────────────────────────────────</span>
+Build a conversational political analysis CLI agent in Python
+using LangChain and LangGraph with real-time DuckDuckGo web search.
+
+<span class="cmt"># ── STACK ─────────────────────────────────────────────────────────</span>
+<span class="hl">LLM       :</span> <span class="str">Ollama llama3.2</span>, temperature=0.3 (via langchain-ollama)
+<span class="hl">Framework :</span> LangGraph <span class="fn">create_react_agent</span> (prebuilt ReAct loop)
+<span class="hl">Search    :</span> DuckDuckGo via <span class="fn">duckduckgo-search</span> Python package
+            (free, no API key, no rate-limit registration)
+
+<span class="cmt"># ── TOOL (1) ──────────────────────────────────────────────────────</span>
+<span class="fn">web_search</span>(<span class="kw">query</span>: str) → str
+  - Use DDGS().text(query, max_results=5) in a context manager
+  - For each result: extract title, href (URL), body (snippet)
+  - Return numbered list:
+      [1] Title
+          URL : https://...
+          Info: snippet text
+
+      [2] ...
+  - On any exception: return friendly error, suggest rephrasing
+
+<span class="cmt"># ── BEHAVIOUR ─────────────────────────────────────────────────────</span>
+The agent may call web_search multiple times per question to:
+  - Search for different angles of the same scenario
+  - Find historical context after getting current news
+  - Verify claims from a first search result
+
+<span class="cmt"># ── ENTRY POINT ───────────────────────────────────────────────────</span>
+Interactive while-loop CLI chat (agent.py):
+  - Print header with model, tool name, and 3 example queries:
+      "What is the current political situation in France?"
+      "Analyze the impact of US-China trade tensions."
+      "What are the key issues in the upcoming UK elections?"
+  - Exit on "quit" / "exit" / "q" / Ctrl+C
+
+<span class="cmt"># ── FILES ─────────────────────────────────────────────────────────</span>
+tools.py          ← web_search tool
+agent.py          ← build_agent(), ask(), main()
+requirements.txt  ← langchain, langchain-ollama, langchain-community,
+                    langgraph, duckduckgo-search
+.venv/</div>
+  </div>
+
+  <!-- Tool Contract -->
+  <div class="prompt-card">
+    <div class="prompt-card-header">
+      <div class="ph-left">
+        <span class="prompt-type pt-tool">Tool Contract</span>
+        <span class="ph-title">Exact docstring the LLM reads from political_scenario_agent/tools.py</span>
+      </div>
+      <button class="copy-btn" onclick="copyPrompt(this,'tc-political')">⎘ Copy</button>
+    </div>
+    <div class="prompt-body" id="tc-political"><span class="fn">web_search</span>(<span class="kw">query</span>: str) → str
+<span class="str">"""
+Search the web for current political news, events, policies, elections,
+geopolitical developments, or any factual information about world affairs.
+Returns the top 5 search results with title, URL, and snippet.
+Uses DuckDuckGo — free, no API key required.
+"""</span></div>
+  </div>
+
+</div><!-- /political -->
+
+
+<!-- ═══════════════════════════════════════════════
+     COMPARISON TABLE
+════════════════════════════════════════════════ -->
+<div class="agent-section">
+  <div class="table-wrap">
+    <div class="table-title">📊 Side-by-Side Comparison</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>🌦 Weather Agent</th>
+          <th>🌍 Travel Agent</th>
+          <th>🏛️ Political Agent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Entry file</td>
+          <td>main.py</td>
+          <td>agent.py</td>
+          <td>agent.py</td>
+        </tr>
+        <tr>
+          <td>Agent builder</td>
+          <td>create_agent</td>
+          <td>create_react_agent</td>
+          <td>create_react_agent</td>
+        </tr>
+        <tr>
+          <td>LLM temp</td>
+          <td>0 (deterministic)</td>
+          <td>0.3</td>
+          <td>0.3</td>
+        </tr>
+        <tr>
+          <td>Number of tools</td>
+          <td>2</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>Tool names</td>
+          <td>get_past_temperatures, temperature_trend</td>
+          <td>get_destination_info</td>
+          <td>web_search</td>
+        </tr>
+        <tr>
+          <td>Data source</td>
+          <td>Open-Meteo historical</td>
+          <td>Open-Meteo forecast</td>
+          <td>DuckDuckGo live web</td>
+        </tr>
+        <tr>
+          <td>API key needed</td>
+          <td>No</td>
+          <td>No</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td>Output mode</td>
+          <td>Streamed steps</td>
+          <td>Chat reply</td>
+          <td>Chat reply</td>
+        </tr>
+        <tr>
+          <td>Tool file</td>
+          <td>Inline in main.py</td>
+          <td>tools.py</td>
+          <td>tools.py</td>
+        </tr>
+        <tr>
+          <td>Key dependency</td>
+          <td>requests</td>
+          <td>requests</td>
+          <td>duckduckgo-search</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<footer>
+  day_17_agents · LangGraph + Ollama + Free APIs · Reverse-engineered prompts
+</footer>
+
+<script>
+function copyPrompt(btn, id) {
+  const el = document.getElementById(id);
+  // strip HTML tags to get plain text
+  const text = el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.textContent = '✓ Copied';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.textContent = '⎘ Copy';
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Political Scenario Agent — Architecture</title>
+<style>
+  :root {
+    --bg: #0b0d14;
+    --panel: #101420;
+    --border: #1e2d4a;
+    --accent1: #ef4444;
+    --accent2: #f97316;
+    --accent3: #8b5cf6;
+    --accent4: #3b82f6;
+    --accent5: #10b981;
+    --accent6: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── starfield bg ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,.18) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 10%, rgba(255,255,255,.12) 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.10) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 55%, rgba(255,255,255,.14) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 65%, rgba(255,255,255,.08) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .canvas {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* ── header ── */
+  header {
+    text-align: center;
+    padding: 32px 20px 0;
+    position: relative;
+    z-index: 1;
+  }
+  header h1 {
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent1), var(--accent6), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.02em;
+  }
+  header p { color: var(--muted); margin-top: 6px; font-size: 0.88rem; }
+
+  /* ── badges ── */
+  .badges {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    border: 1px solid;
+  }
+  .b-red    { background:rgba(239,68,68,.12);  border-color:var(--accent1); color:var(--accent1); }
+  .b-orange { background:rgba(249,115,22,.12); border-color:var(--accent2); color:var(--accent2); }
+  .b-purple { background:rgba(139,92,246,.12); border-color:var(--accent3); color:var(--accent3); }
+  .b-blue   { background:rgba(59,130,246,.12); border-color:var(--accent4); color:var(--accent4); }
+  .b-green  { background:rgba(16,185,129,.12); border-color:var(--accent5); color:var(--accent5); }
+  .b-amber  { background:rgba(245,158,11,.12); border-color:var(--accent6); color:var(--accent6); }
+
+  /* ── node ── */
+  .node {
+    border-radius: 16px;
+    border: 1.5px solid var(--border);
+    background: var(--panel);
+    padding: 16px 18px;
+    text-align: center;
+    min-width: 136px;
+    flex-shrink: 0;
+    transition: transform 0.3s;
+  }
+  .node:hover { transform: translateY(-3px); }
+  .node .icon  { font-size: 2rem; display: block; margin-bottom: 6px; }
+  .node .label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .node .name  { font-size: 0.93rem; font-weight: 700; margin-top: 4px; line-height: 1.3; }
+  .node .sub   { font-size: 0.71rem; color: var(--muted); margin-top: 4px; }
+
+  .n-user   { border-color: var(--accent6); animation: glowAmber 2.5s ease-in-out infinite; }
+  .n-user   .name { color: var(--accent6); }
+  .n-llm    { border-color: var(--accent3); animation: glowPurple 2.5s ease-in-out infinite .4s; }
+  .n-llm    .name { color: var(--accent3); }
+  .n-tool   { border-color: var(--accent2); animation: glowOrange 2.5s ease-in-out infinite .8s; }
+  .n-tool   .name { color: var(--accent2); }
+  .n-search { border-color: var(--accent5); animation: glowGreen 2.5s ease-in-out infinite 1.2s; }
+  .n-search .name { color: var(--accent5); }
+  .n-web    { border-color: var(--accent4); animation: glowBlue 2.5s ease-in-out infinite 1.6s; }
+  .n-web    .name { color: var(--accent4); }
+
+  @keyframes glowAmber  { 0%,100%{box-shadow:0 0 8px rgba(245,158,11,.2)}  50%{box-shadow:0 0 28px rgba(245,158,11,.5)} }
+  @keyframes glowPurple { 0%,100%{box-shadow:0 0 8px rgba(139,92,246,.2)}  50%{box-shadow:0 0 28px rgba(139,92,246,.5)} }
+  @keyframes glowOrange { 0%,100%{box-shadow:0 0 8px rgba(249,115,22,.2)}  50%{box-shadow:0 0 28px rgba(249,115,22,.5)} }
+  @keyframes glowGreen  { 0%,100%{box-shadow:0 0 8px rgba(16,185,129,.2)}  50%{box-shadow:0 0 28px rgba(16,185,129,.5)} }
+  @keyframes glowBlue   { 0%,100%{box-shadow:0 0 8px rgba(59,130,246,.2)}  50%{box-shadow:0 0 28px rgba(59,130,246,.5)} }
+
+  /* ── flow row ── */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: nowrap;
+  }
+
+  /* ── arrow ── */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 56px;
+    flex-shrink: 0;
+    gap: 2px;
+  }
+  .arrow .lbl { font-size: 0.63rem; color: var(--muted); white-space: nowrap; }
+  .arrow-line {
+    width: 100%; height: 2px;
+    position: relative; overflow: hidden; border-radius: 2px;
+  }
+  .arrow-line::before {
+    content: '';
+    position: absolute;
+    top: 0; height: 100%; width: 100%;
+    border-radius: 2px;
+  }
+  .arr-r .arrow-line::before { left: -100%; animation: slideR 1.5s linear infinite; }
+  .arr-l .arrow-line::before { left: 100%;  animation: slideL 1.5s linear infinite; }
+  @keyframes slideR { to { left: 100%; } }
+  @keyframes slideL { to { left: -100%; } }
+  .arrow-head { font-size: .95rem; line-height: 1; }
+
+  .c-amber  .arrow-line { background: rgba(245,158,11,.18); }  .c-amber  .arrow-line::before { background: var(--accent6); } .c-amber  .arrow-head { color: var(--accent6); }
+  .c-purple .arrow-line { background: rgba(139,92,246,.18); }  .c-purple .arrow-line::before { background: var(--accent3); } .c-purple .arrow-head { color: var(--accent3); }
+  .c-orange .arrow-line { background: rgba(249,115,22,.18); }  .c-orange .arrow-line::before { background: var(--accent2); } .c-orange .arrow-head { color: var(--accent2); }
+  .c-green  .arrow-line { background: rgba(16,185,129,.18); }  .c-green  .arrow-line::before { background: var(--accent5); } .c-green  .arrow-head { color: var(--accent5); }
+  .c-blue   .arrow-line { background: rgba(59,130,246,.18); }  .c-blue   .arrow-line::before { background: var(--accent4); } .c-blue   .arrow-head { color: var(--accent4); }
+  .c-red    .arrow-line { background: rgba(239,68,68,.18); }   .c-red    .arrow-line::before { background: var(--accent1); } .c-red    .arrow-head { color: var(--accent1); }
+
+  /* ── ReAct box ── */
+  .react-box {
+    border: 1.5px dashed var(--accent1);
+    border-radius: 20px;
+    padding: 20px 24px 16px;
+    position: relative;
+    animation: glowRed 3s ease-in-out infinite;
+  }
+  @keyframes glowRed { 0%,100%{box-shadow:0 0 10px rgba(239,68,68,.12)} 50%{box-shadow:0 0 36px rgba(239,68,68,.3)} }
+  .react-box .box-label {
+    position: absolute;
+    top: -12px; left: 20px;
+    background: var(--bg);
+    padding: 2px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent1);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 20px;
+    border: 1px solid var(--accent1);
+  }
+
+  .react-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .step {
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: center;
+    min-width: 86px;
+    font-size: 0.78rem;
+  }
+  .step .s-icon  { font-size: 1.4rem; display: block; }
+  .step .s-label { font-weight: 700; margin-top: 4px; }
+  .step .s-desc  { color: var(--muted); font-size: 0.67rem; margin-top: 2px; }
+
+  .s-think { background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.4); }
+  .s-think .s-label { color: var(--accent3); }
+  .s-act   { background: rgba(249,115,22,.12); border: 1px solid rgba(249,115,22,.4); }
+  .s-act   .s-label { color: var(--accent2); }
+  .s-obs   { background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.4); }
+  .s-obs   .s-label { color: var(--accent4); }
+  .s-ans   { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.4); }
+  .s-ans   .s-label { color: var(--accent5); }
+
+  .step { animation-duration: 4s; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+  .s-think { animation-name: hlPurple; animation-delay: 0s; }
+  .s-act   { animation-name: hlOrange; animation-delay: 1s; }
+  .s-obs   { animation-name: hlBlue;   animation-delay: 2s; }
+  .s-ans   { animation-name: hlGreen;  animation-delay: 3s; }
+
+  @keyframes hlPurple { 0%,20%,100%{filter:brightness(1)} 10%{filter:brightness(1.7) drop-shadow(0 0 10px var(--accent3))} }
+  @keyframes hlOrange { 0%,20%,100%{filter:brightness(1)} 10%{filter:brightness(1.7) drop-shadow(0 0 10px var(--accent2))} }
+  @keyframes hlBlue   { 0%,20%,100%{filter:brightness(1)} 10%{filter:brightness(1.7) drop-shadow(0 0 10px var(--accent4))} }
+  @keyframes hlGreen  { 0%,20%,100%{filter:brightness(1)} 10%{filter:brightness(1.7) drop-shadow(0 0 10px var(--accent5))} }
+
+  .mini-arr { color: var(--muted); font-size: 1rem; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  .loop-arrow {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.69rem;
+    color: var(--accent1);
+    animation: fadeLoop 4s ease-in-out infinite;
+  }
+  @keyframes fadeLoop { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  /* ── vertical connectors ── */
+  .v-conn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .v-line {
+    width: 2px; height: 44px;
+    position: relative; overflow: hidden; border-radius: 2px;
+  }
+  .v-line::before {
+    content: '';
+    position: absolute;
+    left: 0; top: -100%;
+    width: 100%; height: 100%;
+    border-radius: 2px;
+    animation: slideD 1.5s linear infinite;
+  }
+  @keyframes slideD { to { top: 100%; } }
+  .v-line.c-orange { background: rgba(249,115,22,.2); }
+  .v-line.c-orange::before { background: var(--accent2); }
+  .v-line.c-green  { background: rgba(16,185,129,.2); }
+  .v-line.c-green::before  { background: var(--accent5); }
+  .v-arr { font-size: .95rem; line-height: 1; }
+  .v-lbl { font-size: .63rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── web sources grid ── */
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  .source-card {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 12px 10px;
+    text-align: center;
+    font-size: 0.75rem;
+    transition: transform .3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .source-card:hover { transform: translateY(-2px); }
+  .source-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 60%, rgba(59,130,246,.06));
+    pointer-events: none;
+  }
+  .source-card .s-emoji { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+  .source-card .s-name  { font-weight: 600; color: var(--accent4); }
+  .source-card .s-type  { color: var(--muted); font-size: 0.67rem; margin-top: 2px; }
+
+  /* animate source cards in stagger */
+  .source-card:nth-child(1) { animation: glowBlue  2.5s ease-in-out infinite 0.0s; }
+  .source-card:nth-child(2) { animation: glowBlue  2.5s ease-in-out infinite 0.4s; }
+  .source-card:nth-child(3) { animation: glowBlue  2.5s ease-in-out infinite 0.8s; }
+  .source-card:nth-child(4) { animation: glowBlue  2.5s ease-in-out infinite 1.2s; }
+  .source-card:nth-child(5) { animation: glowBlue  2.5s ease-in-out infinite 1.6s; }
+  .source-card:nth-child(6) { animation: glowBlue  2.5s ease-in-out infinite 2.0s; }
+
+  /* ── ticker ── */
+  .ticker {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+    min-height: 20px;
+    padding: 4px;
+  }
+  .ticker span { display: inline-block; animation: tickerFade .5s ease; }
+  @keyframes tickerFade { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  /* ── legend ── */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: .74rem; color: var(--muted); }
+  .legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏛️ Political Scenario Agent — Architecture</h1>
+  <p>LangChain · LangGraph ReAct · Ollama · DuckDuckGo Web Search</p>
+</header>
+
+<div class="canvas">
+
+  <!-- Badges -->
+  <div class="badges">
+    <span class="badge b-red">LangGraph</span>
+    <span class="badge b-purple">LangChain</span>
+    <span class="badge b-orange">Ollama llama3.2</span>
+    <span class="badge b-green">DuckDuckGo Search</span>
+    <span class="badge b-amber">Free · No API Key</span>
+    <span class="badge b-blue">Real-Time Web</span>
+  </div>
+
+  <!-- ROW 1: User → Agent → LLM -->
+  <div class="flow-row">
+
+    <div class="node n-user">
+      <span class="icon">👤</span>
+      <div class="label">Input</div>
+      <div class="name">User</div>
+      <div class="sub">"Analyze US-China tensions"</div>
+    </div>
+
+    <div class="arrow arr-r c-amber" style="min-width:64px;">
+      <div class="lbl">political query</div>
+      <div class="arrow-line"></div>
+      <div class="arrow-head">▶</div>
+    </div>
+
+    <div class="react-box">
+      <div class="box-label">LangGraph ReAct Agent</div>
+      <div class="react-steps">
+        <div class="step s-think">
+          <span class="s-icon">🧠</span>
+          <div class="s-label">Think</div>
+          <div class="s-desc">Plan query</div>
+        </div>
+        <span class="mini-arr">→</span>
+        <div class="step s-act">
+          <span class="s-icon">🔍</span>
+          <div class="s-label">Act</div>
+          <div class="s-desc">web_search</div>
+        </div>
+        <span class="mini-arr">→</span>
+        <div class="step s-obs">
+          <span class="s-icon">📰</span>
+          <div class="s-label">Observe</div>
+          <div class="s-desc">Read results</div>
+        </div>
+        <span class="mini-arr">→</span>
+        <div class="step s-ans">
+          <span class="s-icon">🏛️</span>
+          <div class="s-label">Analyze</div>
+          <div class="s-desc">Final insight</div>
+        </div>
+      </div>
+      <div class="loop-arrow">↺ may search multiple times to build a full picture</div>
+    </div>
+
+    <div class="arrow arr-r c-purple" style="min-width:64px;">
+      <div class="lbl">prompt + news</div>
+      <div class="arrow-line"></div>
+      <div class="arrow-head">▶</div>
+    </div>
+
+    <div class="node n-llm">
+      <span class="icon">🤖</span>
+      <div class="label">Local LLM</div>
+      <div class="name">Ollama</div>
+      <div class="sub">llama3.2</div>
+    </div>
+
+  </div>
+
+  <!-- Vertical down: Agent → Tool -->
+  <div style="display:flex;justify-content:center;">
+    <div class="v-conn">
+      <div class="v-line c-orange"></div>
+      <div class="v-arr" style="color:var(--accent2);">▼</div>
+      <div class="v-lbl">tool call</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Tool -->
+  <div class="flow-row">
+    <div class="node n-tool" style="min-width:270px;">
+      <span class="icon">🛠️</span>
+      <div class="label">LangChain Tool</div>
+      <div class="name">web_search</div>
+      <div class="sub">query → DuckDuckGo → top 5 results → structured text</div>
+    </div>
+  </div>
+
+  <!-- Vertical down: Tool → DuckDuckGo -->
+  <div style="display:flex;justify-content:center;">
+    <div class="v-conn">
+      <div class="v-line c-green"></div>
+      <div class="v-arr" style="color:var(--accent5);">▼</div>
+      <div class="v-lbl">HTTPS search request</div>
+    </div>
+  </div>
+
+  <!-- ROW 3: DuckDuckGo engine -->
+  <div class="flow-row">
+    <div class="node n-search" style="min-width:260px;">
+      <span class="icon">🦆</span>
+      <div class="label">Search Engine</div>
+      <div class="name">DuckDuckGo</div>
+      <div class="sub">privacy-first · free · no API key · real-time index</div>
+    </div>
+  </div>
+
+  <!-- Vertical down: DDG → Web Sources -->
+  <div style="display:flex;justify-content:center;">
+    <div class="v-conn">
+      <div class="v-line c-green"></div>
+      <div class="v-arr" style="color:var(--accent5);">▼</div>
+      <div class="v-lbl">crawls live web</div>
+    </div>
+  </div>
+
+  <!-- ROW 4: Web sources grid -->
+  <div class="sources-grid">
+    <div class="source-card">
+      <span class="s-emoji">📰</span>
+      <div class="s-name">News Sites</div>
+      <div class="s-type">BBC · Reuters · AP</div>
+    </div>
+    <div class="source-card">
+      <span class="s-emoji">🏛️</span>
+      <div class="s-name">Gov. Sources</div>
+      <div class="s-type">Official statements</div>
+    </div>
+    <div class="source-card">
+      <span class="s-emoji">📊</span>
+      <div class="s-name">Think Tanks</div>
+      <div class="s-type">CFR · Brookings</div>
+    </div>
+    <div class="source-card">
+      <span class="s-emoji">🌐</span>
+      <div class="s-name">Wikipedia</div>
+      <div class="s-type">Background context</div>
+    </div>
+    <div class="source-card">
+      <span class="s-emoji">📡</span>
+      <div class="s-name">Wire Services</div>
+      <div class="s-type">AFP · Bloomberg</div>
+    </div>
+    <div class="source-card">
+      <span class="s-emoji">🗳️</span>
+      <div class="s-name">Election Data</div>
+      <div class="s-type">Polls · results</div>
+    </div>
+  </div>
+
+  <!-- Return path label -->
+  <div style="text-align:center;color:var(--muted);font-size:.72rem;">
+    ↑ &nbsp; search results flow back → tool → agent → Ollama → political analysis → user
+  </div>
+
+  <!-- ROW 5: Output -->
+  <div class="flow-row">
+    <div class="node n-user" style="min-width:320px;">
+      <span class="icon">📋</span>
+      <div class="label">Output</div>
+      <div class="name">Political Analysis</div>
+      <div class="sub">"Key players, tensions, likely outcomes, cited sources…"</div>
+    </div>
+  </div>
+
+  <!-- Ticker -->
+  <div class="ticker" id="ticker"><span>Initialising agent…</span></div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent6)"></div>User I/O</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent1)"></div>LangGraph Agent</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Ollama LLM</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>web_search Tool</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent5)"></div>DuckDuckGo (Free)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent4)"></div>Live Web Sources</div>
+  </div>
+
+</div>
+
+<script>
+  const steps = [
+    "👤 User submits a political scenario or question…",
+    "🧠 Agent (Think): planning the best search query…",
+    "🔍 Agent (Act): calling web_search tool…",
+    "🦆 DuckDuckGo: querying live web index…",
+    "🌐 Crawling: news sites, government sources, think tanks…",
+    "📰 Top 5 results returned with titles, URLs, snippets…",
+    "👁️ Agent (Observe): reading and parsing search results…",
+    "🤖 Ollama (llama3.2): analysing political context…",
+    "🔍 Agent: may search again for additional angles…",
+    "🏛️ Agent: synthesising multi-perspective analysis…",
+    "📋 User receives balanced, cited political insight!",
+  ];
+
+  let idx = 0;
+  const ticker = document.getElementById("ticker");
+
+  function tick() {
+    ticker.innerHTML = `<span>${steps[idx]}</span>`;
+    idx = (idx + 1) % steps.length;
+  }
+
+  tick();
+  setInterval(tick, 2000);
+</script>
+</body>
+</html>
