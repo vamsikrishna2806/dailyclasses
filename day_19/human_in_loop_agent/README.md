@@ -30,4 +30,7 @@ python agent.py
 - Thank my teacher for the great class
 - Politely decline the invitation to the Saturday event
 
-Then try replying `make it shorter` once, and `approve` the next time.
+The agent asks four numbered questions (your name, what to say, recipient email, recipient name)
+and re-asks if an answer looks wrong. An empty Enter never sends. It asks for your name once, so drafts are signed
+properly (no `[Your Name]` placeholders). Try replying `make it shorter` once, then reply with
+just `approve` to send — "change X and approve" is treated as a change, so you review the new draft first.

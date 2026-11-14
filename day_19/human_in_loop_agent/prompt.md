@@ -7,12 +7,21 @@
 
 ```
 You are an email assistant. Write a short, polite email (max 80 words)
-for the user's request. Return ONLY the email body — no subject line, no extra comments.
+for the user's request. Start with "Dear <recipient name>," and end with
+"Best regards," followed by the sender's name. Use the real names you are given and
+NEVER leave placeholders like [Recipient] or [Your Name].
+Return ONLY the email body — no subject line, no extra comments.
 ```
 
-When the human asks for changes, the draft node adds this to the user message:
+The draft node always sends the names along with the request:
 ```
-<original request>
+Recipient name: <to_name>
+Sender name: <sender>
+Request: <original request>
+```
+
+When the human asks for changes, it also adds:
+```
 
 Previous draft:
 <draft>
@@ -37,7 +46,7 @@ STACK
   Checkpointer : MemorySaver  (REQUIRED — saves the paused state)
 
 STATE (TypedDict)
-  request: str, to: str, draft: str, feedback: str, result: str
+  request: str, to: str, to_name: str, sender: str, draft: str, feedback: str, result: str
 
 TOOL (1)
   send_email(to: str, subject: str, body: str) -> str
@@ -62,7 +71,11 @@ RUNNER (run_once)
       out = agent.invoke(Command(resume=answer), config)
 
 ENTRY POINT (agent.py)
-  Interactive CLI: ask for request and recipient, then run_once()
+  Interactive CLI with numbered, example-rich prompts: 1) sender name  2) request
+  3) recipient email  4) recipient name, then run_once()
+  Validate input with an ask_until_valid(prompt, is_ok, hint) helper:
+    name not "approve"/"q"; request >= 3 words; email must look like name@domain.com
+  An EMPTY answer at the review step must never count as approval
   Exit on "quit"/"exit"/"q" or Ctrl+C
 
 FILES
@@ -91,8 +104,10 @@ def send_email(to: str, subject: str, body: str) -> str:
 ## Example Interaction
 
 ```
+Your name: Vamsi                      (asked once at start-up)
 Request: Ask Priya to move tomorrow's meeting to 3pm
 Send to (email): priya@example.com
+Recipient's name: Priya
 
 📧 DRAFT for priya@example.com:
 ----------------------------------------
@@ -100,7 +115,7 @@ Hi Priya,
 
 I was wondering if you could move tomorrow's meeting to 3pm instead ...
 ----------------------------------------
-Type 'approve' to send, or tell me what to change: make it shorter
+Reply with ONLY 'approve' to send, or tell me what to change: make it shorter
 
 📧 DRAFT for priya@example.com:
 ----------------------------------------
@@ -108,7 +123,7 @@ Hi Priya,
 
 Could you please move tomorrow's meeting to 3pm? ...
 ----------------------------------------
-Type 'approve' to send, or tell me what to change: approve
+Reply with ONLY 'approve' to send, or tell me what to change: approve
 
 Agent: Email to priya@example.com saved in outbox.txt
 ```

@@ -6,14 +6,18 @@ This agent is an **email assistant that always asks permission first**. It write
 
 ## How to talk to it
 
+0. When it starts, type **your name** (it signs the email)
 1. Say what the email is about:
    - "Ask Priya to move tomorrow's meeting to 3pm"
    - "Thank my teacher for the great class"
    - "Politely decline the invitation to the Saturday event"
-2. Type the recipient's email address
+2. Type the recipient's email address (it must look like name@domain.com) and their name
+   - The agent numbers its questions 1) to 4) and checks your answers — if one looks wrong it simply asks again
+   - After each email it asks "What should the email say?" again — type **q** to quit
 3. Read the draft, then either:
-   - type **approve** to send, or
+   - type **approve** (just that one word) to send, or
    - type what to change, like **make it shorter** or **sound more formal**
+   - tip: "change X and approve" counts as a change, not an approval — you will see the new draft and then type **approve**
 
 ## How it works (simple version)
 
@@ -50,5 +54,5 @@ Some actions cannot be undone — sending an email, paying money, deleting files
 ## Limitations
 
 - Emails are only saved to a file, not delivered
-- The draft ends with a placeholder like "[Your Name]" — edit it or ask the agent to change it
+- Small AI models can still occasionally slip in a placeholder like "[Name]" — just ask it to fix that
 - Paused drafts are kept in memory only, so closing the program forgets them
