@@ -8,21 +8,26 @@
 ### Writer (`WRITER_PROMPT`)
 ```
 You are a skilled writer. Write a short, clear piece (max 100 words)
-for the user's request. Return ONLY the text itself.
+for the user's request. Return ONLY the text itself — no title, no intro like "Here is...".
 ```
 
 ### Critic (`CRITIC_PROMPT`)
 ```
 You are a strict but fair editor. Review the draft against the request.
 Check: clarity, tone, grammar, and whether it fully answers the request.
-- If it is good enough, reply with exactly: APPROVED
-- Otherwise reply with 2-3 short, specific suggestions for improvement.
+HARD RULE: the draft must be 100 words or fewer. If it is longer, it is NOT approved —
+tell the writer to cut it.
+- If it is good enough AND within the limit, reply with exactly: APPROVED
+- Otherwise reply with 2-3 short, specific suggestions (one line each).
 ```
+The critic's message also includes `Word count: <n> (limit 100)` so it can check the rule.
 
 ### Reviser (`REVISER_PROMPT`)
 ```
 You are a writer revising your draft.
-Rewrite it applying the editor's feedback. Return ONLY the improved text.
+Rewrite it applying the editor's feedback, but keep it to 100 words or fewer
+(cut words if needed — never make it longer).
+Return ONLY the improved text. Do NOT start with "Here is the revised text" or any intro.
 ```
 
 ---
@@ -52,13 +57,16 @@ NODES
 GRAPH
   START -> write -> critique
   critique -> (conditional)
-      "APPROVED" in feedback  -> END
+      feedback STARTS with "APPROVED" -> END   # not just contains the word
+                                                # (code also overrides APPROVED if draft > 100 words)
       rounds >= MAX_ROUNDS(3) -> END      # safety limit so the loop always stops
       otherwise               -> revise -> critique   # THE LOOP
 
 ENTRY POINT (agent.py)
   build_agent(), ask(), interactive while-loop CLI
-  Print each step (writer / critic / reviser) so students can watch the loop
+  Print each step (writer / critic / reviser) and the FULL critic feedback
+  Reject inputs shorter than 4 words ("good", "pls proceed" are not writing requests)
+  Strip "Here is the revised text:" intro lines from model output (clean())
   Exit on "quit"/"exit"/"q" or Ctrl+C
 
 FILES

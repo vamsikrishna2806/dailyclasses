@@ -1,5 +1,7 @@
 # Human-in-the-Loop Agent
 
+> 📘 **New here? Follow the step-by-step guide: [HOW_TO_USE.md](HOW_TO_USE.md)**
+
 An email assistant that **never sends anything without your approval**, built with
 **LangChain + LangGraph + Ollama**.
 

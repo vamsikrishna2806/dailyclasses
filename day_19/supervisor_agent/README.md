@@ -1,5 +1,7 @@
 # Supervisor Agent
 
+> 📘 **New here? Follow the step-by-step guide: [HOW_TO_USE.md](HOW_TO_USE.md)**
+
 A mini newsroom built with **LangChain + LangGraph + Ollama**.
 
 - **LLM**: Ollama (local, free) — default `llama3.2`
