@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>LangGraph in a Nutshell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: one column of short scenes, each a card with one animated diagram.
+   Palette: cool paper, ink, teal for shared state, indigo for workers,
+   amber for decisions, rose for the human pause.
+   Type: Space Grotesk for headings, Inter for body, monospace for code. */
+:root {
+  --paper: #eef2f5;
+  --card: #ffffff;
+  --ink: #14213d;
+  --muted: #5b6678;
+  --rule: #d5dde6;
+  --state: #0e7490;
+  --state-soft: #d9f0f5;
+  --worker: #4338ca;
+  --worker-soft: #e4e3fb;
+  --decide: #b45309;
+  --decide-soft: #fbeedd;
+  --pause: #be123c;
+  --pause-soft: #fbe3e9;
+  --dot: #f59e0b;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0c1420;
+    --card: #142030;
+    --ink: #e8eef6;
+    --muted: #9aa7b8;
+    --rule: #2a3a50;
+    --state: #5ed3e6;
+    --state-soft: #113540;
+    --worker: #a5b4fc;
+    --worker-soft: #222a54;
+    --decide: #fbbf24;
+    --decide-soft: #3a2a10;
+    --pause: #fb7185;
+    --pause-soft: #3d1722;
+    --dot: #fbbf24;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0c1420;
+  --card: #142030;
+  --ink: #e8eef6;
+  --muted: #9aa7b8;
+  --rule: #2a3a50;
+  --state: #5ed3e6;
+  --state-soft: #113540;
+  --worker: #a5b4fc;
+  --worker-soft: #222a54;
+  --decide: #fbbf24;
+  --decide-soft: #3a2a10;
+  --pause: #fb7185;
+  --pause-soft: #3d1722;
+  --dot: #fbbf24;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 720px; margin: 0 auto; display: grid; gap: 18px; min-width: 0; }
+h1, h2, .display { font-family: "Space Grotesk", Inter, system-ui, sans-serif; text-wrap: balance; }
+h1 { font-size: clamp(32px, 7vw, 46px); line-height: 1.08; margin: 6px 0 6px; font-weight: 700; letter-spacing: -.02em; }
+h2 { font-size: 24px; line-height: 1.2; margin: 0 0 6px; font-weight: 700; }
+p { margin: 0 0 10px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.lead { color: var(--muted); font-size: 18px; max-width: 58ch; }
+.note { color: var(--muted); font-size: 14px; margin-top: 10px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 22px;
+  min-width: 0;
+}
+.nutshell {
+  display: grid; gap: 10px; margin-top: 4px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.nutshell div {
+  border-radius: 12px; padding: 12px; background: var(--paper); border: 1px solid var(--rule);
+}
+.nutshell b { display: block; font-family: "Space Grotesk", Inter, sans-serif; font-size: 17px; margin-bottom: 2px; }
+.nutshell span { font-size: 14px; color: var(--muted); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+
+.diagram { width: 100%; height: auto; max-width: 100%; display: block; margin-top: 14px; }
+.shape { stroke-width: 2; transition: fill .3s, stroke .3s; }
+.s-state .shape { fill: var(--state-soft); stroke: var(--state); }
+.s-worker .shape { fill: var(--worker-soft); stroke: var(--worker); }
+.s-decide .shape { fill: var(--decide-soft); stroke: var(--decide); }
+.s-pause .shape { fill: var(--pause-soft); stroke: var(--pause); }
+.s-idle .shape { fill: var(--card); stroke: var(--rule); }
+.lbl { font-family: "Space Grotesk", Inter, sans-serif; font-size: 15px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; }
+.sub { font-size: 12px; fill: var(--muted); text-anchor: middle; }
+.edge { fill: none; stroke: var(--muted); stroke-width: 2.5; }
+.ah { fill: var(--muted); }
+.dot { opacity: 0; }
+.lit .shape { filter: none; }
+.glow .shape { stroke-width: 3.5; }
+
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 600; font-size: 15px; min-height: 44px;
+  padding: 10px 18px; border-radius: 12px; border: 0; cursor: pointer; color: #fff;
+}
+.btn.worker { background: var(--worker); }
+.btn.pause { background: var(--pause); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
+.btn:focus-visible { outline: 3px solid var(--decide); outline-offset: 2px; }
+.btn:disabled { opacity: .45; cursor: default; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.chip {
+  font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 14px;
+  padding: 6px 10px; border-radius: 10px; border: 1px solid var(--rule); background: var(--paper);
+}
+.chip b { color: var(--state); font-weight: 600; }
+.status {
+  margin-top: 14px; padding: 12px 14px; border-radius: 12px; min-height: 48px;
+  background: var(--paper); border: 1px dashed var(--rule); font-size: 15px;
+}
+.status.waiting { background: var(--pause-soft); border-style: solid; border-color: var(--pause); }
+.status.done { background: var(--state-soft); border-style: solid; border-color: var(--state); }
+
+pre {
+  margin: 12px 0 0; padding: 14px; border-radius: 12px; background: var(--paper);
+  border: 1px solid var(--rule); overflow-x: auto; max-width: 100%;
+  font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 14px; line-height: 1.5;
+}
+code { font-family: ui-monospace, Consolas, "Courier New", monospace; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shape { transition: none; }
+}
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <div class="kicker">LangGraph, explained simply</div>
+    <h1>LangGraph in a Nutshell</h1>
+    <p class="lead">LangGraph runs your AI app as a map. Data moves along the map, and the map can decide, loop, and pause. Press play and watch.</p>
+  </header>
+
+  <!-- 1. The five parts -->
+  <section class="card" aria-labelledby="p1">
+    <h2 id="p1">The five parts</h2>
+    <p>Every LangGraph app is built from these five ideas. The rest of this page shows each one moving.</p>
+    <div class="nutshell">
+      <div><b><span class="swatch" style="background:var(--state)"></span>State</b><span>A shared notebook that every step can read and write.</span></div>
+      <div><b><span class="swatch" style="background:var(--worker)"></span>Nodes</b><span>Steps. Each one is a function that does one job.</span></div>
+      <div><b><span class="swatch" style="background:var(--muted)"></span>Edges</b><span>Arrows that say which step runs next.</span></div>
+      <div><b><span class="swatch" style="background:var(--decide)"></span>Conditions</b><span>A decision that picks the next arrow.</span></div>
+      <div><b><span class="swatch" style="background:var(--pause)"></span>Pauses</b><span>Stop and wait for a person, then carry on.</span></div>
+    </div>
+  </section>
+
+  <!-- 2. The map, animated -->
+  <section class="card" aria-labelledby="p2">
+    <h2 id="p2">Watch the map run</h2>
+    <p>A draft is written, checked, and rewritten until it is good. Then the graph pauses and waits for a person to approve it.</p>
+
+    <svg class="diagram" viewBox="0 0 640 220" role="img" aria-label="Start, then Draft, then a Good? decision that loops back to Draft until good, then Approve which pauses for a person">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path class="ah" d="M0 0L10 5L0 10z"/>
+        </marker>
+      </defs>
+      <path id="e_s" class="edge" d="M84 110 H130" marker-end="url(#ah)"/>
+      <path id="e_d" class="edge" d="M260 110 H310" marker-end="url(#ah)"/>
+      <path id="e_y" class="edge" d="M420 110 H480" marker-end="url(#ah)"/>
+      <path id="e_loop" class="edge" d="M365 138 V184 H195 V140" marker-end="url(#ah)"/>
+      <text class="sub" x="450" y="100">yes</text>
+      <text class="sub" x="280" y="200">no, try again</text>
+
+      <g id="n-start" class="s-idle"><circle class="shape" cx="60" cy="110" r="24"/><text class="lbl" x="60" y="110">Start</text></g>
+      <g id="n-draft" class="s-worker"><rect class="shape" x="130" y="82" width="130" height="56" rx="12"/><text class="lbl" x="195" y="104">Draft</text><text class="sub" x="195" y="122" id="draftv">v0</text></g>
+      <g id="n-check" class="s-decide"><polygon class="shape" points="365,82 420,110 365,138 310,110"/><text class="lbl" x="365" y="110" style="font-size:13px">Good?</text></g>
+      <g id="n-approve" class="s-pause"><rect class="shape" x="480" y="82" width="130" height="56" rx="12"/><text class="lbl" x="545" y="110">Approve</text></g>
+
+      <circle id="dot" class="dot" r="9" fill="var(--dot)" cx="84" cy="110"/>
+    </svg>
+
+    <div class="row">
+      <button class="btn worker" id="play" type="button">▶ Play</button>
+      <button class="btn ghost" id="reset" type="button">Reset</button>
+    </div>
+    <div class="chips" aria-live="polite">
+      <span class="chip">draft: <b id="cv">none</b></span>
+      <span class="chip">good: <b id="cg">no</b></span>
+      <span class="chip">approved: <b id="ca">no</b></span>
+    </div>
+    <div class="status" id="status" aria-live="polite">Press Play. The dot is the work moving through the map.</div>
+    <div class="row">
+      <button class="btn pause" id="approve" type="button" disabled>Approve (a person does this)</button>
+    </div>
+  </section>
+
+  <!-- 3. The notebook -->
+  <section class="card" aria-labelledby="p3">
+    <h2 id="p3">The notebook: state</h2>
+    <p>Each step does not pass the whole work to the next one. It reads the notebook, changes only what it owns, and puts the notebook back. The chips above are that notebook: <b>draft</b>, <b>good</b>, and <b>approved</b>.</p>
+    <p class="note">Nothing is hidden. Any step can see the current notebook, and a saved notebook lets a paused app continue later.</p>
+  </section>
+
+  <!-- 4. The code in five lines -->
+  <section class="card" aria-labelledby="p4">
+    <h2 id="p4">The same map, as code</h2>
+    <p>Each line adds one of the five parts to the map above.</p>
+<pre><code>graph = StateGraph(State)                      # the notebook
+graph.add_node("draft", draft)                 # a worker
+graph.add_conditional_edges("check", route)    # the decision and its arrows
+app = graph.compile(checkpointer=saver)        # saves the notebook so pauses work</code></pre>
+    <p class="note">This is an outline for learning, not a complete program. The full course has runnable examples.</p>
+  </section>
+
+  <!-- 5. Remember -->
+  <section class="card" aria-labelledby="p5">
+    <h2 id="p5">In one sentence</h2>
+    <p>LangGraph is a shared notebook passed along a map of steps, where arrows can decide, loop, and pause.</p>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function $(id) { return document.getElementById(id); }
+  var dot = $('dot');
+
+  // Move the dot along an SVG path. Resolves on arrival.
+  function travel(path, ms) {
+    return new Promise(function (resolve) {
+      dot.setAttribute('opacity', '1');
+      var L = path.getTotalLength();
+      if (reduce) {
+        var e = path.getPointAtLength(L);
+        dot.setAttribute('cx', e.x); dot.setAttribute('cy', e.y);
+        resolve(); return;
+      }
+      var t0 = performance.now();
+      function frame(now) {
+        var k = Math.min(1, (now - t0) / ms);
+        var p = path.getPointAtLength(L * k);
+        dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+        if (k < 1) requestAnimationFrame(frame); else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  var nodes = ['n-start', 'n-draft', 'n-check', 'n-approve'];
+  function light(id) {
+    nodes.forEach(function (n) { $(n).classList.toggle('glow', n === id); });
+  }
+  function setStatus(text, cls) {
+    var s = $('status');
+    s.textContent = text;
+    s.className = 'status' + (cls ? ' ' + cls : '');
+  }
+
+  var busy = false;
+  var steps = [
+    { e: 'e_s', n: 'n-draft', v: 1, msg: 'Draft v1 is written.' },
+    { e: 'e_d', n: 'n-check', msg: 'Check: not good yet.', good: 'no' },
+    { e: 'e_loop', n: 'n-draft', v: 2, msg: 'Loop back. Draft v2.' },
+    { e: 'e_d', n: 'n-check', msg: 'Check: still not good.', good: 'no' },
+    { e: 'e_loop', n: 'n-draft', v: 3, msg: 'Loop back. Draft v3.' },
+    { e: 'e_d', n: 'n-check', msg: 'Check: good!', good: 'yes' }
+  ];
+
+  async function play() {
+    if (busy) return;
+    reset();
+    busy = true;
+    $('play').disabled = true;
+    light('n-start');
+    setStatus('Starting the map…');
+    for (var i = 0; i < steps.length; i++) {
+      var s = steps[i];
+      await travel($(s.e), 650);
+      light(s.n);
+      if (s.v) { $('cv').textContent = 'v' + s.v; $('draftv').textContent = 'v' + s.v; }
+      if (s.good) $('cg').textContent = s.good;
+      setStatus(s.msg);
+    }
+    // Yes branch: travel to Approve, then pause.
+    await travel($('e_y'), 650);
+    light('n-approve');
+    setStatus('Paused. The graph is waiting for a person to approve the draft.', 'waiting');
+    $('approve').disabled = false;
+    busy = false;
+  }
+
+  function approve() {
+    if ($('approve').disabled) return;
+    $('approve').disabled = true;
+    $('ca').textContent = 'yes';
+    setStatus('Approved. The graph continues and finishes.', 'done');
+    nodes.forEach(function (n) { $(n).classList.remove('glow'); });
+  }
+
+  function reset() {
+    busy = false;
+    dot.setAttribute('opacity', '0');
+    dot.setAttribute('cx', 84); dot.setAttribute('cy', 110);
+    nodes.forEach(function (n) { $(n).classList.remove('glow'); });
+    $('cv').textContent = 'none';
+    $('cg').textContent = 'no';
+    $('ca').textContent = 'no';
+    $('draftv').textContent = 'v0';
+    $('play').disabled = false;
+    $('approve').disabled = true;
+    setStatus('Press Play. The dot is the work moving through the map.');
+  }
+
+  $('play').addEventListener('click', play);
+  $('approve').addEventListener('click', approve);
+  $('reset').addEventListener('click', reset);
+})();
+</script>
+</body>
+</html>

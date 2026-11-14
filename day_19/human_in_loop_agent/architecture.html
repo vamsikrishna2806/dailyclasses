@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Human-in-the-Loop Agent Architecture</title>
+<style>
+:root{--bg:#0a0c14;--panel:#0f1420;--border:#1e2d4a;--a:#f59e0b;--a2:#fcd34d;--rgb:245,158,11;--muted:#64748b;--text:#e2e8f0;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;}
+header{text-align:center;padding:36px 20px 16px;}
+header h1{font-size:clamp(1.3rem,3vw,2rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+header p{color:var(--muted);font-size:.88rem;margin-top:6px;}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid var(--a);background:rgba(var(--rgb),.12);color:var(--a);}
+.canvas{max-width:1000px;margin:0 auto;padding:24px 20px 40px;display:flex;flex-direction:column;gap:24px;}
+.flow-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;}
+.col{display:flex;flex-direction:column;gap:12px;align-items:center;}
+.node{border-radius:14px;border:1.5px solid var(--border);background:var(--panel);padding:14px 16px;text-align:center;min-width:130px;flex-shrink:0;transition:transform .3s,filter .3s;animation:glow 2.5s ease-in-out infinite;}
+.node:hover{transform:translateY(-3px);}
+.node .icon{font-size:1.7rem;display:block;margin-bottom:6px;}
+.node .lbl{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.node .name{font-size:.9rem;font-weight:700;margin-top:3px;color:var(--a);}
+.node .sub{font-size:.68rem;color:var(--muted);margin-top:3px;max-width:190px;}
+.node.green .name{color:var(--green);}.node.amber .name{color:var(--amber);}.node.purple .name{color:var(--purple);}
+@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(var(--rgb),.2)}50%{box-shadow:0 0 26px rgba(var(--rgb),.5)}}
+.on{filter:brightness(1.7) drop-shadow(0 0 12px var(--a));transform:scale(1.05);}
+.arrow{display:flex;flex-direction:column;align-items:center;min-width:56px;flex-shrink:0;gap:2px;}
+.arrow .albl{font-size:.62rem;color:var(--muted);white-space:nowrap;}
+.aline{width:100%;height:2px;position:relative;overflow:hidden;border-radius:2px;background:rgba(var(--rgb),.18);}
+.aline::before{content:'';position:absolute;top:0;height:100%;width:100%;background:var(--a);border-radius:2px;left:-100%;animation:slideR 1.5s linear infinite;}
+@keyframes slideR{to{left:100%}}
+.ahead{color:var(--a);font-size:.9rem;}
+.box{border:1.5px dashed var(--a);border-radius:18px;padding:22px 22px 14px;position:relative;animation:rbox 3s ease-in-out infinite;}
+@keyframes rbox{0%,100%{box-shadow:0 0 10px rgba(var(--rgb),.12)}50%{box-shadow:0 0 32px rgba(var(--rgb),.3)}}
+.box-lbl{position:absolute;top:-11px;left:16px;background:var(--bg);padding:2px 10px;font-size:.68rem;font-weight:700;color:var(--a);letter-spacing:.1em;text-transform:uppercase;border-radius:20px;border:1px solid var(--a);}
+.note{text-align:center;margin-top:10px;font-size:.68rem;color:var(--a);animation:fadeL 4s ease-in-out infinite;}
+@keyframes fadeL{0%,100%{opacity:.4}50%{opacity:1}}
+.vconn{display:flex;flex-direction:column;align-items:center;}
+.vline{width:2px;height:34px;position:relative;overflow:hidden;border-radius:2px;background:rgba(var(--rgb),.2);}
+.vline::before{content:'';position:absolute;left:0;top:-100%;width:100%;height:100%;background:var(--a);border-radius:2px;animation:slideD 1.5s linear infinite;}
+@keyframes slideD{to{top:100%}}
+.varr{color:var(--a);font-size:.9rem;}
+.vlbl{font-size:.62rem;color:var(--muted);margin-top:2px;text-align:center;}
+.center{display:flex;justify-content:center;}
+.ticker{text-align:center;font-size:.78rem;color:var(--text);min-height:22px;padding:6px;}
+.ticker span{display:inline-block;animation:tf .5s ease;}
+@keyframes tf{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:12px;border-top:1px solid var(--border);}
+.li{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);}
+.ld{width:9px;height:9px;border-radius:50%;}
+.small{text-align:center;color:var(--muted);font-size:.7rem;}
+.pause{animation:pz 1.2s ease-in-out infinite;border-color:var(--amber);}
+@keyframes pz{0%,100%{box-shadow:0 0 6px rgba(245,158,11,.2)}50%{box-shadow:0 0 34px rgba(245,158,11,.75)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🙋 Human-in-the-Loop Agent — Architecture</h1>
+  <p>LangChain · LangGraph interrupt() · Ollama · MemorySaver checkpointer</p>
+  <div class="badges"><span class="badge">LangGraph</span><span class="badge">interrupt() + resume</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
+</header>
+<div class="canvas">
+  <div class="flow-row">
+    <div class="node " id="user"><span class="icon">👤</span><div class="lbl">Input</div><div class="name">User</div><div class="sub">"Ask Priya to move the meeting to 3pm"</div></div>
+    <div class="arrow"><div class="albl">request</div><div class="aline"></div><div class="ahead">▶</div></div>
+    <div class="node purple" id="draft"><span class="icon">✍️</span><div class="lbl">LLM</div><div class="name">Draft</div><div class="sub">writes the email</div></div>
+    <div class="arrow"><div class="albl">draft</div><div class="aline"></div><div class="ahead">▶</div></div>
+    <div class="node pause" id="human"><span class="icon">🙋</span><div class="lbl">interrupt() · PAUSED</div><div class="name" style="color:var(--amber)">Human Review</div><div class="sub">graph is frozen and saved by MemorySaver until you answer</div></div>
+  </div>
+  <div class="flow-row" style="gap:40px;align-items:flex-start;">
+    <div class="col">
+      <div class="vconn"><div class="vline"></div><div class="varr">▼</div><div class="vlbl">“approve”</div></div>
+      <div class="node green" id="send"><span class="icon">🛠️</span><div class="lbl">Risky tool</div><div class="name">send_email</div><div class="sub">saves to outbox.txt (demo)</div></div>
+      <div class="center"><div class="vconn"><div class="vline"></div><div class="varr">▼</div><div class="vlbl"></div></div></div>
+      <div class="node green" id="out"><span class="icon">✅</span><div class="lbl">Output</div><div class="name">Email Sent</div><div class="sub">only AFTER approval</div></div>
+    </div>
+    <div class="col">
+      <div class="vconn"><div class="vline"></div><div class="varr">↩</div><div class="vlbl">“make it shorter” → back to Draft<br>(your feedback goes into the prompt)</div></div>
+    </div>
+  </div>
+  <div class="small">Resume with <b>Command(resume=answer)</b> — the graph continues exactly where it stopped.</div>
+  <div class="ticker" id="tk"><span>Initialising…</span></div>
+  <div class="legend"><div class="li"><div class="ld" style="background:var(--amber)"></div>Paused for human</div><div class="li"><div class="ld" style="background:var(--purple)"></div>LLM</div><div class="li"><div class="ld" style="background:var(--green)"></div>Safe action</div></div>
+</div>
+<script>
+// each step = [message, id of the element to highlight]
+const steps=[["👤 User: “Ask Priya to move tomorrow's meeting to 3pm”", "user"], ["✍️ Draft node: LLM writes the email", "draft"], ["🙋 interrupt() → graph PAUSES and shows the draft to the human", "human"], ["⏸️ Nothing is sent. State is saved by the checkpointer…", "human"], ["🙋 Human types: “make it shorter” → Command(resume=…)", "human"], ["✍️ Back to Draft: LLM rewrites using the feedback", "draft"], ["🙋 Paused again with the new draft…", "human"], ["🙋 Human types: “approve”", "human"], ["🛠️ send_email runs — ONLY now", "send"], ["✅ Email delivered with a human's OK", "out"]];
+let i=0;const tk=document.getElementById('tk');
+function tick(){
+  document.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
+  const [msg,id]=steps[i];
+  tk.innerHTML=`<span>${msg}</span>`;
+  const el=document.getElementById(id); if(el) el.classList.add('on');
+  i=(i+1)%steps.length;
+}
+tick();setInterval(tick,2200);
+</script>
+</body>
+</html>

@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>LangChain vs LangGraph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5ef;
+    --card: #ffffff;
+    --fg: #1d1b16;
+    --muted: #6c675c;
+    --line: #e3ded2;
+    --lc: #1f8a5b;
+    --lc-soft: #dff3ea;
+    --lg: #6b4fd8;
+    --lg-soft: #ebe6fb;
+    --dot: #f59e0b;
+    --warn: #c2410c;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15140f;
+      --card: #1f1d17;
+      --fg: #f2efe6;
+      --muted: #a8a293;
+      --line: #3a372d;
+      --lc: #4ade80;
+      --lc-soft: #16301f;
+      --lg: #a78bfa;
+      --lg-soft: #2a2149;
+      --dot: #fbbf24;
+      --warn: #fb923c;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15140f;
+    --card: #1f1d17;
+    --fg: #f2efe6;
+    --muted: #a8a293;
+    --line: #3a372d;
+    --lc: #4ade80;
+    --lc-soft: #16301f;
+    --lg: #a78bfa;
+    --lg-soft: #2a2149;
+    --dot: #fbbf24;
+    --warn: #fb923c;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    padding-block: 24px 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  main { max-width: 760px; margin: 0 auto; display: grid; gap: 20px; min-width: 0; }
+  h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.15; margin: 8px 0 4px; font-weight: 800; text-wrap: balance; }
+  h2 { font-size: 22px; margin: 0 0 6px; font-weight: 800; text-wrap: balance; }
+  p { margin: 0 0 10px; }
+  .kicker { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .lead { color: var(--muted); font-size: 17px; max-width: 60ch; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 20px;
+    min-width: 0;
+  }
+  .tag {
+    display: inline-block; font-size: 13px; font-weight: 600;
+    padding: 3px 10px; border-radius: 999px; margin-bottom: 8px;
+  }
+  .tag.lc { background: var(--lc-soft); color: var(--lc); }
+  .tag.lg { background: var(--lg-soft); color: var(--lg); }
+
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+  .btn {
+    font: inherit; font-weight: 600; font-size: 15px;
+    padding: 10px 16px; border-radius: 12px; border: 0; cursor: pointer;
+    color: #fff; min-height: 44px;
+  }
+  .btn.lc { background: var(--lc); }
+  .btn.lg { background: var(--lg); }
+  .btn:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+  .btn.ghost {
+    background: transparent; color: var(--fg); border: 1px solid var(--line);
+  }
+  .note { color: var(--muted); font-size: 14px; }
+
+  svg.diagram { width: 100%; height: auto; max-width: 100%; display: block; margin-top: 14px; }
+  .shape { fill: var(--card); stroke: var(--line); stroke-width: 2; transition: fill .3s, stroke .3s; }
+  .label { fill: var(--fg); font-size: 15px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+  .small { fill: var(--muted); font-size: 12px; text-anchor: middle; }
+  .edge { stroke: var(--muted); stroke-width: 2.5; fill: none; }
+  .edge.hi { stroke: var(--fg); }
+  .dot { opacity: 0; }
+  .arrowhead { fill: var(--muted); }
+
+  .cnode.active .shape { fill: var(--lc-soft); stroke: var(--lc); }
+  .gnode.active .shape { fill: var(--lg-soft); stroke: var(--lg); }
+  .gnode.done .shape { stroke: var(--lg); }
+
+  .out {
+    margin-top: 14px; padding: 12px 14px; border-radius: 12px;
+    background: var(--bg); border: 1px dashed var(--line); min-height: 52px;
+    font-size: 15px;
+  }
+  .log { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 15px; }
+  .log li { padding: 6px 10px; border-left: 3px solid var(--lg); background: var(--bg); border-radius: 6px; }
+  .state {
+    margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .chip {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 6px 10px; font-size: 14px; font-family: ui-monospace, Consolas, monospace;
+  }
+  .chip b { color: var(--lg); }
+
+  .compare { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 640px) { .compare { grid-template-columns: 1fr 1fr; } }
+  ul.plain { padding-left: 18px; margin: 8px 0 0; }
+  ul.plain li { margin: 6px 0; }
+
+  /* Scene 3: CSS animations (looping) */
+  .stack { display: grid; gap: 8px; margin-top: 14px; }
+  .stack .item {
+    background: var(--lc-soft); color: var(--fg); border-radius: 10px; padding: 8px 12px;
+    font-size: 15px; opacity: 0; animation: pop 6s infinite;
+    animation-delay: calc(var(--i) * .8s);
+  }
+  @keyframes pop {
+    0% { opacity: 0; transform: translateY(8px); }
+    8%, 80% { opacity: 1; transform: translateY(0); }
+    92%, 100% { opacity: 0; transform: translateY(0); }
+  }
+
+  .quiz { display: grid; gap: 10px; margin-top: 14px; }
+  .qbtn {
+    text-align: left; font: inherit; font-size: 15px; line-height: 1.4;
+    padding: 12px 14px; border-radius: 12px; cursor: pointer; min-height: 44px;
+    background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+  }
+  .qbtn:hover { border-color: var(--muted); }
+  .qbtn:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+  .feedback { margin-top: 12px; padding: 12px 14px; border-radius: 12px; min-height: 48px; font-size: 15px; }
+  .feedback.lc { background: var(--lc-soft); }
+  .feedback.lg { background: var(--lg-soft); }
+
+  pre {
+    margin: 12px 0 0; padding: 14px; border-radius: 12px;
+    background: var(--bg); border: 1px solid var(--line);
+    overflow-x: auto; font-size: 14px; line-height: 1.5;
+    font-family: ui-monospace, Consolas, "Courier New", monospace;
+    max-width: 100%;
+  }
+  .takeaway {
+    display: grid; gap: 12px; grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .takeaway { grid-template-columns: 1fr 1fr; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stack .item { animation: none; opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <div class="kicker">Motion guide for students</div>
+    <h1>LangChain vs LangGraph</h1>
+    <p class="lead">Both tools help you build AI apps. The difference is <b>the shape of the work</b>. Press the buttons and watch the shapes move.</p>
+  </header>
+
+  <!-- SCENE 1 -->
+  <section class="card" aria-labelledby="s1">
+    <div class="tag lc">LangChain</div>
+    <h2 id="s1">1. A straight line</h2>
+    <p>LangChain connects steps in one fixed order. Data goes in one end and comes out the other. Each box runs once.</p>
+
+    <svg class="diagram" viewBox="0 0 600 150" role="img" aria-label="Chain: Input, Prompt, Model, Parser, Output in a line">
+      <defs>
+        <marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path class="arrowhead" d="M0 0L10 5L0 10z"/>
+        </marker>
+      </defs>
+      <!-- hidden lead-in path for the dot -->
+      <path id="ci" d="M60 70 H110" stroke="none" fill="none"/>
+      <path id="ce1" class="edge" d="M110 70 H130" marker-end="url(#arr1)"/>
+      <path id="ce2" class="edge" d="M230 70 H250" marker-end="url(#arr1)"/>
+      <path id="ce3" class="edge" d="M350 70 H370" marker-end="url(#arr1)"/>
+      <path id="ce4" class="edge" d="M470 70 H490" marker-end="url(#arr1)"/>
+
+      <g id="c-input" class="cnode"><rect class="shape" x="10" y="40" width="100" height="60" rx="12"/><text class="label" x="60" y="70">Input</text></g>
+      <g id="c-prompt" class="cnode"><rect class="shape" x="130" y="40" width="100" height="60" rx="12"/><text class="label" x="180" y="70">Prompt</text></g>
+      <g id="c-model" class="cnode"><rect class="shape" x="250" y="40" width="100" height="60" rx="12"/><text class="label" x="300" y="70">Model</text></g>
+      <g id="c-parser" class="cnode"><rect class="shape" x="370" y="40" width="100" height="60" rx="12"/><text class="label" x="420" y="70">Parser</text></g>
+      <g id="c-output" class="cnode"><rect class="shape" x="490" y="40" width="100" height="60" rx="12"/><text class="label" x="540" y="70">Output</text></g>
+
+      <circle id="c-dot" class="dot" r="9" fill="var(--dot)" cx="60" cy="70"/>
+    </svg>
+
+    <div class="row">
+      <button class="btn lc" id="runChain" type="button">▶ Run the chain</button>
+      <span class="note">Order never changes.</span>
+    </div>
+    <div class="out" id="chainOut" aria-live="polite">Press the button to send a question through the line.</div>
+  </section>
+
+  <!-- SCENE 2 -->
+  <section class="card" aria-labelledby="s2">
+    <div class="tag lg">LangGraph</div>
+    <h2 id="s2">2. A map with loops and choices</h2>
+    <p>LangGraph is a map. A step can ask a question (a <b>decision</b>), send you back to an earlier step (a <b>loop</b>), and keep a <b>shared notebook</b> called state that every step can read and write.</p>
+
+    <svg class="diagram" viewBox="0 0 600 300" role="img" aria-label="Graph: Start, Think, Check enough facts, Search loop, Answer, End">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path class="arrowhead" d="M0 0L10 5L0 10z"/>
+        </marker>
+      </defs>
+      <path id="e_start" class="edge" d="M86 130 H150" marker-end="url(#arr2)"/>
+      <path id="e_think" class="edge" d="M260 130 H315" marker-end="url(#arr2)"/>
+      <path id="e_yes" class="edge" d="M425 130 H460" marker-end="url(#arr2)"/>
+      <path id="e_no" class="edge" d="M370 164 V220" marker-end="url(#arr2)"/>
+      <path id="e_loop" class="edge" d="M315 246 Q205 272 205 158" marker-end="url(#arr2)"/>
+      <path id="e_done" class="edge" d="M515 158 V218" marker-end="url(#arr2)"/>
+      <text class="small" x="443" y="120">yes</text>
+      <text class="small" x="392" y="196">no</text>
+      <text class="small" x="240" y="236">loop back</text>
+
+      <g id="g-start" class="gnode"><circle class="shape" cx="60" cy="130" r="26"/><text class="label" x="60" y="130">Start</text></g>
+      <g id="g-think" class="gnode"><rect class="shape" x="150" y="102" width="110" height="56" rx="12"/><text class="label" x="205" y="130">Think</text></g>
+      <g id="g-check" class="gnode"><polygon class="shape" points="370,96 425,130 370,164 315,130"/><text class="label" x="370" y="130" style="font-size:13px">Enough?</text></g>
+      <g id="g-search" class="gnode"><rect class="shape" x="315" y="220" width="110" height="52" rx="12"/><text class="label" x="370" y="246">Search</text></g>
+      <g id="g-answer" class="gnode"><rect class="shape" x="460" y="102" width="110" height="56" rx="12"/><text class="label" x="515" y="130">Answer</text></g>
+      <g id="g-end" class="gnode"><circle class="shape" cx="515" cy="240" r="22"/><text class="label" x="515" y="240">End</text></g>
+
+      <circle id="g-dot" class="dot" r="9" fill="var(--dot)" cx="86" cy="130"/>
+    </svg>
+
+    <div class="row">
+      <button class="btn lg" id="runGraph" type="button">▶ Run the graph</button>
+      <button class="btn ghost" id="resetGraph" type="button">Reset</button>
+    </div>
+
+    <div class="state" aria-live="polite">
+      <span class="chip">question: <b>"What is LangGraph?"</b></span>
+      <span class="chip">facts found: <b id="facts">0</b></span>
+      <span class="chip">enough: <b id="enough">no</b></span>
+    </div>
+    <ol class="log" id="glog" aria-live="polite"></ol>
+    <p class="note" style="margin-top:12px">Notice: the arrow goes back to <b>Think</b> twice. A plain chain could never do that.</p>
+  </section>
+
+  <!-- AGENT LOOP -->
+  <section class="card" aria-labelledby="sa">
+    <div class="tag lg">Agentic loop</div>
+    <h2 id="sa">3. The agentic loop</h2>
+    <p>An <b>agent</b> is an AI that can use tools. Its <b>loop</b> is simple: the model thinks, uses a tool if it needs one, reads the result, and thinks again. It stops when no tool is needed.</p>
+    <p class="note"><b>Is the loop part of LangGraph?</b> Not exactly. The loop is an idea (called ReAct) that you can build in any code. LangGraph is the tool that lets you draw that loop as a graph, with a clear way to stop.</p>
+
+    <svg class="diagram" viewBox="0 0 600 270" role="img" aria-label="Agent loop: Model, decide if a tool is needed, run tool, back to model, then final answer">
+      <defs>
+        <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path class="arrowhead" d="M0 0L10 5L0 10z"/>
+        </marker>
+      </defs>
+      <path id="a_start" class="edge" d="M86 120 H150" marker-end="url(#arr3)"/>
+      <path id="a_model" class="edge" d="M270 120 H345" marker-end="url(#arr3)"/>
+      <path id="a_yes" class="edge" d="M400 148 V200" marker-end="url(#arr3)"/>
+      <path id="a_back" class="edge" d="M345 226 Q210 262 210 150" marker-end="url(#arr3)"/>
+      <path id="a_no" class="edge" d="M455 120 H490" marker-end="url(#arr3)"/>
+      <text class="small" x="425" y="180">yes</text>
+      <text class="small" x="472" y="112">no</text>
+      <text class="small" x="240" y="250">tool result goes back</text>
+
+      <g id="a-start" class="gnode"><circle class="shape" cx="60" cy="120" r="26"/><text class="label" x="60" y="120">Ask</text></g>
+      <g id="a-model" class="gnode"><rect class="shape" x="150" y="92" width="120" height="56" rx="12"/><text class="label" x="210" y="120">Model</text></g>
+      <g id="a-decide" class="gnode"><polygon class="shape" points="400,92 455,120 400,148 345,120"/><text class="label" x="400" y="120" style="font-size:13px">Tool?</text></g>
+      <g id="a-tools" class="gnode"><rect class="shape" x="345" y="200" width="110" height="52" rx="12"/><text class="label" x="400" y="226">Run tool</text></g>
+      <g id="a-answer" class="gnode"><rect class="shape" x="490" y="92" width="100" height="56" rx="12"/><text class="label" x="540" y="120">Answer</text></g>
+
+      <circle id="a-dot" class="dot" r="9" fill="var(--dot)" cx="86" cy="120"/>
+    </svg>
+
+    <div class="row">
+      <button class="btn lg" id="runAgent" type="button">▶ Run the agent</button>
+      <button class="btn ghost" id="resetAgent" type="button">Reset</button>
+    </div>
+    <div class="state" aria-live="polite">
+      <span class="chip">tool calls so far: <b id="calls">0</b></span>
+    </div>
+    <ol class="log" id="alog" aria-live="polite"></ol>
+
+    <pre><code># The loop, written as a LangGraph graph
+def should_continue(state):
+    last = state["messages"][-1]
+    return "tools" if last.tool_calls else END   # stop when no tool is needed
+
+graph.add_conditional_edges("model", should_continue)
+graph.add_edge("tools", "model")                 # the loop: result goes back</code></pre>
+    <p class="note" style="margin-top:12px">The loop is the same in every agent. LangGraph gives you the wiring and the stop rule. It also has prebuilt helpers that set this loop up for you.</p>
+  </section>
+
+  <!-- SCENE 3 -->
+  <section class="card" aria-labelledby="s3">
+    <h2 id="s3">4. The same idea, in everyday words</h2>
+    <div class="compare">
+      <div>
+        <span class="tag lc">LangChain = a recipe</span>
+        <p>Follow the steps in order: mix, bake, serve. You always end at the last step.</p>
+        <div class="stack" aria-hidden="true">
+          <div class="item" style="--i:0">1. Mix the batter</div>
+          <div class="item" style="--i:1">2. Bake it</div>
+          <div class="item" style="--i:2">3. Serve it</div>
+        </div>
+      </div>
+      <div>
+        <span class="tag lg">LangGraph = a map</span>
+        <p>Choose your route. Taste it, and if it is not right, go back and adjust. Stop when you are happy.</p>
+        <svg class="diagram" viewBox="0 0 300 150" role="img" aria-label="A dot moves around a loop with a branch">
+          <path d="M60 80 C60 20 240 20 240 80 C240 140 60 140 60 80" fill="none" stroke="var(--line)" stroke-width="3"/>
+          <path d="M240 80 H275" fill="none" stroke="var(--line)" stroke-width="3"/>
+          <circle cx="150" cy="20" r="0" fill="none"/>
+          <circle r="8" fill="var(--lg)">
+            <animateMotion dur="4s" repeatCount="indefinite" path="M60 80 C60 20 240 20 240 80 C240 140 60 140 60 80"/>
+          </circle>
+          <text x="150" y="82" text-anchor="middle" font-size="13" fill="var(--muted)" font-family="Inter, sans-serif">loop until done</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCENE 4 -->
+  <section class="card" aria-labelledby="s4">
+    <h2 id="s4">5. Which one should I use?</h2>
+    <p>Tap a job to see the answer.</p>
+    <div class="quiz" id="quiz">
+      <button class="qbtn" type="button" data-ans="lc" data-text="A straight job: one input, one answer. Nothing loops and nothing waits. LangChain is perfect.">Translate one sentence from English to French.</button>
+      <button class="qbtn" type="button" data-ans="lg" data-text="It must repeat (search, think, search again) until it has enough. A loop with a decision is exactly what LangGraph is for.">A bot that searches the web again and again until it has enough facts.</button>
+      <button class="qbtn" type="button" data-ans="lg" data-text="LangGraph can pause the graph, wait for a person to say yes or no, then continue from the same spot.">Pause and ask a manager to approve before an email is sent.</button>
+    </div>
+    <div class="feedback" id="feedback" aria-live="polite">Tap a job above.</div>
+  </section>
+
+  <!-- SCENE 5 -->
+  <section class="card" aria-labelledby="s5">
+    <h2 id="s5">6. What the code looks like</h2>
+    <p>Both are Python. Notice the difference in shape.</p>
+    <div class="takeaway">
+      <div>
+        <span class="tag lc">LangChain: a pipe</span>
+<pre><code>chain = prompt | model | parser
+answer = chain.invoke({"topic": "AI"})</code></pre>
+      </div>
+      <div>
+        <span class="tag lg">LangGraph: nodes and edges</span>
+<pre><code>graph = StateGraph(State)
+graph.add_node("think", think)
+graph.add_conditional_edges("check", route)
+app = graph.compile()</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAKEAWAY -->
+  <section class="card" aria-labelledby="s6">
+    <h2 id="s6">Remember this</h2>
+    <div class="takeaway">
+      <div>
+        <span class="tag lc">Use LangChain when</span>
+        <ul class="plain">
+          <li>Steps always run in the same order</li>
+          <li>You need one question and one answer</li>
+          <li>You are building a simple RAG or prompt pipeline</li>
+        </ul>
+      </div>
+      <div>
+        <span class="tag lg">Use LangGraph when</span>
+        <ul class="plain">
+          <li>The next step depends on the result</li>
+          <li>The app must loop until a goal is met (like an agent's tool loop)</li>
+          <li>You need a pause for a human, or several agents</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note" style="margin-top:14px">Good news: LangGraph uses LangChain's models and tools. You learn LangChain first, then add LangGraph when the work needs a map.</p>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function $(id) { return document.getElementById(id); }
+
+  // Move a dot along an SVG path. Resolves when it arrives.
+  function travel(path, dot, ms) {
+    return new Promise(function (resolve) {
+      dot.setAttribute('opacity', '1');
+      var L = path.getTotalLength();
+      if (reduce) {
+        var end = path.getPointAtLength(L);
+        dot.setAttribute('cx', end.x); dot.setAttribute('cy', end.y);
+        resolve(); return;
+      }
+      var t0 = performance.now();
+      function frame(now) {
+        var k = Math.min(1, (now - t0) / ms);
+        var p = path.getPointAtLength(L * k);
+        dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+        if (k < 1) requestAnimationFrame(frame); else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  // ---------- Scene 1: chain ----------
+  var chainBusy = false;
+  var chainOutEl = $('chainOut');
+  var chainDot = $('c-dot');
+  var chainNodes = ['c-input', 'c-prompt', 'c-model', 'c-parser', 'c-output'];
+
+  function setChainActive(id) {
+    chainNodes.forEach(function (n) {
+      var el = $(n);
+      el.classList.toggle('active', n === id);
+    });
+  }
+
+  var chainSteps = [
+    { edge: 'ce1', node: 'c-prompt', msg: 'Prompt: your question is put into a template.' },
+    { edge: 'ce2', node: 'c-model', msg: 'Model: the AI writes an answer.' },
+    { edge: 'ce3', node: 'c-parser', msg: 'Parser: the answer is cleaned into plain text.' },
+    { edge: 'ce4', node: 'c-output', msg: 'Output: done! It went straight through.' }
+  ];
+
+  async function runChain() {
+    if (chainBusy) return;
+    chainBusy = true;
+    chainOutEl.textContent = 'Starting…';
+    setChainActive('c-input');
+    await travel($('ci'), chainDot, 500);
+    for (var i = 0; i < chainSteps.length; i++) {
+      var s = chainSteps[i];
+      await travel($(s.edge), chainDot, 650);
+      setChainActive(s.node);
+      chainOutEl.textContent = s.msg;
+    }
+    chainBusy = false;
+  }
+  $('runChain').addEventListener('click', runChain);
+
+  // ---------- Scene 2: graph ----------
+  var graphBusy = false;
+  var graphSteps = [
+    { e: 'e_start', n: 'g-think', m: 'Start → Think: read the question.' },
+    { e: 'e_think', n: 'g-check', m: 'Check: do I have enough facts? Not yet.' },
+    { e: 'e_no', n: 'g-search', m: 'No → Search the web. Found fact #1.', f: 1 },
+    { e: 'e_loop', n: 'g-think', m: 'Loop back to Think with the new fact.' },
+    { e: 'e_think', n: 'g-check', m: 'Check again: still not enough.' },
+    { e: 'e_no', n: 'g-search', m: 'No → Search again. Found fact #2.', f: 2 },
+    { e: 'e_loop', n: 'g-think', m: 'Loop back to Think with 2 facts.' },
+    { e: 'e_think', n: 'g-check', m: 'Check: enough now!', enough: 'yes' },
+    { e: 'e_yes', n: 'g-answer', m: 'Yes → Write the answer.' },
+    { e: 'e_done', n: 'g-end', m: 'Finished ✔' }
+  ];
+  var graphNodes = ['g-start', 'g-think', 'g-check', 'g-search', 'g-answer', 'g-end'];
+  var gDot = $('g-dot');
+  var gLog = $('glog');
+
+  function setGraphActive(id) {
+    graphNodes.forEach(function (n) {
+      var el = $(n);
+      el.classList.remove('active');
+      if (n === id) el.classList.add('active');
+    });
+  }
+
+  function resetGraph() {
+    graphBusy = false;
+    graphNodes.forEach(function (n) { $(n).classList.remove('active', 'done'); });
+    gDot.setAttribute('opacity', '0');
+    gDot.setAttribute('cx', 86); gDot.setAttribute('cy', 130);
+    $('facts').textContent = '0';
+    $('enough').textContent = 'no';
+    gLog.innerHTML = '';
+  }
+
+  async function runGraph() {
+    if (graphBusy) return;
+    resetGraph();
+    graphBusy = true;
+    setGraphActive('g-start');
+    for (var i = 0; i < graphSteps.length; i++) {
+      var s = graphSteps[i];
+      await travel($(s.e), gDot, 620);
+      setGraphActive(s.n);
+      if (s.f !== undefined) $('facts').textContent = String(s.f);
+      if (s.enough) $('enough').textContent = s.enough;
+      var li = document.createElement('li');
+      li.textContent = s.m;
+      gLog.appendChild(li);
+    }
+    graphNodes.forEach(function (n) { if (n !== 'g-end') $(n).classList.add('done'); });
+    graphBusy = false;
+  }
+  $('runGraph').addEventListener('click', runGraph);
+  $('resetGraph').addEventListener('click', resetGraph);
+
+  // ---------- Agentic loop ----------
+  var agentBusy = false;
+  var aDot = $('a-dot');
+  var aLog = $('alog');
+  var aNodes = ['a-start', 'a-model', 'a-decide', 'a-tools', 'a-answer'];
+  var agentSteps = [
+    { e: 'a_start', n: 'a-model', m: 'Model reads the question.' },
+    { e: 'a_model', n: 'a-decide', m: 'Model decides: I need a tool.' },
+    { e: 'a_yes', n: 'a-tools', m: 'Run tool: search. Result comes back.', t: 1 },
+    { e: 'a_back', n: 'a-model', m: 'Tool result goes back to the model.' },
+    { e: 'a_model', n: 'a-decide', m: 'Model decides again: one more check needed.' },
+    { e: 'a_yes', n: 'a-tools', m: 'Run tool: calculator.', t: 2 },
+    { e: 'a_back', n: 'a-model', m: 'Result goes back to the model.' },
+    { e: 'a_model', n: 'a-decide', m: 'Model decides: no tool needed now.' },
+    { e: 'a_no', n: 'a-answer', m: 'Stop the loop → write the final answer.' }
+  ];
+
+  function resetAgent() {
+    agentBusy = false;
+    aNodes.forEach(function (n) { $(n).classList.remove('active', 'done'); });
+    aDot.setAttribute('opacity', '0');
+    aDot.setAttribute('cx', 86); aDot.setAttribute('cy', 120);
+    $('calls').textContent = '0';
+    aLog.innerHTML = '';
+  }
+
+  async function runAgent() {
+    if (agentBusy) return;
+    resetAgent();
+    agentBusy = true;
+    $('a-start').classList.add('active');
+    for (var i = 0; i < agentSteps.length; i++) {
+      var s = agentSteps[i];
+      await travel($(s.e), aDot, 620);
+      aNodes.forEach(function (n) { $(n).classList.remove('active'); });
+      $(s.n).classList.add('active');
+      if (s.t !== undefined) $('calls').textContent = String(s.t);
+      var li = document.createElement('li');
+      li.textContent = s.m;
+      aLog.appendChild(li);
+    }
+    aNodes.forEach(function (n) { $(n).classList.remove('active'); $(n).classList.add('done'); });
+    agentBusy = false;
+  }
+  $('runAgent').addEventListener('click', runAgent);
+  $('resetAgent').addEventListener('click', resetAgent);
+
+  // ---------- Scene 4: quiz ----------
+  var fb = $('feedback');
+  document.querySelectorAll('#quiz .qbtn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var isLG = b.getAttribute('data-ans') === 'lg';
+      fb.className = 'feedback ' + (isLG ? 'lg' : 'lc');
+      fb.innerHTML = '';
+      var strong = document.createElement('b');
+      strong.textContent = isLG ? 'Use LangGraph. ' : 'Use LangChain. ';
+      fb.appendChild(strong);
+      fb.appendChild(document.createTextNode(b.getAttribute('data-text')));
+    });
+  });
+})();
+</script>
+</body>
+</html>

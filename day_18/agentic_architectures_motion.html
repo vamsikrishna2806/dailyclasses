@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Agentic Architectures with LangGraph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: an intro, then five agent architectures. Each card: the idea,
+   an animated graph built from the same data, a run control, and when to use it.
+   Palette: warm stone ground; blue for the agent (model), green for tools,
+   amber for decisions, violet for other agents, rose for the human pause.
+   Type: Sora for headings, Inter for text, monospace for code. */
+:root {
+  --bg: #f2efe9;
+  --card: #fffdf9;
+  --ink: #1f2430;
+  --muted: #5f6676;
+  --rule: #d9d3c7;
+  --agent: #2563a8;
+  --agent-soft: #dfeaf7;
+  --tool: #2f7d57;
+  --tool-soft: #dcefe4;
+  --decide: #a86b12;
+  --decide-soft: #f8ecd6;
+  --other: #6b46c1;
+  --other-soft: #ece4f8;
+  --human: #b8323f;
+  --human-soft: #f9e1e3;
+  --dot: #d6457a;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121316;
+    --card: #1b1d22;
+    --ink: #ece9e2;
+    --muted: #a09ba1;
+    --rule: #3a3c44;
+    --agent: #8ab8f0;
+    --agent-soft: #1d2c40;
+    --tool: #7fd1a4;
+    --tool-soft: #1b3428;
+    --decide: #f0bd66;
+    --decide-soft: #3a2d14;
+    --other: #c3aaf5;
+    --other-soft: #2c2540;
+    --human: #ff8a94;
+    --human-soft: #3d1d22;
+    --dot: #ff7aa6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121316;
+  --card: #1b1d22;
+  --ink: #ece9e2;
+  --muted: #a09ba1;
+  --rule: #3a3c44;
+  --agent: #8ab8f0;
+  --agent-soft: #1d2c40;
+  --tool: #7fd1a4;
+  --tool-soft: #1b3428;
+  --decide: #f0bd66;
+  --decide-soft: #3a2d14;
+  --other: #c3aaf5;
+  --other-soft: #2c2540;
+  --human: #ff8a94;
+  --human-soft: #3d1d22;
+  --dot: #ff7aa6;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 760px; margin: 0 auto; display: grid; gap: 22px; min-width: 0; }
+h1, h2 { font-family: Sora, Inter, system-ui, sans-serif; text-wrap: balance; }
+h1 { font-size: clamp(30px, 6.5vw, 44px); line-height: 1.1; margin: 6px 0 10px; font-weight: 700; letter-spacing: -.02em; }
+h2 { font-size: 24px; line-height: 1.2; margin: 0 0 6px; font-weight: 700; }
+p { margin: 0 0 10px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.lead { color: var(--muted); font-size: 18px; max-width: 60ch; }
+.note { color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+.card {
+  background: var(--card); border: 1px solid var(--rule); border-radius: 18px;
+  padding: 22px; min-width: 0;
+}
+.num {
+  font-family: Sora, Inter, sans-serif; font-size: 13px; font-weight: 700; color: var(--muted);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.use {
+  margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--agent-soft);
+  font-size: 15px;
+}
+.use b { font-family: Sora, Inter, sans-serif; }
+
+.diagram { width: 100%; height: auto; max-width: 100%; display: block; margin-top: 14px; }
+.edge { fill: none; stroke: var(--muted); stroke-width: 2.5; }
+.edge.hi { stroke: var(--ink); }
+.ah { fill: var(--muted); }
+.el { font-size: 12px; fill: var(--muted); text-anchor: middle; }
+.lbl { font-family: Sora, Inter, sans-serif; font-size: 14px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; }
+.shape { stroke-width: 2; transition: fill .3s, stroke .3s; }
+.n-idle .shape { fill: var(--card); stroke: var(--rule); }
+.n-agent .shape { fill: var(--agent-soft); stroke: var(--agent); }
+.n-tool .shape { fill: var(--tool-soft); stroke: var(--tool); }
+.n-dec .shape { fill: var(--decide-soft); stroke: var(--decide); }
+.n-other .shape { fill: var(--other-soft); stroke: var(--other); }
+.n-pause .shape { fill: var(--human-soft); stroke: var(--human); }
+.n-done .shape { fill: var(--card); stroke: var(--agent); }
+.dot { opacity: 0; }
+
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 600; font-size: 15px; min-height: 44px;
+  padding: 10px 18px; border-radius: 12px; border: 0; cursor: pointer; color: #fff;
+}
+.btn.a { background: var(--agent); }
+.btn.h { background: var(--human); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
+.btn:focus-visible { outline: 3px solid var(--decide); outline-offset: 2px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.say {
+  margin-top: 12px; padding: 10px 12px; min-height: 48px; border-radius: 10px;
+  background: var(--bg); border: 1px dashed var(--rule); font-size: 15px;
+}
+.say.wait { background: var(--human-soft); border-style: solid; border-color: var(--human); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
+
+pre {
+  margin: 12px 0 0; padding: 12px; border-radius: 12px; background: var(--bg);
+  border: 1px solid var(--rule); overflow-x: auto; max-width: 100%;
+  font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) { .shape { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <div class="kicker">Agentic architectures, in motion</div>
+    <h1>Five ways to build an agent with LangGraph</h1>
+    <p class="lead">An agent is a model that can call tools and decide what to do next. These five shapes cover most agent apps. Press Run on each to watch the graph move.</p>
+    <div class="legend" aria-hidden="true">
+      <span><i style="background:var(--agent)"></i>Model (agent)</span>
+      <span><i style="background:var(--tool)"></i>Tool</span>
+      <span><i style="background:var(--decide)"></i>Decision</span>
+      <span><i style="background:var(--other)"></i>Other agent</span>
+      <span><i style="background:var(--human)"></i>Waits for a person</span>
+    </div>
+  </header>
+
+  <!-- 1. ReAct -->
+  <section class="card" aria-labelledby="a1">
+    <div class="num">1 · Single agent with tools (ReAct)</div>
+    <h2 id="a1">The model, a tool, and a loop</h2>
+    <p>The model reads the question. If it needs a tool, it calls one, reads the result, and thinks again. When no tool is needed, it answers. Most agents in the day 17 folder use this shape.</p>
+    <svg class="diagram" id="sv-react" viewBox="0 0 640 230" role="img" aria-label="Ask, then Model, then Tool? decision. Yes goes to Run tool and back to Model. No goes to Answer."></svg>
+    <div class="row">
+      <button class="btn a" data-run="react" type="button">▶ Run</button>
+      <button class="btn ghost" data-reset="react" type="button">Reset</button>
+    </div>
+    <div class="say" id="say-react" aria-live="polite">Press Run.</div>
+    <pre><code>agent = create_react_agent(llm, tools)   # the loop is built in
+result = agent.invoke({"messages": [("user", "Weather in Pune?")]})</code></pre>
+    <div class="use"><b>Use when</b> one model needs a few tools and can decide which one to call next.</div>
+  </section>
+
+  <!-- 2. Router -->
+  <section class="card" aria-labelledby="a2">
+    <div class="num">2 · Router</div>
+    <h2 id="a2">Sort the question, send it to one expert</h2>
+    <p>A router reads the question once and picks one specialist. Only that specialist runs. There is no loop.</p>
+    <svg class="diagram" id="sv-router" viewBox="0 0 640 210" role="img" aria-label="Ask, then Router, which sends the work to one of three specialists: Weather, Money, or Recipes"></svg>
+    <div class="row">
+      <button class="btn a" data-run="router" type="button">▶ Run</button>
+      <button class="btn ghost" data-reset="router" type="button">Reset</button>
+    </div>
+    <div class="say" id="say-router" aria-live="polite">Press Run.</div>
+    <pre><code>graph.add_conditional_edges("router", pick_specialist,
+    {"weather": "weather", "money": "money", "recipes": "recipes"})</code></pre>
+    <div class="use"><b>Use when</b> the request has a clear type, and each type needs its own tools or prompt.</div>
+  </section>
+
+  <!-- 3. Supervisor -->
+  <section class="card" aria-labelledby="a3">
+    <div class="num">3 · Supervisor with workers</div>
+    <h2 id="a3">A boss delegates, and collects the reports</h2>
+    <p>A supervisor agent splits the task. It sends parts to workers, gets each report back, and writes the final answer.</p>
+    <svg class="diagram" id="sv-super" viewBox="0 0 640 200" role="img" aria-label="Supervisor sends work to Research, then Math, then Writer, and each reports back to the Supervisor"></svg>
+    <div class="row">
+      <button class="btn a" data-run="super" type="button">▶ Run</button>
+      <button class="btn ghost" data-reset="super" type="button">Reset</button>
+    </div>
+    <div class="say" id="say-super" aria-live="polite">Press Run.</div>
+    <pre><code>supervisor = create_supervisor([research, math, writer], model=llm)</code></pre>
+    <div class="use"><b>Use when</b> a task has several parts, and each part needs a different skill or set of tools.</div>
+  </section>
+
+  <!-- 4. Reflection -->
+  <section class="card" aria-labelledby="a4">
+    <div class="num">4 · Reflection (write, critique, revise)</div>
+    <h2 id="a4">Write, get a critic's review, then fix it</h2>
+    <p>One agent writes. A second agent, the critic, reviews it. If the review is not good, the writer revises. The loop stops when the critic is satisfied.</p>
+    <svg class="diagram" id="sv-reflect" viewBox="0 0 640 240" role="img" aria-label="Ask, then Write, then Critic, then Good? decision. No loops back to Write. Yes goes to Send."></svg>
+    <div class="row">
+      <button class="btn a" data-run="reflect" type="button">▶ Run</button>
+      <button class="btn ghost" data-reset="reflect" type="button">Reset</button>
+    </div>
+    <div class="say" id="say-reflect" aria-live="polite">Press Run.</div>
+    <pre><code>graph.add_conditional_edges("critic", lambda s: "send" if s["ok"] else "write",
+    {"send": END, "write": "write"})</code></pre>
+    <div class="use"><b>Use when</b> the first answer is often weak, and a second pass with a checklist makes it better.</div>
+  </section>
+
+  <!-- 5. Human in the loop -->
+  <section class="card" aria-labelledby="a5">
+    <div class="num">5 · Human in the loop</div>
+    <h2 id="a5">Pause for a person before the final step</h2>
+    <p>The agent drafts the work, then stops. The graph waits until a person approves it. If it is not approved, the agent rewrites.</p>
+    <svg class="diagram" id="sv-human" viewBox="0 0 640 230" role="img" aria-label="Ask, then Draft, then Wait for person, then OK? decision. Yes sends the email. No loops back to Draft."></svg>
+    <div class="row">
+      <button class="btn a" data-run="human" type="button">▶ Run</button>
+      <button class="btn h" id="approve-human" type="button" disabled>Approve (a person clicks)</button>
+      <button class="btn ghost" data-reset="human" type="button">Reset</button>
+    </div>
+    <div class="say" id="say-human" aria-live="polite">Press Run.</div>
+    <pre><code>app = graph.compile(checkpointer=saver, interrupt_before=["send"])
+app.invoke(input, config)          # pauses before "send"
+app.invoke(None, config)           # a person approved; continue</code></pre>
+    <div class="use"><b>Use when</b> an action is hard to undo, such as sending an email, paying, or deleting data.</div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var NS = 'http://www.w3.org/2000/svg';
+
+  // Each pattern is data: nodes (center x,y and shape), edges (path), and steps.
+  var P = {
+    react: {
+      svg: 'sv-react', say: 'say-react',
+      nodes: [
+        { id: 'ask', k: 'c', x: 60, y: 110, r: 24, t: 'Ask', s: 'idle' },
+        { id: 'model', k: 'r', x: 210, y: 110, w: 120, h: 56, t: 'Model', s: 'agent' },
+        { id: 'dec', k: 'd', x: 370, y: 110, w: 110, h: 56, t: 'Tool?', s: 'dec' },
+        { id: 'tool', k: 'r', x: 370, y: 207, w: 120, h: 46, t: 'Run tool', s: 'tool' },
+        { id: 'ans', k: 'r', x: 550, y: 110, w: 120, h: 56, t: 'Answer', s: 'agent' }
+      ],
+      edges: [
+        { id: 'a', d: 'M84 110 H150' },
+        { id: 'b', d: 'M270 110 H315' },
+        { id: 'c', d: 'M370 138 V184' },
+        { id: 'd', d: 'M310 207 H210 V138' },
+        { id: 'e', d: 'M425 110 H490' }
+      ],
+      edgeLabels: [{ x: 402, y: 180, t: 'yes' }, { x: 460, y: 102, t: 'no' }],
+      steps: [
+        { e: 'a', n: 'model', msg: 'The model reads the question: "Weather in Pune?"' },
+        { e: 'b', n: 'dec', msg: 'Does it need a tool? Yes.' },
+        { e: 'c', n: 'tool', msg: 'Calls the weather tool. It returns 22°C and sunny.' },
+        { e: 'd', n: 'model', msg: 'The result goes back to the model.' },
+        { e: 'b', n: 'dec', msg: 'Does it need another tool? No.' },
+        { e: 'e', n: 'ans', msg: 'The model writes the final answer.' }
+      ]
+    },
+    router: {
+      svg: 'sv-router', say: 'say-router',
+      nodes: [
+        { id: 'ask', k: 'c', x: 60, y: 100, r: 24, t: 'Ask', s: 'idle' },
+        { id: 'route', k: 'r', x: 200, y: 100, w: 110, h: 56, t: 'Router', s: 'dec' },
+        { id: 'w', k: 'r', x: 470, y: 46, w: 150, h: 40, t: 'Weather', s: 'agent' },
+        { id: 'm', k: 'r', x: 470, y: 100, w: 150, h: 40, t: 'Money', s: 'agent' },
+        { id: 'rec', k: 'r', x: 470, y: 154, w: 150, h: 40, t: 'Recipes', s: 'agent' }
+      ],
+      edges: [
+        { id: 'a', d: 'M84 100 H145' },
+        { id: 'b', d: 'M255 100 C320 100 325 46 395 46' },
+        { id: 'c', d: 'M255 100 H395' },
+        { id: 'd', d: 'M255 100 C320 100 325 154 395 154' }
+      ],
+      edgeLabels: [],
+      steps: [
+        { e: 'a', n: 'route', msg: 'The router reads: "Will it rain in Pune?"' },
+        { e: 'b', n: 'w', msg: 'It is about weather, so only the Weather agent runs.' },
+        { done: 'Finished. The Money and Recipes agents never ran.' }
+      ]
+    },
+    super: {
+      svg: 'sv-super', say: 'say-super',
+      nodes: [
+        { id: 'boss', k: 'r', x: 320, y: 44, w: 170, h: 50, t: 'Supervisor', s: 'agent' },
+        { id: 'w1', k: 'r', x: 110, y: 160, w: 150, h: 48, t: 'Research', s: 'other' },
+        { id: 'w2', k: 'r', x: 320, y: 160, w: 150, h: 48, t: 'Math', s: 'other' },
+        { id: 'w3', k: 'r', x: 530, y: 160, w: 150, h: 48, t: 'Writer', s: 'other' }
+      ],
+      edges: [
+        { id: 'd1', d: 'M320 69 V100 H110 V136' },
+        { id: 'r1', d: 'M130 136 V120 H300 V69' },
+        { id: 'd2', d: 'M320 69 V136' },
+        { id: 'r2', d: 'M340 136 V69' },
+        { id: 'd3', d: 'M320 69 V100 H530 V136' },
+        { id: 'r3', d: 'M550 136 V122 H360 V69' }
+      ],
+      edgeLabels: [],
+      steps: [
+        { e: 'd1', n: 'w1', msg: 'Supervisor: "Find the facts." Research starts.' },
+        { e: 'r1', n: 'boss', msg: 'Research sends its facts back to the Supervisor.' },
+        { e: 'd2', n: 'w2', msg: 'Supervisor: "Check the numbers." Math starts.' },
+        { e: 'r2', n: 'boss', msg: 'Math sends its result back.' },
+        { e: 'd3', n: 'w3', msg: 'Supervisor: "Write it up." Writer starts.' },
+        { e: 'r3', n: 'boss', msg: 'The Supervisor combines all reports into one answer.' }
+      ]
+    },
+    reflect: {
+      svg: 'sv-reflect', say: 'say-reflect',
+      nodes: [
+        { id: 'ask', k: 'c', x: 60, y: 110, r: 24, t: 'Ask', s: 'idle' },
+        { id: 'write', k: 'r', x: 180, y: 110, w: 100, h: 56, t: 'Write', s: 'agent' },
+        { id: 'critic', k: 'r', x: 320, y: 110, w: 110, h: 56, t: 'Critic', s: 'other' },
+        { id: 'dec', k: 'd', x: 480, y: 110, w: 110, h: 56, t: 'Good?', s: 'dec' },
+        { id: 'send', k: 'r', x: 480, y: 200, w: 120, h: 44, t: 'Send', s: 'agent' }
+      ],
+      edges: [
+        { id: 'a', d: 'M84 110 H130' },
+        { id: 'b', d: 'M230 110 H265' },
+        { id: 'c', d: 'M375 110 H425' },
+        { id: 'loop', d: 'M480 82 V40 H180 V82' },
+        { id: 'y', d: 'M480 138 V178' }
+      ],
+      edgeLabels: [{ x: 330, y: 32, t: 'no, revise' }, { x: 506, y: 162, t: 'yes' }],
+      steps: [
+        { e: 'a', n: 'write', msg: 'Write draft 1.' },
+        { e: 'b', n: 'critic', msg: 'Critic: "Missing a source for the numbers."' },
+        { e: 'loop', n: 'write', msg: 'Revise: draft 2 adds a source.' },
+        { e: 'b', n: 'critic', msg: 'Critic: "Looks good."' },
+        { e: 'c', n: 'dec', msg: 'Good? Yes.' },
+        { e: 'y', n: 'send', msg: 'The answer is sent.' }
+      ]
+    },
+    human: {
+      svg: 'sv-human', say: 'say-human', approve: 'approve-human',
+      nodes: [
+        { id: 'ask', k: 'c', x: 60, y: 110, r: 24, t: 'Ask', s: 'idle' },
+        { id: 'draft', k: 'r', x: 170, y: 110, w: 120, h: 56, t: 'Draft', s: 'agent' },
+        { id: 'wait', k: 'r', x: 330, y: 110, w: 120, h: 56, t: 'Wait for person', s: 'pause' },
+        { id: 'ok', k: 'd', x: 490, y: 110, w: 100, h: 56, t: 'OK?', s: 'dec' },
+        { id: 'send', k: 'r', x: 490, y: 200, w: 120, h: 44, t: 'Send email', s: 'tool' }
+      ],
+      edges: [
+        { id: 'a', d: 'M84 110 H110' },
+        { id: 'b', d: 'M230 110 H270' },
+        { id: 'c', d: 'M390 110 H440' },
+        { id: 'loop', d: 'M490 82 V40 H170 V82' },
+        { id: 'y', d: 'M490 138 V178' }
+      ],
+      edgeLabels: [{ x: 330, y: 32, t: 'no, rewrite' }, { x: 516, y: 162, t: 'yes' }],
+      steps: [
+        { e: 'a', n: 'draft', msg: 'The agent drafts the email.' },
+        { e: 'b', n: 'wait', msg: 'The graph pauses here. Waiting for a person.', pause: true },
+        { e: 'c', n: 'ok', msg: 'The person approved. Checking the decision: OK.' },
+        { e: 'y', n: 'send', msg: 'The email is sent.' }
+      ]
+    }
+  };
+
+  function el(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // Build the SVG from data.
+  function render(p) {
+    var svg = document.getElementById(p.svg);
+    var defs = el('defs');
+    var mk = el('marker', { id: p.svg + '-ah', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto' });
+    mk.appendChild(el('path', { class: 'ah', d: 'M0 0L10 5L0 10z' }));
+    defs.appendChild(mk);
+    svg.appendChild(defs);
+
+    p.edges.forEach(function (e) {
+      var path = el('path', { id: p.svg + '-e-' + e.id, class: 'edge', d: e.d, 'marker-end': 'url(#' + p.svg + '-ah)' });
+      svg.appendChild(path);
+    });
+    (p.edgeLabels || []).forEach(function (l) {
+      svg.appendChild(el('text', { class: 'el', x: l.x, y: l.y }, l.t));
+    });
+    p.nodes.forEach(function (n) {
+      var g = el('g', { id: p.svg + '-n-' + n.id, class: 'n-' + n.s });
+      if (n.k === 'c') {
+        g.appendChild(el('circle', { class: 'shape', cx: n.x, cy: n.y, r: n.r }));
+      } else if (n.k === 'd') {
+        var hw = n.w / 2, hh = n.h / 2;
+        var pts = [[n.x, n.y - hh], [n.x + hw, n.y], [n.x, n.y + hh], [n.x - hw, n.y]].map(function (q) { return q.join(','); }).join(' ');
+        g.appendChild(el('polygon', { class: 'shape', points: pts }));
+      } else {
+        g.appendChild(el('rect', { class: 'shape', x: n.x - n.w / 2, y: n.y - n.h / 2, width: n.w, height: n.h, rx: 12 }));
+      }
+      g.appendChild(el('text', { class: 'lbl', x: n.x, y: n.y, style: n.k === 'd' ? 'font-size:13px' : '' }, n.t));
+      svg.appendChild(g);
+    });
+    var start = p.nodes[0];
+    svg.appendChild(el('circle', { id: p.svg + '-dot', class: 'dot', r: 9, fill: 'var(--dot)', cx: start.x + 24, cy: start.y }));
+  }
+
+  function nodeEl(p, id) { return document.getElementById(p.svg + '-n-' + id); }
+  function dotEl(p) { return document.getElementById(p.svg + '-dot'); }
+  function edgeEl(p, id) { return document.getElementById(p.svg + '-e-' + id); }
+
+  function setNode(p, id, state) {
+    p.nodes.forEach(function (n) {
+      var g = nodeEl(p, n.id);
+      var base = n.s === 'dec' ? 'n-dec' : (n.id === id ? 'n-' + state : 'n-' + n.s);
+      if (n.id === id) g.setAttribute('class', 'n-' + state);
+      else g.setAttribute('class', 'n-' + n.s);
+    });
+  }
+
+  function travel(p, path, ms) {
+    return new Promise(function (resolve) {
+      var dot = dotEl(p);
+      dot.setAttribute('opacity', '1');
+      var L = path.getTotalLength();
+      if (reduce) {
+        var e = path.getPointAtLength(L);
+        dot.setAttribute('cx', e.x); dot.setAttribute('cy', e.y);
+        resolve(); return;
+      }
+      var t0 = performance.now();
+      function frame(now) {
+        var k = Math.min(1, (now - t0) / ms);
+        var q = path.getPointAtLength(L * k);
+        dot.setAttribute('cx', q.x); dot.setAttribute('cy', q.y);
+        if (k < 1) requestAnimationFrame(frame); else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  var waiting = {};     // pattern key -> resolve function for human approval
+  var busy = {};
+
+  function reset(key) {
+    var p = P[key];
+    busy[key] = false;
+    waiting[key] = null;
+    var dot = dotEl(p);
+    dot.setAttribute('opacity', '0');
+    var s = p.nodes[0];
+    dot.setAttribute('cx', s.x + 24); dot.setAttribute('cy', s.y);
+    p.nodes.forEach(function (n) { nodeEl(p, n.id).setAttribute('class', 'n-' + n.s); });
+    document.getElementById(p.say).textContent = 'Press Run.';
+    document.getElementById(p.say).className = 'say';
+    if (p.approve) document.getElementById(p.approve).disabled = true;
+  }
+
+  async function run(key) {
+    var p = P[key];
+    if (busy[key]) return;
+    reset(key);
+    busy[key] = true;
+    var say = document.getElementById(p.say);
+    var startNode = p.nodes[0].id;
+    nodeEl(p, startNode).setAttribute('class', 'n-idle');
+    for (var i = 0; i < p.steps.length; i++) {
+      var s = p.steps[i];
+      if (s.done) {
+        say.textContent = s.done;
+        break;
+      }
+      var path = edgeEl(p, s.e);
+      await travel(p, path, reduce ? 0 : 700);
+      var node = p.nodes.filter(function (n) { return n.id === s.n; })[0];
+      var st = s.pause ? 'pause' : node.s;
+      if (node.s === 'dec') st = 'dec';
+      nodeEl(p, s.n).setAttribute('class', 'n-' + st);
+      say.textContent = s.msg;
+      if (s.pause) {
+        say.className = 'say wait';
+        var btn = document.getElementById(p.approve);
+        btn.disabled = false;
+        await new Promise(function (resolve) { waiting[key] = resolve; });
+        btn.disabled = true;
+        say.className = 'say';
+      }
+    }
+    busy[key] = false;
+  }
+
+  // Build all five, then wire the buttons.
+  Object.keys(P).forEach(function (k) {
+    render(P[k]);
+    reset(k);
+  });
+  document.querySelectorAll('[data-run]').forEach(function (b) {
+    b.addEventListener('click', function () { run(b.getAttribute('data-run')); });
+  });
+  document.querySelectorAll('[data-reset]').forEach(function (b) {
+    b.addEventListener('click', function () { reset(b.getAttribute('data-reset')); });
+  });
+  var approveBtn = document.getElementById('approve-human');
+  approveBtn.addEventListener('click', function () {
+    var r = waiting.human;
+    if (r) { waiting.human = null; r(); }
+  });
+})();
+</script>
+</body>
+</html>

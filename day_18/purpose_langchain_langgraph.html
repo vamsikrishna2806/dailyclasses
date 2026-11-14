@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>What LangChain and LangGraph Do</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: a short hero, then one scene per purpose, then how they work together.
+   Palette: slate ground, LangChain in sea-green, LangGraph in violet,
+   a warm amber dot for the moving work, rose for the pause.
+   Type: Manrope for headings, Inter for body. */
+:root {
+  --bg: #eef1f6;
+  --card: #ffffff;
+  --ink: #17202e;
+  --muted: #5d6779;
+  --rule: #d6dce8;
+  --chain: #0f7a6c;
+  --chain-soft: #d7f0eb;
+  --graph: #6d3fc9;
+  --graph-soft: #ebe2fb;
+  --dot: #e89a1a;
+  --pause: #c02650;
+  --pause-soft: #fbe2ea;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1420;
+    --card: #162032;
+    --ink: #e7edf7;
+    --muted: #97a3b8;
+    --rule: #2b3a52;
+    --chain: #56d6bf;
+    --chain-soft: #14322d;
+    --graph: #b79cff;
+    --graph-soft: #291f4a;
+    --dot: #f4b048;
+    --pause: #ff7b9c;
+    --pause-soft: #3b1725;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1420;
+  --card: #162032;
+  --ink: #e7edf7;
+  --muted: #97a3b8;
+  --rule: #2b3a52;
+  --chain: #56d6bf;
+  --chain-soft: #14322d;
+  --graph: #b79cff;
+  --graph-soft: #291f4a;
+  --dot: #f4b048;
+  --pause: #ff7b9c;
+  --pause-soft: #3b1725;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 740px; margin: 0 auto; display: grid; gap: 20px; min-width: 0; }
+h1, h2 { font-family: Manrope, Inter, system-ui, sans-serif; text-wrap: balance; }
+h1 { font-size: clamp(32px, 7vw, 48px); line-height: 1.06; margin: 6px 0 10px; font-weight: 800; letter-spacing: -.025em; }
+h2 { font-size: 26px; line-height: 1.2; margin: 0 0 6px; font-weight: 800; }
+p { margin: 0 0 10px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.lead { color: var(--muted); font-size: 18px; max-width: 58ch; }
+.card {
+  background: var(--card); border: 1px solid var(--rule); border-radius: 18px;
+  padding: 22px; min-width: 0;
+}
+.purpose {
+  display: grid; gap: 4px; margin: 12px 0 0; padding: 12px 14px; border-radius: 12px;
+}
+.purpose.c { background: var(--chain-soft); }
+.purpose.g { background: var(--graph-soft); }
+.purpose b { font-family: Manrope, Inter, sans-serif; font-size: 16px; }
+.tag { display: inline-block; font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+.tag.c { background: var(--chain-soft); color: var(--chain); }
+.tag.g { background: var(--graph-soft); color: var(--graph); }
+.note { color: var(--muted); font-size: 14px; margin-top: 10px; }
+
+.diagram { width: 100%; height: auto; max-width: 100%; display: block; margin-top: 14px; }
+.box { fill: var(--card); stroke: var(--rule); stroke-width: 2; opacity: .35; transition: opacity .5s, fill .4s, stroke .4s; }
+.box.in { opacity: 1; }
+.box.c-on { fill: var(--chain-soft); stroke: var(--chain); }
+.line { fill: none; stroke: var(--rule); stroke-width: 3; stroke-dasharray: 40; stroke-dashoffset: 40; transition: stroke-dashoffset .5s, stroke .4s; }
+.line.in { stroke-dashoffset: 0; stroke: var(--chain); }
+.lbl { font-family: Manrope, Inter, sans-serif; font-size: 15px; font-weight: 800; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; }
+.sub { font-size: 12px; fill: var(--muted); text-anchor: middle; }
+.shape { stroke-width: 2; transition: fill .3s, stroke .3s; }
+.s-idle .shape { fill: var(--card); stroke: var(--rule); }
+.s-on .shape { fill: var(--graph-soft); stroke: var(--graph); }
+.s-pause .shape { fill: var(--pause-soft); stroke: var(--pause); }
+.s-decide .shape { fill: var(--graph-soft); stroke: var(--graph); }
+.edge { fill: none; stroke: var(--muted); stroke-width: 2.5; }
+.ah { fill: var(--muted); }
+.dot { opacity: 0; }
+
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 700; font-size: 15px; min-height: 44px;
+  padding: 10px 18px; border-radius: 12px; border: 0; cursor: pointer; color: #fff;
+}
+.btn.c { background: var(--chain); }
+.btn.g { background: var(--graph); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
+.btn:focus-visible { outline: 3px solid var(--dot); outline-offset: 2px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.say {
+  margin-top: 12px; min-height: 26px; font-size: 15px; color: var(--ink);
+}
+
+.pair { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 620px) { .pair { grid-template-columns: 1fr 1fr; } }
+.pair > div { min-width: 0; }
+
+.together {
+  display: grid; gap: 12px; margin-top: 14px; grid-template-columns: 1fr;
+}
+.nodebox {
+  border: 2px solid var(--graph); border-radius: 14px; padding: 12px; background: var(--graph-soft);
+  min-width: 0;
+}
+.nodebox .nm { font-family: Manrope, Inter, sans-serif; font-weight: 800; font-size: 15px; }
+.chainline {
+  margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  font-size: 13px; font-weight: 600;
+}
+.chainline span {
+  background: var(--chain-soft); color: var(--chain); border-radius: 8px; padding: 4px 8px;
+}
+.chainline i { font-style: normal; color: var(--muted); }
+.arrowrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .box, .line, .shape { transition: none; }
+}
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <div class="kicker">The purpose, in motion</div>
+    <h1>What LangChain and LangGraph Do</h1>
+    <p class="lead">Both tools help you build AI apps. LangChain's purpose is to connect the parts. LangGraph's purpose is to control the order those parts run in. Press the buttons to see each one.</p>
+  </header>
+
+  <!-- LANGCHAIN PURPOSE -->
+  <section class="card" aria-labelledby="pc">
+    <span class="tag c">LangChain</span>
+    <h2 id="pc">Its purpose: connect the parts</h2>
+    <p>An AI app needs a model, a prompt, tools, and data. LangChain gives each part a standard shape, so they plug together like parts on a line.</p>
+
+    <svg class="diagram" viewBox="0 0 640 120" role="img" aria-label="Five parts click into a line: Prompt, Model, Tools, Data, Output">
+      <path id="l1" class="line" d="M122 60 H148"/>
+      <path id="l2" class="line" d="M252 60 H278"/>
+      <path id="l3" class="line" d="M382 60 H408"/>
+      <path id="l4" class="line" d="M512 60 H538"/>
+      <rect id="b1" class="box" x="20" y="30" width="102" height="60" rx="14"/>
+      <rect id="b2" class="box" x="148" y="30" width="104" height="60" rx="14"/>
+      <rect id="b3" class="box" x="278" y="30" width="104" height="60" rx="14"/>
+      <rect id="b4" class="box" x="408" y="30" width="104" height="60" rx="14"/>
+      <rect id="b5" class="box" x="538" y="30" width="82" height="60" rx="14"/>
+      <text class="lbl" x="71" y="60">Prompt</text>
+      <text class="lbl" x="200" y="60">Model</text>
+      <text class="lbl" x="330" y="60">Tools</text>
+      <text class="lbl" x="460" y="60">Data</text>
+      <text class="lbl" x="579" y="60">Output</text>
+    </svg>
+    <div class="row">
+      <button class="btn c" id="btnC" type="button">▶ Connect the parts</button>
+      <button class="btn ghost" id="resetC" type="button">Reset</button>
+    </div>
+    <div class="say" id="sayC" aria-live="polite">Press Connect. Each part snaps into place.</div>
+
+    <div class="purpose c">
+      <b>In one line</b>
+      <span>LangChain answers: <i>what are the parts, and how do they connect?</i></span>
+    </div>
+  </section>
+
+  <!-- LANGGRAPH PURPOSE -->
+  <section class="card" aria-labelledby="pg">
+    <span class="tag g">LangGraph</span>
+    <h2 id="pg">Its purpose: control the order</h2>
+    <p>Real work is not always a straight line. The next step can depend on the last result. LangGraph runs the steps as a map, so the app can decide, loop back, and wait for a person.</p>
+
+    <svg class="diagram" viewBox="0 0 640 210" role="img" aria-label="Start, Step, Decide, then Wait for person; decide loops back to Step">
+      <defs>
+        <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path class="ah" d="M0 0L10 5L0 10z"/>
+        </marker>
+      </defs>
+      <path id="g1" class="edge" d="M84 100 H130" marker-end="url(#ag)"/>
+      <path id="g2" class="edge" d="M250 100 H330" marker-end="url(#ag)"/>
+      <path id="g3" class="edge" d="M410 100 H490" marker-end="url(#ag)"/>
+      <path id="g4" class="edge" d="M370 128 V176 H190 V128" marker-end="url(#ag)"/>
+      <text class="sub" x="450" y="92">yes</text>
+      <text class="sub" x="280" y="192">no, again</text>
+
+      <g id="n0" class="s-idle"><circle class="shape" cx="60" cy="100" r="24"/><text class="lbl" x="60" y="100">Start</text></g>
+      <g id="n1" class="s-idle"><rect class="shape" x="130" y="72" width="120" height="56" rx="12"/><text class="lbl" x="190" y="100">Step</text></g>
+      <g id="n2" class="s-idle s-decide"><polygon class="shape" points="370,72 410,100 370,128 330,100"/><text class="lbl" x="370" y="100" style="font-size:12px">Enough?</text></g>
+      <g id="n3" class="s-idle"><rect class="shape" x="490" y="72" width="130" height="56" rx="12"/><text class="lbl" x="555" y="100">Wait</text></g>
+
+      <circle id="gdot" class="dot" r="9" fill="var(--dot)" cx="84" cy="100"/>
+    </svg>
+    <div class="row">
+      <button class="btn g" id="btnG" type="button">▶ Run the flow</button>
+      <button class="btn ghost" id="resetG" type="button">Reset</button>
+    </div>
+    <div class="say" id="sayG" aria-live="polite">Press Run. Watch the order change as the answer changes.</div>
+
+    <div class="purpose g">
+      <b>In one line</b>
+      <span>LangGraph answers: <i>what runs next, when do we loop, and when do we stop or wait?</i></span>
+    </div>
+  </section>
+
+  <!-- SIDE BY SIDE -->
+  <section class="card" aria-labelledby="ps">
+    <h2 id="ps">Side by side</h2>
+    <div class="pair">
+      <div class="purpose c">
+        <b>LangChain</b>
+        <span>Gives you the parts and a way to join them.</span>
+        <span class="note" style="margin-top:4px">Best when the order is always the same.</span>
+      </div>
+      <div class="purpose g">
+        <b>LangGraph</b>
+        <span>Gives you the map: decisions, loops, shared state, pauses.</span>
+        <span class="note" style="margin-top:4px">Best when the next step depends on the result.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOGETHER -->
+  <section class="card" aria-labelledby="pt">
+    <h2 id="pt">How they work together</h2>
+    <p>LangGraph does not replace LangChain. Each step of the map can be a LangChain chain. LangGraph decides the order, and LangChain does the work inside each box.</p>
+    <div class="together">
+      <div class="nodebox">
+        <div class="nm">Step box in a LangGraph map</div>
+        <div class="chainline">
+          <span>prompt</span><i>→</i><span>model</span><i>→</i><span>parser</span>
+        </div>
+        <p class="note" style="margin:8px 0 0">The map says when this box runs. The chain says what it does.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function $(id) { return document.getElementById(id); }
+
+  // ---------- LangChain: connect the parts ----------
+  var boxes = ['b1', 'b2', 'b3', 'b4', 'b5'];
+  var lines = ['l1', 'l2', 'l3', 'l4'];
+  var timers = [];
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+  var sayC = [
+    'Prompt: the question has a template.',
+    'Model: the AI writes an answer.',
+    'Tools: the model can call helpers.',
+    'Data: documents can be looked up.',
+    'Output: the answer is handed back.'
+  ];
+  function connect() {
+    resetC();
+    var gap = reduce ? 0 : 450;
+    boxes.forEach(function (b, i) {
+      timers.push(setTimeout(function () {
+        $(b).classList.add('in');
+        $('sayC').textContent = sayC[i];
+        if (i > 0) $(lines[i - 1]).classList.add('in');
+      }, i * gap));
+    });
+    timers.push(setTimeout(function () {
+      $('sayC').textContent = 'Connected. One clear line from start to finish.';
+    }, boxes.length * gap));
+  }
+  function resetC() {
+    clearTimers();
+    boxes.forEach(function (b) { $(b).classList.remove('in'); });
+    lines.forEach(function (l) { $(l).classList.remove('in'); });
+    $('sayC').textContent = 'Press Connect. Each part snaps into place.';
+  }
+  $('btnC').addEventListener('click', connect);
+  $('resetC').addEventListener('click', resetC);
+
+  // ---------- LangGraph: control the order ----------
+  var dot = $('gdot');
+  var busy = false;
+  var nodes = ['n0', 'n1', 'n2', 'n3'];
+
+  function travel(path, ms) {
+    return new Promise(function (resolve) {
+      dot.setAttribute('opacity', '1');
+      var L = path.getTotalLength();
+      if (reduce) {
+        var e = path.getPointAtLength(L);
+        dot.setAttribute('cx', e.x); dot.setAttribute('cy', e.y);
+        resolve(); return;
+      }
+      var t0 = performance.now();
+      function frame(now) {
+        var k = Math.min(1, (now - t0) / ms);
+        var p = path.getPointAtLength(L * k);
+        dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+        if (k < 1) requestAnimationFrame(frame); else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+  function light(id, cls) {
+    nodes.forEach(function (n) {
+      var el = $(n);
+      el.setAttribute('class', n === id ? cls : (n === 'n2' ? 's-idle s-decide' : 's-idle'));
+    });
+  }
+  var flow = [
+    { e: 'g1', n: 'n1', m: 'Step: do the work.', cls: 's-on', say: 'Step runs. Next: check the result.' },
+    { e: 'g2', n: 'n2', m: 'Decide', cls: 's-decide', say: 'Decide: not enough yet, so loop back.' },
+    { e: 'g4', n: 'n1', m: 'Step again', cls: 's-on', say: 'The loop sends the work back to Step.' },
+    { e: 'g2', n: 'n2', m: 'Decide', cls: 's-decide', say: 'Decide: enough now.' },
+    { e: 'g3', n: 'n3', m: 'Wait', cls: 's-pause', say: 'Wait: paused until a person says yes.' }
+  ];
+  async function runG() {
+    if (busy) return;
+    resetG();
+    busy = true;
+    $('btnG').disabled = true;
+    light('n0', 's-on');
+    dot.setAttribute('opacity', '1');
+    for (var i = 0; i < flow.length; i++) {
+      var s = flow[i];
+      await travel($(s.e), reduce ? 0 : 700);
+      light(s.n, s.cls);
+      $('sayG').textContent = s.say;
+    }
+    busy = false;
+    $('btnG').disabled = false;
+  }
+  function resetG() {
+    busy = false;
+    dot.setAttribute('opacity', '0');
+    dot.setAttribute('cx', 84); dot.setAttribute('cy', 100);
+    light('none', 's-idle');
+    $('btnG').disabled = false;
+    $('sayG').textContent = 'Press Run. Watch the order change as the answer changes.';
+  }
+  $('btnG').addEventListener('click', runG);
+  $('resetG').addEventListener('click', resetG);
+})();
+</script>
+</body>
+</html>

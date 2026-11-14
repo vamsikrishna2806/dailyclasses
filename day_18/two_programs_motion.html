@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>LangChain and LangGraph Programs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: two stacked programs. Each has the problem, the code, an animated run,
+   and what goes wrong with the wrong tool.
+   Palette: warm paper, ink, green for LangChain's line, indigo for LangGraph's map,
+   amber for decisions and the moving dot, rose for mistakes.
+   Type: Space Grotesk for headings, Inter for text, monospace for code. */
+:root {
+  --paper: #f6f3ec;
+  --card: #fffdf8;
+  --ink: #1d1a14;
+  --muted: #645d50;
+  --rule: #ddd6c6;
+  --line-c: #1f7a57;
+  --line-c-soft: #dcf1e7;
+  --map: #4338ca;
+  --map-soft: #e6e5fb;
+  --decide: #b7791f;
+  --decide-soft: #faefd8;
+  --wrong: #b4233f;
+  --wrong-soft: #fbe6ea;
+  --dot: #e8a317;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #13120e;
+    --card: #1c1a15;
+    --ink: #f1ece0;
+    --muted: #a59d8b;
+    --rule: #3a3628;
+    --line-c: #5fd39f;
+    --line-c-soft: #173227;
+    --map: #a5b4fc;
+    --map-soft: #252a55;
+    --decide: #f5c46a;
+    --decide-soft: #3a2d12;
+    --wrong: #fb7a92;
+    --wrong-soft: #3d1820;
+    --dot: #f5c46a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #13120e;
+  --card: #1c1a15;
+  --ink: #f1ece0;
+  --muted: #a59d8b;
+  --rule: #3a3628;
+  --line-c: #5fd39f;
+  --line-c-soft: #173227;
+  --map: #a5b4fc;
+  --map-soft: #252a55;
+  --decide: #f5c46a;
+  --decide-soft: #3a2d12;
+  --wrong: #fb7a92;
+  --wrong-soft: #3d1820;
+  --dot: #f5c46a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 760px; margin: 0 auto; display: grid; gap: 22px; min-width: 0; }
+h1, h2, h3 { font-family: "Space Grotesk", Inter, system-ui, sans-serif; text-wrap: balance; }
+h1 { font-size: clamp(30px, 6.5vw, 44px); line-height: 1.08; margin: 6px 0; font-weight: 700; letter-spacing: -.02em; }
+h2 { font-size: 26px; line-height: 1.2; margin: 0 0 6px; font-weight: 700; }
+h3 { font-size: 17px; margin: 18px 0 6px; font-weight: 700; }
+p { margin: 0 0 10px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.lead { color: var(--muted); font-size: 18px; max-width: 60ch; }
+.note { color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+.program {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 22px;
+  min-width: 0;
+}
+.problem {
+  border-left: 4px solid var(--decide);
+  background: var(--decide-soft);
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin: 12px 0 4px;
+}
+.problem b { font-family: "Space Grotesk", Inter, sans-serif; }
+.wrong {
+  border-left: 4px solid var(--wrong);
+  background: var(--wrong-soft);
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-top: 14px;
+}
+
+.diagram { width: 100%; height: auto; max-width: 100%; display: block; margin-top: 14px; }
+.shape { stroke-width: 2; transition: fill .3s, stroke .3s; }
+.lc .shape { fill: var(--card); stroke: var(--rule); }
+.lc.on .shape { fill: var(--line-c-soft); stroke: var(--line-c); }
+.lg .shape { fill: var(--card); stroke: var(--rule); }
+.lg.on .shape { fill: var(--map-soft); stroke: var(--map); }
+.lg.now .shape { stroke-width: 3.5; }
+.dec .shape { fill: var(--decide-soft); stroke: var(--decide); }
+.lbl { font-family: "Space Grotesk", Inter, sans-serif; font-size: 15px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; }
+.sub { font-size: 12px; fill: var(--muted); text-anchor: middle; }
+.edge { fill: none; stroke: var(--muted); stroke-width: 2.5; }
+.ah { fill: var(--muted); }
+.dot { opacity: 0; }
+
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 600; font-size: 15px; min-height: 44px;
+  padding: 10px 18px; border-radius: 12px; border: 0; cursor: pointer; color: #fff;
+}
+.btn.c { background: var(--line-c); }
+.btn.g { background: var(--map); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--rule); }
+.btn:focus-visible { outline: 3px solid var(--decide); outline-offset: 2px; }
+.btn:disabled { opacity: .45; cursor: default; }
+
+.panel {
+  margin-top: 14px; padding: 12px 14px; border-radius: 12px; min-height: 52px;
+  background: var(--paper); border: 1px dashed var(--rule); font-size: 15px;
+  font-family: ui-monospace, Consolas, "Courier New", monospace; overflow-wrap: anywhere;
+}
+.panel b { font-family: Inter, sans-serif; color: var(--muted); font-weight: 600; font-size: 13px; display: block; margin-bottom: 4px; letter-spacing: .04em; text-transform: uppercase; }
+.caption { margin-top: 10px; font-size: 15px; color: var(--muted); min-height: 24px; }
+
+pre {
+  margin: 10px 0 0; padding: 14px; border-radius: 12px; background: var(--paper);
+  border: 1px solid var(--rule); overflow-x: auto; max-width: 100%;
+  font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 14px; line-height: 1.5;
+}
+code { font-family: ui-monospace, Consolas, "Courier New", monospace; }
+.tag {
+  display: inline-block; font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 999px; margin-bottom: 6px;
+}
+.tag.c { background: var(--line-c-soft); color: var(--line-c); }
+.tag.g { background: var(--map-soft); color: var(--map); }
+
+@media (prefers-reduced-motion: reduce) { .shape { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+
+  <header>
+    <div class="kicker">Two small programs, two problems</div>
+    <h1>LangChain and LangGraph, side by side</h1>
+    <p class="lead">Each program starts with a problem. Read the problem first, then watch the program solve it. The first is a straight line. The second needs a loop.</p>
+  </header>
+
+  <!-- PROGRAM 1: LANGCHAIN -->
+  <section class="program" aria-labelledby="pa">
+    <span class="tag c">Program 1 · LangChain</span>
+    <h2 id="pa">A straight job: summarize a review</h2>
+
+    <div class="problem">
+      <b>The problem.</b> You have a long customer review. You want one short line that says what the customer thinks. Every review follows the same steps, in the same order. No decisions, no retries.
+    </div>
+
+    <pre><code>from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_openai import ChatOpenAI          # any chat model works
+
+prompt = ChatPromptTemplate.from_template("Summarize in one line: {review}")
+model = ChatOpenAI(model="gpt-4o-mini")
+parser = StrOutputParser()
+
+chain = prompt | model | parser                  # the straight line
+print(chain.invoke({"review": "The phone is fast, but the battery dies by noon."}))</code></pre>
+
+    <svg class="diagram" viewBox="0 0 640 110" role="img" aria-label="Input, then Prompt, then Model, then Parser, in one line">
+      <defs>
+        <marker id="ahc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path class="ah" d="M0 0L10 5L0 10z"/>
+        </marker>
+      </defs>
+      <path id="ca0" d="M75 55 H140" stroke="none" fill="none"/>
+      <path id="ca1" class="edge" d="M140 55 H175" marker-end="url(#ahc)"/>
+      <path id="ca2" class="edge" d="M305 55 H340" marker-end="url(#ahc)"/>
+      <path id="ca3" class="edge" d="M470 55 H505" marker-end="url(#ahc)"/>
+
+      <g id="cn0" class="lc"><rect class="shape" x="10" y="25" width="130" height="60" rx="12"/><text class="lbl" x="75" y="55">Review</text></g>
+      <g id="cn1" class="lc"><rect class="shape" x="175" y="25" width="130" height="60" rx="12"/><text class="lbl" x="240" y="55">Prompt</text></g>
+      <g id="cn2" class="lc"><rect class="shape" x="340" y="25" width="130" height="60" rx="12"/><text class="lbl" x="405" y="55">Model</text></g>
+      <g id="cn3" class="lc"><rect class="shape" x="505" y="25" width="125" height="60" rx="12"/><text class="lbl" x="567" y="55">Parser</text></g>
+
+      <circle id="cdot" class="dot" r="9" fill="var(--dot)" cx="75" cy="55"/>
+    </svg>
+
+    <div class="row">
+      <button class="btn c" id="runA" type="button">▶ Run the chain</button>
+      <button class="btn ghost" id="resetA" type="button">Reset</button>
+    </div>
+    <div class="panel" aria-live="polite"><b>Holding now</b><span id="valA">The phone is fast, but the battery dies by noon.</span></div>
+    <div class="caption" id="capA">Press Run. Each box does one job, then passes the value on.</div>
+
+    <div class="wrong">
+      <b>What goes wrong without a chain?</b>
+      <p class="note" style="color:inherit;margin:6px 0 0">You would write the same three calls by hand, in the right order, for every review. A chain names the steps once and reuses them. It only fails when a step needs to go back, which is Program 2's problem.</p>
+    </div>
+  </section>
+
+  <!-- PROGRAM 2: LANGGRAPH -->
+  <section class="program" aria-labelledby="pb">
+    <span class="tag g">Program 2 · LangGraph</span>
+    <h2 id="pb">A job that must repeat: write until good</h2>
+
+    <div class="problem">
+      <b>The problem.</b> A helper writes a draft answer. A checker decides if it is good enough. If not, the helper must write again. Stop after a good draft, or after three tries. A straight line cannot go back, so this needs a loop with a decision.
+    </div>
+
+    <pre><code>from typing import TypedDict
+from langgraph.graph import StateGraph, START, END
+
+class State(TypedDict):
+    question: str
+    draft: str
+    tries: int
+
+def write(state: State) -> dict:
+    # a real app would call an LLM here
+    n = state["tries"] + 1
+    return {"draft": f"Answer v{n}", "tries": n}
+
+def check(state: State) -> str:
+    # the decision: pick the next arrow
+    return "done" if state["tries"] >= 3 else "retry"
+
+graph = StateGraph(State)
+graph.add_node("write", write)
+graph.add_edge(START, "write")
+graph.add_conditional_edges("write", check, {"retry": "write", "done": END})
+app = graph.compile()
+
+print(app.invoke({"question": "What is LangGraph?", "draft": "", "tries": 0}))</code></pre>
+
+    <svg class="diagram" viewBox="0 0 640 210" role="img" aria-label="Start, then Write, then Check. Check loops back to Write until done, then Finish">
+      <defs>
+        <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path class="ah" d="M0 0L10 5L0 10z"/>
+        </marker>
+      </defs>
+      <path id="ga" class="edge" d="M84 105 H130" marker-end="url(#ahg)"/>
+      <path id="gb" class="edge" d="M260 105 H310" marker-end="url(#ahg)"/>
+      <path id="gc" class="edge" d="M420 105 H480" marker-end="url(#ahg)"/>
+      <path id="gl" class="edge" d="M365 133 V176 H195 V135" marker-end="url(#ahg)"/>
+      <text class="sub" x="450" y="97">done</text>
+      <text class="sub" x="280" y="192">retry</text>
+
+      <g id="gn0" class="lg"><circle class="shape" cx="60" cy="105" r="24"/><text class="lbl" x="60" y="105">Start</text></g>
+      <g id="gn1" class="lg"><rect class="shape" x="130" y="77" width="130" height="56" rx="12"/><text class="lbl" x="195" y="99">Write</text><text class="sub" x="195" y="118" id="gdraft">no draft</text></g>
+      <g id="gn2" class="lg dec"><polygon class="shape" points="365,77 420,105 365,133 310,105"/><text class="lbl" x="365" y="105" style="font-size:13px">Good?</text></g>
+      <g id="gn3" class="lg"><rect class="shape" x="480" y="77" width="130" height="56" rx="12"/><text class="lbl" x="545" y="105">Finish</text></g>
+
+      <circle id="gdot" class="dot" r="9" fill="var(--dot)" cx="84" cy="105"/>
+    </svg>
+
+    <div class="row">
+      <button class="btn g" id="runB" type="button">▶ Run the graph</button>
+      <button class="btn ghost" id="resetB" type="button">Reset</button>
+    </div>
+    <div class="panel" aria-live="polite"><b>State (the notebook)</b><span id="stateB">{ question: "What is LangGraph?", draft: "", tries: 0 }</span></div>
+    <div class="caption" id="capB">Press Run. Watch the loop: Write, Check, Write again.</div>
+
+    <div class="wrong">
+      <b>What goes wrong without a loop?</b>
+      <p class="note" style="color:inherit;margin:6px 0 0">A plain chain runs once and stops, so the draft is never checked. You could copy the steps three times, but then you would have to guess how many tries to make. The graph holds the count in state and decides at each check.</p>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="program" aria-labelledby="ps">
+    <h2 id="ps">Which one, and why</h2>
+    <p>Look at the problem first. Ask one question: <b>does the work ever go back?</b></p>
+    <div class="row" style="align-items:stretch">
+      <div style="flex:1 1 240px;min-width:0;border:1px solid var(--rule);border-radius:12px;padding:12px;background:var(--paper)">
+        <span class="tag c">No: a straight job</span>
+        <p class="note" style="color:inherit;margin:0">Use a LangChain chain. Program 1.</p>
+      </div>
+      <div style="flex:1 1 240px;min-width:0;border:1px solid var(--rule);border-radius:12px;padding:12px;background:var(--paper)">
+        <span class="tag g">Yes: loops or decisions</span>
+        <p class="note" style="color:inherit;margin:0">Use LangGraph. Program 2.</p>
+      </div>
+    </div>
+    <p class="note">Both programs are outlines for learning. They are written against the current LangChain and LangGraph APIs, but they have not been executed in the page. Install with <code>pip install langchain-core langchain-openai langgraph</code> and add your API key.</p>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function $(id) { return document.getElementById(id); }
+
+  function travel(dot, path, ms) {
+    return new Promise(function (resolve) {
+      dot.setAttribute('opacity', '1');
+      var L = path.getTotalLength();
+      if (reduce) {
+        var e = path.getPointAtLength(L);
+        dot.setAttribute('cx', e.x); dot.setAttribute('cy', e.y);
+        resolve(); return;
+      }
+      var t0 = performance.now();
+      function frame(now) {
+        var k = Math.min(1, (now - t0) / ms);
+        var p = path.getPointAtLength(L * k);
+        dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+        if (k < 1) requestAnimationFrame(frame); else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  // ---------- Program 1: chain ----------
+  var busyA = false;
+  var dotA = $('cdot');
+  var cNodes = ['cn0', 'cn1', 'cn2', 'cn3'];
+  var startA = 'The phone is fast, but the battery dies by noon.';
+  var stepsA = [
+    { e: 'ca1', n: 'cn1', v: 'Summarize in one line: ' + startA, c: 'Prompt: the review is slotted into the template.' },
+    { e: 'ca2', n: 'cn2', v: 'The phone is fast, but its battery is weak.', c: 'Model: writes a one-line summary.' },
+    { e: 'ca3', n: 'cn3', v: 'The phone is fast, but its battery is weak.', c: 'Parser: returns plain text. Done.' }
+  ];
+  function setLitA(id) {
+    cNodes.forEach(function (n) { $(n).classList.toggle('on', n === id); });
+  }
+  async function runA() {
+    if (busyA) return;
+    resetA();
+    busyA = true;
+    $('runA').disabled = true;
+    setLitA('cn0');
+    await travel(dotA, $('ca0'), 500);
+    for (var i = 0; i < stepsA.length; i++) {
+      var s = stepsA[i];
+      await travel(dotA, $(s.e), 700);
+      setLitA(s.n);
+      $('valA').textContent = s.v;
+      $('capA').textContent = s.c;
+    }
+    busyA = false;
+    $('runA').disabled = false;
+  }
+  function resetA() {
+    busyA = false;
+    cNodes.forEach(function (n) { $(n).classList.remove('on'); });
+    dotA.setAttribute('opacity', '0');
+    dotA.setAttribute('cx', 75); dotA.setAttribute('cy', 55);
+    $('valA').textContent = startA;
+    $('capA').textContent = 'Press Run. Each box does one job, then passes the value on.';
+    $('runA').disabled = false;
+  }
+  $('runA').addEventListener('click', runA);
+  $('resetA').addEventListener('click', resetA);
+
+  // ---------- Program 2: graph ----------
+  var busyB = false;
+  var dotB = $('gdot');
+  var gNodes = ['gn0', 'gn1', 'gn2', 'gn3'];
+  var gSteps = [
+    { e: 'ga', n: 'gn1', t: 1, c: 'Write: draft 1 is made. Check next.' },
+    { e: 'gb', n: 'gn2', t: 1, c: 'Check: tries is 1, so not done. Retry.' },
+    { e: 'gl', n: 'gn1', t: 2, c: 'Loop back to Write: draft 2.' },
+    { e: 'gb', n: 'gn2', t: 2, c: 'Check: tries is 2, not done. Retry.' },
+    { e: 'gl', n: 'gn1', t: 3, c: 'Loop back to Write: draft 3.' },
+    { e: 'gb', n: 'gn2', t: 3, c: 'Check: tries is 3, done!' },
+    { e: 'gc', n: 'gn3', t: 3, c: 'Finish: the graph returns the final state.', done: true }
+  ];
+  function setGraphB(id) {
+    gNodes.forEach(function (n) { $(n).classList.toggle('now', n === id); });
+  }
+  function stateText(t, draft) {
+    return '{ question: "What is LangGraph?", draft: "' + (draft || '') + '", tries: ' + t + ' }';
+  }
+  async function runB() {
+    if (busyB) return;
+    resetB();
+    busyB = true;
+    $('runB').disabled = true;
+    setGraphB('gn0');
+    dotB.setAttribute('opacity', '1');
+    for (var i = 0; i < gSteps.length; i++) {
+      var s = gSteps[i];
+      await travel(dotB, $(s.e), 700);
+      setGraphB(s.n);
+      var draft = 'Answer v' + s.t;
+      if (s.n === 'gn1') { $('gdraft').textContent = draft; }
+      if (s.n !== 'gn2' || s.t) { $('stateB').textContent = stateText(s.t, draft); }
+      $('capB').textContent = s.c;
+    }
+    gNodes.forEach(function (n) { $(n).classList.remove('now'); });
+    busyB = false;
+    $('runB').disabled = false;
+  }
+  function resetB() {
+    busyB = false;
+    gNodes.forEach(function (n) { $(n).classList.remove('on', 'now'); });
+    dotB.setAttribute('opacity', '0');
+    dotB.setAttribute('cx', 84); dotB.setAttribute('cy', 105);
+    $('gdraft').textContent = 'no draft';
+    $('stateB').textContent = '{ question: "What is LangGraph?", draft: "", tries: 0 }';
+    $('capB').textContent = 'Press Run. Watch the loop: Write, Check, Write again.';
+    $('runB').disabled = false;
+  }
+  $('runB').addEventListener('click', runB);
+  $('resetB').addEventListener('click', resetB);
+})();
+</script>
+</body>
+</html>
