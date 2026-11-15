@@ -5,53 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Router Agent Architecture</title>
 <style>
-:root{--bg:#0a0c14;--panel:#0f1420;--border:#1e2d4a;--a:#06b6d4;--a2:#67e8f9;--rgb:6,182,212;--muted:#64748b;--text:#e2e8f0;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;}
-header{text-align:center;padding:36px 20px 16px;}
-header h1{font-size:clamp(1.3rem,3vw,2rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-header p{color:var(--muted);font-size:.88rem;margin-top:6px;}
-.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;}
-.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid var(--a);background:rgba(var(--rgb),.12);color:var(--a);}
-.canvas{max-width:1000px;margin:0 auto;padding:24px 20px 40px;display:flex;flex-direction:column;gap:24px;}
-.flow-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;}
-.col{display:flex;flex-direction:column;gap:12px;align-items:center;}
-.node{border-radius:14px;border:1.5px solid var(--border);background:var(--panel);padding:14px 16px;text-align:center;min-width:130px;flex-shrink:0;transition:transform .3s,filter .3s;animation:glow 2.5s ease-in-out infinite;}
-.node:hover{transform:translateY(-3px);}
-.node .icon{font-size:1.7rem;display:block;margin-bottom:6px;}
-.node .lbl{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
-.node .name{font-size:.9rem;font-weight:700;margin-top:3px;color:var(--a);}
-.node .sub{font-size:.68rem;color:var(--muted);margin-top:3px;max-width:190px;}
-.node.green .name{color:var(--green);}.node.amber .name{color:var(--amber);}.node.purple .name{color:var(--purple);}
-@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(var(--rgb),.2)}50%{box-shadow:0 0 26px rgba(var(--rgb),.5)}}
-.on{filter:brightness(1.7) drop-shadow(0 0 12px var(--a));transform:scale(1.05);}
-.arrow{display:flex;flex-direction:column;align-items:center;min-width:56px;flex-shrink:0;gap:2px;}
-.arrow .albl{font-size:.62rem;color:var(--muted);white-space:nowrap;}
-.aline{width:100%;height:2px;position:relative;overflow:hidden;border-radius:2px;background:rgba(var(--rgb),.18);}
-.aline::before{content:'';position:absolute;top:0;height:100%;width:100%;background:var(--a);border-radius:2px;left:-100%;animation:slideR 1.5s linear infinite;}
-@keyframes slideR{to{left:100%}}
-.ahead{color:var(--a);font-size:.9rem;}
-.box{border:1.5px dashed var(--a);border-radius:18px;padding:22px 22px 14px;position:relative;animation:rbox 3s ease-in-out infinite;}
-@keyframes rbox{0%,100%{box-shadow:0 0 10px rgba(var(--rgb),.12)}50%{box-shadow:0 0 32px rgba(var(--rgb),.3)}}
-.box-lbl{position:absolute;top:-11px;left:16px;background:var(--bg);padding:2px 10px;font-size:.68rem;font-weight:700;color:var(--a);letter-spacing:.1em;text-transform:uppercase;border-radius:20px;border:1px solid var(--a);}
-.note{text-align:center;margin-top:10px;font-size:.68rem;color:var(--a);animation:fadeL 4s ease-in-out infinite;}
-@keyframes fadeL{0%,100%{opacity:.4}50%{opacity:1}}
-.vconn{display:flex;flex-direction:column;align-items:center;}
-.vline{width:2px;height:34px;position:relative;overflow:hidden;border-radius:2px;background:rgba(var(--rgb),.2);}
-.vline::before{content:'';position:absolute;left:0;top:-100%;width:100%;height:100%;background:var(--a);border-radius:2px;animation:slideD 1.5s linear infinite;}
-@keyframes slideD{to{top:100%}}
-.varr{color:var(--a);font-size:.9rem;}
-.vlbl{font-size:.62rem;color:var(--muted);margin-top:2px;text-align:center;}
-.center{display:flex;justify-content:center;}
-.ticker{text-align:center;font-size:.78rem;color:var(--text);min-height:22px;padding:6px;}
-.ticker span{display:inline-block;animation:tf .5s ease;}
-@keyframes tf{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:12px;border-top:1px solid var(--border);}
-.li{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);}
-.ld{width:9px;height:9px;border-radius:50%;}
-.small{text-align:center;color:var(--muted);font-size:.7rem;}
-.pause{animation:pz 1.2s ease-in-out infinite;border-color:var(--amber);}
-@keyframes pz{0%,100%{box-shadow:0 0 6px rgba(245,158,11,.2)}50%{box-shadow:0 0 34px rgba(245,158,11,.75)}}
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#06b6d4;--a2:#67e8f9;--rgb:6,182,212}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
 </style>
 </head>
 <body>
@@ -60,40 +77,116 @@ header p{color:var(--muted);font-size:.88rem;margin-top:6px;}
   <p>LangChain · LangGraph conditional edges · Ollama · In-memory tools</p>
   <div class="badges"><span class="badge">LangGraph</span><span class="badge">Router pattern</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
 </header>
-<div class="canvas">
-  <div class="flow-row">
-    <div class="node " id="user"><span class="icon">👤</span><div class="lbl">Input</div><div class="name">User</div><div class="sub">"Is invoice 1002 paid?"</div></div>
-    <div class="arrow"><div class="albl">question</div><div class="aline"></div><div class="ahead">▶</div></div>
-    <div class="node purple" id="router"><span class="icon">🚦</span><div class="lbl">LLM Classifier</div><div class="name">Router</div><div class="sub">answers ONE word: billing / tech / general</div></div>
-    <div class="arrow"><div class="albl">route</div><div class="aline"></div><div class="ahead">▶</div></div>
-    <div class="box">
-      <div class="box-lbl">Specialists — only ONE runs</div>
-      <div class="col">
-        <div class="node " id="billing"><span class="icon">💳</span><div class="lbl">ReAct agent</div><div class="name">Billing</div><div class="sub">tool: lookup_invoice</div></div>
-        <div class="node " id="tech"><span class="icon">🛠️</span><div class="lbl">ReAct agent</div><div class="name">Tech Support</div><div class="sub">tool: search_kb</div></div>
-        <div class="node " id="general"><span class="icon">💬</span><div class="lbl">Plain LLM</div><div class="name">General</div><div class="sub">no tools · short answers</div></div>
-      </div>
-      <div class="note">add_conditional_edges("router", pick_route)</div>
-    </div>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>The router never answers the question itself</b> — it only decides <b>who</b> should. Exactly one specialist runs per question.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="520" fill="url(#dots)"/>
+<rect class="group" x="540" y="20" width="230" height="480" rx="20" style="--c:#06b6d4"/>
+<g style="--c:#06b6d4"><rect class="gtag" x="558" y="8" width="202.2" height="24" rx="12"/><text class="gtxt" x="659.1" y="24" text-anchor="middle">Specialists — only ONE runs</text></g>
+<g class="edge" id="e_ur" data-both="0"><path class="base" d="M180,261.0 L235,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M180,261.0 L235,261.0"/></g>
+<g class="edge" id="e_rb" data-both="0"><path class="base" d="M415,261.0 L480.0,261.0 Q492,261 492.0,249.0 L492.0,123.0 Q492,111 504.0,111.0 L570,111.0" marker-end="url(#arr-off)"/><path class="flow" d="M415,261.0 L480.0,261.0 Q492,261 492.0,249.0 L492.0,123.0 Q492,111 504.0,111.0 L570,111.0"/></g>
+<g class="edge" id="e_ba" data-both="0"><path class="base" d="M740,111.0 L798.0,111.0 Q810,111 810.0,123.0 L810.0,249.0 Q810,261 822.0,261.0 L850,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M740,111.0 L798.0,111.0 Q810,111 810.0,123.0 L810.0,249.0 Q810,261 822.0,261.0 L850,261.0"/></g>
+<g class="edge" id="e_rt" data-both="0"><path class="base" d="M415,261.0 L491.5,261.0 Q492,261 492.0,261.0 L492.0,261.0 Q492,261 492.5,261.0 L570,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M415,261.0 L491.5,261.0 Q492,261 492.0,261.0 L492.0,261.0 Q492,261 492.5,261.0 L570,261.0"/></g>
+<g class="edge" id="e_ta" data-both="0"><path class="base" d="M740,261.0 L809.5,261.0 Q810,261 810.0,261.0 L810.0,261.0 Q810,261 810.5,261.0 L850,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M740,261.0 L809.5,261.0 Q810,261 810.0,261.0 L810.0,261.0 Q810,261 810.5,261.0 L850,261.0"/></g>
+<g class="edge" id="e_rg" data-both="0"><path class="base" d="M415,261.0 L480.0,261.0 Q492,261 492.0,273.0 L492.0,399.0 Q492,411 504.0,411.0 L570,411.0" marker-end="url(#arr-off)"/><path class="flow" d="M415,261.0 L480.0,261.0 Q492,261 492.0,273.0 L492.0,399.0 Q492,411 504.0,411.0 L570,411.0"/></g>
+<g class="edge" id="e_ga" data-both="0"><path class="base" d="M740,411.0 L798.0,411.0 Q810,411 810.0,399.0 L810.0,273.0 Q810,261 822.0,261.0 L850,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M740,411.0 L798.0,411.0 Q810,411 810.0,399.0 L810.0,273.0 Q810,261 822.0,261.0 L850,261.0"/></g>
+<g class="elabel" data-for="e_ur"><rect x="173.6" y="228" width="66.8" height="22" rx="11"/><text x="207" y="243" text-anchor="middle">question</text></g>
+<g class="elabel" data-for="e_rb"><rect x="499.65" y="100" width="60.699999999999996" height="22" rx="11"/><text x="530" y="115" text-anchor="middle">billing</text></g>
+<g class="elabel" data-for="e_rt"><rect x="508.8" y="232" width="42.4" height="22" rx="11"/><text x="530" y="247" text-anchor="middle">tech</text></g>
+<g class="elabel" data-for="e_rg"><rect x="499.65" y="400" width="60.699999999999996" height="22" rx="11"/><text x="530" y="415" text-anchor="middle">general</text></g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="20" y="205" width="160" height="112" rx="16"/>
+<rect class="bar" x="42" y="205" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="100.0" cy="238" r="21"/>
+<text class="emoji" x="100.0" y="246" text-anchor="middle">👤</text>
+<text class="nname" x="100.0" y="273" text-anchor="middle">User</text>
+<text class="nlbl" x="100.0" y="286" text-anchor="middle">INPUT</text>
+<text class="nsub" x="100.0" y="299" text-anchor="middle">"Is invoice 1002 paid?"</text>
+</g>
+<g class="node" id="router" style="--c:#8b5cf6">
+<rect class="card" x="235" y="205" width="180" height="112" rx="16"/>
+<rect class="bar" x="257" y="205" width="136" height="3" rx="1.5"/>
+<circle class="ic" cx="325.0" cy="238" r="21"/>
+<text class="emoji" x="325.0" y="246" text-anchor="middle">🚦</text>
+<text class="nname" x="325.0" y="273" text-anchor="middle">Router</text>
+<text class="nlbl" x="325.0" y="286" text-anchor="middle">LLM CLASSIFIER</text>
+<text class="nsub" x="325.0" y="299" text-anchor="middle">replies ONE word:</text>
+<text class="nsub" x="325.0" y="311" text-anchor="middle">billing / tech / general</text>
+</g>
+<g class="node" id="billing" style="--c:#06b6d4">
+<rect class="card" x="570" y="55" width="170" height="112" rx="16"/>
+<rect class="bar" x="592" y="55" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="655.0" cy="88" r="21"/>
+<text class="emoji" x="655.0" y="96" text-anchor="middle">💳</text>
+<text class="nname" x="655.0" y="123" text-anchor="middle">Billing</text>
+<text class="nlbl" x="655.0" y="136" text-anchor="middle">REACT AGENT</text>
+<text class="nsub" x="655.0" y="149" text-anchor="middle">tool: lookup_invoice</text>
+</g>
+<g class="node" id="tech" style="--c:#06b6d4">
+<rect class="card" x="570" y="205" width="170" height="112" rx="16"/>
+<rect class="bar" x="592" y="205" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="655.0" cy="238" r="21"/>
+<text class="emoji" x="655.0" y="246" text-anchor="middle">🛠️</text>
+<text class="nname" x="655.0" y="273" text-anchor="middle">Tech Support</text>
+<text class="nlbl" x="655.0" y="286" text-anchor="middle">REACT AGENT</text>
+<text class="nsub" x="655.0" y="299" text-anchor="middle">tool: search_kb</text>
+</g>
+<g class="node" id="general" style="--c:#06b6d4">
+<rect class="card" x="570" y="355" width="170" height="112" rx="16"/>
+<rect class="bar" x="592" y="355" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="655.0" cy="388" r="21"/>
+<text class="emoji" x="655.0" y="396" text-anchor="middle">💬</text>
+<text class="nname" x="655.0" y="423" text-anchor="middle">General</text>
+<text class="nlbl" x="655.0" y="436" text-anchor="middle">PLAIN LLM</text>
+<text class="nsub" x="655.0" y="449" text-anchor="middle">no tools · short answers</text>
+</g>
+<g class="node" id="out" style="--c:#10b981">
+<rect class="card" x="850" y="205" width="140" height="112" rx="16"/>
+<rect class="bar" x="872" y="205" width="96" height="3" rx="1.5"/>
+<circle class="ic" cx="920.0" cy="238" r="21"/>
+<text class="emoji" x="920.0" y="246" text-anchor="middle">✅</text>
+<text class="nname" x="920.0" y="273" text-anchor="middle">Answer</text>
+<text class="nlbl" x="920.0" y="286" text-anchor="middle">OUTPUT</text>
+<text class="nsub" x="920.0" y="299" text-anchor="middle">from the chosen</text>
+<text class="nsub" x="920.0" y="311" text-anchor="middle">specialist</text>
+</g>
+<g class="nnote" style="--c:#8b5cf6"><rect x="20" y="380" width="235" height="62" rx="14"/>
+<text class="emoji" x="44" y="418.0" text-anchor="middle">🎯</text>
+<text x="66" y="404">Conditional edge:</text>
+<text x="66" y="419">add_conditional_edges("router", pick_route)</text>
+</g>
+</svg>
   </div>
-  <div class="center"><div class="vconn"><div class="vline"></div><div class="varr">▼</div><div class="vlbl">answer</div></div></div>
-  <div class="flow-row"><div class="node green" id="out"><span class="icon">✅</span><div class="lbl">Output</div><div class="name">Answer</div><div class="sub">from the chosen specialist</div></div></div>
-  <div class="small">The router never answers the question itself — it only decides WHO should.</div>
-  <div class="ticker" id="tk"><span>Initialising…</span></div>
-  <div class="legend"><div class="li"><div class="ld" style="background:var(--a)"></div>Router / agents</div><div class="li"><div class="ld" style="background:var(--purple)"></div>Decision</div><div class="li"><div class="ld" style="background:var(--green)"></div>Output</div></div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
+  </div>
+  <div class="legend"><span><i style="background:#94a3b8"></i>Input</span><span><i style="background:#8b5cf6"></i>Decision</span><span><i style="background:#06b6d4"></i>Specialist agent</span><span><i style="background:#10b981"></i>Output</span></div>
 </div>
 <script>
-// each step = [message, id of the element to highlight]
-const steps=[["👤 User asks: “Is invoice 1002 paid?”", "user"], ["🚦 Router (LLM) reads the question and replies with one word…", "router"], ["🚦 Router → “billing”. Conditional edge picks the billing node.", "router"], ["💳 Billing agent calls lookup_invoice(\"1002\")…", "billing"], ["💳 Tool returns: $120.00, OVERDUE since 2026-10-20", "billing"], ["✅ User gets the billing specialist's answer. Tech and General never ran!", "out"], ["🔁 Next question: “My wifi keeps dropping” → router picks “tech”", "tech"], ["💬 Next question: “What are your hours?” → router picks “general”", "general"]];
-let i=0;const tk=document.getElementById('tk');
-function tick(){
-  document.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
-  const [msg,id]=steps[i];
-  tk.innerHTML=`<span>${msg}</span>`;
-  const el=document.getElementById(id); if(el) el.classList.add('on');
-  i=(i+1)%steps.length;
+const steps=[{"t": "👤 User asks: “Is invoice 1002 paid?”", "n": ["user"], "e": []}, {"t": "🚦 The question goes to the Router (an LLM that must reply with one word).", "n": ["user", "router"], "e": ["e_ur"]}, {"t": "🚦 Router replies “billing” → the conditional edge picks the Billing node.", "n": ["router", "billing"], "e": ["e_rb"]}, {"t": "💳 Billing agent calls lookup_invoice(\"1002\") → $120.00, OVERDUE since 2026-10-20.", "n": ["billing"], "e": []}, {"t": "✅ User gets the billing specialist's answer. Tech and General never ran!", "n": ["billing", "out"], "e": ["e_ba"]}, {"t": "🔁 Next: “My wifi keeps dropping” → router says “tech” → Tech Support answers.", "n": ["router", "tech", "out"], "e": ["e_rt", "e_ta"]}, {"t": "💬 Next: “What are your hours?” → router says “general” → plain LLM answers.", "n": ["router", "general", "out"], "e": ["e_rg", "e_ga"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
 }
-tick();setInterval(tick,2200);
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
 </script>
 </body>
 </html>

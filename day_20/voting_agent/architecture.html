@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voting Panel Agent Architecture</title>
+<style>
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#6366f1;--a2:#a5b4fc;--rgb:99,102,241}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗳️ Voting Panel Agent — Architecture</h1>
+  <p>LangChain · LangGraph ensemble · Ollama · spam-signal tool</p>
+  <div class="badges"><span class="badge">LangGraph</span><span class="badge">Voting / ensemble</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
+</header>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>One AI can be wrong; a panel is wrong less often.</b> Jurors with different personalities vote; code counts; a judge only breaks ties.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="520" fill="url(#dots)"/>
+<rect class="group" x="215" y="20" width="250" height="480" rx="20" style="--c:#06b6d4"/>
+<g style="--c:#06b6d4"><rect class="gtag" x="233" y="8" width="222.0" height="24" rx="12"/><text class="gtxt" x="344.0" y="24" text-anchor="middle">3 jurors vote at the SAME time</text></g>
+<g class="edge" id="e_us" data-both="0"><path class="base" d="M170,261.0 L180.0,261.0 Q190,261 190.0,251.0 L190.0,123.0 Q190,111 202.0,111.0 L245,111.0" marker-end="url(#arr-off)"/><path class="flow" d="M170,261.0 L180.0,261.0 Q190,261 190.0,251.0 L190.0,123.0 Q190,111 202.0,111.0 L245,111.0"/></g>
+<g class="edge" id="e_st" data-both="0"><path class="base" d="M435,111.0 L488.0,111.0 Q500,111 500.0,123.0 L500.0,249.0 Q500,261 512.0,261.0 L540,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M435,111.0 L488.0,111.0 Q500,111 500.0,123.0 L500.0,249.0 Q500,261 512.0,261.0 L540,261.0"/></g>
+<g class="edge" id="e_uf" data-both="0"><path class="base" d="M170,261.0 L189.5,261.0 Q190,261 190.0,261.0 L190.0,261.0 Q190,261 190.5,261.0 L245,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M170,261.0 L189.5,261.0 Q190,261 190.0,261.0 L190.0,261.0 Q190,261 190.5,261.0 L245,261.0"/></g>
+<g class="edge" id="e_ft" data-both="0"><path class="base" d="M435,261.0 L499.5,261.0 Q500,261 500.0,261.0 L500.0,261.0 Q500,261 500.5,261.0 L540,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M435,261.0 L499.5,261.0 Q500,261 500.0,261.0 L500.0,261.0 Q500,261 500.5,261.0 L540,261.0"/></g>
+<g class="edge" id="e_ue" data-both="0"><path class="base" d="M170,261.0 L180.0,261.0 Q190,261 190.0,271.0 L190.0,399.0 Q190,411 202.0,411.0 L245,411.0" marker-end="url(#arr-off)"/><path class="flow" d="M170,261.0 L180.0,261.0 Q190,261 190.0,271.0 L190.0,399.0 Q190,411 202.0,411.0 L245,411.0"/></g>
+<g class="edge" id="e_et" data-both="0"><path class="base" d="M435,411.0 L488.0,411.0 Q500,411 500.0,399.0 L500.0,273.0 Q500,261 512.0,261.0 L540,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M435,411.0 L488.0,411.0 Q500,411 500.0,399.0 L500.0,273.0 Q500,261 512.0,261.0 L540,261.0"/></g>
+<g class="edge" id="e_to" data-both="0"><path class="base" d="M700,261.0 L810,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M700,261.0 L810,261.0"/></g>
+<g class="edge" id="e_tj" data-both="0"><path class="base" d="M620.0,317 L620.0,380" marker-end="url(#arr-off)"/><path class="flow" d="M620.0,317 L620.0,380"/></g>
+<g class="edge" id="e_jo" data-both="0"><path class="base" d="M700,436.0 L748.0,436.0 Q760,436 760.0,424.0 L760.0,288.0 Q760,276 772.0,276.0 L810,276.0" marker-end="url(#arr-off)"/><path class="flow" d="M700,436.0 L748.0,436.0 Q760,436 760.0,424.0 L760.0,288.0 Q760,276 772.0,276.0 L810,276.0"/></g>
+<g class="elabel" data-for="e_us"><rect x="144.4" y="139" width="91.19999999999999" height="22" rx="11"/><text x="190" y="154" text-anchor="middle">same message</text></g>
+<g class="elabel" data-for="e_ft"><rect x="469.65" y="139" width="60.699999999999996" height="22" rx="11"/><text x="500" y="154" text-anchor="middle">3 votes</text></g>
+<g class="elabel" data-for="e_to"><rect x="703.3" y="229" width="103.39999999999999" height="22" rx="11"/><text x="755" y="244" text-anchor="middle">clear majority</text></g>
+<g class="elabel" data-for="e_tj"><rect x="580.5" y="334" width="79.0" height="22" rx="11"/><text x="620" y="349" text-anchor="middle">split vote</text></g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="20" y="205" width="150" height="112" rx="16"/>
+<rect class="bar" x="42" y="205" width="106" height="3" rx="1.5"/>
+<circle class="ic" cx="95.0" cy="238" r="21"/>
+<text class="emoji" x="95.0" y="246" text-anchor="middle">👤</text>
+<text class="nname" x="95.0" y="273" text-anchor="middle">User</text>
+<text class="nlbl" x="95.0" y="286" text-anchor="middle">INPUT</text>
+<text class="nsub" x="95.0" y="299" text-anchor="middle">a message to check</text>
+</g>
+<g class="node" id="strict" style="--c:#ec4899">
+<rect class="card" x="245" y="55" width="190" height="112" rx="16"/>
+<rect class="bar" x="267" y="55" width="146" height="3" rx="1.5"/>
+<circle class="ic" cx="340.0" cy="88" r="21"/>
+<text class="emoji" x="340.0" y="96" text-anchor="middle">🕵️</text>
+<text class="nname" x="340.0" y="123" text-anchor="middle">Strict Guard</text>
+<text class="nlbl" x="340.0" y="136" text-anchor="middle">JUROR 1 · LLM</text>
+<text class="nsub" x="340.0" y="149" text-anchor="middle">distrusts everything</text>
+</g>
+<g class="node" id="friendly" style="--c:#10b981">
+<rect class="card" x="245" y="205" width="190" height="112" rx="16"/>
+<rect class="bar" x="267" y="205" width="146" height="3" rx="1.5"/>
+<circle class="ic" cx="340.0" cy="238" r="21"/>
+<text class="emoji" x="340.0" y="246" text-anchor="middle">😊</text>
+<text class="nname" x="340.0" y="273" text-anchor="middle">Friendly Juror</text>
+<text class="nlbl" x="340.0" y="286" text-anchor="middle">JUROR 2 · LLM</text>
+<text class="nsub" x="340.0" y="299" text-anchor="middle">gives the benefit</text>
+<text class="nsub" x="340.0" y="311" text-anchor="middle">of the doubt</text>
+</g>
+<g class="node" id="evidence" style="--c:#06b6d4">
+<rect class="card" x="245" y="355" width="190" height="112" rx="16"/>
+<rect class="bar" x="267" y="355" width="146" height="3" rx="1.5"/>
+<circle class="ic" cx="340.0" cy="388" r="21"/>
+<text class="emoji" x="340.0" y="396" text-anchor="middle">📊</text>
+<text class="nname" x="340.0" y="423" text-anchor="middle">Data Analyst</text>
+<text class="nlbl" x="340.0" y="436" text-anchor="middle">JUROR 3 · LLM + TOOL</text>
+<text class="nsub" x="340.0" y="449" text-anchor="middle">uses spam_signals()</text>
+</g>
+<g class="node" id="tally" style="--c:#f59e0b">
+<rect class="card" x="540" y="205" width="160" height="112" rx="16"/>
+<rect class="bar" x="562" y="205" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="620.0" cy="238" r="21"/>
+<text class="emoji" x="620.0" y="246" text-anchor="middle">🧮</text>
+<text class="nname" x="620.0" y="273" text-anchor="middle">Tally</text>
+<text class="nlbl" x="620.0" y="286" text-anchor="middle">PLAIN CODE · NO AI</text>
+<text class="nsub" x="620.0" y="299" text-anchor="middle">counts the votes</text>
+</g>
+<g class="node" id="judge" style="--c:#8b5cf6">
+<rect class="card" x="540" y="380" width="160" height="112" rx="16"/>
+<rect class="bar" x="562" y="380" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="620.0" cy="413" r="21"/>
+<text class="emoji" x="620.0" y="421" text-anchor="middle">⚖️</text>
+<text class="nname" x="620.0" y="448" text-anchor="middle">Judge</text>
+<text class="nlbl" x="620.0" y="461" text-anchor="middle">TIE-BREAKER · LLM</text>
+<text class="nsub" x="620.0" y="474" text-anchor="middle">only if no majority</text>
+</g>
+<g class="node" id="out" style="--c:#10b981">
+<rect class="card" x="810" y="205" width="170" height="112" rx="16"/>
+<rect class="bar" x="832" y="205" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="895.0" cy="238" r="21"/>
+<text class="emoji" x="895.0" y="246" text-anchor="middle">🚦</text>
+<text class="nname" x="895.0" y="273" text-anchor="middle">Verdict</text>
+<text class="nlbl" x="895.0" y="286" text-anchor="middle">SPAM / NOT_SPAM</text>
+<text class="nsub" x="895.0" y="299" text-anchor="middle">+ who decided</text>
+</g>
+</svg>
+  </div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
+  </div>
+  <div class="legend"><span><i style="background:#ec4899"></i>Juror</span><span><i style="background:#10b981"></i>Juror</span><span><i style="background:#06b6d4"></i>Juror + tool</span><span><i style="background:#f59e0b"></i>Plain code</span><span><i style="background:#8b5cf6"></i>Judge</span></div>
+</div>
+<script>
+const steps=[{"t": "👤 User pastes a message to check.", "n": ["user"], "e": []}, {"t": "🗳️ Three jurors receive the SAME message and vote at the same time.", "n": ["strict", "friendly", "evidence"], "e": ["e_us", "e_uf", "e_ue"]}, {"t": "📊 The Data Analyst also gets hard numbers from the spam_signals tool.", "n": ["evidence"], "e": []}, {"t": "🧮 Tally (plain Python) counts: SPAM vs NOT_SPAM vs UNSURE.", "n": ["strict", "friendly", "evidence", "tally"], "e": ["e_st", "e_ft", "e_et"]}, {"t": "✅ Two or more agree → the majority wins, no judge needed.", "n": ["tally", "out"], "e": ["e_to"]}, {"t": "⚖️ Otherwise (split vote) the Judge breaks the tie.", "n": ["tally", "judge", "out"], "e": ["e_tj", "e_jo"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
+}
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
+</script>
+</body>
+</html>

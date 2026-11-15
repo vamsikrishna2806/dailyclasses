@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hierarchical Agent Architecture</title>
+<style>
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#6366f1;--a2:#a5b4fc;--rgb:99,102,241}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏢 Hierarchical Agent — Architecture</h1>
+  <p>LangChain · LangGraph sub-graphs · Ollama · audience research tool</p>
+  <div class="badges"><span class="badge">LangGraph</span><span class="badge">Hierarchical teams</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
+</header>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>A company org-chart.</b> The manager only talks to teams; each team has its own workers and lead. Graphs inside graphs.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="540" fill="url(#dots)"/>
+<rect class="group" x="20" y="230" width="465" height="200" rx="20" style="--c:#06b6d4"/>
+<g style="--c:#06b6d4"><rect class="gtag" x="38" y="218" width="208.79999999999998" height="24" rx="12"/><text class="gtxt" x="142.39999999999998" y="234" text-anchor="middle">Product team — its OWN graph</text></g>
+<rect class="group" x="515" y="230" width="465" height="200" rx="20" style="--c:#ec4899"/>
+<g style="--c:#ec4899"><rect class="gtag" x="533" y="218" width="222.0" height="24" rx="12"/><text class="gtxt" x="644.0" y="234" text-anchor="middle">Marketing team — its OWN graph</text></g>
+<g class="edge" id="e_um" data-both="0"><path class="base" d="M180,86.0 L395,86.0" marker-end="url(#arr-off)"/><path class="flow" d="M180,86.0 L395,86.0"/></g>
+<g class="edge" id="e_mo" data-both="0"><path class="base" d="M615,86.0 L830,86.0" marker-end="url(#arr-off)"/><path class="flow" d="M615,86.0 L830,86.0"/></g>
+<g class="edge" id="e_mp" data-both="1"><path class="base" d="M445.0,142 L445.0,178.0 Q445,190 433.0,190.0 L264.0,190.0 Q252,190 252.0,202.0 L252,230" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M445.0,142 L445.0,178.0 Q445,190 433.0,190.0 L264.0,190.0 Q252,190 252.0,202.0 L252,230"/></g>
+<g class="edge" id="e_mm" data-both="1"><path class="base" d="M565.0,142 L565.0,178.0 Q565,190 577.0,190.0 L735.0,190.0 Q747,190 747.0,202.0 L747,230" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M565.0,142 L565.0,178.0 Q565,190 577.0,190.0 L735.0,190.0 Q747,190 747.0,202.0 L747,230"/></g>
+<g class="edge" id="e_p1" data-both="0"><path class="base" d="M175,326.0 L185,326.0" marker-end="url(#arr-off)"/><path class="flow" d="M175,326.0 L185,326.0"/></g>
+<g class="edge" id="e_p2" data-both="0"><path class="base" d="M320,326.0 L330,326.0" marker-end="url(#arr-off)"/><path class="flow" d="M320,326.0 L330,326.0"/></g>
+<g class="edge" id="e_m1" data-both="0"><path class="base" d="M670,326.0 L680,326.0" marker-end="url(#arr-off)"/><path class="flow" d="M670,326.0 L680,326.0"/></g>
+<g class="edge" id="e_m2" data-both="0"><path class="base" d="M815,326.0 L825,326.0" marker-end="url(#arr-off)"/><path class="flow" d="M815,326.0 L825,326.0"/></g>
+<g class="elabel" data-for="e_um"><rect x="266.8" y="59" width="42.4" height="22" rx="11"/><text x="288" y="74" text-anchor="middle">idea</text></g>
+<g class="elabel" data-for="e_mo"><rect x="694.7" y="59" width="54.599999999999994" height="22" rx="11"/><text x="722" y="74" text-anchor="middle">FINISH</text></g>
+<g class="elabel" data-for="e_mp"><rect x="280.0" y="179" width="140.0" height="22" rx="11"/><text x="350" y="194" text-anchor="middle">delegate ↓  report ↑</text></g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="20" y="30" width="160" height="112" rx="16"/>
+<rect class="bar" x="42" y="30" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="100.0" cy="63" r="21"/>
+<text class="emoji" x="100.0" y="71" text-anchor="middle">👤</text>
+<text class="nname" x="100.0" y="98" text-anchor="middle">User</text>
+<text class="nlbl" x="100.0" y="111" text-anchor="middle">INPUT</text>
+<text class="nsub" x="100.0" y="124" text-anchor="middle">idea: "a note-taking</text>
+<text class="nsub" x="100.0" y="136" text-anchor="middle">app"</text>
+</g>
+<g class="node" id="manager" style="--c:#8b5cf6">
+<rect class="card" x="395" y="30" width="220" height="112" rx="16"/>
+<rect class="bar" x="417" y="30" width="176" height="3" rx="1.5"/>
+<circle class="ic" cx="505.0" cy="63" r="21"/>
+<text class="emoji" x="505.0" y="71" text-anchor="middle">🏢</text>
+<text class="nname" x="505.0" y="98" text-anchor="middle">Manager</text>
+<text class="nlbl" x="505.0" y="111" text-anchor="middle">TOP BOSS · LLM</text>
+<text class="nsub" x="505.0" y="124" text-anchor="middle">talks to TEAMS only</text>
+</g>
+<g class="node" id="out" style="--c:#10b981">
+<rect class="card" x="830" y="30" width="160" height="112" rx="16"/>
+<rect class="bar" x="852" y="30" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="910.0" cy="63" r="21"/>
+<text class="emoji" x="910.0" y="71" text-anchor="middle">✅</text>
+<text class="nname" x="910.0" y="98" text-anchor="middle">Launch Kit</text>
+<text class="nlbl" x="910.0" y="111" text-anchor="middle">OUTPUT</text>
+<text class="nsub" x="910.0" y="124" text-anchor="middle">spec + campaign</text>
+</g>
+<g class="node" id="researcher" style="--c:#06b6d4">
+<rect class="card" x="40" y="270" width="135" height="112" rx="16"/>
+<rect class="bar" x="62" y="270" width="91" height="3" rx="1.5"/>
+<circle class="ic" cx="107.5" cy="303" r="21"/>
+<text class="emoji" x="107.5" y="311" text-anchor="middle">🔎</text>
+<text class="nname" x="107.5" y="338" text-anchor="middle">Researcher</text>
+<text class="nlbl" x="107.5" y="351" text-anchor="middle">REACT · WORKER</text>
+<text class="nsub" x="107.5" y="364" text-anchor="middle">tool: audience_insights</text>
+</g>
+<g class="node" id="spec" style="--c:#06b6d4">
+<rect class="card" x="185" y="270" width="135" height="112" rx="16"/>
+<rect class="bar" x="207" y="270" width="91" height="3" rx="1.5"/>
+<circle class="ic" cx="252.5" cy="303" r="21"/>
+<text class="emoji" x="252.5" y="311" text-anchor="middle">📝</text>
+<text class="nname" x="252.5" y="338" text-anchor="middle">Spec Writer</text>
+<text class="nlbl" x="252.5" y="351" text-anchor="middle">LLM · WORKER</text>
+<text class="nsub" x="252.5" y="364" text-anchor="middle">3 key features</text>
+</g>
+<g class="node" id="plead" style="--c:#8b5cf6">
+<rect class="card" x="330" y="270" width="135" height="112" rx="16"/>
+<rect class="bar" x="352" y="270" width="91" height="3" rx="1.5"/>
+<circle class="ic" cx="397.5" cy="303" r="21"/>
+<text class="emoji" x="397.5" y="311" text-anchor="middle">👩‍💼</text>
+<text class="nname" x="397.5" y="338" text-anchor="middle">Product Lead</text>
+<text class="nlbl" x="397.5" y="351" text-anchor="middle">LLM · LEAD</text>
+<text class="nsub" x="397.5" y="364" text-anchor="middle">merges the spec</text>
+</g>
+<g class="node" id="copy" style="--c:#06b6d4">
+<rect class="card" x="535" y="270" width="135" height="112" rx="16"/>
+<rect class="bar" x="557" y="270" width="91" height="3" rx="1.5"/>
+<circle class="ic" cx="602.5" cy="303" r="21"/>
+<text class="emoji" x="602.5" y="311" text-anchor="middle">✍️</text>
+<text class="nname" x="602.5" y="338" text-anchor="middle">Copywriter</text>
+<text class="nlbl" x="602.5" y="351" text-anchor="middle">LLM · WORKER</text>
+<text class="nsub" x="602.5" y="364" text-anchor="middle">tagline + pitch</text>
+</g>
+<g class="node" id="social" style="--c:#06b6d4">
+<rect class="card" x="680" y="270" width="135" height="112" rx="16"/>
+<rect class="bar" x="702" y="270" width="91" height="3" rx="1.5"/>
+<circle class="ic" cx="747.5" cy="303" r="21"/>
+<text class="emoji" x="747.5" y="311" text-anchor="middle">📣</text>
+<text class="nname" x="747.5" y="338" text-anchor="middle">Social Planner</text>
+<text class="nlbl" x="747.5" y="351" text-anchor="middle">LLM · WORKER</text>
+<text class="nsub" x="747.5" y="364" text-anchor="middle">3 social posts</text>
+</g>
+<g class="node" id="mlead" style="--c:#8b5cf6">
+<rect class="card" x="825" y="270" width="135" height="112" rx="16"/>
+<rect class="bar" x="847" y="270" width="91" height="3" rx="1.5"/>
+<circle class="ic" cx="892.5" cy="303" r="21"/>
+<text class="emoji" x="892.5" y="311" text-anchor="middle">👨‍💼</text>
+<text class="nname" x="892.5" y="338" text-anchor="middle">Marketing Lead</text>
+<text class="nlbl" x="892.5" y="351" text-anchor="middle">LLM · LEAD</text>
+<text class="nsub" x="892.5" y="364" text-anchor="middle">assembles campaign</text>
+</g>
+<g class="nnote" style="--c:#8b5cf6"><rect x="20" y="450" width="480" height="62" rx="14"/>
+<text class="emoji" x="44" y="488.0" text-anchor="middle">🪆</text>
+<text x="66" y="474">A graph inside a graph: each team is compiled on its own,</text>
+<text x="66" y="489">then plugged into the manager's graph as ONE node.</text>
+</g>
+</svg>
+  </div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
+  </div>
+  <div class="legend"><span><i style="background:#8b5cf6"></i>Boss / Leads</span><span><i style="background:#06b6d4"></i>Workers</span><span><i style="background:#ec4899"></i>Team box</span><span><i style="background:#10b981"></i>Output</span></div>
+</div>
+<script>
+const steps=[{"t": "👤 User gives a product idea: “a note-taking app”.", "n": ["user"], "e": []}, {"t": "🏢 Manager: product team has not worked yet → delegate to the Product team.", "n": ["user", "manager"], "e": ["e_um", "e_mp"]}, {"t": "🔎📝 Inside the team: Researcher (tool) → Spec Writer…", "n": ["researcher", "spec"], "e": ["e_p1"]}, {"t": "👩‍💼 …→ Product Lead merges everything into a PRODUCT SPEC and reports back.", "n": ["spec", "plead"], "e": ["e_p2"]}, {"t": "🏢 Manager: spec ready → delegate to the Marketing team (with the spec).", "n": ["manager"], "e": ["e_mm"]}, {"t": "✍️📣 Copywriter → Social Planner…", "n": ["copy", "social"], "e": ["e_m1"]}, {"t": "👨‍💼 …→ Marketing Lead assembles the CAMPAIGN and reports back.", "n": ["social", "mlead"], "e": ["e_m2"]}, {"t": "✅ Manager: both teams done → FINISH. User gets the launch kit.", "n": ["manager", "out"], "e": ["e_mo"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
+}
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
+</script>
+</body>
+</html>

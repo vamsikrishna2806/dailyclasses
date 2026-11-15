@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline Agent Architecture</title>
+<style>
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#06b6d4;--a2:#67e8f9;--rgb:6,182,212}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏭 Pipeline Agent — Architecture</h1>
+  <p>LangChain · LangGraph linear graph · Ollama · outline → write → edit → headline</p>
+  <div class="badges"><span class="badge">LangGraph</span><span class="badge">Pipeline pattern</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
+</header>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>An assembly line.</b> Every agent does one small job, then passes the work to the next. The order never changes.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="500" fill="url(#dots)"/>
+<rect class="group" x="240" y="5" width="710" height="160" rx="20" style="--c:#06b6d4"/>
+<g style="--c:#06b6d4"><rect class="gtag" x="258" y="-7" width="301.2" height="24" rx="12"/><text class="gtxt" x="408.6" y="9" text-anchor="middle">Assembly line — fixed order, one direction</text></g>
+<g class="edge" id="e_uo" data-both="0"><path class="base" d="M180,96.0 L265,96.0" marker-end="url(#arr-off)"/><path class="flow" d="M180,96.0 L265,96.0"/></g>
+<g class="edge" id="e_ow" data-both="0"><path class="base" d="M425,96.0 L510,96.0" marker-end="url(#arr-off)"/><path class="flow" d="M425,96.0 L510,96.0"/></g>
+<g class="edge" id="e_we" data-both="0"><path class="base" d="M670,96.0 L755,96.0" marker-end="url(#arr-off)"/><path class="flow" d="M670,96.0 L755,96.0"/></g>
+<g class="edge" id="e_eh" data-both="0"><path class="base" d="M840.0,152 L840.0,270" marker-end="url(#arr-off)"/><path class="flow" d="M840.0,152 L840.0,270"/></g>
+<g class="edge" id="e_hq" data-both="0"><path class="base" d="M755,326.0 L670,326.0" marker-end="url(#arr-off)"/><path class="flow" d="M755,326.0 L670,326.0"/></g>
+<g class="edge" id="e_qo" data-both="0"><path class="base" d="M510,326.0 L425,326.0" marker-end="url(#arr-off)"/><path class="flow" d="M510,326.0 L425,326.0"/></g>
+<g class="elabel" data-for="e_uo"><rect x="197.75" y="69" width="48.5" height="22" rx="11"/><text x="222" y="84" text-anchor="middle">topic</text></g>
+<g class="elabel" data-for="e_ow"><rect x="436.65" y="85" width="60.699999999999996" height="22" rx="11"/><text x="467" y="100" text-anchor="middle">outline</text></g>
+<g class="elabel" data-for="e_we"><rect x="687.75" y="85" width="48.5" height="22" rx="11"/><text x="712" y="100" text-anchor="middle">draft</text></g>
+<g class="elabel" data-for="e_eh"><rect x="797.45" y="207" width="85.1" height="22" rx="11"/><text x="840" y="222" text-anchor="middle">edited text</text></g>
+<g class="elabel" data-for="e_hq"><rect x="678.6" y="315" width="66.8" height="22" rx="11"/><text x="712" y="330" text-anchor="middle">headline</text></g>
+<g class="elabel" data-for="e_qo"><rect x="439.7" y="315" width="54.599999999999994" height="22" rx="11"/><text x="467" y="330" text-anchor="middle">report</text></g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="20" y="40" width="160" height="112" rx="16"/>
+<rect class="bar" x="42" y="40" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="100.0" cy="73" r="21"/>
+<text class="emoji" x="100.0" y="81" text-anchor="middle">👤</text>
+<text class="nname" x="100.0" y="108" text-anchor="middle">User</text>
+<text class="nlbl" x="100.0" y="121" text-anchor="middle">INPUT</text>
+<text class="nsub" x="100.0" y="134" text-anchor="middle">topic: "Why sleep</text>
+<text class="nsub" x="100.0" y="146" text-anchor="middle">matters"</text>
+</g>
+<g class="node" id="outliner" style="--c:#06b6d4">
+<rect class="card" x="265" y="40" width="160" height="112" rx="16"/>
+<rect class="bar" x="287" y="40" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="345.0" cy="73" r="21"/>
+<text class="emoji" x="345.0" y="81" text-anchor="middle">🗂️</text>
+<text class="nname" x="345.0" y="108" text-anchor="middle">Outliner</text>
+<text class="nlbl" x="345.0" y="121" text-anchor="middle">AGENT 1 · LLM</text>
+<text class="nsub" x="345.0" y="134" text-anchor="middle">3-point outline</text>
+</g>
+<g class="node" id="writer" style="--c:#8b5cf6">
+<rect class="card" x="510" y="40" width="160" height="112" rx="16"/>
+<rect class="bar" x="532" y="40" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="590.0" cy="73" r="21"/>
+<text class="emoji" x="590.0" y="81" text-anchor="middle">✍️</text>
+<text class="nname" x="590.0" y="108" text-anchor="middle">Writer</text>
+<text class="nlbl" x="590.0" y="121" text-anchor="middle">AGENT 2 · LLM</text>
+<text class="nsub" x="590.0" y="134" text-anchor="middle">follows the outline</text>
+</g>
+<g class="node" id="editor" style="--c:#06b6d4">
+<rect class="card" x="755" y="40" width="170" height="112" rx="16"/>
+<rect class="bar" x="777" y="40" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="840.0" cy="73" r="21"/>
+<text class="emoji" x="840.0" y="81" text-anchor="middle">🧹</text>
+<text class="nname" x="840.0" y="108" text-anchor="middle">Editor</text>
+<text class="nlbl" x="840.0" y="121" text-anchor="middle">AGENT 3 · LLM</text>
+<text class="nsub" x="840.0" y="134" text-anchor="middle">fixes clarity &amp; grammar</text>
+</g>
+<g class="node" id="headline" style="--c:#8b5cf6">
+<rect class="card" x="755" y="270" width="170" height="112" rx="16"/>
+<rect class="bar" x="777" y="270" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="840.0" cy="303" r="21"/>
+<text class="emoji" x="840.0" y="311" text-anchor="middle">📰</text>
+<text class="nname" x="840.0" y="338" text-anchor="middle">Headline</text>
+<text class="nlbl" x="840.0" y="351" text-anchor="middle">AGENT 4 · LLM</text>
+<text class="nsub" x="840.0" y="364" text-anchor="middle">one catchy title</text>
+</g>
+<g class="node" id="quality" style="--c:#f59e0b">
+<rect class="card" x="510" y="270" width="160" height="112" rx="16"/>
+<rect class="bar" x="532" y="270" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="590.0" cy="303" r="21"/>
+<text class="emoji" x="590.0" y="311" text-anchor="middle">📏</text>
+<text class="nname" x="590.0" y="338" text-anchor="middle">Quality Gate</text>
+<text class="nlbl" x="590.0" y="351" text-anchor="middle">PLAIN CODE · NO AI</text>
+<text class="nsub" x="590.0" y="364" text-anchor="middle">word count +</text>
+<text class="nsub" x="590.0" y="376" text-anchor="middle">reading time</text>
+</g>
+<g class="node" id="out" style="--c:#10b981">
+<rect class="card" x="265" y="270" width="160" height="112" rx="16"/>
+<rect class="bar" x="287" y="270" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="345.0" cy="303" r="21"/>
+<text class="emoji" x="345.0" y="311" text-anchor="middle">✅</text>
+<text class="nname" x="345.0" y="338" text-anchor="middle">Finished Post</text>
+<text class="nlbl" x="345.0" y="351" text-anchor="middle">OUTPUT</text>
+<text class="nsub" x="345.0" y="364" text-anchor="middle">headline + text +</text>
+<text class="nsub" x="345.0" y="376" text-anchor="middle">stats</text>
+</g>
+<g class="nnote" style="--c:#06b6d4"><rect x="20" y="410" width="560" height="62" rx="14"/>
+<text class="emoji" x="44" y="448.0" text-anchor="middle">🧺</text>
+<text x="66" y="434">State = the baton. Each agent reads what the one before it wrote</text>
+<text x="66" y="449">and adds ONE field. Nobody decides the order — the edges do.</text>
+</g>
+</svg>
+  </div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
+  </div>
+  <div class="legend"><span><i style="background:#94a3b8"></i>Input</span><span><i style="background:#06b6d4"></i>LLM agent</span><span><i style="background:#8b5cf6"></i>LLM agent (creative)</span><span><i style="background:#f59e0b"></i>Plain code</span><span><i style="background:#10b981"></i>Output</span></div>
+</div>
+<script>
+const steps=[{"t": "👤 User gives a topic: “Why sleep matters”.", "n": ["user"], "e": []}, {"t": "🗂️ Outliner writes a 3-point outline.", "n": ["user", "outliner"], "e": ["e_uo"]}, {"t": "✍️ Writer turns the outline into a first draft.", "n": ["outliner", "writer"], "e": ["e_ow"]}, {"t": "🧹 Editor improves clarity and grammar.", "n": ["writer", "editor"], "e": ["e_we"]}, {"t": "📰 Headline writer picks a title for the edited post.", "n": ["editor", "headline"], "e": ["e_eh"]}, {"t": "📏 Quality Gate (plain Python) counts words and reading time.", "n": ["headline", "quality"], "e": ["e_hq"]}, {"t": "✅ User receives headline + post + stats.", "n": ["quality", "out"], "e": ["e_qo"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
+}
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
+</script>
+</body>
+</html>

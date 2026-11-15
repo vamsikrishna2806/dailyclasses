@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Team Agent Architecture</title>
+<style>
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#06b6d4;--a2:#67e8f9;--rgb:6,182,212}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 RAG Team Agent — Architecture</h1>
+  <p>LangChain · LangGraph retrieve-and-verify · Ollama · tiny offline handbook</p>
+  <div class="badges"><span class="badge">LangGraph</span><span class="badge">Multi-agent RAG</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
+</header>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>Answers you can trust.</b> One agent finds sources, one answers only from them, and a fact-checker sends bad answers back.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="440" fill="url(#dots)"/>
+<g class="edge" id="e_ur" data-both="0"><path class="base" d="M170,126.0 L205,126.0" marker-end="url(#arr-off)"/><path class="flow" d="M170,126.0 L205,126.0"/></g>
+<g class="edge" id="e_rr" data-both="0"><path class="base" d="M365,126.0 L400,126.0" marker-end="url(#arr-off)"/><path class="flow" d="M365,126.0 L400,126.0"/></g>
+<g class="edge" id="e_ra" data-both="0"><path class="base" d="M565,126.0 L600,126.0" marker-end="url(#arr-off)"/><path class="flow" d="M565,126.0 L600,126.0"/></g>
+<g class="edge" id="e_ac" data-both="0"><path class="base" d="M760,126.0 L795,126.0" marker-end="url(#arr-off)"/><path class="flow" d="M760,126.0 L795,126.0"/></g>
+<g class="edge" id="e_loop" data-both="0"><path class="base" d="M850.0,70 L850.0,42.0 Q850.0,30 838.0,30.0 L722.0,30.0 Q710.0,30 710.0,42.0 L710.0,70" marker-end="url(#arr-off)"/><path class="flow" d="M850.0,70 L850.0,42.0 Q850.0,30 838.0,30.0 L722.0,30.0 Q710.0,30 710.0,42.0 L710.0,70"/></g>
+<g class="edge dash" id="e_rn" data-both="0"><path class="base" d="M482.5,182 L482.5,310" marker-end="url(#arr-off)"/><path class="flow" d="M482.5,182 L482.5,310"/></g>
+<g class="edge" id="e_no" data-both="0"><path class="base" d="M565,366.0 L795,366.0" marker-end="url(#arr-off)"/><path class="flow" d="M565,366.0 L795,366.0"/></g>
+<g class="edge" id="e_co" data-both="0"><path class="base" d="M880.0,182 L880.0,310" marker-end="url(#arr-off)"/><path class="flow" d="M880.0,182 L880.0,310"/></g>
+<g class="elabel" data-for="e_ur"><rect x="151.6" y="89" width="66.8" height="22" rx="11"/><text x="185" y="104" text-anchor="middle">question</text></g>
+<g class="elabel" data-for="e_rr"><rect x="348.6" y="89" width="66.8" height="22" rx="11"/><text x="382" y="104" text-anchor="middle">keywords</text></g>
+<g class="elabel" data-for="e_ra"><rect x="548.6" y="89" width="66.8" height="22" rx="11"/><text x="582" y="104" text-anchor="middle">passages</text></g>
+<g class="elabel" data-for="e_ac"><rect x="750.7" y="89" width="54.599999999999994" height="22" rx="11"/><text x="778" y="104" text-anchor="middle">answer</text></g>
+<g class="elabel" data-for="e_loop"><rect x="666.95" y="19" width="146.1" height="22" rx="11"/><text x="740" y="34" text-anchor="middle">UNSUPPORTED → retry ↺</text></g>
+<g class="elabel" data-for="e_rn"><rect x="433.35" y="244" width="97.3" height="22" rx="11"/><text x="482" y="259" text-anchor="middle">nothing found</text></g>
+<g class="elabel" data-for="e_co"><rect x="840.5" y="244" width="79.0" height="22" rx="11"/><text x="880" y="259" text-anchor="middle">GROUNDED ✓</text></g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="20" y="70" width="150" height="112" rx="16"/>
+<rect class="bar" x="42" y="70" width="106" height="3" rx="1.5"/>
+<circle class="ic" cx="95.0" cy="103" r="21"/>
+<text class="emoji" x="95.0" y="111" text-anchor="middle">👤</text>
+<text class="nname" x="95.0" y="138" text-anchor="middle">User</text>
+<text class="nlbl" x="95.0" y="151" text-anchor="middle">INPUT</text>
+<text class="nsub" x="95.0" y="164" text-anchor="middle">"How many vacation</text>
+<text class="nsub" x="95.0" y="176" text-anchor="middle">days do I get?"</text>
+</g>
+<g class="node" id="rewriter" style="--c:#8b5cf6">
+<rect class="card" x="205" y="70" width="160" height="112" rx="16"/>
+<rect class="bar" x="227" y="70" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="285.0" cy="103" r="21"/>
+<text class="emoji" x="285.0" y="111" text-anchor="middle">🔍</text>
+<text class="nname" x="285.0" y="138" text-anchor="middle">Rewriter</text>
+<text class="nlbl" x="285.0" y="151" text-anchor="middle">AGENT · LLM</text>
+<text class="nsub" x="285.0" y="164" text-anchor="middle">question → keywords</text>
+</g>
+<g class="node" id="retriever" style="--c:#f59e0b">
+<rect class="card" x="400" y="70" width="165" height="112" rx="16"/>
+<rect class="bar" x="422" y="70" width="121" height="3" rx="1.5"/>
+<circle class="ic" cx="482.5" cy="103" r="21"/>
+<text class="emoji" x="482.5" y="111" text-anchor="middle">📚</text>
+<text class="nname" x="482.5" y="138" text-anchor="middle">Retriever</text>
+<text class="nlbl" x="482.5" y="151" text-anchor="middle">PLAIN CODE · NO AI</text>
+<text class="nsub" x="482.5" y="164" text-anchor="middle">searches the handbook</text>
+</g>
+<g class="node" id="answerer" style="--c:#06b6d4">
+<rect class="card" x="600" y="70" width="160" height="112" rx="16"/>
+<rect class="bar" x="622" y="70" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="680.0" cy="103" r="21"/>
+<text class="emoji" x="680.0" y="111" text-anchor="middle">💬</text>
+<text class="nname" x="680.0" y="138" text-anchor="middle">Answerer</text>
+<text class="nlbl" x="680.0" y="151" text-anchor="middle">AGENT · LLM</text>
+<text class="nsub" x="680.0" y="164" text-anchor="middle">ONLY from context,</text>
+<text class="nsub" x="680.0" y="176" text-anchor="middle">cites [HR-1]</text>
+</g>
+<g class="node" id="checker" style="--c:#ec4899">
+<rect class="card" x="795" y="70" width="170" height="112" rx="16"/>
+<rect class="bar" x="817" y="70" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="880.0" cy="103" r="21"/>
+<text class="emoji" x="880.0" y="111" text-anchor="middle">🕵️</text>
+<text class="nname" x="880.0" y="138" text-anchor="middle">Checker</text>
+<text class="nlbl" x="880.0" y="151" text-anchor="middle">AGENT · LLM</text>
+<text class="nsub" x="880.0" y="164" text-anchor="middle">is every claim in</text>
+<text class="nsub" x="880.0" y="176" text-anchor="middle">the context?</text>
+</g>
+<g class="node" id="no" style="--c:#94a3b8">
+<rect class="card" x="400" y="310" width="165" height="112" rx="16"/>
+<rect class="bar" x="422" y="310" width="121" height="3" rx="1.5"/>
+<circle class="ic" cx="482.5" cy="343" r="21"/>
+<text class="emoji" x="482.5" y="351" text-anchor="middle">🤷</text>
+<text class="nname" x="482.5" y="378" text-anchor="middle">No Answer</text>
+<text class="nlbl" x="482.5" y="391" text-anchor="middle">FALLBACK</text>
+<text class="nsub" x="482.5" y="404" text-anchor="middle">“I could not find</text>
+<text class="nsub" x="482.5" y="416" text-anchor="middle">that in the handbook”</text>
+</g>
+<g class="node" id="out" style="--c:#10b981">
+<rect class="card" x="795" y="310" width="170" height="112" rx="16"/>
+<rect class="bar" x="817" y="310" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="880.0" cy="343" r="21"/>
+<text class="emoji" x="880.0" y="351" text-anchor="middle">✅</text>
+<text class="nname" x="880.0" y="378" text-anchor="middle">Grounded Answer</text>
+<text class="nlbl" x="880.0" y="391" text-anchor="middle">OUTPUT</text>
+<text class="nsub" x="880.0" y="404" text-anchor="middle">with source ids</text>
+</g>
+<g class="nnote" style="--c:#f59e0b"><rect x="20" y="300" width="330" height="80" rx="14"/>
+<text class="emoji" x="44" y="347.0" text-anchor="middle">📖</text>
+<text x="66" y="324">tools.py holds a tiny handbook (8 passages).</text>
+<text x="66" y="339">Search = keyword overlap. A real system would use</text>
+<text x="66" y="354">embeddings + a vector store (day 12).</text>
+</g>
+</svg>
+  </div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
+  </div>
+  <div class="legend"><span><i style="background:#8b5cf6"></i>Query agent</span><span><i style="background:#f59e0b"></i>Plain code</span><span><i style="background:#06b6d4"></i>Answerer</span><span><i style="background:#ec4899"></i>Checker</span><span><i style="background:#10b981"></i>Output</span></div>
+</div>
+<script>
+const steps=[{"t": "👤 User asks: “How many vacation days do I get?”", "n": ["user"], "e": []}, {"t": "🔍 Rewriter turns the chatty question into search keywords.", "n": ["user", "rewriter"], "e": ["e_ur"]}, {"t": "📚 Retriever (plain code) finds the best handbook passages.", "n": ["rewriter", "retriever"], "e": ["e_rr"]}, {"t": "🤷 Nothing found? Skip straight to “I could not find that” — no guessing.", "n": ["retriever", "no"], "e": ["e_rn"]}, {"t": "💬 Otherwise the Answerer replies using ONLY those passages and cites ids.", "n": ["retriever", "answerer"], "e": ["e_ra"]}, {"t": "🕵️ Checker verifies every fact against the passages.", "n": ["answerer", "checker"], "e": ["e_ac"]}, {"t": "↺ UNSUPPORTED? Back to the Answerer with the checker's complaint (max 2 retries).", "n": ["checker", "answerer"], "e": ["e_loop"]}, {"t": "✅ GROUNDED → the answer, with sources, goes to the user.", "n": ["checker", "out"], "e": ["e_co"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
+}
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
+</script>
+</body>
+</html>

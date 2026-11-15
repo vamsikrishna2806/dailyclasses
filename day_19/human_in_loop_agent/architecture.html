@@ -5,53 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Human-in-the-Loop Agent Architecture</title>
 <style>
-:root{--bg:#0a0c14;--panel:#0f1420;--border:#1e2d4a;--a:#f59e0b;--a2:#fcd34d;--rgb:245,158,11;--muted:#64748b;--text:#e2e8f0;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;}
-header{text-align:center;padding:36px 20px 16px;}
-header h1{font-size:clamp(1.3rem,3vw,2rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-header p{color:var(--muted);font-size:.88rem;margin-top:6px;}
-.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;}
-.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid var(--a);background:rgba(var(--rgb),.12);color:var(--a);}
-.canvas{max-width:1000px;margin:0 auto;padding:24px 20px 40px;display:flex;flex-direction:column;gap:24px;}
-.flow-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;}
-.col{display:flex;flex-direction:column;gap:12px;align-items:center;}
-.node{border-radius:14px;border:1.5px solid var(--border);background:var(--panel);padding:14px 16px;text-align:center;min-width:130px;flex-shrink:0;transition:transform .3s,filter .3s;animation:glow 2.5s ease-in-out infinite;}
-.node:hover{transform:translateY(-3px);}
-.node .icon{font-size:1.7rem;display:block;margin-bottom:6px;}
-.node .lbl{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
-.node .name{font-size:.9rem;font-weight:700;margin-top:3px;color:var(--a);}
-.node .sub{font-size:.68rem;color:var(--muted);margin-top:3px;max-width:190px;}
-.node.green .name{color:var(--green);}.node.amber .name{color:var(--amber);}.node.purple .name{color:var(--purple);}
-@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(var(--rgb),.2)}50%{box-shadow:0 0 26px rgba(var(--rgb),.5)}}
-.on{filter:brightness(1.7) drop-shadow(0 0 12px var(--a));transform:scale(1.05);}
-.arrow{display:flex;flex-direction:column;align-items:center;min-width:56px;flex-shrink:0;gap:2px;}
-.arrow .albl{font-size:.62rem;color:var(--muted);white-space:nowrap;}
-.aline{width:100%;height:2px;position:relative;overflow:hidden;border-radius:2px;background:rgba(var(--rgb),.18);}
-.aline::before{content:'';position:absolute;top:0;height:100%;width:100%;background:var(--a);border-radius:2px;left:-100%;animation:slideR 1.5s linear infinite;}
-@keyframes slideR{to{left:100%}}
-.ahead{color:var(--a);font-size:.9rem;}
-.box{border:1.5px dashed var(--a);border-radius:18px;padding:22px 22px 14px;position:relative;animation:rbox 3s ease-in-out infinite;}
-@keyframes rbox{0%,100%{box-shadow:0 0 10px rgba(var(--rgb),.12)}50%{box-shadow:0 0 32px rgba(var(--rgb),.3)}}
-.box-lbl{position:absolute;top:-11px;left:16px;background:var(--bg);padding:2px 10px;font-size:.68rem;font-weight:700;color:var(--a);letter-spacing:.1em;text-transform:uppercase;border-radius:20px;border:1px solid var(--a);}
-.note{text-align:center;margin-top:10px;font-size:.68rem;color:var(--a);animation:fadeL 4s ease-in-out infinite;}
-@keyframes fadeL{0%,100%{opacity:.4}50%{opacity:1}}
-.vconn{display:flex;flex-direction:column;align-items:center;}
-.vline{width:2px;height:34px;position:relative;overflow:hidden;border-radius:2px;background:rgba(var(--rgb),.2);}
-.vline::before{content:'';position:absolute;left:0;top:-100%;width:100%;height:100%;background:var(--a);border-radius:2px;animation:slideD 1.5s linear infinite;}
-@keyframes slideD{to{top:100%}}
-.varr{color:var(--a);font-size:.9rem;}
-.vlbl{font-size:.62rem;color:var(--muted);margin-top:2px;text-align:center;}
-.center{display:flex;justify-content:center;}
-.ticker{text-align:center;font-size:.78rem;color:var(--text);min-height:22px;padding:6px;}
-.ticker span{display:inline-block;animation:tf .5s ease;}
-@keyframes tf{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:12px;border-top:1px solid var(--border);}
-.li{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);}
-.ld{width:9px;height:9px;border-radius:50%;}
-.small{text-align:center;color:var(--muted);font-size:.7rem;}
-.pause{animation:pz 1.2s ease-in-out infinite;border-color:var(--amber);}
-@keyframes pz{0%,100%{box-shadow:0 0 6px rgba(245,158,11,.2)}50%{box-shadow:0 0 34px rgba(245,158,11,.75)}}
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#f59e0b;--a2:#fcd34d;--rgb:245,158,11}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
 </style>
 </head>
 <body>
@@ -60,41 +77,106 @@ header p{color:var(--muted);font-size:.88rem;margin-top:6px;}
   <p>LangChain · LangGraph interrupt() · Ollama · MemorySaver checkpointer</p>
   <div class="badges"><span class="badge">LangGraph</span><span class="badge">interrupt() + resume</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
 </header>
-<div class="canvas">
-  <div class="flow-row">
-    <div class="node " id="user"><span class="icon">👤</span><div class="lbl">Input</div><div class="name">User</div><div class="sub">"Ask Priya to move the meeting to 3pm"</div></div>
-    <div class="arrow"><div class="albl">request</div><div class="aline"></div><div class="ahead">▶</div></div>
-    <div class="node purple" id="draft"><span class="icon">✍️</span><div class="lbl">LLM</div><div class="name">Draft</div><div class="sub">writes the email</div></div>
-    <div class="arrow"><div class="albl">draft</div><div class="aline"></div><div class="ahead">▶</div></div>
-    <div class="node pause" id="human"><span class="icon">🙋</span><div class="lbl">interrupt() · PAUSED</div><div class="name" style="color:var(--amber)">Human Review</div><div class="sub">graph is frozen and saved by MemorySaver until you answer</div></div>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>Nothing risky happens without a human OK.</b> The graph pauses at Human Review; “approve” sends, any other answer loops back to Draft.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="420" fill="url(#dots)"/>
+<rect class="group" x="215" y="30" width="515" height="250" rx="20" style="--c:#f59e0b"/>
+<g style="--c:#f59e0b"><rect class="gtag" x="233" y="18" width="222.0" height="24" rx="12"/><text class="gtxt" x="344.0" y="34" text-anchor="middle">Revision loop — until approved</text></g>
+<g class="edge" id="e_ud" data-both="0"><path class="base" d="M180,126.0 L245,126.0" marker-end="url(#arr-off)"/><path class="flow" d="M180,126.0 L245,126.0"/></g>
+<g class="edge" id="e_dh" data-both="0"><path class="base" d="M410,126.0 L490,126.0" marker-end="url(#arr-off)"/><path class="flow" d="M410,126.0 L490,126.0"/></g>
+<g class="edge dash" id="e_fb" data-both="0"><path class="base" d="M535.0,182 L535.0,228.0 Q535.0,240 523.0,240.0 L339.5,240.0 Q327.5,240 327.5,228.0 L327.5,182" marker-end="url(#arr-off)"/><path class="flow" d="M535.0,182 L535.0,228.0 Q535.0,240 523.0,240.0 L339.5,240.0 Q327.5,240 327.5,228.0 L327.5,182"/></g>
+<g class="edge" id="e_hs" data-both="0"><path class="base" d="M650.0,182 L650.0,310" marker-end="url(#arr-off)"/><path class="flow" d="M650.0,182 L650.0,310"/></g>
+<g class="edge" id="e_so" data-both="0"><path class="base" d="M750,366.0 L820,366.0" marker-end="url(#arr-off)"/><path class="flow" d="M750,366.0 L820,366.0"/></g>
+<g class="elabel" data-for="e_ud"><rect x="181.65" y="89" width="60.699999999999996" height="22" rx="11"/><text x="212" y="104" text-anchor="middle">request</text></g>
+<g class="elabel" data-for="e_dh"><rect x="425.75" y="89" width="48.5" height="22" rx="11"/><text x="450" y="104" text-anchor="middle">draft</text></g>
+<g class="elabel" data-for="e_fb"><rect x="290.35" y="229" width="219.29999999999998" height="22" rx="11"/><text x="400" y="244" text-anchor="middle">“make it shorter” → back to Draft</text></g>
+<g class="elabel" data-for="e_hs"><rect x="613.55" y="234" width="72.9" height="22" rx="11"/><text x="650" y="249" text-anchor="middle">“approve”</text></g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="20" y="70" width="160" height="112" rx="16"/>
+<rect class="bar" x="42" y="70" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="100.0" cy="103" r="21"/>
+<text class="emoji" x="100.0" y="111" text-anchor="middle">👤</text>
+<text class="nname" x="100.0" y="138" text-anchor="middle">User</text>
+<text class="nlbl" x="100.0" y="151" text-anchor="middle">INPUT</text>
+<text class="nsub" x="100.0" y="164" text-anchor="middle">"Ask Priya to move</text>
+<text class="nsub" x="100.0" y="176" text-anchor="middle">the meeting to 3pm"</text>
+</g>
+<g class="node" id="draft" style="--c:#8b5cf6">
+<rect class="card" x="245" y="70" width="165" height="112" rx="16"/>
+<rect class="bar" x="267" y="70" width="121" height="3" rx="1.5"/>
+<circle class="ic" cx="327.5" cy="103" r="21"/>
+<text class="emoji" x="327.5" y="111" text-anchor="middle">✍️</text>
+<text class="nname" x="327.5" y="138" text-anchor="middle">Draft</text>
+<text class="nlbl" x="327.5" y="151" text-anchor="middle">LLM</text>
+<text class="nsub" x="327.5" y="164" text-anchor="middle">writes the email</text>
+</g>
+<g class="node pulse" id="human" style="--c:#f59e0b">
+<rect class="card" x="490" y="70" width="210" height="112" rx="16"/>
+<rect class="bar" x="512" y="70" width="166" height="3" rx="1.5"/>
+<circle class="ic" cx="595.0" cy="103" r="21"/>
+<text class="emoji" x="595.0" y="111" text-anchor="middle">🙋</text>
+<text class="nname" x="595.0" y="138" text-anchor="middle">Human Review</text>
+<text class="nlbl" x="595.0" y="151" text-anchor="middle">INTERRUPT() · PAUSED</text>
+<text class="nsub" x="595.0" y="164" text-anchor="middle">graph frozen &amp; saved</text>
+<text class="nsub" x="595.0" y="176" text-anchor="middle">until you answer</text>
+</g>
+<g class="node" id="send" style="--c:#10b981">
+<rect class="card" x="560" y="310" width="190" height="112" rx="16"/>
+<rect class="bar" x="582" y="310" width="146" height="3" rx="1.5"/>
+<circle class="ic" cx="655.0" cy="343" r="21"/>
+<text class="emoji" x="655.0" y="351" text-anchor="middle">🛠️</text>
+<text class="nname" x="655.0" y="378" text-anchor="middle">send_email</text>
+<text class="nlbl" x="655.0" y="391" text-anchor="middle">RISKY TOOL</text>
+<text class="nsub" x="655.0" y="404" text-anchor="middle">saves to outbox.txt (demo)</text>
+</g>
+<g class="node" id="out" style="--c:#10b981">
+<rect class="card" x="820" y="310" width="160" height="112" rx="16"/>
+<rect class="bar" x="842" y="310" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="900.0" cy="343" r="21"/>
+<text class="emoji" x="900.0" y="351" text-anchor="middle">✅</text>
+<text class="nname" x="900.0" y="378" text-anchor="middle">Email Sent</text>
+<text class="nlbl" x="900.0" y="391" text-anchor="middle">OUTPUT</text>
+<text class="nsub" x="900.0" y="404" text-anchor="middle">only AFTER approval</text>
+</g>
+<g class="nnote" style="--c:#f59e0b"><rect x="20" y="310" width="500" height="80" rx="14"/>
+<text class="emoji" x="44" y="357.0" text-anchor="middle">💾</text>
+<text x="66" y="334">MemorySaver checkpoint keeps the whole state while paused.</text>
+<text x="66" y="349">Resume with Command(resume=answer) — the graph</text>
+<text x="66" y="364">continues exactly where it stopped.</text>
+</g>
+</svg>
   </div>
-  <div class="flow-row" style="gap:40px;align-items:flex-start;">
-    <div class="col">
-      <div class="vconn"><div class="vline"></div><div class="varr">▼</div><div class="vlbl">“approve”</div></div>
-      <div class="node green" id="send"><span class="icon">🛠️</span><div class="lbl">Risky tool</div><div class="name">send_email</div><div class="sub">saves to outbox.txt (demo)</div></div>
-      <div class="center"><div class="vconn"><div class="vline"></div><div class="varr">▼</div><div class="vlbl"></div></div></div>
-      <div class="node green" id="out"><span class="icon">✅</span><div class="lbl">Output</div><div class="name">Email Sent</div><div class="sub">only AFTER approval</div></div>
-    </div>
-    <div class="col">
-      <div class="vconn"><div class="vline"></div><div class="varr">↩</div><div class="vlbl">“make it shorter” → back to Draft<br>(your feedback goes into the prompt)</div></div>
-    </div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
   </div>
-  <div class="small">Resume with <b>Command(resume=answer)</b> — the graph continues exactly where it stopped.</div>
-  <div class="ticker" id="tk"><span>Initialising…</span></div>
-  <div class="legend"><div class="li"><div class="ld" style="background:var(--amber)"></div>Paused for human</div><div class="li"><div class="ld" style="background:var(--purple)"></div>LLM</div><div class="li"><div class="ld" style="background:var(--green)"></div>Safe action</div></div>
+  <div class="legend"><span><i style="background:#f59e0b"></i>Paused for human</span><span><i style="background:#8b5cf6"></i>LLM</span><span><i style="background:#10b981"></i>Safe / approved action</span></div>
 </div>
 <script>
-// each step = [message, id of the element to highlight]
-const steps=[["👤 User: “Ask Priya to move tomorrow's meeting to 3pm”", "user"], ["✍️ Draft node: LLM writes the email", "draft"], ["🙋 interrupt() → graph PAUSES and shows the draft to the human", "human"], ["⏸️ Nothing is sent. State is saved by the checkpointer…", "human"], ["🙋 Human types: “make it shorter” → Command(resume=…)", "human"], ["✍️ Back to Draft: LLM rewrites using the feedback", "draft"], ["🙋 Paused again with the new draft…", "human"], ["🙋 Human types: “approve”", "human"], ["🛠️ send_email runs — ONLY now", "send"], ["✅ Email delivered with a human's OK", "out"]];
-let i=0;const tk=document.getElementById('tk');
-function tick(){
-  document.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
-  const [msg,id]=steps[i];
-  tk.innerHTML=`<span>${msg}</span>`;
-  const el=document.getElementById(id); if(el) el.classList.add('on');
-  i=(i+1)%steps.length;
+const steps=[{"t": "👤 User: “Ask Priya to move tomorrow's meeting to 3pm”.", "n": ["user"], "e": []}, {"t": "✍️ Draft node: the LLM writes the email.", "n": ["user", "draft"], "e": ["e_ud"]}, {"t": "🙋 interrupt() → graph PAUSES and shows the draft. Nothing is sent; state is checkpointed.", "n": ["draft", "human"], "e": ["e_dh"]}, {"t": "🙋 Human types “make it shorter” → Command(resume=…) → back to Draft with the feedback.", "n": ["human", "draft"], "e": ["e_fb"]}, {"t": "🙋 Paused again with the new draft…", "n": ["draft", "human"], "e": ["e_dh"]}, {"t": "🙋 Human types “approve”.", "n": ["human", "send"], "e": ["e_hs"]}, {"t": "🛠️ send_email runs — ONLY now.", "n": ["send"], "e": []}, {"t": "✅ Email delivered with a human's OK.", "n": ["send", "out"], "e": ["e_so"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
 }
-tick();setInterval(tick,2200);
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
 </script>
 </body>
 </html>

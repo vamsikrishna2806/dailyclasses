@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blackboard Agent Architecture</title>
+<style>
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#ec4899;--a2:#f9a8d4;--rgb:236,72,153}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 Blackboard Agent — Architecture</h1>
+  <p>LangChain · LangGraph shared state · Ollama · fake grocery prices</p>
+  <div class="badges"><span class="badge">LangGraph</span><span class="badge">Blackboard pattern</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
+</header>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>A shared whiteboard.</b> Specialists never talk to each other — each one only watches the board and adds its piece when it can.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="540" fill="url(#dots)"/>
+<g class="edge" id="e_n" data-both="1"><path class="base" d="M250,106.0 L308.0,106.0 Q320,106 320.0,118.0 L320.0,224.0 Q320,236 332.0,236.0 L395,236.0" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M250,106.0 L308.0,106.0 Q320,106 320.0,118.0 L320.0,224.0 Q320,236 332.0,236.0 L395,236.0"/></g>
+<g class="edge" id="e_a" data-both="1"><path class="base" d="M250,406.0 L308.0,406.0 Q320,406 320.0,394.0 L320.0,288.0 Q320,276 332.0,276.0 L395,276.0" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M250,406.0 L308.0,406.0 Q320,406 320.0,394.0 L320.0,288.0 Q320,276 332.0,276.0 L395,276.0"/></g>
+<g class="edge" id="e_c" data-both="1"><path class="base" d="M760,106.0 L702.0,106.0 Q690,106 690.0,118.0 L690.0,224.0 Q690,236 678.0,236.0 L615,236.0" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M760,106.0 L702.0,106.0 Q690,106 690.0,118.0 L690.0,224.0 Q690,236 678.0,236.0 L615,236.0"/></g>
+<g class="edge" id="e_s" data-both="1"><path class="base" d="M760,406.0 L702.0,406.0 Q690,406 690.0,394.0 L690.0,288.0 Q690,276 678.0,276.0 L615,276.0" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M760,406.0 L702.0,406.0 Q690,406 690.0,394.0 L690.0,288.0 Q690,276 678.0,276.0 L615,276.0"/></g>
+<g class="edge dash" id="e_ctl" data-both="1"><path class="base" d="M505.0,132 L505.0,200" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M505.0,132 L505.0,200"/></g>
+<g class="edge" id="e_ub" data-both="1"><path class="base" d="M505.0,390 L505.0,312" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M505.0,390 L505.0,312"/></g>
+<g class="elabel" data-for="e_ctl"><rect x="512.25" y="161" width="109.5" height="22" rx="11"/><text x="567" y="176" text-anchor="middle">reads the board</text></g>
+<g class="node" id="nutri" style="--c:#10b981">
+<rect class="card" x="60" y="50" width="190" height="112" rx="16"/>
+<rect class="bar" x="82" y="50" width="146" height="3" rx="1.5"/>
+<circle class="ic" cx="155.0" cy="83" r="21"/>
+<text class="emoji" x="155.0" y="91" text-anchor="middle">🥗</text>
+<text class="nname" x="155.0" y="118" text-anchor="middle">Nutritionist</text>
+<text class="nlbl" x="155.0" y="131" text-anchor="middle">SPECIALIST · LLM</text>
+<text class="nsub" x="155.0" y="144" text-anchor="middle">needs: request</text>
+<text class="nsub" x="155.0" y="156" text-anchor="middle">adds: dietary rules</text>
+</g>
+<g class="node" id="chef" style="--c:#06b6d4">
+<rect class="card" x="760" y="50" width="190" height="112" rx="16"/>
+<rect class="bar" x="782" y="50" width="146" height="3" rx="1.5"/>
+<circle class="ic" cx="855.0" cy="83" r="21"/>
+<text class="emoji" x="855.0" y="91" text-anchor="middle">👨‍🍳</text>
+<text class="nname" x="855.0" y="118" text-anchor="middle">Chef</text>
+<text class="nlbl" x="855.0" y="131" text-anchor="middle">SPECIALIST · LLM</text>
+<text class="nsub" x="855.0" y="144" text-anchor="middle">needs: rules</text>
+<text class="nsub" x="855.0" y="156" text-anchor="middle">adds: menu</text>
+</g>
+<g class="node" id="shopper" style="--c:#8b5cf6">
+<rect class="card" x="760" y="350" width="190" height="112" rx="16"/>
+<rect class="bar" x="782" y="350" width="146" height="3" rx="1.5"/>
+<circle class="ic" cx="855.0" cy="383" r="21"/>
+<text class="emoji" x="855.0" y="391" text-anchor="middle">🛒</text>
+<text class="nname" x="855.0" y="418" text-anchor="middle">Shopper</text>
+<text class="nlbl" x="855.0" y="431" text-anchor="middle">SPECIALIST · LLM</text>
+<text class="nsub" x="855.0" y="444" text-anchor="middle">needs: menu</text>
+<text class="nsub" x="855.0" y="456" text-anchor="middle">adds: list + cost</text>
+</g>
+<g class="node" id="auditor" style="--c:#f59e0b">
+<rect class="card" x="60" y="350" width="190" height="112" rx="16"/>
+<rect class="bar" x="82" y="350" width="146" height="3" rx="1.5"/>
+<circle class="ic" cx="155.0" cy="383" r="21"/>
+<text class="emoji" x="155.0" y="391" text-anchor="middle">🧾</text>
+<text class="nname" x="155.0" y="418" text-anchor="middle">Auditor</text>
+<text class="nlbl" x="155.0" y="431" text-anchor="middle">SPECIALIST · CODE</text>
+<text class="nsub" x="155.0" y="444" text-anchor="middle">needs: list</text>
+<text class="nsub" x="155.0" y="456" text-anchor="middle">adds: verdict</text>
+</g>
+<g class="node" id="board" style="--c:#ec4899">
+<rect class="card" x="395" y="200" width="220" height="112" rx="16"/>
+<rect class="bar" x="417" y="200" width="176" height="3" rx="1.5"/>
+<circle class="ic" cx="505.0" cy="233" r="21"/>
+<text class="emoji" x="505.0" y="241" text-anchor="middle">📋</text>
+<text class="nname" x="505.0" y="268" text-anchor="middle">Shared Board</text>
+<text class="nlbl" x="505.0" y="281" text-anchor="middle">EVERYONE READS &amp; WRITES</text>
+<text class="nsub" x="505.0" y="294" text-anchor="middle">request · rules · menu</text>
+<text class="nsub" x="505.0" y="306" text-anchor="middle">list · cost · verdict</text>
+</g>
+<g class="node" id="ctl" style="--c:#94a3b8">
+<rect class="card" x="395" y="20" width="220" height="112" rx="16"/>
+<rect class="bar" x="417" y="20" width="176" height="3" rx="1.5"/>
+<circle class="ic" cx="505.0" cy="53" r="21"/>
+<text class="emoji" x="505.0" y="61" text-anchor="middle">🚦</text>
+<text class="nname" x="505.0" y="88" text-anchor="middle">Controller</text>
+<text class="nlbl" x="505.0" y="101" text-anchor="middle">PLAIN PYTHON · NO AI</text>
+<text class="nsub" x="505.0" y="114" text-anchor="middle">who CAN contribute now?</text>
+</g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="395" y="390" width="220" height="112" rx="16"/>
+<rect class="bar" x="417" y="390" width="176" height="3" rx="1.5"/>
+<circle class="ic" cx="505.0" cy="423" r="21"/>
+<text class="emoji" x="505.0" y="431" text-anchor="middle">👤</text>
+<text class="nname" x="505.0" y="458" text-anchor="middle">User</text>
+<text class="nlbl" x="505.0" y="471" text-anchor="middle">REQUEST / ANSWER</text>
+<text class="nsub" x="505.0" y="484" text-anchor="middle">"Vegetarian dinners</text>
+<text class="nsub" x="505.0" y="496" text-anchor="middle">under $20"</text>
+</g>
+<g class="nnote" style="--c:#ec4899"><rect x="20" y="215" width="270" height="90" rx="14"/>
+<text class="emoji" x="44" y="267.0" text-anchor="middle">🎯</text>
+<text x="66" y="239">Nobody gives orders. Each</text>
+<text x="66" y="254">specialist has a RULE (RULES dict):</text>
+<text x="66" y="269">'I may act when X is on the board'.</text>
+</g>
+<g class="nnote" style="--c:#f59e0b"><rect x="740" y="215" width="250" height="90" rx="14"/>
+<text class="emoji" x="764" y="267.0" text-anchor="middle">💥</text>
+<text x="786" y="239">Over budget? The auditor ERASES</text>
+<text x="786" y="254">the menu → the chef's rule is</text>
+<text x="786" y="269">true again → chef redoes it.</text>
+</g>
+</svg>
+  </div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
+  </div>
+  <div class="legend"><span><i style="background:#ec4899"></i>Board</span><span><i style="background:#10b981"></i>Specialists</span><span><i style="background:#f59e0b"></i>Code specialist</span><span><i style="background:#94a3b8"></i>Controller / User</span></div>
+</div>
+<script>
+const steps=[{"t": "👤 User: “Vegetarian dinners for 3 days under $20.” The request is written on the board.", "n": ["user", "board"], "e": ["e_ub"]}, {"t": "🚦 Controller (plain Python) asks: whose rule is true now? → Nutritionist.", "n": ["ctl", "board"], "e": ["e_ctl"]}, {"t": "🥗 Nutritionist adds dietary rules to the board.", "n": ["nutri", "board"], "e": ["e_n"]}, {"t": "👨‍🍳 Rules now exist → the Chef's rule is true → menu goes on the board.", "n": ["chef", "board"], "e": ["e_c"]}, {"t": "🛒 Menu exists → Shopper writes the shopping list and cost.", "n": ["shopper", "board"], "e": ["e_s"]}, {"t": "🧾 Auditor compares cost with budget. Too expensive → it ERASES the menu…", "n": ["auditor", "board"], "e": ["e_a"]}, {"t": "👨‍🍳 …so the Chef's rule is true again and a cheaper menu is written. Loop until within budget.", "n": ["chef", "board"], "e": ["e_c"]}, {"t": "✅ Nobody can contribute any more → done. User gets the board's content.", "n": ["board", "user"], "e": ["e_ub"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
+}
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
+</script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debate Agent Architecture</title>
+<style>
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#ec4899;--a2:#f9a8d4;--rgb:236,72,153}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<header>
+  <h1>🥊 Debate Agent — Architecture</h1>
+  <p>LangChain · LangGraph loop · Ollama · PRO vs CON + judge</p>
+  <div class="badges"><span class="badge">LangGraph</span><span class="badge">Debate pattern</span><span class="badge">Ollama llama3.2</span><span class="badge">Free · No API Key</span></div>
+</header>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>Opposite jobs make better answers.</b> PRO and CON take turns for a fixed number of rounds, then a neutral judge decides.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 510" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="510" fill="url(#dots)"/>
+<rect class="group" x="240" y="20" width="240" height="470" rx="20" style="--c:#f59e0b"/>
+<g style="--c:#f59e0b"><rect class="gtag" x="258" y="8" width="195.6" height="24" rx="12"/><text class="gtxt" x="355.8" y="24" text-anchor="middle">Debate rounds · ROUNDS = 2</text></g>
+<g class="edge" id="e_up" data-both="0"><path class="base" d="M180,261.0 L213.0,261.0 Q225,261 225.0,249.0 L225.0,128.0 Q225,116 237.0,116.0 L270,116.0" marker-end="url(#arr-off)"/><path class="flow" d="M180,261.0 L213.0,261.0 Q225,261 225.0,249.0 L225.0,128.0 Q225,116 237.0,116.0 L270,116.0"/></g>
+<g class="edge" id="e_pc" data-both="0"><path class="base" d="M325.0,172 L325.0,340" marker-end="url(#arr-off)"/><path class="flow" d="M325.0,172 L325.0,340"/></g>
+<g class="edge" id="e_cp" data-both="0"><path class="base" d="M395.0,340 L395.0,172" marker-end="url(#arr-off)"/><path class="flow" d="M395.0,340 L395.0,172"/></g>
+<g class="edge" id="e_cj" data-both="0"><path class="base" d="M450,396.0 L528.0,396.0 Q540,396 540.0,384.0 L540.0,273.0 Q540,261 552.0,261.0 L600,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M450,396.0 L528.0,396.0 Q540,396 540.0,384.0 L540.0,273.0 Q540,261 552.0,261.0 L600,261.0"/></g>
+<g class="edge" id="e_jo" data-both="0"><path class="base" d="M780,261.0 L850,261.0" marker-end="url(#arr-off)"/><path class="flow" d="M780,261.0 L850,261.0"/></g>
+<g class="elabel" data-for="e_up"><rect x="197.7" y="179" width="54.599999999999994" height="22" rx="11"/><text x="225" y="194" text-anchor="middle">motion</text></g>
+<g class="elabel" data-for="e_pc"><rect x="285.5" y="274" width="79.0" height="22" rx="11"/><text x="325" y="289" text-anchor="middle">PRO speech</text></g>
+<g class="elabel" data-for="e_cp"><rect x="359.4" y="274" width="91.19999999999999" height="22" rx="11"/><text x="405" y="289" text-anchor="middle">next round ↺</text></g>
+<g class="elabel" data-for="e_cj"><rect x="482.2" y="329" width="115.6" height="22" rx="11"/><text x="540" y="344" text-anchor="middle">after last round</text></g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="20" y="205" width="160" height="112" rx="16"/>
+<rect class="bar" x="42" y="205" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="100.0" cy="238" r="21"/>
+<text class="emoji" x="100.0" y="246" text-anchor="middle">👤</text>
+<text class="nname" x="100.0" y="273" text-anchor="middle">User</text>
+<text class="nlbl" x="100.0" y="286" text-anchor="middle">INPUT</text>
+<text class="nsub" x="100.0" y="299" text-anchor="middle">motion: "Homework</text>
+<text class="nsub" x="100.0" y="311" text-anchor="middle">should be banned"</text>
+</g>
+<g class="node" id="pro" style="--c:#10b981">
+<rect class="card" x="270" y="60" width="180" height="112" rx="16"/>
+<rect class="bar" x="292" y="60" width="136" height="3" rx="1.5"/>
+<circle class="ic" cx="360.0" cy="93" r="21"/>
+<text class="emoji" x="360.0" y="101" text-anchor="middle">🟢</text>
+<text class="nname" x="360.0" y="128" text-anchor="middle">PRO</text>
+<text class="nlbl" x="360.0" y="141" text-anchor="middle">DEBATER · LLM</text>
+<text class="nsub" x="360.0" y="154" text-anchor="middle">argues FOR the motion</text>
+</g>
+<g class="node" id="con" style="--c:#ec4899">
+<rect class="card" x="270" y="340" width="180" height="112" rx="16"/>
+<rect class="bar" x="292" y="340" width="136" height="3" rx="1.5"/>
+<circle class="ic" cx="360.0" cy="373" r="21"/>
+<text class="emoji" x="360.0" y="381" text-anchor="middle">🔴</text>
+<text class="nname" x="360.0" y="408" text-anchor="middle">CON</text>
+<text class="nlbl" x="360.0" y="421" text-anchor="middle">DEBATER · LLM</text>
+<text class="nsub" x="360.0" y="434" text-anchor="middle">argues AGAINST it</text>
+</g>
+<g class="node" id="judge" style="--c:#8b5cf6">
+<rect class="card" x="600" y="205" width="180" height="112" rx="16"/>
+<rect class="bar" x="622" y="205" width="136" height="3" rx="1.5"/>
+<circle class="ic" cx="690.0" cy="238" r="21"/>
+<text class="emoji" x="690.0" y="246" text-anchor="middle">⚖️</text>
+<text class="nname" x="690.0" y="273" text-anchor="middle">Judge</text>
+<text class="nlbl" x="690.0" y="286" text-anchor="middle">NEUTRAL · LLM</text>
+<text class="nsub" x="690.0" y="299" text-anchor="middle">reads the transcript,</text>
+<text class="nsub" x="690.0" y="311" text-anchor="middle">picks a winner</text>
+</g>
+<g class="node" id="out" style="--c:#10b981">
+<rect class="card" x="850" y="205" width="140" height="112" rx="16"/>
+<rect class="bar" x="872" y="205" width="96" height="3" rx="1.5"/>
+<circle class="ic" cx="920.0" cy="238" r="21"/>
+<text class="emoji" x="920.0" y="246" text-anchor="middle">🏆</text>
+<text class="nname" x="920.0" y="273" text-anchor="middle">Verdict</text>
+<text class="nlbl" x="920.0" y="286" text-anchor="middle">OUTPUT</text>
+<text class="nsub" x="920.0" y="299" text-anchor="middle">Winner + reason</text>
+</g>
+<g class="nnote" style="--c:#f59e0b"><rect x="20" y="400" width="190" height="80" rx="14"/>
+<text class="emoji" x="44" y="447.0" text-anchor="middle">🗣️</text>
+<text x="66" y="424">Both debaters</text>
+<text x="66" y="439">see the full</text>
+<text x="66" y="454">transcript, so they</text>
+<text x="66" y="469">answer each other</text>
+</g>
+</svg>
+  </div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
+  </div>
+  <div class="legend"><span><i style="background:#10b981"></i>PRO</span><span><i style="background:#ec4899"></i>CON</span><span><i style="background:#8b5cf6"></i>Judge</span><span><i style="background:#f59e0b"></i>Loop</span></div>
+</div>
+<script>
+const steps=[{"t": "👤 User gives a motion: “Homework should be banned”.", "n": ["user"], "e": []}, {"t": "🟢 PRO speaks first (max ~50 words).", "n": ["user", "pro"], "e": ["e_up"]}, {"t": "🔴 CON answers PRO's last point and argues against.", "n": ["pro", "con"], "e": ["e_pc"]}, {"t": "↺ Rounds left? The conditional edge sends the floor back to PRO.", "n": ["con", "pro"], "e": ["e_cp"]}, {"t": "🔴 After the last round the edge goes to the judge instead.", "n": ["con", "judge"], "e": ["e_cj"]}, {"t": "⚖️ Judge reads the whole transcript and names a winner.", "n": ["judge"], "e": []}, {"t": "🏆 User receives the verdict.", "n": ["judge", "out"], "e": ["e_jo"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
+}
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
+</script>
+</body>
+</html>

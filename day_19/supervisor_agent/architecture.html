@@ -5,53 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Supervisor Agent Architecture</title>
 <style>
-:root{--bg:#0a0c14;--panel:#0f1420;--border:#1e2d4a;--a:#6366f1;--a2:#818cf8;--rgb:99,102,241;--muted:#64748b;--text:#e2e8f0;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#8b5cf6;}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;}
-header{text-align:center;padding:36px 20px 16px;}
-header h1{font-size:clamp(1.3rem,3vw,2rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-header p{color:var(--muted);font-size:.88rem;margin-top:6px;}
-.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;}
-.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid var(--a);background:rgba(var(--rgb),.12);color:var(--a);}
-.canvas{max-width:1000px;margin:0 auto;padding:24px 20px 40px;display:flex;flex-direction:column;gap:24px;}
-.flow-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;}
-.col{display:flex;flex-direction:column;gap:12px;align-items:center;}
-.node{border-radius:14px;border:1.5px solid var(--border);background:var(--panel);padding:14px 16px;text-align:center;min-width:130px;flex-shrink:0;transition:transform .3s,filter .3s;animation:glow 2.5s ease-in-out infinite;}
-.node:hover{transform:translateY(-3px);}
-.node .icon{font-size:1.7rem;display:block;margin-bottom:6px;}
-.node .lbl{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
-.node .name{font-size:.9rem;font-weight:700;margin-top:3px;color:var(--a);}
-.node .sub{font-size:.68rem;color:var(--muted);margin-top:3px;max-width:190px;}
-.node.green .name{color:var(--green);}.node.amber .name{color:var(--amber);}.node.purple .name{color:var(--purple);}
-@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(var(--rgb),.2)}50%{box-shadow:0 0 26px rgba(var(--rgb),.5)}}
-.on{filter:brightness(1.7) drop-shadow(0 0 12px var(--a));transform:scale(1.05);}
-.arrow{display:flex;flex-direction:column;align-items:center;min-width:56px;flex-shrink:0;gap:2px;}
-.arrow .albl{font-size:.62rem;color:var(--muted);white-space:nowrap;}
-.aline{width:100%;height:2px;position:relative;overflow:hidden;border-radius:2px;background:rgba(var(--rgb),.18);}
-.aline::before{content:'';position:absolute;top:0;height:100%;width:100%;background:var(--a);border-radius:2px;left:-100%;animation:slideR 1.5s linear infinite;}
-@keyframes slideR{to{left:100%}}
-.ahead{color:var(--a);font-size:.9rem;}
-.box{border:1.5px dashed var(--a);border-radius:18px;padding:22px 22px 14px;position:relative;animation:rbox 3s ease-in-out infinite;}
-@keyframes rbox{0%,100%{box-shadow:0 0 10px rgba(var(--rgb),.12)}50%{box-shadow:0 0 32px rgba(var(--rgb),.3)}}
-.box-lbl{position:absolute;top:-11px;left:16px;background:var(--bg);padding:2px 10px;font-size:.68rem;font-weight:700;color:var(--a);letter-spacing:.1em;text-transform:uppercase;border-radius:20px;border:1px solid var(--a);}
-.note{text-align:center;margin-top:10px;font-size:.68rem;color:var(--a);animation:fadeL 4s ease-in-out infinite;}
-@keyframes fadeL{0%,100%{opacity:.4}50%{opacity:1}}
-.vconn{display:flex;flex-direction:column;align-items:center;}
-.vline{width:2px;height:34px;position:relative;overflow:hidden;border-radius:2px;background:rgba(var(--rgb),.2);}
-.vline::before{content:'';position:absolute;left:0;top:-100%;width:100%;height:100%;background:var(--a);border-radius:2px;animation:slideD 1.5s linear infinite;}
-@keyframes slideD{to{top:100%}}
-.varr{color:var(--a);font-size:.9rem;}
-.vlbl{font-size:.62rem;color:var(--muted);margin-top:2px;text-align:center;}
-.center{display:flex;justify-content:center;}
-.ticker{text-align:center;font-size:.78rem;color:var(--text);min-height:22px;padding:6px;}
-.ticker span{display:inline-block;animation:tf .5s ease;}
-@keyframes tf{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:12px;border-top:1px solid var(--border);}
-.li{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);}
-.ld{width:9px;height:9px;border-radius:50%;}
-.small{text-align:center;color:var(--muted);font-size:.7rem;}
-.pause{animation:pz 1.2s ease-in-out infinite;border-color:var(--amber);}
-@keyframes pz{0%,100%{box-shadow:0 0 6px rgba(245,158,11,.2)}50%{box-shadow:0 0 34px rgba(245,158,11,.75)}}
+:root{--bg:#0a0c14;--panel:#121a2b;--panel2:#0e1424;--line:#2a3a5c;--grid:#162036;--muted:#7c8aa5;--text:#e6ecf7;--a:#6366f1;--a2:#a5b4fc;--rgb:99,102,241}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 500px at 50% -10%,rgba(var(--rgb),.14),transparent 70%),var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{text-align:center;padding:38px 20px 8px}
+header h1{font-size:clamp(1.4rem,3.2vw,2.1rem);font-weight:800;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+.badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;border:1px solid rgba(var(--rgb),.5);background:rgba(var(--rgb),.1);color:var(--a2)}
+.wrap{max-width:1040px;margin:0 auto;padding:18px 16px 44px}
+.idea{display:flex;gap:12px;align-items:center;background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.3);border-radius:14px;padding:12px 16px;font-size:.88rem;line-height:1.45;margin-bottom:16px}
+.idea b{color:var(--a2)}
+.idea .bulb{font-size:1.4rem}
+.stage{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:10px;overflow-x:auto}
+.stage svg{display:block;width:100%;min-width:760px;height:auto}
+/* groups */
+.group{fill:rgba(var(--rgb),.03);stroke:var(--c);stroke-width:1.4;stroke-dasharray:7 6;opacity:.8;fill:color-mix(in srgb,var(--c) 5%,transparent)}
+.gtag{fill:var(--bg);stroke:var(--c);stroke-width:1}
+.gtxt{fill:var(--c);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+/* nodes */
+.node .card{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .35s}
+.node .bar{fill:var(--c);opacity:.7}
+.node .ic{fill:color-mix(in srgb,var(--c) 16%,transparent);stroke:var(--c);stroke-width:1.2}
+.emoji{font-size:21px}
+.nname{fill:var(--c);font-size:15px;font-weight:700}
+.nlbl{fill:var(--muted);font-size:9.5px;font-weight:600;letter-spacing:.1em}
+.nsub{fill:#9fb0cc;font-size:11px}
+.node{transition:filter .35s}
+.node.on .card{stroke:var(--c);stroke-width:2.4;fill:color-mix(in srgb,var(--c) 14%,var(--panel))}
+.node.on{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--c) 70%,transparent))}
+.node.dim{opacity:.45}
+.node.pulse.on .card{animation:pz 1.2s ease-in-out infinite}
+@keyframes pz{50%{stroke-width:4}}
+/* edges */
+.edge .base{fill:none;stroke:var(--line);stroke-width:2;transition:stroke .3s}
+.edge.dash .base{stroke-dasharray:6 5}
+.edge .flow{fill:none;stroke:var(--a);stroke-width:3;stroke-linecap:round;stroke-dasharray:10 14;opacity:0;transition:opacity .3s}
+.edge.on .base{stroke:var(--a);stroke-width:2.4}
+.edge.on .flow{opacity:1;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.edge.dim{opacity:.4}
+.elabel rect{fill:var(--bg);stroke:var(--line);stroke-width:1;transition:all .3s}
+.elabel text{fill:var(--muted);font-size:10.5px;font-weight:600}
+.elabel.on rect{stroke:var(--a);fill:color-mix(in srgb,var(--a) 14%,var(--bg))}
+.elabel.on text{fill:var(--a2)}
+.nnote rect{fill:color-mix(in srgb,var(--c) 7%,transparent);stroke:var(--c);stroke-dasharray:4 4;stroke-width:1.2}
+.nnote text{fill:#c7d2e6;font-size:11.5px}
+.nnote text.emoji{font-size:19px}
+/* controls + steps */
+.panel{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:16px}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.phead h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ctl{display:flex;gap:6px}
+.ctl button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.ctl button:hover{border-color:var(--a);color:var(--a2)}
+.steps{list-style:none;display:grid;gap:6px}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border-radius:12px;border:1px solid transparent;font-size:.86rem;line-height:1.4;color:#8fa0bd;cursor:pointer;transition:all .25s}
+.steps li .n{flex:0 0 24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.steps li:hover{background:rgba(var(--rgb),.06)}
+.steps li.active{background:rgba(var(--rgb),.12);border-color:rgba(var(--rgb),.5);color:var(--text)}
+.steps li.active .n{background:var(--a);border-color:var(--a);color:#0a0c14}
+.steps li.done .n{border-color:var(--a);color:var(--a)}
+.legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--muted);font-size:.74rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
 </style>
 </head>
 <body>
@@ -60,46 +77,124 @@ header p{color:var(--muted);font-size:.88rem;margin-top:6px;}
   <p>LangChain · LangGraph hub-and-spoke · Ollama · Wikipedia API</p>
   <div class="badges"><span class="badge">LangGraph</span><span class="badge">Supervisor + workers</span><span class="badge">Ollama llama3.2</span><span class="badge">Wikipedia API</span><span class="badge">Free · No API Key</span></div>
 </header>
-<div class="canvas">
-  <div class="flow-row">
-    <div class="node " id="user"><span class="icon">👤</span><div class="lbl">Input</div><div class="name">User</div><div class="sub">topic: "Black holes"</div></div>
-    <div class="arrow"><div class="albl">task</div><div class="aline"></div><div class="ahead">▶</div></div>
-    <div class="node purple" id="sup"><span class="icon">🧑‍💼</span><div class="lbl">Boss · LLM</div><div class="name">Supervisor</div><div class="sub">looks at progress → picks NEXT worker or FINISH</div></div>
+<div class="wrap">
+  <div class="idea"><span class="bulb">💡</span><span><b>Hub-and-spoke.</b> The Supervisor looks at progress after <b>every</b> step and either delegates to the next worker or says FINISH.</span></div>
+  <div class="stage">
+<svg viewBox="0 0 1010 590" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram">
+<defs>
+<marker id="arr-off" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--line)"/></marker>
+<marker id="arr-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="var(--a)"/></marker>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--grid)"/></pattern>
+</defs>
+<rect width="1010" height="590" fill="url(#dots)"/>
+<rect class="group" x="120" y="245" width="770" height="200" rx="20" style="--c:#06b6d4"/>
+<g style="--c:#06b6d4"><rect class="gtag" x="138" y="233" width="235.2" height="24" rx="12"/><text class="gtxt" x="255.6" y="249" text-anchor="middle">Workers (every one reports back)</text></g>
+<g class="edge" id="e_us" data-both="0"><path class="base" d="M180,111.0 L395,111.0" marker-end="url(#arr-off)"/><path class="flow" d="M180,111.0 L395,111.0"/></g>
+<g class="edge" id="e_so" data-both="0"><path class="base" d="M605,111.0 L840,111.0" marker-end="url(#arr-off)"/><path class="flow" d="M605,111.0 L840,111.0"/></g>
+<g class="edge" id="e_s1" data-both="1"><path class="base" d="M440.0,167 L440.0,193.0 Q440.0,205 428.0,205.0 L247.0,205.0 Q235,205 235.0,217.0 L235.0,290" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M440.0,167 L440.0,193.0 Q440.0,205 428.0,205.0 L247.0,205.0 Q235,205 235.0,217.0 L235.0,290"/></g>
+<g class="edge" id="e_s2" data-both="1"><path class="base" d="M500.0,167 L505.0,290" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M500.0,167 L505.0,290"/></g>
+<g class="edge" id="e_s3" data-both="1"><path class="base" d="M560.0,167 L560.0,193.0 Q560.0,205 572.0,205.0 L763.0,205.0 Q775,205 775.0,217.0 L775.0,290" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M560.0,167 L560.0,193.0 Q560.0,205 572.0,205.0 L763.0,205.0 Q775,205 775.0,217.0 L775.0,290"/></g>
+<g class="edge" id="e_tool" data-both="1"><path class="base" d="M235.0,402 L235.0,495" marker-end="url(#arr-off)" marker-start="url(#arr-off)"/><path class="flow" d="M235.0,402 L235.0,495"/></g>
+<g class="elabel" data-for="e_us"><rect x="266.8" y="79" width="42.4" height="22" rx="11"/><text x="288" y="94" text-anchor="middle">task</text></g>
+<g class="elabel" data-for="e_so"><rect x="694.7" y="79" width="54.599999999999994" height="22" rx="11"/><text x="722" y="94" text-anchor="middle">FINISH</text></g>
+<g class="elabel" data-for="e_s1"><rect x="260.0" y="194" width="140.0" height="22" rx="11"/><text x="330" y="209" text-anchor="middle">delegate ↓  report ↑</text></g>
+<g class="elabel" data-for="e_tool"><rect x="198.55" y="459" width="72.9" height="22" rx="11"/><text x="235" y="474" text-anchor="middle">tool call</text></g>
+<g class="node" id="user" style="--c:#94a3b8">
+<rect class="card" x="20" y="55" width="160" height="112" rx="16"/>
+<rect class="bar" x="42" y="55" width="116" height="3" rx="1.5"/>
+<circle class="ic" cx="100.0" cy="88" r="21"/>
+<text class="emoji" x="100.0" y="96" text-anchor="middle">👤</text>
+<text class="nname" x="100.0" y="123" text-anchor="middle">User</text>
+<text class="nlbl" x="100.0" y="136" text-anchor="middle">INPUT</text>
+<text class="nsub" x="100.0" y="149" text-anchor="middle">topic: "Black holes"</text>
+</g>
+<g class="node" id="sup" style="--c:#8b5cf6">
+<rect class="card" x="395" y="55" width="210" height="112" rx="16"/>
+<rect class="bar" x="417" y="55" width="166" height="3" rx="1.5"/>
+<circle class="ic" cx="500.0" cy="88" r="21"/>
+<text class="emoji" x="500.0" y="96" text-anchor="middle">🧑‍💼</text>
+<text class="nname" x="500.0" y="123" text-anchor="middle">Supervisor</text>
+<text class="nlbl" x="500.0" y="136" text-anchor="middle">BOSS · LLM</text>
+<text class="nsub" x="500.0" y="149" text-anchor="middle">picks NEXT worker or FINISH</text>
+</g>
+<g class="node" id="out" style="--c:#10b981">
+<rect class="card" x="840" y="55" width="150" height="112" rx="16"/>
+<rect class="bar" x="862" y="55" width="106" height="3" rx="1.5"/>
+<circle class="ic" cx="915.0" cy="88" r="21"/>
+<text class="emoji" x="915.0" y="96" text-anchor="middle">✅</text>
+<text class="nname" x="915.0" y="123" text-anchor="middle">Finished Article</text>
+<text class="nlbl" x="915.0" y="136" text-anchor="middle">OUTPUT</text>
+<text class="nsub" x="915.0" y="149" text-anchor="middle">when supervisor</text>
+<text class="nsub" x="915.0" y="161" text-anchor="middle">says FINISH</text>
+</g>
+<g class="node" id="researcher" style="--c:#06b6d4">
+<rect class="card" x="150" y="290" width="170" height="112" rx="16"/>
+<rect class="bar" x="172" y="290" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="235.0" cy="323" r="21"/>
+<text class="emoji" x="235.0" y="331" text-anchor="middle">🔎</text>
+<text class="nname" x="235.0" y="358" text-anchor="middle">Researcher</text>
+<text class="nlbl" x="235.0" y="371" text-anchor="middle">WORKER 1 · REACT</text>
+<text class="nsub" x="235.0" y="384" text-anchor="middle">finds facts, writes notes</text>
+</g>
+<g class="node" id="writer" style="--c:#06b6d4">
+<rect class="card" x="420" y="290" width="170" height="112" rx="16"/>
+<rect class="bar" x="442" y="290" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="505.0" cy="323" r="21"/>
+<text class="emoji" x="505.0" y="331" text-anchor="middle">✍️</text>
+<text class="nname" x="505.0" y="358" text-anchor="middle">Writer</text>
+<text class="nlbl" x="505.0" y="371" text-anchor="middle">WORKER 2 · LLM</text>
+<text class="nsub" x="505.0" y="384" text-anchor="middle">notes → 80-word article</text>
+</g>
+<g class="node" id="proof" style="--c:#06b6d4">
+<rect class="card" x="690" y="290" width="170" height="112" rx="16"/>
+<rect class="bar" x="712" y="290" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="775.0" cy="323" r="21"/>
+<text class="emoji" x="775.0" y="331" text-anchor="middle">🧹</text>
+<text class="nname" x="775.0" y="358" text-anchor="middle">Proofreader</text>
+<text class="nlbl" x="775.0" y="371" text-anchor="middle">WORKER 3 · LLM</text>
+<text class="nsub" x="775.0" y="384" text-anchor="middle">fixes grammar, polishes</text>
+</g>
+<g class="node" id="wiki" style="--c:#f59e0b">
+<rect class="card" x="150" y="495" width="170" height="112" rx="16"/>
+<rect class="bar" x="172" y="495" width="126" height="3" rx="1.5"/>
+<circle class="ic" cx="235.0" cy="528" r="21"/>
+<text class="emoji" x="235.0" y="536" text-anchor="middle">📚</text>
+<text class="nname" x="235.0" y="563" text-anchor="middle">wiki_summary</text>
+<text class="nlbl" x="235.0" y="576" text-anchor="middle">TOOL + FREE API</text>
+<text class="nsub" x="235.0" y="589" text-anchor="middle">Wikipedia REST API</text>
+<text class="nsub" x="235.0" y="601" text-anchor="middle">no key needed</text>
+</g>
+<g class="nnote" style="--c:#8b5cf6"><rect x="420" y="490" width="470" height="62" rx="14"/>
+<text class="emoji" x="444" y="528.0" text-anchor="middle">🛑</text>
+<text x="466" y="514">Workers always hand control back to the Supervisor.</text>
+<text x="466" y="529">MAX_STEPS = 6 stops runaway loops.</text>
+</g>
+</svg>
   </div>
-  <div class="center"><div class="vconn"><div class="vline"></div><div class="varr">⇅</div><div class="vlbl">delegate ↓ · report back ↑ (after EVERY step)</div></div></div>
-  <div class="flow-row">
-    <div class="box">
-      <div class="box-lbl">Workers</div>
-      <div class="flow-row" style="align-items:flex-start;gap:18px;">
-        <div class="col">
-          <div class="node " id="researcher"><span class="icon">🔎</span><div class="lbl">Worker 1 · ReAct</div><div class="name">Researcher</div><div class="sub">finds facts, writes notes</div></div>
-          <div class="vconn"><div class="vline"></div><div class="varr">▼</div><div class="vlbl">tool call</div></div>
-          <div class="node amber" id="wiki"><span class="icon">📚</span><div class="lbl">Tool + Free API</div><div class="name">wiki_summary</div><div class="sub">Wikipedia REST API · no key</div></div>
-        </div>
-        <div class="col"><div class="node " id="writer"><span class="icon">✍️</span><div class="lbl">Worker 2 · LLM</div><div class="name">Writer</div><div class="sub">notes → 80-word article</div></div></div>
-        <div class="col"><div class="node " id="proof"><span class="icon">🧹</span><div class="lbl">Worker 3 · LLM</div><div class="name">Proofreader</div><div class="sub">fixes grammar, polishes</div></div></div>
-      </div>
-      <div class="note">workers → edges back to "supervisor" · MAX_STEPS = 6 stops runaway loops</div>
-    </div>
+  <div class="panel">
+    <div class="phead"><h2>Walkthrough — click any step</h2><div class="ctl"><button id="pv">⏮ Prev</button><button id="pp">⏸ Pause</button><button id="nx">Next ⏭</button></div></div>
+    <ol class="steps" id="steps"></ol>
   </div>
-  <div class="flow-row">
-    <div class="node green" id="out"><span class="icon">✅</span><div class="lbl">Output</div><div class="name">Finished Article</div><div class="sub">when supervisor says FINISH</div></div>
-  </div>
-  <div class="ticker" id="tk"><span>Initialising…</span></div>
-  <div class="legend"><div class="li"><div class="ld" style="background:var(--purple)"></div>Supervisor</div><div class="li"><div class="ld" style="background:var(--a)"></div>Workers</div><div class="li"><div class="ld" style="background:var(--amber)"></div>Tool / API</div><div class="li"><div class="ld" style="background:var(--green)"></div>Output</div></div>
+  <div class="legend"><span><i style="background:#8b5cf6"></i>Supervisor</span><span><i style="background:#06b6d4"></i>Workers</span><span><i style="background:#f59e0b"></i>Tool / API</span><span><i style="background:#10b981"></i>Output</span></div>
 </div>
 <script>
-// each step = [message, id of the element to highlight]
-const steps=[["👤 User gives a topic: “Black holes”", "user"], ["🧑‍💼 Supervisor: no research yet → send to researcher", "sup"], ["🔎 Researcher calls wiki_summary(\"Black holes\")…", "researcher"], ["📚 Wikipedia returns a factual summary", "wiki"], ["🧑‍💼 Supervisor: notes ready, no article yet → send to writer", "sup"], ["✍️ Writer turns the notes into a short article", "writer"], ["🧑‍💼 Supervisor: article exists, not proofread → send to proofreader", "sup"], ["🧹 Proofreader polishes the article", "proof"], ["🧑‍💼 Supervisor: all done → FINISH", "sup"], ["✅ User receives the finished article", "out"]];
-let i=0;const tk=document.getElementById('tk');
-function tick(){
-  document.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
-  const [msg,id]=steps[i];
-  tk.innerHTML=`<span>${msg}</span>`;
-  const el=document.getElementById(id); if(el) el.classList.add('on');
-  i=(i+1)%steps.length;
+const steps=[{"t": "👤 User gives a topic: “Black holes”.", "n": ["user"], "e": []}, {"t": "🧑‍💼 Supervisor: no research yet → send to the Researcher.", "n": ["user", "sup", "researcher"], "e": ["e_us", "e_s1"]}, {"t": "🔎📚 Researcher calls wiki_summary(\"Black holes\") → Wikipedia returns facts.", "n": ["researcher", "wiki"], "e": ["e_tool"]}, {"t": "🧑‍💼 Supervisor: notes ready, no article yet → send to the Writer.", "n": ["sup", "writer"], "e": ["e_s2"]}, {"t": "✍️ Writer turns the notes into a short article, reports back.", "n": ["writer", "sup"], "e": ["e_s2"]}, {"t": "🧹 Supervisor: article not proofread → Proofreader polishes it.", "n": ["sup", "proof"], "e": ["e_s3"]}, {"t": "🧑‍💼 Supervisor: all done → FINISH.", "n": ["sup"], "e": []}, {"t": "✅ User receives the finished article.", "n": ["sup", "out"], "e": ["e_so"]}];
+const $=id=>document.getElementById(id);
+const ol=$('steps');
+steps.forEach((s,k)=>{const li=document.createElement('li');li.innerHTML=`<span class="n">${k+1}</span><span>${s.t}</span>`;li.onclick=()=>{go(k);play(false)};ol.appendChild(li);});
+const allN=[...document.querySelectorAll('.node')],allE=[...document.querySelectorAll('.edge')],allL=[...document.querySelectorAll('.elabel')];
+let cur=0,timer=null;
+function go(k){
+  cur=(k+steps.length)%steps.length;const s=steps[cur];
+  allN.forEach(n=>{const on=(s.n||[]).includes(n.id);n.classList.toggle('on',on);n.classList.toggle('dim',!on)});
+  allE.forEach(e=>{const on=(s.e||[]).includes(e.id);e.classList.toggle('on',on);e.classList.toggle('dim',!on);
+    const b=e.querySelector('.base');b.setAttribute('marker-end',`url(#arr-${on?'on':'off'})`);if(e.dataset.both==='1')b.setAttribute('marker-start',`url(#arr-${on?'on':'off'})`)});
+  allL.forEach(l=>l.classList.toggle('on',(s.e||[]).includes(l.dataset.for)));
+  [...ol.children].forEach((li,j)=>{li.classList.toggle('active',j===cur);li.classList.toggle('done',j<cur)});
 }
-tick();setInterval(tick,2200);
+function play(on){clearInterval(timer);timer=null;$('pp').textContent=on?'⏸ Pause':'▶ Play';if(on)timer=setInterval(()=>go(cur+1),2600)}
+$('pp').onclick=()=>play(!timer);$('pv').onclick=()=>{go(cur-1);play(false)};$('nx').onclick=()=>{go(cur+1);play(false)};
+go(0);play(true);
 </script>
 </body>
 </html>
