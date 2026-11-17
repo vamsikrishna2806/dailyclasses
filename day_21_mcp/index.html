@@ -1,0 +1,1487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP Zero to Hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060914;--bg2:#0a0f1f;--panel:#0f172b;--panel2:#141e37;--line:#22304f;--line2:#2e3f66;
+  --text:#e7ecff;--muted:#97a3c4;--dim:#66729a;
+  --cyan:#22d3ee;--violet:#a78bfa;--amber:#fbbf24;--green:#34d399;--pink:#f472b6;--red:#f87171;--blue:#60a5fa;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  --r:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 Inter,system-ui,Segoe UI,sans-serif;overflow-x:hidden}
+a{color:var(--cyan)}
+code{font-family:var(--mono);font-size:.88em;background:#1a2442;padding:.1em .4em;border-radius:6px;color:#cfe3ff}
+b,strong{color:#fff}
+::selection{background:#22d3ee55}
+
+/* ---------- progress + nav ---------- */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--pink));z-index:100;box-shadow:0 0 12px var(--cyan)}
+aside{position:fixed;top:0;left:0;bottom:0;width:270px;background:rgba(8,12,26,.92);backdrop-filter:blur(10px);border-right:1px solid var(--line);padding:22px 14px;overflow-y:auto;z-index:50;transition:transform .35s}
+aside .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin:0 6px 18px}
+aside .brand .logo{width:34px;height:34px;border-radius:10px;background:conic-gradient(from 0deg,var(--cyan),var(--violet),var(--pink),var(--cyan));display:grid;place-items:center;color:#000;font-size:12px;font-weight:800;animation:spin 8s linear infinite}
+aside .brand .logo span{animation:spin 8s linear infinite reverse;display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+aside .lvl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:16px 8px 6px}
+aside a.nav{display:flex;gap:10px;align-items:center;padding:7px 10px;border-radius:10px;color:var(--muted);text-decoration:none;font-size:14px;transition:.2s}
+aside a.nav .n{font-family:var(--mono);font-size:11px;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:#131c35;border:1px solid var(--line);flex:none}
+aside a.nav:hover{background:#121a33;color:#fff}
+aside a.nav.active{background:linear-gradient(90deg,#22d3ee22,transparent);color:#fff}
+aside a.nav.active .n{background:var(--cyan);color:#000;border-color:var(--cyan)}
+aside a.nav.done .n{background:#34d39933;border-color:var(--green);color:var(--green)}
+#menuBtn{display:none;position:fixed;top:12px;right:12px;z-index:60;background:var(--panel2);color:#fff;border:1px solid var(--line2);border-radius:10px;padding:8px 12px;font-size:14px}
+main{margin-left:270px}
+@media (max-width:900px){aside{transform:translateX(-100%)}aside.open{transform:none}main{margin-left:0}#menuBtn{display:block}}
+
+/* ---------- sections ---------- */
+section{padding:90px 40px;position:relative}
+section .wrap{max-width:1080px;margin:0 auto}
+@media (max-width:700px){section{padding:64px 16px}}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);display:flex;gap:10px;align-items:center}
+.kicker .pill{background:#22d3ee1a;border:1px solid #22d3ee55;padding:2px 10px;border-radius:99px}
+h2{font-size:clamp(28px,4vw,44px);line-height:1.15;margin:12px 0 14px;letter-spacing:-.02em}
+h2 .g{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+h3{font-size:21px;margin:30px 0 10px}
+p.lead{font-size:18px;color:var(--muted);max-width:760px}
+.sep{height:1px;background:linear-gradient(90deg,transparent,var(--line2),transparent);margin:0 40px}
+.reveal{opacity:0;transform:translateY(36px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.2s}.reveal.d3{transition-delay:.3s}.reveal.d4{transition-delay:.4s}
+.card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.note{border-left:3px solid var(--amber);background:#fbbf240d;padding:14px 18px;border-radius:0 12px 12px 0;margin:20px 0;color:#f6e7c1}
+.note.tip{border-color:var(--green);background:#34d3990d;color:#cdf5e5}
+.note.warn{border-color:var(--red);background:#f871710d;color:#ffd6d6}
+.note b{color:inherit}
+.btn{background:var(--panel2);color:#fff;border:1px solid var(--line2);padding:9px 16px;border-radius:10px;font:600 14px Inter,sans-serif;cursor:pointer;transition:.2s}
+.btn:hover{border-color:var(--cyan);box-shadow:0 0 0 3px #22d3ee22}
+.btn.primary{background:linear-gradient(90deg,var(--cyan),var(--violet));color:#03101a;border:0}
+.btn.on{background:var(--cyan);color:#001018;border-color:var(--cyan)}
+.btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;font:600 11px var(--mono);padding:2px 8px;border-radius:6px;background:#1b2747;color:var(--muted);letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+
+/* ---------- hero ---------- */
+#hero{min-height:100vh;display:grid;place-items:center;padding:40px 20px;overflow:hidden}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%}
+#hero .inner{position:relative;text-align:center;max-width:880px;pointer-events:none}
+#hero .inner *{pointer-events:auto}
+#hero h1{font-size:clamp(40px,7vw,86px);line-height:1;margin:18px 0;letter-spacing:-.04em;font-weight:800}
+#hero h1 .g{background:linear-gradient(90deg,var(--cyan),var(--violet),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200%;animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:200% 0}}
+#hero p{font-size:clamp(16px,2vw,20px);color:var(--muted);max-width:640px;margin:0 auto 28px}
+.chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:26px 0}
+.chip{border:1px solid var(--line2);background:#0c1430cc;border-radius:99px;padding:6px 14px;font-size:13px;color:#cbd5f5}
+.scrollhint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:var(--dim);font-size:12px;letter-spacing:.2em;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translate(-50%,8px)}}
+
+/* ---------- roadmap ---------- */
+.roadmap{display:flex;gap:0;position:relative;margin-top:30px;flex-wrap:wrap}
+.roadmap .stop{flex:1;min-width:160px;text-align:center;position:relative;padding:0 8px}
+.roadmap .dot{width:56px;height:56px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:var(--panel2);border:2px solid var(--line2);position:relative;z-index:2}
+.roadmap .stop:not(:last-child)::after{content:"";position:absolute;top:28px;left:calc(50% + 28px);right:calc(-50% + 28px);height:2px;background:linear-gradient(90deg,var(--line2),var(--line2));z-index:1}
+.roadmap .stop.lit .dot{border-color:var(--cyan);box-shadow:0 0 24px #22d3ee66}
+.roadmap .stop.lit:not(:last-child)::after{background:linear-gradient(90deg,var(--cyan),var(--violet))}
+.roadmap .t{font-weight:700}.roadmap .s{font-size:13px;color:var(--muted)}
+
+/* ---------- NxM ---------- */
+.nm{display:grid;grid-template-columns:1fr 300px;gap:20px}
+@media (max-width:860px){.nm{grid-template-columns:1fr}}
+#nmSvg{width:100%;height:auto;background:radial-gradient(ellipse at center,#111b38,#0a0f1f);border:1px solid var(--line);border-radius:var(--r)}
+.counter{font:800 56px/1 var(--mono);letter-spacing:-.04em}
+.counter.bad{color:var(--red)}.counter.good{color:var(--green)}
+input[type=range]{width:100%;accent-color:var(--cyan)}
+
+/* ---------- USB analogy ---------- */
+.usb{display:flex;align-items:center;justify-content:center;gap:8px;padding:30px 10px;flex-wrap:wrap}
+.usb .dev{width:96px;height:96px;border-radius:20px;background:var(--panel2);border:1px solid var(--line2);display:grid;place-items:center;font-size:34px;text-align:center;line-height:1.1}
+.usb .dev small{display:block;font-size:11px;color:var(--muted)}
+.usb .cable{width:70px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--violet));position:relative;overflow:hidden}
+.usb .cable::after{content:"";position:absolute;top:0;left:-30%;width:30%;height:100%;background:#fff;filter:blur(2px);animation:flow 1.4s linear infinite}
+@keyframes flow{to{left:130%}}
+.usb .hub{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,#22d3ee33,#0f172b 70%);border:2px solid var(--cyan);display:grid;place-items:center;font-weight:800;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 14px #22d3ee11,0 0 40px #22d3ee44}}
+
+/* ---------- architecture ---------- */
+.arch{display:grid;grid-template-columns:1fr 320px;gap:20px}
+@media (max-width:900px){.arch{grid-template-columns:1fr}}
+#archSvg{width:100%;height:auto;border:1px solid var(--line);border-radius:var(--r);background:#0a0f1f}
+#archSvg .hit{cursor:pointer}
+#archSvg .hit:hover rect{stroke:#fff}
+#archInfo h4{margin:0 0 6px;font-size:20px}
+#archInfo .role{font:600 12px var(--mono);color:var(--cyan);letter-spacing:.1em;text-transform:uppercase}
+
+/* ---------- primitives ---------- */
+.tabs{display:flex;gap:8px;margin:18px 0;flex-wrap:wrap}
+.prim{perspective:1200px;height:300px}
+.prim .in{position:relative;width:100%;height:100%;transition:transform .7s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;cursor:pointer}
+.prim.flip .in{transform:rotateY(180deg)}
+.prim .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);padding:22px;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--bg2));display:flex;flex-direction:column}
+.prim .back{transform:rotateY(180deg);background:linear-gradient(160deg,#151f3d,#0b1124)}
+.prim .ic{font-size:40px;margin-bottom:6px}
+.prim h4{margin:0;font-size:22px}
+.prim .who{font:600 12px var(--mono);margin:6px 0 10px}
+.prim .face p{margin:0;color:var(--muted);font-size:14.5px}
+.prim .hint{margin-top:auto;font-size:12px;color:var(--dim)}
+.prim .back pre{margin:8px 0 0;font-size:12px}
+
+/* ---------- code ---------- */
+.code{border:1px solid var(--line);border-radius:14px;background:#070b18;overflow:hidden;margin:16px 0}
+.code .bar{display:flex;align-items:center;gap:8px;padding:9px 14px;background:#0d1428;border-bottom:1px solid var(--line);font:600 12px var(--mono);color:var(--muted)}
+.code .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.code .bar .title{margin-left:6px}
+.code .bar .copy{margin-left:auto;background:none;border:1px solid var(--line2);color:var(--muted);border-radius:7px;padding:3px 10px;cursor:pointer;font:600 11px var(--mono)}
+.code .bar .copy:hover{color:#fff;border-color:var(--cyan)}
+.code pre{margin:0;padding:14px 0;overflow-x:auto;font:13.5px/1.7 var(--mono);max-height:560px}
+.code .ln{display:block;padding:0 16px 0 0;transition:background .2s}
+.code .ln::before{content:attr(data-n);display:inline-block;width:42px;text-align:right;margin-right:16px;color:#3a4870;user-select:none}
+.code .ln.hl{background:#22d3ee18;box-shadow:inset 3px 0 0 var(--cyan)}
+pre.json{margin:0;font:12.5px/1.6 var(--mono);white-space:pre-wrap;word-break:break-word}
+.t-k{color:#c792ea}.t-s{color:#c3e88d}.t-c{color:#5c6a92;font-style:italic}.t-n{color:#f78c6c}.t-d{color:#ffcb6b}.t-f{color:#82aaff}.t-key{color:#7fdbff}.t-l{color:#ff9cac}
+.annot{display:grid;gap:10px}
+.annot .a{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel);cursor:pointer;transition:.2s;font-size:14.5px}
+.annot .a:hover,.annot .a.on{border-color:var(--cyan);background:#22d3ee0d}
+.annot .a .lns{font:600 11px var(--mono);color:var(--cyan)}
+.codegrid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:start}
+@media (max-width:900px){.codegrid{grid-template-columns:1fr}}
+.codegrid .annot{position:sticky;top:20px}
+
+/* ---------- json-rpc ---------- */
+.anat{display:flex;flex-wrap:wrap;gap:4px;font:14px/2 var(--mono);background:#070b18;border:1px solid var(--line);border-radius:14px;padding:18px}
+.anat span.f{padding:2px 6px;border-radius:6px;cursor:pointer;transition:.2s;border:1px dashed transparent}
+.anat span.f:hover,.anat span.f.on{background:#22d3ee22;border-color:var(--cyan)}
+.msgtype{position:relative;overflow:hidden}
+.msgtype .env{font-size:30px;display:inline-block}
+.msgtype .lane{height:44px;position:relative;margin:12px 0;border-radius:10px;background:#0a1124;border:1px solid var(--line)}
+.msgtype .lane .a,.msgtype .lane .b{position:absolute;top:50%;transform:translateY(-50%);font:600 11px var(--mono);color:var(--muted)}
+.msgtype .lane .a{left:8px}.msgtype .lane .b{right:8px}
+.msgtype .lane .p{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;margin-top:-7px}
+.mv-r{animation:mvr 2.6s ease-in-out infinite}
+.mv-l{animation:mvl 2.6s ease-in-out infinite}
+.mv-rl{animation:mvrl 3.2s ease-in-out infinite}
+@keyframes mvr{0%{left:12%;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:84%;opacity:0}}
+@keyframes mvl{0%{left:84%;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:12%;opacity:0}}
+@keyframes mvrl{0%{left:12%;opacity:0}8%{opacity:1}45%{left:84%}55%{left:84%}92%{opacity:1}100%{left:12%;opacity:0}}
+
+/* ---------- lifecycle ---------- */
+.life{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:start}
+@media (max-width:900px){.life{grid-template-columns:1fr}}
+#lifeSvg{width:100%;height:auto;border:1px solid var(--line);border-radius:var(--r);background:#0a0f1f}
+#lifeSvg .arrow{opacity:.15;transition:opacity .4s}
+#lifeSvg .arrow.shown{opacity:.55}
+#lifeSvg .arrow.cur{opacity:1}
+#lifeJson{min-height:330px}
+.phase{display:inline-block;font:700 11px var(--mono);padding:3px 9px;border-radius:6px;letter-spacing:.06em}
+
+/* ---------- transports ---------- */
+.tsvg{width:100%;height:auto;border-radius:12px;background:#0a0f1f;border:1px solid var(--line);margin:10px 0}
+
+/* ---------- flow sim ---------- */
+#stage{position:relative;border:1px solid var(--line);border-radius:var(--r);background:radial-gradient(ellipse at top,#111c3a,#080c1a);padding:24px 10px 20px;overflow:hidden}
+.actors{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;position:relative;z-index:2}
+.actor{text-align:center;transition:.3s}
+.actor .av{width:62px;height:62px;margin:0 auto 8px;border-radius:18px;display:grid;place-items:center;font-size:28px;background:var(--panel2);border:2px solid var(--line2);transition:.3s}
+.actor.on .av{border-color:var(--cyan);box-shadow:0 0 0 6px #22d3ee18,0 0 30px #22d3ee55;transform:scale(1.08)}
+.actor .nm2{font-weight:700;font-size:13px}.actor .sb{font-size:11px;color:var(--muted)}
+.lifelines{position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:0 10px;pointer-events:none}
+.lifelines div{border-right:1px dashed #22304f;transform:translateX(-50%)}
+#envelope{position:absolute;top:44px;left:0;z-index:3;transition:left .9s cubic-bezier(.6,0,.3,1),opacity .3s;opacity:0;pointer-events:none;transform:translateX(-50%)}
+#envelope .e{background:linear-gradient(90deg,var(--cyan),var(--violet));color:#02101a;font:700 11px var(--mono);padding:5px 10px;border-radius:8px;white-space:nowrap;box-shadow:0 6px 24px #22d3ee55}
+#bubble{margin-top:20px;min-height:110px;position:relative;z-index:2}
+#flowLog{max-height:260px;overflow:auto;font:12.5px/1.6 var(--mono);background:#060a16;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:14px}
+#flowLog div{opacity:0;animation:fadein .4s forwards}
+@keyframes fadein{to{opacity:1}}
+@media (max-width:700px){.actor .av{width:44px;height:44px;font-size:20px;border-radius:12px}.actor .sb{display:none}.actor .nm2{font-size:10px}}
+
+/* ---------- langgraph ---------- */
+#lgSvg{width:100%;height:auto;border:1px solid var(--line);border-radius:var(--r);background:#0a0f1f}
+.term{background:#03060e;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.term .bar{padding:8px 14px;background:#0d1428;font:600 12px var(--mono);color:var(--muted);display:flex;gap:8px;align-items:center}
+.term pre{margin:0;padding:16px;font:13px/1.65 var(--mono);min-height:320px;max-height:460px;overflow:auto;white-space:pre-wrap;color:#c9d4f5}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--cyan);vertical-align:middle;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ctabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:18px}
+.ctabs .btn{font:600 12.5px var(--mono);padding:7px 12px}
+
+/* ---------- live servers ---------- */
+.srv{position:relative;overflow:hidden}
+.srv .live{position:absolute;top:18px;right:18px;font:700 11px var(--mono);color:var(--green);display:flex;gap:6px;align-items:center}
+.srv .live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 #34d39988;animation:ping 1.6s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 10px #34d39900}100%{box-shadow:0 0 0 0 #34d39900}}
+.srv h4{margin:0 0 4px;font-size:19px}
+.srv ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+
+/* ---------- security ---------- */
+.threat{border-top:3px solid var(--red)}
+.threat h4{margin:4px 0 6px}
+.threat p{margin:0;color:var(--muted);font-size:14.5px}
+.threat .fix{margin-top:10px;font-size:13.5px;color:#bff3dd}
+.check label{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:15px}
+.check input{accent-color:var(--green);width:18px;height:18px;margin-top:3px;flex:none}
+
+/* ---------- quiz ---------- */
+.q{margin-bottom:18px}
+.q .opts{display:grid;gap:8px;margin-top:10px}
+.q .opt{text-align:left;background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:11px 14px;border-radius:10px;cursor:pointer;font:15px Inter,sans-serif;transition:.2s}
+.q .opt:hover:not(:disabled){border-color:var(--cyan)}
+.q .opt.right{background:#34d39922;border-color:var(--green)}
+.q .opt.wrong{background:#f8717122;border-color:var(--red)}
+.q .why{margin-top:10px;font-size:14px;color:var(--muted);display:none}
+.q.answered .why{display:block}
+#score{font:800 40px var(--mono)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:200}
+
+/* glossary */
+.gl{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.gl div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--muted)}
+.gl b{display:block;color:#fff;font-size:15px;margin-bottom:2px}
+footer{padding:60px 20px;text-align:center;color:var(--dim);font-size:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<canvas id="confetti"></canvas>
+<button id="menuBtn">☰ Chapters</button>
+
+<aside id="side">
+  <div class="brand"><div class="logo"><span>MCP</span></div>Zero → Hero</div>
+  <div class="lvl">Level 0 · Zero</div>
+  <a class="nav" href="#why"><span class="n">01</span>The problem</a>
+  <a class="nav" href="#analogy"><span class="n">02</span>USB-C for AI</a>
+  <a class="nav" href="#compare"><span class="n">03</span>MCP vs what you know</a>
+  <div class="lvl">Level 1 · Beginner</div>
+  <a class="nav" href="#arch"><span class="n">04</span>Host · Client · Server</a>
+  <a class="nav" href="#prims"><span class="n">05</span>The 6 primitives</a>
+  <div class="lvl">Level 2 · Intermediate</div>
+  <a class="nav" href="#rpc"><span class="n">06</span>JSON-RPC messages</a>
+  <a class="nav" href="#life"><span class="n">07</span>Connection lifecycle</a>
+  <a class="nav" href="#transport"><span class="n">08</span>Transports</a>
+  <a class="nav" href="#flow"><span class="n">09</span>One request, end to end</a>
+  <div class="lvl">Level 3 · Builder</div>
+  <a class="nav" href="#build"><span class="n">10</span>Build your first server</a>
+  <a class="nav" href="#client"><span class="n">11</span>Write a client + test</a>
+  <a class="nav" href="#live"><span class="n">12</span>Real live MCP servers</a>
+  <div class="lvl">Level 4 · Hero</div>
+  <a class="nav" href="#langgraph"><span class="n">13</span>LangGraph agent + MCP</a>
+  <a class="nav" href="#security"><span class="n">14</span>Security & best practice</a>
+  <a class="nav" href="#recap"><span class="n">15</span>Cheat sheet & glossary</a>
+  <a class="nav" href="#quiz"><span class="n">16</span>Final boss quiz</a>
+</aside>
+
+<main>
+<!-- ================= HERO ================= -->
+<section id="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="inner">
+    <div class="kicker" style="justify-content:center"><span class="pill">Model Context Protocol</span></div>
+    <h1>MCP<br><span class="g">Zero to Hero</span></h1>
+    <p>A motion-graphics tour of the protocol that lets any AI app plug into any tool or data source. We start with what problem it solves and end with a LangGraph agent that pulls live data from real MCP servers.</p>
+    <div class="btns" style="justify-content:center">
+      <a href="#why" class="btn primary" style="text-decoration:none">▶ Start the journey</a>
+      <a href="#langgraph" class="btn" style="text-decoration:none">Jump to the agent</a>
+    </div>
+    <div class="chips">
+      <span class="chip">🎬 14 interactive animations</span><span class="chip">🧩 16 chapters</span><span class="chip">🐍 runnable Python code</span><span class="chip">🌐 real live servers</span><span class="chip">🏆 final quiz</span>
+    </div>
+    <div class="roadmap" id="roadmap">
+      <div class="stop"><div class="dot">🌱</div><div class="t">Zero</div><div class="s">Why MCP exists</div></div>
+      <div class="stop"><div class="dot">🧭</div><div class="t">Beginner</div><div class="s">Core concepts</div></div>
+      <div class="stop"><div class="dot">⚙️</div><div class="t">Intermediate</div><div class="s">The wire protocol</div></div>
+      <div class="stop"><div class="dot">🛠️</div><div class="t">Builder</div><div class="s">Servers & clients</div></div>
+      <div class="stop"><div class="dot">🦸</div><div class="t">Hero</div><div class="s">LangGraph agent</div></div>
+    </div>
+  </div>
+  <div class="scrollhint">SCROLL ↓</div>
+</section>
+
+<!-- ================= 01 WHY ================= -->
+<section id="why"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">01</span> Level 0 · The problem</div>
+  <h2 class="reveal">The <span class="g">N × M</span> integration nightmare</h2>
+  <p class="lead reveal">An LLM by itself only knows what was in its training data. It can't read your files, query your database or check today's weather. To do those things it needs <b>tools</b> and <b>context</b>. Before MCP, every AI app had to write its own custom connector for every tool.</p>
+  <div class="nm reveal">
+    <svg id="nmSvg" viewBox="0 0 700 420"></svg>
+    <div class="card">
+      <div class="btns"><button class="btn on" id="nmWithout">❌ Without MCP</button><button class="btn" id="nmWith">✅ With MCP</button></div>
+      <h3 style="margin-top:18px">AI apps: <span id="nVal">4</span></h3>
+      <input type="range" id="nRange" min="2" max="7" value="4">
+      <h3>Tools / data sources: <span id="mVal">5</span></h3>
+      <input type="range" id="mRange" min="2" max="8" value="5">
+      <div style="margin-top:20px;color:var(--muted);font-size:14px">Custom integrations to build and maintain</div>
+      <div class="counter bad" id="nmCount">20</div>
+      <div id="nmFormula" style="font-family:var(--mono);color:var(--muted)">N × M = 4 × 5</div>
+    </div>
+  </div>
+  <div class="note tip reveal"><b>The MCP idea:</b> each AI app implements the protocol <b>once</b> (as a client) and each tool implements it <b>once</b> (as a server). After that, any app works with any tool. N × M integrations become N + M.</div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 02 ANALOGY ================= -->
+<section id="analogy"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">02</span> Level 0 · Mental model</div>
+  <h2 class="reveal">MCP is the <span class="g">USB-C port</span> for AI</h2>
+  <p class="lead reveal">Before USB, every printer, mouse and camera had its own cable. USB set one standard, so any device works with any computer. MCP does the same for AI: one standard connector between AI applications and the outside world.</p>
+  <div class="card reveal">
+    <div class="usb">
+      <div class="dev">🤖<small>Claude</small></div><div class="dev">💬<small>ChatGPT</small></div><div class="dev">🦙<small>Your agent</small></div>
+      <div class="cable"></div><div class="hub">MCP</div><div class="cable"></div>
+      <div class="dev">📁<small>Files</small></div><div class="dev">🐙<small>GitHub</small></div><div class="dev">🗄️<small>Postgres</small></div><div class="dev">🌦️<small>Weather</small></div>
+    </div>
+  </div>
+  <div class="grid g3" style="margin-top:20px">
+    <div class="card reveal d1"><div style="font-size:30px">📜</div><h3 style="margin-top:6px">Open standard</h3><p style="color:var(--muted);margin:0">Anthropic released MCP in November 2024. It is now an open specification used by Claude, ChatGPT, VS Code, Cursor, Gemini and many others, with SDKs in Python, TypeScript, Java, C#, Kotlin, Go, Rust, Swift, Ruby and PHP.</p></div>
+    <div class="card reveal d2"><div style="font-size:30px">🔁</div><h3 style="margin-top:6px">Write once, use anywhere</h3><p style="color:var(--muted);margin:0">Build a GitHub MCP server once, and every MCP-compatible app can use it. You don't need a Claude version, a Cursor version and a LangGraph version.</p></div>
+    <div class="card reveal d3"><div style="font-size:30px">🧠</div><h3 style="margin-top:6px">Context, not just tools</h3><p style="color:var(--muted);margin:0">It is called a <i>context</i> protocol because it carries more than function calls: documents (resources), prompt templates, and even requests from the server back to the model.</p></div>
+  </div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 03 COMPARE ================= -->
+<section id="compare"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">03</span> Level 0 · Clearing confusion</div>
+  <h2 class="reveal">MCP vs <span class="g">what you already know</span></h2>
+  <p class="lead reveal">Beginners often ask: "Isn't this just function calling? Or a REST API?" It works alongside both. This table shows where each one fits.</p>
+  <div class="tablewrap reveal"><table>
+    <tr><th></th><th>REST API</th><th>LLM function calling</th><th>MCP</th></tr>
+    <tr><td><b>What it is</b></td><td>A way for programs to talk over HTTP</td><td>The model's ability to output "call tool X with args Y"</td><td>A standard for <i>discovering</i> and <i>running</i> tools/data across any app</td></tr>
+    <tr><td><b>Who defines the tools?</b></td><td>Each service, its own way</td><td>You hard-code them in your app</td><td>The server advertises them; clients discover them at runtime (<code>tools/list</code>)</td></tr>
+    <tr><td><b>Reusable across AI apps?</b></td><td>Needs glue code per app</td><td>No, it's tied to your code</td><td>Yes, any MCP host can plug in</td></tr>
+    <tr><td><b>Carries context/data?</b></td><td>Raw responses</td><td>Only tool results</td><td>Tools + Resources + Prompts + Sampling + Elicitation</td></tr>
+    <tr><td><b>Relationship</b></td><td colspan="3" style="color:var(--muted)">MCP <b>uses</b> function calling (the LLM still decides to call a tool) and MCP servers often <b>wrap</b> REST APIs. MCP is the standard layer between them.</td></tr>
+  </table></div>
+  <div class="note reveal"><b>Key insight:</b> the LLM never talks to the MCP server directly. The model only produces text and tool-call requests. Your <b>host application</b> runs the MCP client that actually sends messages to servers.</div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 04 ARCH ================= -->
+<section id="arch"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">04</span> Level 1 · Architecture</div>
+  <h2 class="reveal">Host · Client · <span class="g">Server</span></h2>
+  <p class="lead reveal">MCP has three roles. <b>Click any box</b> in the diagram to learn what it does. The moving dots are live messages: <span style="color:var(--cyan)">cyan = requests</span>, <span style="color:var(--violet)">violet = responses</span>.</p>
+  <div class="arch reveal">
+    <svg id="archSvg" viewBox="0 0 900 470">
+      <defs>
+        <linearGradient id="hostG" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".12"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".06"/></linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <g class="hit" data-k="host"><rect x="16" y="16" width="400" height="438" rx="18" fill="url(#hostG)" stroke="#22d3ee" stroke-dasharray="6 6"/>
+      <text x="36" y="46" fill="#22d3ee" font-family="JetBrains Mono" font-size="13" font-weight="700">HOST APPLICATION</text>
+      <text x="36" y="64" fill="#97a3c4" font-size="12">Claude Desktop · VS Code · your LangGraph app</text></g>
+      <g class="hit" data-k="llm"><rect x="46" y="86" width="340" height="70" rx="14" fill="#141e37" stroke="#fbbf24"/>
+      <text x="216" y="118" text-anchor="middle" fill="#fff" font-weight="700" font-size="17">🧠 LLM</text>
+      <text x="216" y="140" text-anchor="middle" fill="#97a3c4" font-size="12">decides WHICH tool to call</text></g>
+      <g id="clients"></g>
+      <g id="servers"></g>
+      <g id="wires"></g>
+      <text x="488" y="38" fill="#a78bfa" font-family="JetBrains Mono" font-size="13" font-weight="700">MCP SERVERS</text>
+      <text x="720" y="38" fill="#34d399" font-family="JetBrains Mono" font-size="13" font-weight="700">REAL WORLD</text>
+    </svg>
+    <div class="card" id="archInfo"></div>
+  </div>
+  <div class="grid g3" style="margin-top:20px">
+    <div class="card reveal d1"><span class="tag">RULE 1</span><p style="margin:8px 0 0">One host can hold <b>many clients</b>.</p></div>
+    <div class="card reveal d2"><span class="tag">RULE 2</span><p style="margin:8px 0 0">Each client keeps a <b>1:1 connection</b> with exactly one server.</p></div>
+    <div class="card reveal d3"><span class="tag">RULE 3</span><p style="margin:8px 0 0">Servers are <b>isolated</b>. They can't see the full conversation or each other. The host controls what they get.</p></div>
+  </div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 05 PRIMITIVES ================= -->
+<section id="prims"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">05</span> Level 1 · What travels over MCP</div>
+  <h2 class="reveal">The <span class="g">6 primitives</span></h2>
+  <p class="lead reveal">Everything in MCP is one of six building blocks. Three are offered <b>by servers</b> and three are offered <b>by clients</b>. The most important question for each one is <b>who controls it</b>. <i>Click a card to flip it and see the real message.</i></p>
+  <div class="tabs reveal"><button class="btn on" data-pt="server">⚙️ Server gives</button><button class="btn" data-pt="client">🖥️ Client gives</button></div>
+  <div class="grid g3" id="primGrid"></div>
+  <div class="tablewrap reveal" style="margin-top:24px"><table>
+    <tr><th>Primitive</th><th>Controlled by</th><th>Kitchen analogy 🍳</th></tr>
+    <tr><td>🔧 Tools</td><td><span style="color:var(--amber)">Model</span> decides when</td><td>Kitchen appliances the chef chooses to use (oven, blender)</td></tr>
+    <tr><td>📄 Resources</td><td><span style="color:var(--cyan)">Application</span> decides what to attach</td><td>Ingredients in the pantry, read-only</td></tr>
+    <tr><td>📝 Prompts</td><td><span style="color:var(--pink)">User</span> picks them</td><td>Recipe cards the customer chooses from a menu</td></tr>
+    <tr><td>🧪 Sampling</td><td>Server asks, client's LLM answers</td><td>The supplier asks the chef for a quick taste opinion</td></tr>
+    <tr><td>📂 Roots</td><td>Client sets boundaries</td><td>"You may only work in this part of the kitchen"</td></tr>
+    <tr><td>🙋 Elicitation</td><td>Server asks the user</td><td>The waiter asks the customer "spicy or mild?"</td></tr>
+  </table></div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 06 JSON-RPC ================= -->
+<section id="rpc"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">06</span> Level 2 · The wire format</div>
+  <h2 class="reveal">Every message is <span class="g">JSON-RPC 2.0</span></h2>
+  <p class="lead reveal">Under the hood, MCP messages are small JSON objects that follow the JSON-RPC 2.0 standard. There are exactly three kinds:</p>
+  <div class="grid g3">
+    <div class="card msgtype reveal d1"><span class="tag" style="color:var(--cyan)">REQUEST</span><h3 style="margin:8px 0 0">"Please do X"</h3>
+      <div class="lane"><span class="a">CLIENT</span><span class="b">SERVER</span><div class="p mv-r" style="background:var(--cyan);box-shadow:0 0 12px var(--cyan)"></div></div>
+      <p style="color:var(--muted);font-size:14px;margin:0">Has an <code>id</code> and a <code>method</code>. The sender <b>expects</b> a reply.</p></div>
+    <div class="card msgtype reveal d2"><span class="tag" style="color:var(--violet)">RESPONSE</span><h3 style="margin:8px 0 0">"Here's the result"</h3>
+      <div class="lane"><span class="a">CLIENT</span><span class="b">SERVER</span><div class="p mv-l" style="background:var(--violet);box-shadow:0 0 12px var(--violet)"></div></div>
+      <p style="color:var(--muted);font-size:14px;margin:0">Same <code>id</code> as the request, plus either <code>result</code> or <code>error</code>.</p></div>
+    <div class="card msgtype reveal d3"><span class="tag" style="color:var(--amber)">NOTIFICATION</span><h3 style="margin:8px 0 0">"FYI, no reply needed"</h3>
+      <div class="lane"><span class="a">CLIENT</span><span class="b">SERVER</span><div class="p mv-rl" style="background:var(--amber);box-shadow:0 0 12px var(--amber)"></div></div>
+      <p style="color:var(--muted);font-size:14px;margin:0">Has <b>no</b> <code>id</code>. Fire and forget. Either side can send one.</p></div>
+  </div>
+  <h3 class="reveal">🔬 Anatomy of a request: click each part</h3>
+  <div class="grid g2 reveal" style="align-items:start">
+    <div class="anat" id="anat"></div>
+    <div class="card" id="anatInfo"><b>👈 Click a highlighted part</b><p style="color:var(--muted);margin:6px 0 0">Each field has a job. Click them one by one.</p></div>
+  </div>
+  <h3 class="reveal">Error response</h3>
+  <div class="grid g2 reveal">
+    <div class="code"><div class="bar"><i style="background:#f87171"></i><span class="title">protocol error (bad method)</span></div><pre class="json" style="padding:14px" data-json='{"jsonrpc":"2.0","id":7,"error":{"code":-32601,"message":"Method not found: tools/cal"}}'></pre></div>
+    <div class="code"><div class="bar"><i style="background:#fbbf24"></i><span class="title">tool error (tool ran, but failed)</span></div><pre class="json" style="padding:14px" data-json='{"jsonrpc":"2.0","id":8,"result":{"content":[{"type":"text","text":"City \"Atlantis\" not found"}],"isError":true}}'></pre></div>
+  </div>
+  <div class="note tip reveal"><b>Why two kinds of errors?</b> A protocol <code>error</code> means the request itself was broken. <code>isError:true</code> means the tool ran but failed. The LLM <i>sees</i> tool errors, so it can fix its mistake and try again.</div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 07 LIFECYCLE ================= -->
+<section id="life"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">07</span> Level 2 · Lifecycle</div>
+  <h2 class="reveal">How a connection <span class="g">lives and dies</span></h2>
+  <p class="lead reveal">Every MCP session goes through the same phases: <b>Initialize</b> (a handshake where both sides agree on a protocol version and capabilities) → <b>Operate</b> (list and call things) → <b>Shutdown</b>. Press <b>Play</b> or step through each message one at a time.</p>
+  <div class="btns reveal" style="margin-bottom:14px"><button class="btn primary" id="lfPlay">▶ Play</button><button class="btn" id="lfPrev">◀ Prev</button><button class="btn" id="lfNext">Next ▶</button><button class="btn" id="lfReset">↺ Reset</button><span id="lfStep" class="tag">step 0 / 9</span></div>
+  <div class="life reveal">
+    <svg id="lifeSvg" viewBox="0 0 640 520"></svg>
+    <div class="card" id="lifeJson"><b>Press Play to begin ▶</b><p style="color:var(--muted)">You'll see the exact JSON that goes over the wire at each step.</p></div>
+  </div>
+  <div class="note reveal"><b>Capability negotiation</b> is the clever part. During <code>initialize</code> the client says "I support sampling and roots," and the server says "I offer tools, resources and prompts." From then on, neither side uses a feature the other didn't announce.</div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 08 TRANSPORT ================= -->
+<section id="transport"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">08</span> Level 2 · Transports</div>
+  <h2 class="reveal">How bytes actually <span class="g">travel</span></h2>
+  <p class="lead reveal">The JSON messages stay the same. The <b>transport</b> is just the pipe they travel through. MCP defines two standard transports:</p>
+  <div class="grid g2">
+    <div class="card reveal d1">
+      <span class="tag" style="color:var(--green)">LOCAL</span><h3 style="margin:8px 0 4px">📟 stdio</h3>
+      <p style="color:var(--muted);margin:0;font-size:14.5px">The host <b>launches the server as a child process</b>. Messages go through stdin and stdout, one JSON object per line.</p>
+      <svg class="tsvg" viewBox="0 0 420 200">
+        <rect x="14" y="40" width="130" height="120" rx="14" fill="#141e37" stroke="#22d3ee"/><text x="79" y="95" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">Host</text><text x="79" y="115" text-anchor="middle" fill="#97a3c4" font-size="11">parent process</text>
+        <rect x="276" y="40" width="130" height="120" rx="14" fill="#141e37" stroke="#a78bfa"/><text x="341" y="95" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">Server</text><text x="341" y="115" text-anchor="middle" fill="#97a3c4" font-size="11">child process</text>
+        <path id="tp1" d="M144 70 H276" stroke="#22d3ee" stroke-width="2"/><text x="210" y="62" text-anchor="middle" fill="#22d3ee" font-family="JetBrains Mono" font-size="11">stdin →</text>
+        <path id="tp2" d="M276 112 H144" stroke="#a78bfa" stroke-width="2"/><text x="210" y="104" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="11">← stdout</text>
+        <path d="M341 160 V188" stroke="#f87171" stroke-dasharray="3 3"/><text x="350" y="188" fill="#f87171" font-family="JetBrains Mono" font-size="10">stderr = logs only</text>
+        <circle r="5" fill="#22d3ee"><animateMotion dur="1.6s" repeatCount="indefinite"><mpath href="#tp1"/></animateMotion></circle>
+        <circle r="5" fill="#a78bfa"><animateMotion dur="1.6s" begin=".8s" repeatCount="indefinite"><mpath href="#tp2"/></animateMotion></circle>
+      </svg>
+      <ul style="color:var(--muted);font-size:14px;padding-left:18px;margin:0"><li>Fast and simple, no network</li><li>Best for local tools: files, git, scripts</li><li>⚠️ Never <code>print()</code> to stdout in a stdio server. It corrupts the JSON stream. Log to stderr instead.</li></ul>
+    </div>
+    <div class="card reveal d2">
+      <span class="tag" style="color:var(--violet)">REMOTE</span><h3 style="margin:8px 0 4px">🌐 Streamable HTTP</h3>
+      <p style="color:var(--muted);margin:0;font-size:14.5px">The server is a <b>web service</b> with one endpoint (for example <code>/mcp</code>). The client POSTs JSON. The server replies with JSON or streams events back (SSE).</p>
+      <svg class="tsvg" viewBox="0 0 420 200">
+        <rect x="14" y="40" width="130" height="120" rx="14" fill="#141e37" stroke="#22d3ee"/><text x="79" y="95" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">Client</text><text x="79" y="115" text-anchor="middle" fill="#97a3c4" font-size="11">anywhere</text>
+        <rect x="276" y="40" width="130" height="120" rx="14" fill="#141e37" stroke="#a78bfa"/><text x="341" y="92" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">Server</text><text x="341" y="112" text-anchor="middle" fill="#97a3c4" font-family="JetBrains Mono" font-size="11">https://…/mcp</text>
+        <path id="tp3" d="M144 66 H276" stroke="#22d3ee" stroke-width="2"/><text x="210" y="58" text-anchor="middle" fill="#22d3ee" font-family="JetBrains Mono" font-size="11">POST /mcp</text>
+        <path id="tp4" d="M276 118 H144" stroke="#a78bfa" stroke-width="2" stroke-dasharray="4 4"/><text x="210" y="140" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="11">← SSE event stream</text>
+        <circle r="5" fill="#22d3ee"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#tp3"/></animateMotion></circle>
+        <circle r="4" fill="#a78bfa"><animateMotion dur="1.2s" begin=".4s" repeatCount="indefinite"><mpath href="#tp4"/></animateMotion></circle>
+        <circle r="4" fill="#a78bfa"><animateMotion dur="1.2s" begin=".8s" repeatCount="indefinite"><mpath href="#tp4"/></animateMotion></circle>
+        <text x="210" y="186" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="10">header: Mcp-Session-Id · Authorization: Bearer …</text>
+      </svg>
+      <ul style="color:var(--muted);font-size:14px;padding-left:18px;margin:0"><li>Many users, deployed in the cloud</li><li>Supports OAuth 2.1 authorization</li><li>Replaced the older "HTTP + SSE" transport in spec 2025-03-26</li></ul>
+    </div>
+  </div>
+  <div class="tablewrap reveal" style="margin-top:20px"><table>
+    <tr><th></th><th>stdio</th><th>Streamable HTTP</th></tr>
+    <tr><td>Where server runs</td><td>Same machine, as a subprocess</td><td>Anywhere on the network</td></tr>
+    <tr><td>Who starts it</td><td>The host, automatically</td><td>You deploy it (it's always running)</td></tr>
+    <tr><td>Clients per server</td><td>One</td><td>Many</td></tr>
+    <tr><td>Auth</td><td>Environment variables (e.g. API keys)</td><td>OAuth 2.1 / bearer tokens</td></tr>
+    <tr><td>Config in LangGraph</td><td><code>"transport": "stdio"</code> + <code>command</code>/<code>args</code></td><td><code>"transport": "streamable_http"</code> + <code>url</code></td></tr>
+  </table></div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 09 FLOW ================= -->
+<section id="flow"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">09</span> Level 2 · Put it all together</div>
+  <h2 class="reveal">One question, <span class="g">end to end</span></h2>
+  <p class="lead reveal">This is the most important animation in the tutorial. Pick a question and watch every hop, from the user's words to the API and back. Notice the LLM <b>never</b> talks to the server directly.</p>
+  <div class="btns reveal" style="margin-bottom:14px">
+    <button class="btn on" data-sc="weather">🌦️ "Weather in Paris?"</button>
+    <button class="btn" data-sc="math">🧮 "What is 23 × 19?"</button>
+    <button class="btn" data-sc="github">🐙 "Summarise langgraph repo"</button>
+    <button class="btn primary" id="flowPlay">▶ Play</button>
+    <label style="font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center"><input type="checkbox" id="flowSlow"> slow mode</label>
+  </div>
+  <div id="stage" class="reveal">
+    <div class="lifelines"><div></div><div></div><div></div><div></div><div></div><div></div></div>
+    <div class="actors" id="actors"></div>
+    <div id="envelope"><div class="e">msg</div></div>
+    <div id="bubble" class="card" style="background:#0b1226cc"><b>Press ▶ Play</b><div style="color:var(--muted);font-size:14px">Each step explains what is happening and why.</div></div>
+  </div>
+  <div id="flowLog" class="reveal"></div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 10 BUILD ================= -->
+<section id="build"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">10</span> Level 3 · Hands on</div>
+  <h2 class="reveal">Build your <span class="g">first MCP server</span></h2>
+  <p class="lead reveal">We'll use <b>FastMCP</b>, the high-level API in the official Python SDK. A regular Python function plus a decorator becomes an MCP tool. The type hints become the JSON schema and the docstring becomes the description the LLM reads.</p>
+  <h3 class="reveal">Step 1: install</h3>
+  <div class="code reveal" data-src="c-install" data-lang="bash" data-title="terminal"></div>
+  <h3 class="reveal">Step 2: write the server. <span style="color:var(--muted);font-weight:500;font-size:16px">Hover the notes on the right to highlight lines.</span></h3>
+  <div class="codegrid reveal">
+    <div class="code" id="mathCode" data-src="c-math" data-lang="python" data-title="servers/math_server.py"></div>
+    <div class="annot" data-for="mathCode">
+      <div class="a" data-lines="7"><div class="lns">LINE 7</div><b>FastMCP("Math")</b> creates the server. The name appears in <code>serverInfo</code> during the handshake.</div>
+      <div class="a" data-lines="10-13"><div class="lns">LINES 10–13</div><b>@mcp.tool()</b> registers a tool. <code>a: float, b: float</code> becomes <code>inputSchema</code>. The docstring is what the <b>LLM reads</b> to decide when to call it, so write it clearly.</div>
+      <div class="a" data-lines="25-29"><div class="lns">LINES 25–29</div><b>@mcp.resource("math://constants")</b> is read-only data with a URI. The <i>app</i> chooses to load it, like opening a file.</div>
+      <div class="a" data-lines="32-35"><div class="lns">LINES 32–35</div><b>@mcp.prompt()</b> is a reusable template. In Claude Desktop it shows up as a slash-command the <i>user</i> picks.</div>
+      <div class="a" data-lines="38-40"><div class="lns">LINES 38–40</div><b>mcp.run(transport="stdio")</b> starts listening on stdin/stdout. That one line is all the protocol code you need.</div>
+    </div>
+  </div>
+  <h3 class="reveal">Step 3: test it with the MCP Inspector</h3>
+  <div class="code reveal" data-src="c-inspect" data-lang="bash" data-title="terminal"></div>
+  <p class="reveal" style="color:var(--muted)">The Inspector opens a web UI (default <code>http://localhost:6274</code>). Click <b>Connect</b>, then the <b>Tools</b> tab, then <b>List Tools</b>, then <code>multiply</code>, enter 6 and 7, and click <b>Run</b>. You just spoke raw MCP. 🎉</p>
+  <h3 class="reveal">Step 4: plug it into a host (Claude Desktop, Cursor, VS Code…)</h3>
+  <div class="code reveal" data-src="c-desktop" data-lang="json" data-title="claude_desktop_config.json"></div>
+  <div class="note tip reveal"><b>That's the magic:</b> no change to the server code. The same file works in Claude Desktop, Cursor, VS Code and your own LangGraph agent, because they all speak MCP.</div>
+  <h3 class="reveal">Bonus: a remote HTTP server</h3>
+  <p class="reveal" style="color:var(--muted)">Change one line (<code>transport="streamable-http"</code>) and the same kind of server becomes a web service at <code>http://127.0.0.1:8000/mcp</code>.</p>
+  <div class="code reveal" data-src="c-notes" data-lang="python" data-title="servers/notes_server.py"></div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 11 CLIENT ================= -->
+<section id="client"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">11</span> Level 3 · The other side</div>
+  <h2 class="reveal">Write a <span class="g">raw MCP client</span> (no LLM yet)</h2>
+  <p class="lead reveal">Before adding AI, see what a client does on its own: <b>connect → initialize → list → call</b>. This is what LangGraph's adapter does for you behind the scenes.</p>
+  <div class="codegrid reveal">
+    <div class="code" id="rawCode" data-src="c-raw" data-lang="python" data-title="raw_client.py"></div>
+    <div class="annot" data-for="rawCode">
+      <div class="a" data-lines="11"><div class="lns">LINE 11</div><b>StdioServerParameters</b> tells the client <i>how to launch</i> the server: which command and arguments to run.</div>
+      <div class="a" data-lines="15-16"><div class="lns">LINES 15–16</div><b>stdio_client</b> spawns the process and gives you read/write streams. <b>ClientSession</b> handles JSON-RPC ids and matches responses to requests.</div>
+      <div class="a" data-lines="17-18"><div class="lns">LINES 17–18</div><b>initialize()</b> is the handshake from chapter 07: protocol version plus capabilities.</div>
+      <div class="a" data-lines="20-22"><div class="lns">LINES 20–22</div><b>list_tools()</b> is discovery. Your code didn't know these tools existed until now.</div>
+      <div class="a" data-lines="24-25"><div class="lns">LINES 24–25</div><b>call_tool()</b> sends <code>tools/call</code>. In an agent, the <i>LLM</i> picks the name and arguments instead of you.</div>
+      <div class="a" data-lines="27-32"><div class="lns">LINES 27–32</div>Resources and prompts use the same pattern: <code>read_resource</code>, <code>get_prompt</code>.</div>
+    </div>
+  </div>
+  <div class="term reveal"><div class="bar"><i style="width:10px;height:10px;border-radius:50%;background:#34d399;display:inline-block"></i> python raw_client.py</div><pre id="rawTerm"></pre></div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 12 LIVE ================= -->
+<section id="live"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">12</span> Level 3 · Real world</div>
+  <h2 class="reveal">Connect to <span class="g">real, live MCP servers</span></h2>
+  <p class="lead reveal">You don't have to build everything yourself. Thousands of MCP servers already exist. These are the ones our final agent uses for <b>real-time data</b>. None of them need an API key.</p>
+  <div class="grid g2">
+    <div class="card srv reveal d1"><span class="live">LIVE</span><div style="font-size:32px">🌐</div><h4>Fetch (official)</h4><span class="tag">stdio · pip install mcp-server-fetch</span>
+      <p style="color:var(--muted);font-size:14.5px;margin:10px 0 0">Fetches <b>any web page right now</b> and returns it as clean markdown that the LLM can read:</p>
+      <ul><li>📖 Docs and blog pages</li><li>🌍 Wikipedia articles</li><li>📰 News pages. It respects each site's robots.txt.</li></ul></div>
+    <div class="card srv reveal d2"><span class="live">LIVE</span><div style="font-size:32px">⏰</div><h4>Time (official)</h4><span class="tag">stdio · pip install mcp-server-time</span>
+      <p style="color:var(--muted);font-size:14.5px;margin:10px 0 0">LLMs don't know what time it is. This server returns the <b>current time</b> in any IANA time zone and converts between zones.</p>
+      <ul><li><code>get_current_time(timezone)</code></li><li><code>convert_time(source_timezone, time, target_timezone)</code></li></ul></div>
+    <div class="card srv reveal d3"><span class="live">LIVE · REMOTE</span><div style="font-size:32px">📚</div><h4>DeepWiki (public remote)</h4><span class="tag">streamable_http · https://mcp.deepwiki.com/mcp</span>
+      <p style="color:var(--muted);font-size:14.5px;margin:10px 0 0">A hosted MCP server you connect to with a <b>URL only</b>, with nothing to install. It answers questions about any public GitHub repository.</p>
+      <ul><li><code>read_wiki_structure(repoName)</code></li><li><code>ask_wiki_question(repoName, question)</code></li></ul></div>
+    <div class="card srv reveal d4"><span class="live">LIVE · YOURS</span><div style="font-size:32px">🌦️🧮📝</div><h4>Weather + Math + Notes (ours)</h4><span class="tag">servers/weather_server.py · math · notes</span>
+      <p style="color:var(--muted);font-size:14.5px;margin:10px 0 0"><b>weather_server.py</b> wraps the free <b>Open-Meteo REST API</b> (no key) as MCP tools <code>get_current_weather(city)</code> and <code>get_forecast(city, days)</code>. This is the most common real-world pattern: <i>existing REST API → MCP server → any AI app</i>. The agent mixes these with the public servers in one tool list.</p></div>
+  </div>
+  <h3 class="reveal">More real servers worth knowing</h3>
+  <div class="tablewrap reveal"><table>
+    <tr><th>Server</th><th>What you get</th><th>Launch</th></tr>
+    <tr><td>📁 Filesystem (official)</td><td>Read/write/search files in folders you allow</td><td><code>npx -y @modelcontextprotocol/server-filesystem C:/path</code></td></tr>
+    <tr><td>🧠 Memory (official)</td><td>Knowledge-graph long-term memory</td><td><code>npx -y @modelcontextprotocol/server-memory</code></td></tr>
+    <tr><td>🐙 GitHub</td><td>Issues, PRs, code search (needs token)</td><td>Remote: <code>https://api.githubcopilot.com/mcp/</code></td></tr>
+    <tr><td>🎭 Playwright</td><td>Drive a real browser</td><td><code>npx @playwright/mcp@latest</code></td></tr>
+    <tr><td>🗄️ Postgres / SQLite</td><td>Query databases</td><td>Many community servers</td></tr>
+    <tr><td>🔎 Find more</td><td colspan="2">The official registry at <code>registry.modelcontextprotocol.io</code> and the <code>modelcontextprotocol/servers</code> GitHub repo</td></tr>
+  </table></div>
+  <div class="note warn reveal"><b>Trust warning:</b> an MCP server runs code on your machine or sees your data. Install servers only from sources you trust, the same way you would with any program. Chapter 14 explains why.</div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 13 LANGGRAPH ================= -->
+<section id="langgraph"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">13</span> Level 4 · Hero</div>
+  <h2 class="reveal">A <span class="g">LangGraph agent</span> powered by MCP</h2>
+  <p class="lead reveal">Now everything connects. The <code>langchain-mcp-adapters</code> package acts as the MCP client. It connects to every server, runs <code>tools/list</code>, and converts each MCP tool into a LangChain tool. LangGraph then runs the classic <b>ReAct loop</b>: the LLM thinks, calls tools, reads the results, and repeats until it can answer.</p>
+  <div class="grid g2 reveal" style="align-items:start">
+    <div>
+      <svg id="lgSvg" viewBox="0 0 520 430"></svg>
+      <div class="btns" style="margin-top:12px"><button class="btn primary" id="lgPlay">▶ Run the graph</button><span class="tag" id="lgState">idle</span></div>
+    </div>
+    <div class="card" id="lgInfo" style="min-height:300px">
+      <b>How the graph works</b>
+      <ol style="color:var(--muted);font-size:14.5px;padding-left:20px">
+        <li><b style="color:#fff">START → agent</b>: the LLM receives the conversation and the list of tools (from MCP).</li>
+        <li><b style="color:#fff">agent → tools?</b>: if the LLM's reply contains <code>tool_calls</code>, the conditional edge (<code>tools_condition</code>) routes to the tools node.</li>
+        <li><b style="color:#fff">tools</b>: the <code>ToolNode</code> runs each call. Each tool is an MCP <code>tools/call</code> to the right server.</li>
+        <li><b style="color:#fff">tools → agent</b>: the results go back to the LLM, and the loop repeats.</li>
+        <li><b style="color:#fff">agent → END</b>: when there are no tool calls, the answer is final.</li>
+      </ol>
+    </div>
+  </div>
+  <h3 class="reveal">The adapter: MCP tool → LangChain tool</h3>
+  <div class="grid g3 reveal" style="align-items:stretch">
+    <div class="code" style="margin:0"><div class="bar"><span class="title">MCP server says (tools/list)</span></div><pre class="json" style="padding:14px" data-json='{"name":"multiply","description":"Multiply two numbers and return the product.","inputSchema":{"type":"object","properties":{"a":{"type":"number"},"b":{"type":"number"}},"required":["a","b"]}}'></pre></div>
+    <div class="card" style="display:grid;place-items:center;text-align:center"><div><div style="font-size:42px">🔄</div><b>langchain-mcp-adapters</b><p style="color:var(--muted);font-size:14px">wraps each MCP tool in a <code>StructuredTool</code> whose code sends <code>session.call_tool()</code></p></div></div>
+    <div class="code" style="margin:0"><div class="bar"><span class="title">LangGraph sees</span></div><pre class="json" style="padding:14px" data-json='{"type":"StructuredTool","name":"multiply","description":"Multiply two numbers and return the product.","args_schema":{"a":"number","b":"number"},"coroutine":"-> MCP tools/call on server math"}'></pre></div>
+  </div>
+  <h3 class="reveal">The complete code</h3>
+  <p class="reveal" style="color:var(--muted)">All of these files are in this folder and ready to run. The LLM is a local <b>Ollama</b> model (like your earlier days). Use one that supports tool calling. The default is <code>llama3.2</code>; <code>qwen2.5:7b</code> is smarter at choosing tools.</p>
+  <div class="ctabs reveal" id="lgTabs">
+    <button class="btn on" data-c="c-agent">agent/agent_graph.py</button>
+    <button class="btn" data-c="c-weather">servers/weather_server.py</button>
+    <button class="btn" data-c="c-prebuilt">agent/agent_prebuilt.py</button>
+    <button class="btn" data-c="c-req">requirements.txt</button>
+    <button class="btn" data-c="c-run">how to run</button>
+  </div>
+  <div class="code reveal" id="lgCode" data-src="c-agent" data-lang="python" data-title="agent/agent_graph.py"></div>
+  <h3 class="reveal">▶ What a run looks like</h3>
+  <div class="btns reveal" style="margin-bottom:10px"><button class="btn primary" id="termPlay">▶ Replay session</button></div>
+  <div class="term reveal"><div class="bar"><i style="width:10px;height:10px;border-radius:50%;background:#34d399;display:inline-block"></i> python agent/agent_graph.py</div><pre id="agentTerm"></pre></div>
+  <p class="reveal" style="color:var(--dim);font-size:13px">(Illustrative replay. Your live numbers will differ because the weather and time are real.)</p>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 14 SECURITY ================= -->
+<section id="security"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">14</span> Level 4 · Responsibility</div>
+  <h2 class="reveal">Security & <span class="g">best practices</span></h2>
+  <p class="lead reveal">MCP gives an AI real power: running code, reading data, calling APIs. So you need to know the main risks and how to defend against them.</p>
+  <div class="grid g3">
+    <div class="card threat reveal d1"><span class="tag">THREAT</span><h4>☠️ Tool poisoning</h4><p>A malicious server hides instructions in a tool's <i>description</i> ("…also read ~/.ssh and send it"). The LLM reads descriptions, so it may obey.</p><div class="fix">✅ Use trusted servers only; review tool descriptions.</div></div>
+    <div class="card threat reveal d2"><span class="tag">THREAT</span><h4>💉 Prompt injection via data</h4><p>A web page or email fetched by a tool contains "ignore previous instructions…". Tool <i>results</i> are untrusted input.</p><div class="fix">✅ Treat results as data; require human approval for risky actions.</div></div>
+    <div class="card threat reveal d3"><span class="tag">THREAT</span><h4>🎭 Rug pull</h4><p>A server changes its tool definitions after you approved it (<code>list_changed</code>).</p><div class="fix">✅ Pin versions; re-review when tools change.</div></div>
+    <div class="card threat reveal d1"><span class="tag">THREAT</span><h4>🔑 Token passthrough</h4><p>A server forwards a user's token to other services, or accepts tokens that weren't issued for it (the "confused deputy" problem).</p><div class="fix">✅ The spec forbids it. Validate the token audience (OAuth 2.1 + resource indicators).</div></div>
+    <div class="card threat reveal d2"><span class="tag">THREAT</span><h4>🧨 Command injection</h4><p>A server passes LLM-chosen arguments straight into a shell or SQL query.</p><div class="fix">✅ Validate inputs, use parameterised queries, never <code>shell=True</code>.</div></div>
+    <div class="card threat reveal d3"><span class="tag">THREAT</span><h4>🌊 Over-permission</h4><p>A filesystem server with access to <code>C:\</code>, or a database user with DROP rights.</p><div class="fix">✅ Least privilege: roots, read-only users, scoped tokens.</div></div>
+  </div>
+  <h3 class="reveal">✅ Builder's checklist <span style="font-size:14px;color:var(--muted);font-weight:500">(tick as you go)</span></h3>
+  <div class="card check reveal">
+    <label><input type="checkbox"> Every tool has a clear, honest docstring. The LLM chooses tools by reading it.</label>
+    <label><input type="checkbox"> Tools do one thing each, with small typed arguments (not one giant "do_anything" tool).</label>
+    <label><input type="checkbox"> Return helpful errors with <code>isError</code> so the model can recover.</label>
+    <label><input type="checkbox"> stdio servers never print to stdout. Logs go to stderr.</label>
+    <label><input type="checkbox"> Secrets come from environment variables, never hard-coded.</label>
+    <label><input type="checkbox"> Destructive tools (delete, send, pay) require a human confirmation (elicitation or a LangGraph interrupt).</label>
+    <label><input type="checkbox"> Remote servers use HTTPS + OAuth 2.1 and validate <code>Origin</code> headers.</label>
+    <label><input type="checkbox"> Test every server in the MCP Inspector before giving it to an agent.</label>
+  </div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 15 RECAP ================= -->
+<section id="recap"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">15</span> Level 4 · Keep this page</div>
+  <h2 class="reveal">Cheat sheet & <span class="g">glossary</span></h2>
+  <div class="tablewrap reveal"><table>
+    <tr><th>Method</th><th>Direction</th><th>Purpose</th></tr>
+    <tr><td><code>initialize</code></td><td>client → server</td><td>Handshake: version + capabilities</td></tr>
+    <tr><td><code>notifications/initialized</code></td><td>client → server</td><td>"Handshake done, let's go"</td></tr>
+    <tr><td><code>tools/list</code> · <code>tools/call</code></td><td>client → server</td><td>Discover / run tools</td></tr>
+    <tr><td><code>resources/list</code> · <code>resources/read</code> · <code>resources/subscribe</code></td><td>client → server</td><td>Discover / read / watch data</td></tr>
+    <tr><td><code>prompts/list</code> · <code>prompts/get</code></td><td>client → server</td><td>Discover / fill templates</td></tr>
+    <tr><td><code>sampling/createMessage</code></td><td>server → client</td><td>Server borrows the host's LLM</td></tr>
+    <tr><td><code>elicitation/create</code></td><td>server → client</td><td>Server asks the user for input</td></tr>
+    <tr><td><code>roots/list</code></td><td>server → client</td><td>Which folders/URIs am I allowed?</td></tr>
+    <tr><td><code>notifications/tools/list_changed</code></td><td>server → client</td><td>"My tools changed, re-list"</td></tr>
+    <tr><td><code>ping</code></td><td>either</td><td>Are you alive?</td></tr>
+  </table></div>
+  <h3 class="reveal">Glossary</h3>
+  <div class="gl reveal">
+    <div><b>MCP</b>Model Context Protocol. An open standard linking AI apps to tools and data.</div>
+    <div><b>Host</b>The AI application the user interacts with. It holds the LLM and the clients.</div>
+    <div><b>Client</b>A connector inside the host, with one connection to one server.</div>
+    <div><b>Server</b>A program that exposes tools, resources and prompts.</div>
+    <div><b>Tool</b>A function the model can call. It can have side effects.</div>
+    <div><b>Resource</b>Read-only data identified by a URI.</div>
+    <div><b>Prompt</b>A reusable message template the user can choose.</div>
+    <div><b>Sampling</b>A server asking the client's LLM to generate text.</div>
+    <div><b>Elicitation</b>A server asking the user for structured input.</div>
+    <div><b>Roots</b>The boundaries (folders/URIs) a client lets a server work in.</div>
+    <div><b>JSON-RPC 2.0</b>The message format: request, response, notification.</div>
+    <div><b>stdio</b>Local transport through a child process's stdin/stdout.</div>
+    <div><b>Streamable HTTP</b>Remote transport: a POST to one endpoint, optionally streamed with SSE.</div>
+    <div><b>Capabilities</b>Features each side announces during initialize.</div>
+    <div><b>FastMCP</b>A high-level Python API for writing servers with decorators.</div>
+    <div><b>MCP Inspector</b>A visual testing tool (<code>mcp dev</code> / <code>npx @modelcontextprotocol/inspector</code>).</div>
+    <div><b>langchain-mcp-adapters</b>Turns MCP tools into LangChain/LangGraph tools.</div>
+    <div><b>ReAct</b>The Reason + Act loop: think → call tool → observe → repeat.</div>
+  </div>
+</div></section>
+<div class="sep"></div>
+
+<!-- ================= 16 QUIZ ================= -->
+<section id="quiz"><div class="wrap">
+  <div class="kicker reveal"><span class="pill">16</span> Final boss</div>
+  <h2 class="reveal">Prove you're an <span class="g">MCP hero</span></h2>
+  <p class="lead reveal">Ten questions. Each one explains the answer after you choose. Score 8 or more and you've earned the title. 🦸</p>
+  <div id="quizBox"></div>
+  <div class="card reveal" style="text-align:center"><div style="color:var(--muted)">Your score</div><div id="score">0 / 10</div><div id="verdict" style="color:var(--muted)">Answer all questions…</div></div>
+</div></section>
+
+<footer>
+  <div class="btns" style="justify-content:center;margin-bottom:18px">
+    <a class="btn" style="text-decoration:none" href="architecture.html">🏗️ Architecture diagrams</a>
+    <a class="btn" style="text-decoration:none" href="HOW_TO_USE.md">📘 How to run (HOW_TO_USE.md)</a>
+    <a class="btn" style="text-decoration:none" href="prompt.md">💬 Prompts (prompt.md)</a>
+    <a class="btn" style="text-decoration:none" href="prompt_nontechnical.md">🙂 Plain-language guide</a>
+  </div>
+  MCP Zero → Hero · Day 21 · Built with plain HTML, CSS & JS · Spec reference: modelcontextprotocol.io
+</footer>
+</main>
+
+<!-- ======================= CODE SOURCES ======================= -->
+<script type="text/plain" id="c-install">
+# create a virtual env (recommended)
+python -m venv .venv
+.venv\Scripts\activate          # Windows   (macOS/Linux: source .venv/bin/activate)
+
+# the official MCP Python SDK (+ CLI tools like the Inspector launcher)
+pip install "mcp[cli]"
+
+# for the LangGraph agent later
+pip install langgraph langchain-ollama langchain-mcp-adapters
+
+# real-world servers we will connect to
+pip install mcp-server-fetch mcp-server-time
+</script>
+<script type="text/plain" id="c-math">
+"""
+math_server.py  -  Your FIRST MCP server (stdio transport)
+Try it:  mcp dev servers/math_server.py     (opens the MCP Inspector)
+"""
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Math")              # the name clients will see
+
+
+@mcp.tool()
+def add(a: float, b: float) -> float:
+    """Add two numbers and return the sum."""
+    return a + b
+
+
+@mcp.tool()
+def multiply(a: float, b: float) -> float:
+    """Multiply two numbers and return the product."""
+    return a * b
+
+
+@mcp.tool()
+def power(base: float, exponent: float) -> float:
+    """Raise base to the power of exponent."""
+    return base ** exponent
+
+@mcp.resource("math://constants")
+def constants() -> str:
+    """Useful math constants (read-only data)."""
+    return "pi = 3.14159\ne = 2.71828\ngolden_ratio = 1.61803"
+
+
+@mcp.prompt()
+def explain_step_by_step(problem: str) -> str:
+    """Template: solve a math problem step by step."""
+    return f"Solve step by step. Use the math tools for EVERY calculation:\n{problem}"
+
+
+if __name__ == "__main__":
+    # stdio: talk JSON-RPC over stdin/stdout. NEVER print() in a stdio server!
+    mcp.run(transport="stdio")
+</script>
+<script type="text/plain" id="c-inspect">
+# opens the MCP Inspector in your browser, connected to your server
+mcp dev servers/math_server.py
+
+# (alternative, no Python CLI needed - requires Node.js)
+npx @modelcontextprotocol/inspector python servers/math_server.py
+</script>
+<script type="text/plain" id="c-desktop">
+{
+  "mcpServers": {
+    "math": {
+      "command": "python",
+      "args": ["D:/getwork/day_21_mcp/servers/math_server.py"]
+    },
+    "time": {
+      "command": "python",
+      "args": ["-m", "mcp_server_time"]
+    }
+  }
+}
+</script>
+<script type="text/plain" id="c-notes">
+"""
+notes_server.py  -  An MCP server over Streamable HTTP (a tiny web service)
+Run:  python servers/notes_server.py      ->  http://127.0.0.1:8000/mcp
+"""
+from datetime import datetime
+
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Notes", host="127.0.0.1", port=8000)
+NOTES: list[dict] = []          # in-memory "database"
+
+
+@mcp.tool()
+def add_note(title: str, body: str) -> str:
+    """Save a note with a title and a body. Returns a confirmation."""
+    note = {"id": len(NOTES) + 1, "title": title, "body": body,
+            "created": datetime.now().isoformat(timespec="seconds")}
+    NOTES.append(note)
+    return f"Saved note #{note['id']}: {title}"
+
+
+@mcp.tool()
+def list_notes() -> list[dict]:
+    """Return every saved note."""
+    return NOTES
+
+
+@mcp.tool()
+def search_notes(keyword: str) -> list[dict]:
+    """Find notes whose title or body contains the keyword (case-insensitive)."""
+    k = keyword.lower()
+    return [n for n in NOTES if k in n["title"].lower() or k in n["body"].lower()]
+
+
+@mcp.resource("notes://all")
+def all_notes() -> str:
+    """All notes as plain text."""
+    return "\n".join(f"#{n['id']} {n['title']}: {n['body']}" for n in NOTES) or "(no notes yet)"
+
+
+if __name__ == "__main__":
+    # HTTP transport: printing is fine here (stdout is not the protocol channel)
+    print("Notes MCP server -> http://127.0.0.1:8000/mcp")
+    mcp.run(transport="streamable-http")
+</script>
+<script type="text/plain" id="c-raw">
+"""
+raw_client.py  -  Talk to an MCP server directly, no LLM involved.
+Run:  python raw_client.py
+"""
+import asyncio
+import sys
+from pathlib import Path
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+SERVER = StdioServerParameters(command=sys.executable, args=[str(Path(__file__).parent / "servers" / "math_server.py")])
+
+
+async def main():
+    async with stdio_client(SERVER) as (read, write):
+        async with ClientSession(read, write) as session:
+            init = await session.initialize()
+            print(f"Connected to '{init.serverInfo.name}' (protocol {init.protocolVersion})")
+
+            tools = await session.list_tools()
+            for t in tools.tools:
+                print(f"  tool: {t.name:10} - {t.description}")
+
+            result = await session.call_tool("multiply", {"a": 6, "b": 7})
+            print("multiply(6, 7) =", result.content[0].text)
+
+            res = await session.read_resource("math://constants")
+            print("resource math://constants ->", res.contents[0].text.replace("\n", " | "))
+
+            prompt = await session.get_prompt("explain_step_by_step", {"problem": "2^10 + 5"})
+            print("prompt ->", prompt.messages[0].content.text)
+            print("Done. (that is exactly what LangGraph's adapter does for you)")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+</script>
+<script type="text/plain" id="c-agent">
+"""
+agent_graph.py  -  A LangGraph ReAct agent whose tools come from MCP servers.
+
+    START -> agent (LLM) --tool_calls?--> tools (MCP) -> agent ... -> END
+
+MCP servers used (each one is optional - missing ones are skipped):
+  math   : our own stdio server                (servers/math_server.py)
+  weather: our own LIVE weather server         (servers/weather_server.py -> Open-Meteo API)
+  notes  : our own HTTP server                 (run servers/notes_server.py first)
+  fetch  : OFFICIAL real-time web fetcher      (pip install mcp-server-fetch)
+  time   : OFFICIAL current time / time zones  (pip install mcp-server-time)
+  deepwiki: PUBLIC remote server for GitHub repo docs (internet, no key)
+"""
+import asyncio
+import sys
+from pathlib import Path
+from typing import Annotated, TypedDict
+
+from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_ollama import ChatOllama
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
+
+ROOT = Path(__file__).resolve().parent.parent
+PY = sys.executable
+OLLAMA_MODEL = "llama3.2"     # must support tool calling: llama3.2, llama3.1, qwen2.5:7b (smarter), mistral-nemo
+
+# 1) Which MCP servers to connect to ------------------------------------------
+SERVERS = {
+    "math":     {"transport": "stdio", "command": PY, "args": [str(ROOT / "servers" / "math_server.py")]},
+    "weather":  {"transport": "stdio", "command": PY, "args": [str(ROOT / "servers" / "weather_server.py")]},
+    "notes":    {"transport": "streamable_http", "url": "http://127.0.0.1:8000/mcp"},
+    "fetch":    {"transport": "stdio", "command": PY, "args": ["-m", "mcp_server_fetch"]},
+    "time":     {"transport": "stdio", "command": PY, "args": ["-m", "mcp_server_time"]},
+    "deepwiki": {"transport": "streamable_http", "url": "https://mcp.deepwiki.com/mcp"},
+}
+
+SYSTEM = """You are a helpful assistant connected to MCP tools.
+- For ANY arithmetic, use the math tools (never calculate in your head).
+- For the CURRENT time in a city, call get_current_time with an IANA timezone (e.g. "Asia/Tokyo").
+  Use convert_time only when the user gives a specific time to convert.
+- For live weather use get_current_weather / get_forecast.
+- To read a web page (docs, Wikipedia, news) use the fetch tool.
+- For questions about a GitHub repository use the deepwiki tools (repoName like "langchain-ai/langgraph").
+- Use the notes tools to save or look up notes.
+Answer briefly and say which tool gave you the data."""
+
+
+# 2) Graph state: just a list of chat messages ---------------------------------
+class State(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
+
+
+async def load_mcp_tools():
+    """Connect to every server; skip the ones that are not available."""
+    client = MultiServerMCPClient(SERVERS)
+    tools = []
+    for name in SERVERS:
+        try:
+            server_tools = await client.get_tools(server_name=name)
+            tools += server_tools
+            print(f"  [ok]   {name:9} -> {', '.join(t.name for t in server_tools)}")
+        except Exception as e:  # server not installed / not running / offline
+            print(f"  [skip] {name:9} -> {type(e).__name__}")
+    return tools
+
+
+async def build_graph():
+    tools = await load_mcp_tools()
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0).bind_tools(tools)
+
+    async def agent(state: State):
+        reply = await llm.ainvoke([SystemMessage(SYSTEM)] + state["messages"])
+        return {"messages": [reply]}
+
+    g = StateGraph(State)
+    g.add_node("agent", agent)
+    g.add_node("tools", ToolNode(tools))         # runs MCP tools/call for us
+    g.add_edge(START, "agent")
+    g.add_conditional_edges("agent", tools_condition)   # tool_calls? -> "tools" else END
+    g.add_edge("tools", "agent")
+    return g.compile(checkpointer=MemorySaver())  # memory across turns
+
+
+async def main():
+    print("Connecting to MCP servers...")
+    graph = await build_graph()
+    config = {"configurable": {"thread_id": "day21"}}
+    print("\nAsk me anything (live weather, time, math, web pages, GitHub repos, notes). 'quit' to exit.")
+
+    while True:
+        q = input("\nYou: ").strip()
+        if q.lower() in {"quit", "exit", "q"}:
+            break
+        if not q:
+            continue
+        async for update in graph.astream({"messages": [HumanMessage(q)]}, config, stream_mode="updates"):
+            for node, data in update.items():
+                msg = data["messages"][-1]
+                if node == "agent" and getattr(msg, "tool_calls", None):
+                    for tc in msg.tool_calls:
+                        print(f"  -> [agent] calls {tc['name']}({tc['args']})")
+                elif node == "tools":
+                    for m in data["messages"]:
+                        print(f"  <- [tool:{m.name}] {str(m.content)[:160]}")
+                else:
+                    print(f"\nAgent: {msg.content}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+</script>
+<script type="text/plain" id="c-weather">
+"""
+weather_server.py  -  REAL-TIME data: wraps the free Open-Meteo REST API as MCP tools.
+No API key needed.  Try it:  mcp dev servers/weather_server.py
+
+This is the most common real-world MCP pattern:
+    LLM  ->  MCP tool  ->  your server  ->  existing REST API  ->  live data
+"""
+import logging
+
+import httpx
+from mcp.server.fastmcp import FastMCP
+
+logging.getLogger("httpx").setLevel(logging.WARNING)   # keep the console quiet
+
+mcp = FastMCP("Weather")
+
+GEO_URL = "https://geocoding-api.open-meteo.com/v1/search"
+WX_URL = "https://api.open-meteo.com/v1/forecast"
+CODES = {0: "clear sky", 1: "mainly clear", 2: "partly cloudy", 3: "overcast", 45: "fog", 48: "fog",
+         51: "light drizzle", 53: "drizzle", 55: "heavy drizzle", 61: "light rain", 63: "rain",
+         65: "heavy rain", 71: "light snow", 73: "snow", 75: "heavy snow", 80: "rain showers",
+         81: "rain showers", 82: "violent rain showers", 95: "thunderstorm", 96: "thunderstorm with hail",
+         99: "thunderstorm with hail"}
+
+
+async def _locate(client: httpx.AsyncClient, city: str) -> dict:
+    r = await client.get(GEO_URL, params={"name": city, "count": 1})
+    r.raise_for_status()
+    hits = r.json().get("results")
+    if not hits:
+        raise ValueError(f"City '{city}' not found")
+    return hits[0]
+
+
+@mcp.tool()
+async def get_current_weather(city: str) -> dict:
+    """Get the LIVE current weather for a city (temperature in Celsius, wind, conditions)."""
+    async with httpx.AsyncClient(timeout=15) as client:
+        place = await _locate(client, city)
+        r = await client.get(WX_URL, params={
+            "latitude": place["latitude"], "longitude": place["longitude"],
+            "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code",
+            "timezone": "auto"})
+        r.raise_for_status()
+        cur = r.json()["current"]
+    return {"city": place["name"], "country": place.get("country"), "time": cur["time"],
+            "temperature_c": cur["temperature_2m"], "humidity_pct": cur["relative_humidity_2m"],
+            "wind_kmh": cur["wind_speed_10m"], "conditions": CODES.get(cur["weather_code"], "unknown")}
+
+
+@mcp.tool()
+async def get_forecast(city: str, days: int = 3) -> list[dict]:
+    """Get a daily forecast (min/max Celsius, rain chance) for the next 1-7 days."""
+    days = max(1, min(days, 7))
+    async with httpx.AsyncClient(timeout=15) as client:
+        place = await _locate(client, city)
+        r = await client.get(WX_URL, params={
+            "latitude": place["latitude"], "longitude": place["longitude"], "forecast_days": days,
+            "daily": "temperature_2m_min,temperature_2m_max,precipitation_probability_max,weather_code",
+            "timezone": "auto"})
+        r.raise_for_status()
+        d = r.json()["daily"]
+    return [{"date": d["time"][i], "min_c": d["temperature_2m_min"][i], "max_c": d["temperature_2m_max"][i],
+             "rain_chance_pct": d["precipitation_probability_max"][i],
+             "conditions": CODES.get(d["weather_code"][i], "unknown")} for i in range(len(d["time"]))]
+
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
+</script>
+<script type="text/plain" id="c-prebuilt">
+"""
+agent_prebuilt.py  -  Same agent in ~25 lines using a prebuilt ReAct agent.
+"""
+import asyncio
+import sys
+from pathlib import Path
+
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_ollama import ChatOllama
+
+try:                                    # LangChain >= 1.0
+    from langchain.agents import create_agent
+
+    def make_agent(llm, tools, prompt):
+        return create_agent(llm, tools, system_prompt=prompt)
+except ImportError:                     # older LangGraph
+    from langgraph.prebuilt import create_react_agent
+
+    def make_agent(llm, tools, prompt):
+        return create_react_agent(llm, tools, prompt=prompt)
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+async def main():
+    client = MultiServerMCPClient({
+        "weather":  {"transport": "stdio", "command": sys.executable, "args": [str(ROOT / "servers" / "weather_server.py")]},
+        "time":     {"transport": "stdio", "command": sys.executable, "args": ["-m", "mcp_server_time"]},
+        "fetch":    {"transport": "stdio", "command": sys.executable, "args": ["-m", "mcp_server_fetch"]},
+        "deepwiki": {"transport": "streamable_http", "url": "https://mcp.deepwiki.com/mcp"},
+    })
+    tools = await client.get_tools()                 # MCP tools -> LangChain tools
+    agent = make_agent(ChatOllama(model="llama3.2", temperature=0), tools,
+                       "Always use tools for live data (time, weather, web pages, GitHub repos).")
+
+    question = "What time is it in Tokyo right now, and what's the weather in Hyderabad?"
+    result = await agent.ainvoke({"messages": [{"role": "user", "content": question}]})
+    print(result["messages"][-1].content)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+</script>
+<script type="text/plain" id="c-req">
+mcp[cli]>=1.9
+langchain>=1.0
+langchain-mcp-adapters>=0.1
+langgraph>=1.0
+langchain-ollama>=0.3
+langchain-core>=0.3
+mcp-server-fetch
+mcp-server-time
+</script>
+<script type="text/plain" id="c-run">
+# 1) install everything
+pip install -r requirements.txt
+
+# 2) pull a local model that supports tool calling
+ollama pull llama3.2          # (better at tools, if you have ~5 GB: ollama pull qwen2.5:7b)
+
+# 3) (optional) start the HTTP notes server in a second terminal
+python servers/notes_server.py
+
+# 4) run the agent
+python agent/agent_graph.py
+</script>
+
+<script>
+/* ================= utilities ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const RX={
+  python:{re:/(#.*$)|("""[\s\S]*?"""|f?"(?:\\.|[^"\\\n])*"|f?'(?:\\.|[^'\\\n])*')|(@[\w.]+)|\b(def|async|await|return|import|from|as|class|if|else|elif|for|in|while|with|try|except|finally|None|True|False|and|or|not|lambda|raise|pass|break|continue|is)\b|\b(\d+(?:\.\d+)?)\b|\b([A-Za-z_]\w*)(?=\()/gm,cls:['t-c','t-s','t-d','t-k','t-n','t-f']},
+  json:{re:/("(?:\\.|[^"\\])*")(?=\s*:)|("(?:\\.|[^"\\])*")|\b(true|false|null)\b|(-?\b\d+(?:\.\d+)?\b)/g,cls:['t-key','t-s','t-l','t-n']},
+  bash:{re:/(#.*$)|("[^"\n]*"|'[^'\n]*')|(^[ \t]*[\w.\\/-]+)|(\s--?[\w-]+)/gm,cls:['t-c','t-s','t-f','t-k']}
+};
+function hl(code,lang){
+  const R=RX[lang]; if(!R) return esc(code);
+  let out='',last=0,m; R.re.lastIndex=0;
+  while((m=R.re.exec(code))){
+    if(m[0]===''){R.re.lastIndex++;continue}
+    out+=esc(code.slice(last,m.index));
+    let gi=1; while(gi<m.length && m[gi]===undefined) gi++;
+    const cls=R.cls[gi-1];
+    out+=esc(m[0]).split('\n').map(p=>`<span class="${cls}">${p}</span>`).join('\n');
+    last=m.index+m[0].length;
+  }
+  return out+esc(code.slice(last));
+}
+function renderCode(el){
+  const src=document.getElementById(el.dataset.src).textContent.replace(/^\n/,'').replace(/\s+$/,'');
+  const lang=el.dataset.lang;
+  const lines=hl(src,lang).split('\n').map((l,i)=>`<span class="ln" data-n="${i+1}">${l||' '}</span>`).join('');
+  el.innerHTML=`<div class="bar"><i style="background:#f87171"></i><i style="background:#fbbf24"></i><i style="background:#34d399"></i><span class="title">${el.dataset.title||''}</span><button class="copy">copy</button></div><pre>${lines}</pre>`;
+  el.querySelector('.copy').onclick=e=>{navigator.clipboard?.writeText(src);e.target.textContent='copied ✓';setTimeout(()=>e.target.textContent='copy',1400)};
+}
+$$('.code[data-src]').forEach(renderCode);
+$$('pre.json[data-json]').forEach(p=>p.innerHTML=hl(JSON.stringify(JSON.parse(p.dataset.json),null,2),'json'));
+const jsonHTML=o=>`<pre class="json">${hl(JSON.stringify(o,null,2),'json')}</pre>`;
+
+/* annotations: hover highlights code lines */
+$$('.annot').forEach(box=>{
+  const code=document.getElementById(box.dataset.for);
+  box.querySelectorAll('.a').forEach(a=>{
+    const [s,e]=a.dataset.lines.split('-').map(Number);
+    const on=()=>{box.querySelectorAll('.a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
+      code.querySelectorAll('.ln').forEach((ln,i)=>ln.classList.toggle('hl',i+1>=s&&i+1<=(e||s)));
+      const t=code.querySelector('.ln.hl'); const pre=code.querySelector('pre'); if(t) pre.scrollTo({top:t.offsetTop-60,behavior:'smooth'});};
+    a.addEventListener('mouseenter',on);a.addEventListener('click',on);
+  });
+});
+
+/* ================= scroll: reveal, progress, nav ================= */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+$$('.reveal').forEach(el=>io.observe(el));
+const navs=$$('aside a.nav'), secs=navs.map(a=>document.querySelector(a.getAttribute('href')));
+const stops=$$('#roadmap .stop'); const lvlOf=[0,0,0,1,1,2,2,2,2,3,3,3,4,4,4,4];
+function onScroll(){
+  const h=document.documentElement; $('#progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+  let cur=-1; secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<innerHeight*.4) cur=i});
+  navs.forEach((a,i)=>{a.classList.toggle('active',i===cur);if(i<cur)a.classList.add('done')});
+  stops.forEach((s,i)=>s.classList.toggle('lit',cur>=0&&i<=lvlOf[cur]));
+}
+addEventListener('scroll',onScroll,{passive:true});onScroll();
+$('#menuBtn').onclick=()=>$('#side').classList.toggle('open');
+navs.forEach(a=>a.addEventListener('click',()=>$('#side').classList.remove('open')));
+
+/* ================= HERO canvas ================= */
+(()=>{
+  const c=$('#heroCanvas'),x=c.getContext('2d');let W,H,t=0;
+  const L=['Claude','ChatGPT','Cursor','VS Code','LangGraph','Files','GitHub','Slack','Postgres','Weather','Browser','Calendar'];
+  const nodes=L.map((l,i)=>({l,a:i/L.length*Math.PI*2,r:i<5?.62:1,ring:i<5?0:1}));
+  let parts=[];
+  function size(){W=c.width=c.offsetWidth*devicePixelRatio;H=c.height=c.offsetHeight*devicePixelRatio}
+  size();addEventListener('resize',size);
+  function frame(){
+    t+=.0025;x.clearRect(0,0,W,H);const cx=W/2,cy=H/2,R=Math.min(W,H)*.42,d=devicePixelRatio;
+    for(let i=0;i<70;i++){const sx=(Math.sin(i*91.7)*.5+.5)*W,sy=(Math.cos(i*37.3)*.5+.5)*H;x.fillStyle=`rgba(150,170,255,${.15+.15*Math.sin(t*20+i)})`;x.fillRect(sx,sy,1.5*d,1.5*d)}
+    [R*.62,R].forEach((r,k)=>{x.beginPath();x.ellipse(cx,cy,r,r*.42,0,0,Math.PI*2);x.strokeStyle=k?'rgba(167,139,250,.18)':'rgba(34,211,238,.18)';x.lineWidth=d;x.stroke()});
+    const pos=nodes.map(n=>{const a=n.a+t*(n.ring?-.6:1);const r=R*n.r;return{x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r*.42,z:Math.sin(a),n}});
+    if(Math.random()<.18){const p=pos[Math.random()*pos.length|0];parts.push({n:nodes.indexOf(p.n),k:0,back:Math.random()<.5})}
+    parts=parts.filter(p=>p.k<1);parts.forEach(p=>{p.k+=.012;const q=pos[p.n];const k=p.back?1-p.k:p.k;const px=q.x+(cx-q.x)*k,py=q.y+(cy-q.y)*k;
+      x.beginPath();x.arc(px,py,2.6*d,0,7);x.fillStyle=q.n.ring?'#a78bfa':'#22d3ee';x.shadowBlur=12*d;x.shadowColor=x.fillStyle;x.fill();x.shadowBlur=0});
+    pos.sort((a,b)=>a.z-b.z).forEach(p=>{const s=.75+.35*(p.z+1)/2;x.globalAlpha=.35+.5*(p.z+1)/2;
+      x.beginPath();x.moveTo(p.x,p.y);x.lineTo(cx,cy);x.strokeStyle=p.n.ring?'rgba(167,139,250,.12)':'rgba(34,211,238,.12)';x.stroke();
+      x.beginPath();x.arc(p.x,p.y,7*d*s,0,7);x.fillStyle=p.n.ring?'#a78bfa':'#22d3ee';x.fill();
+      x.font=`${600} ${12*d*s}px Inter`;x.fillStyle='#e7ecff';x.textAlign='center';x.fillText(p.n.l,p.x,p.y-12*d*s);x.globalAlpha=1});
+    const g=x.createRadialGradient(cx,cy,0,cx,cy,70*d);g.addColorStop(0,'rgba(34,211,238,.55)');g.addColorStop(1,'rgba(34,211,238,0)');
+    x.fillStyle=g;x.beginPath();x.arc(cx,cy,(60+8*Math.sin(t*30))*d,0,7);x.fill();
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+/* ================= N x M ================= */
+(()=>{
+  const svg=$('#nmSvg');let mode='without';
+  const apps=['🤖 Claude','💬 ChatGPT','🦙 Agent','🧑‍💻 Cursor','📝 VS Code','📱 App','🧪 Lab'];
+  const tools=['📁 Files','🐙 GitHub','🗄️ DB','💬 Slack','🌦️ Weather','📅 Calendar','🔎 Search','📧 Email'];
+  function draw(){
+    const n=+$('#nRange').value,m=+$('#mRange').value;$('#nVal').textContent=n;$('#mVal').textContent=m;
+    const ay=i=>40+i*(340/(n-1||1)),ty=i=>40+i*(340/(m-1||1));let h='';
+    if(mode==='without'){for(let i=0;i<n;i++)for(let j=0;j<m;j++){const hue=(i*47)%360;h+=`<path d="M150 ${ay(i)} C 350 ${ay(i)}, 350 ${ty(j)}, 550 ${ty(j)}" stroke="hsl(${hue},80%,65%)" stroke-opacity=".55" fill="none" stroke-width="1.6" stroke-dasharray="400" stroke-dashoffset="400"><animate attributeName="stroke-dashoffset" to="0" dur=".9s" begin="${(i*m+j)*.03}s" fill="freeze"/></path>`}}
+    else{for(let i=0;i<n;i++)h+=`<path d="M150 ${ay(i)} L 350 210" stroke="#22d3ee" stroke-width="2" fill="none" stroke-opacity=".8"/><circle r="4" fill="#22d3ee"><animateMotion dur="1.6s" begin="${i*.2}s" repeatCount="indefinite" path="M150 ${ay(i)} L 350 210"/></circle>`;
+      for(let j=0;j<m;j++)h+=`<path d="M350 210 L 550 ${ty(j)}" stroke="#a78bfa" stroke-width="2" fill="none" stroke-opacity=".8"/><circle r="4" fill="#a78bfa"><animateMotion dur="1.6s" begin="${j*.2}s" repeatCount="indefinite" path="M350 210 L 550 ${ty(j)}"/></circle>`;
+      h+=`<circle cx="350" cy="210" r="44" fill="#0f172b" stroke="#22d3ee" stroke-width="3"><animate attributeName="r" values="44;50;44" dur="2s" repeatCount="indefinite"/></circle><text x="350" y="216" text-anchor="middle" fill="#fff" font-weight="800" font-size="18">MCP</text>`}
+    for(let i=0;i<n;i++)h+=`<rect x="20" y="${ay(i)-16}" width="130" height="32" rx="9" fill="#141e37" stroke="#2e3f66"/><text x="85" y="${ay(i)+5}" text-anchor="middle" fill="#e7ecff" font-size="13">${apps[i]}</text>`;
+    for(let j=0;j<m;j++)h+=`<rect x="550" y="${ty(j)-16}" width="130" height="32" rx="9" fill="#141e37" stroke="#2e3f66"/><text x="615" y="${ty(j)+5}" text-anchor="middle" fill="#e7ecff" font-size="13">${tools[j]}</text>`;
+    svg.innerHTML=h;
+    const cnt=$('#nmCount');cnt.textContent=mode==='without'?n*m:n+m;cnt.className='counter '+(mode==='without'?'bad':'good');
+    $('#nmFormula').textContent=mode==='without'?`N × M = ${n} × ${m}`:`N + M = ${n} + ${m}`;
+  }
+  $('#nRange').oninput=$('#mRange').oninput=draw;
+  $('#nmWithout').onclick=()=>{mode='without';$('#nmWithout').classList.add('on');$('#nmWith').classList.remove('on');draw()};
+  $('#nmWith').onclick=()=>{mode='with';$('#nmWith').classList.add('on');$('#nmWithout').classList.remove('on');draw()};
+  draw();
+})();
+
+/* ================= Architecture ================= */
+(()=>{
+  const S=[{c:'Client A',s:'GitHub server',w:'🐙 GitHub API',col:'#a78bfa'},{c:'Client B',s:'Files server',w:'📁 Your disk',col:'#f472b6'},{c:'Client C',s:'Weather server',w:'🌦️ Open-Meteo',col:'#34d399'}];
+  let cl='',sv='',wi='';
+  S.forEach((o,i)=>{const y=190+i*88;
+    cl+=`<g class="hit" data-k="client"><rect x="66" y="${y}" width="300" height="62" rx="12" fill="#101a33" stroke="#22d3ee"/><text x="90" y="${y+27}" fill="#fff" font-weight="700" font-size="15">🔌 MCP ${o.c}</text><text x="90" y="${y+47}" fill="#97a3c4" font-size="12">1 : 1 connection →</text></g>`;
+    sv+=`<g class="hit" data-k="server"><rect x="488" y="${y}" width="190" height="62" rx="12" fill="#141e37" stroke="${o.col}"/><text x="583" y="${y+27}" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">⚙️ ${o.s}</text><text x="583" y="${y+47}" text-anchor="middle" fill="#97a3c4" font-size="11">tools · resources · prompts</text></g>
+    <g class="hit" data-k="world"><rect x="716" y="${y+8}" width="168" height="46" rx="12" fill="#0d1a1c" stroke="#34d399" stroke-dasharray="4 4"/><text x="800" y="${y+36}" text-anchor="middle" fill="#cdf5e5" font-size="13">${o.w}</text></g>`;
+    wi+=`<path id="w${i}" d="M366 ${y+31} H488" stroke="#2e3f66" stroke-width="2"/><path d="M678 ${y+31} H716" stroke="#2e3f66" stroke-width="2"/><path id="l${i}" d="M216 156 V${y}" stroke="#fbbf24" stroke-opacity=".3" stroke-dasharray="3 4"/>
+    <circle r="5" fill="#22d3ee" filter="url(#glow)"><animateMotion dur="2.4s" begin="${i*.5}s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#w${i}"/></animateMotion></circle>
+    <circle r="5" fill="#a78bfa" filter="url(#glow)"><animateMotion dur="2.4s" begin="${i*.5+1.2}s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#w${i}"/></animateMotion></circle>`;
+  });
+  $('#clients').innerHTML=cl;$('#servers').innerHTML=sv;$('#wires').innerHTML=wi;
+  const INFO={
+    host:{i:'🖥️',t:'Host',r:'the container',d:'The application the user actually uses, such as Claude Desktop, VS Code, Cursor or <b>your LangGraph program</b>. It owns the LLM, creates one client per server, decides which data the model may see, and asks the user for permission.',e:'In our agent: <code>agent_graph.py</code> is the host.'},
+    llm:{i:'🧠',t:'LLM',r:'the brain',d:'The model reads the user\'s question plus the <b>list of tool descriptions</b>, and decides which tool to call with which arguments. It never opens a network connection itself. It only <i>asks</i> the host to call tools.',e:'In our agent: <code>ChatOllama(...).bind_tools(tools)</code>.'},
+    client:{i:'🔌',t:'MCP Client',r:'the connector',d:'Lives <b>inside</b> the host. Each client keeps one stateful connection to one server: it does the handshake, sends <code>tools/list</code> and <code>tools/call</code>, and routes responses back.',e:'In our agent: <code>MultiServerMCPClient</code> creates one per server.'},
+    server:{i:'⚙️',t:'MCP Server',r:'the capability provider',d:'A program (local process or web service) that exposes <b>tools</b>, <b>resources</b> and <b>prompts</b>. It is usually a thin wrapper around a real system: an API, a database or the filesystem.',e:'In our code: <code>servers/math_server.py</code>, or the official Fetch server.'},
+    world:{i:'🌍',t:'Real world',r:'what the server wraps',d:'The real system behind the server: REST APIs, databases, files, browsers. MCP doesn\'t replace them. It gives AI a <b>standard way</b> to reach them.',e:'Example: the weather server calls Open-Meteo\'s HTTP API.'}
+  };
+  function show(k){const o=INFO[k];$('#archInfo').innerHTML=`<div style="font-size:40px">${o.i}</div><div class="role">${o.r}</div><h4>${o.t}</h4><p style="color:var(--muted)">${o.d}</p><div class="note tip" style="margin:0">${o.e}</div>`}
+  $$('#archSvg .hit').forEach(g=>g.addEventListener('click',e=>{e.stopPropagation();show(g.dataset.k)}));
+  show('host');
+})();
+
+/* ================= Primitives ================= */
+(()=>{
+  const P={server:[
+    {i:'🔧',n:'Tools',w:'MODEL-CONTROLLED',c:'#fbbf24',d:'Functions the AI can <b>execute</b>: search the web, send an email, run SQL. They can change things in the world.',j:{method:'tools/call',params:{name:'get_weather',arguments:{city:'Paris'}}}},
+    {i:'📄',n:'Resources',w:'APP-CONTROLLED',c:'#22d3ee',d:'<b>Read-only data</b> with a URI, like <code>file:///notes.md</code> or <code>db://schema</code>. The app attaches them as context.',j:{method:'resources/read',params:{uri:'file:///project/README.md'}}},
+    {i:'📝',n:'Prompts',w:'USER-CONTROLLED',c:'#f472b6',d:'<b>Reusable templates</b> with arguments, which show up as slash-commands such as <code>/code-review</code>. The user picks them.',j:{method:'prompts/get',params:{name:'code_review',arguments:{language:'python'}}}}],
+   client:[
+    {i:'🧪',n:'Sampling',w:'SERVER → CLIENT LLM',c:'#a78bfa',d:'The server <b>borrows the host\'s LLM</b>: "please summarise this for me." The server needs no API key of its own, and the user stays in control.',j:{method:'sampling/createMessage',params:{messages:[{role:'user',content:{type:'text',text:'Summarise this log'}}],maxTokens:200}}},
+    {i:'📂',n:'Roots',w:'CLIENT-DEFINED',c:'#34d399',d:'The client tells the server <b>which folders or URIs it may work in</b>. It acts as a safety fence.',j:{method:'roots/list',result:{roots:[{uri:'file:///D:/getwork/day_21_mcp',name:'project'}]}}},
+    {i:'🙋',n:'Elicitation',w:'SERVER → USER',c:'#60a5fa',d:'The server <b>asks the user a question</b> in the middle of a task, with a schema: "Which branch should I deploy?"',j:{method:'elicitation/create',params:{message:'Which branch?',requestedSchema:{type:'object',properties:{branch:{type:'string'}}}}}}]};
+  function render(k){$('#primGrid').innerHTML=P[k].map(p=>`<div class="prim reveal in"><div class="in"><div class="face"><div class="ic">${p.i}</div><h4>${p.n}</h4><div class="who" style="color:${p.c}">● ${p.w}</div><p>${p.d}</p><div class="hint">↻ click to see the message</div></div><div class="face back"><b style="color:${p.c}">${p.n} on the wire</b>${jsonHTML(Object.assign({jsonrpc:'2.0',id:1},p.j))}<div class="hint">↻ click to flip back</div></div></div></div>`).join('');
+    $$('#primGrid .prim').forEach(e=>e.onclick=()=>e.classList.toggle('flip'))}
+  $$('[data-pt]').forEach(b=>b.onclick=()=>{$$('[data-pt]').forEach(x=>x.classList.remove('on'));b.classList.add('on');render(b.dataset.pt)});
+  render('server');
+})();
+
+/* ================= JSON-RPC anatomy ================= */
+(()=>{
+  const F=[['{',''],['"jsonrpc": "2.0",','jsonrpc','Always the string "2.0". It tells the receiver this is JSON-RPC 2.0.'],['"id": 3,','id','A unique number (or string) chosen by the sender. The response repeats it, so responses can be matched to requests even when they arrive out of order. Notifications have no id.'],
+    ['"method": "tools/call",','method','What you want done. MCP methods are namespaced: <code>tools/…</code>, <code>resources/…</code>, <code>prompts/…</code>, <code>notifications/…</code>.'],['"params": {','params','The arguments for the method. For tools/call this holds the tool name and its arguments.'],
+    ['"name": "get_weather",','name','Which tool to run. It must match a name returned by <code>tools/list</code>.'],['"arguments": { "city": "Paris" }','arguments','The tool\'s input. It must match the tool\'s <code>inputSchema</code> (a JSON Schema). The LLM fills this in.'],['}',''],['}','']];
+  $('#anat').innerHTML=F.map((f,i)=>`<div style="width:100%;padding-left:${[0,1,1,1,1,2,2,1,0][i]*22}px">${f[1]?`<span class="f" data-i="${i}">${hl(f[0],'json')}</span>`:f[0]}</div>`).join('');
+  $$('#anat .f').forEach(s=>s.onclick=()=>{$$('#anat .f').forEach(x=>x.classList.remove('on'));s.classList.add('on');const f=F[s.dataset.i];$('#anatInfo').innerHTML=`<span class="tag" style="color:var(--cyan)">${f[1]}</span><p style="margin:10px 0 0">${f[2]}</p>`});
+})();
+
+/* ================= Lifecycle ================= */
+(()=>{
+  const ST=[
+    {d:'c',ph:'INIT',l:'initialize',j:{jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-11-25',capabilities:{roots:{listChanged:true},sampling:{},elicitation:{}},clientInfo:{name:'my-langgraph-host',version:'1.0.0'}}},n:'The client opens with its protocol version and what <b>it</b> can do (sampling, roots, elicitation).'},
+    {d:'s',ph:'INIT',l:'result: capabilities',j:{jsonrpc:'2.0',id:1,result:{protocolVersion:'2025-11-25',capabilities:{tools:{listChanged:true},resources:{subscribe:true},prompts:{}},serverInfo:{name:'Math',version:'1.0.0'}}},n:'The server answers with the version it agrees to and what <b>it</b> offers. Both sides now know the rules.'},
+    {d:'c',ph:'INIT',l:'notifications/initialized',j:{jsonrpc:'2.0',method:'notifications/initialized'},n:'A <b>notification</b> (no id, no reply) meaning "handshake complete." Normal operation can begin.'},
+    {d:'c',ph:'OPERATE',l:'tools/list',j:{jsonrpc:'2.0',id:2,method:'tools/list'},n:'<b>Discovery.</b> "What tools do you have?"'},
+    {d:'s',ph:'OPERATE',l:'result: [add, multiply, power]',j:{jsonrpc:'2.0',id:2,result:{tools:[{name:'multiply',description:'Multiply two numbers and return the product.',inputSchema:{type:'object',properties:{a:{type:'number'},b:{type:'number'}},required:['a','b']}},'… add, power']}},n:'Each tool comes with a name, a description (for the LLM) and an inputSchema (JSON Schema for the arguments).'},
+    {d:'c',ph:'OPERATE',l:'tools/call multiply',j:{jsonrpc:'2.0',id:3,method:'tools/call',params:{name:'multiply',arguments:{a:6,b:7}}},n:'The LLM decided to call <code>multiply</code>. The client sends the request.'},
+    {d:'s',ph:'OPERATE',l:'result: 42',j:{jsonrpc:'2.0',id:3,result:{content:[{type:'text',text:'42.0'}],structuredContent:{result:42.0},isError:false}},n:'The result comes back as <b>content blocks</b> (text, image, audio, resource links), plus optional structured JSON.'},
+    {d:'s',ph:'OPERATE',l:'notifications/tools/list_changed',j:{jsonrpc:'2.0',method:'notifications/tools/list_changed'},n:'The <b>server</b> can send notifications too: "my tools changed, please list them again."'},
+    {d:'x',ph:'SHUTDOWN',l:'close connection',j:{stdio:'client closes the server\'s stdin, waits, then terminates the process',http:'client sends HTTP DELETE with its Mcp-Session-Id header'},n:'There is no special shutdown message. The transport is closed. 👋'}];
+  const svg=$('#lifeSvg'),X1=110,X2=530,Y0=90,DY=46;let cur=0,timer=null;
+  const pc={INIT:'#22d3ee',OPERATE:'#a78bfa',SHUTDOWN:'#f87171'};
+  let h=`<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>
+  <rect x="40" y="20" width="140" height="40" rx="10" fill="#141e37" stroke="#22d3ee"/><text x="110" y="46" text-anchor="middle" fill="#fff" font-weight="700">🔌 Client</text>
+  <rect x="460" y="20" width="140" height="40" rx="10" fill="#141e37" stroke="#a78bfa"/><text x="530" y="46" text-anchor="middle" fill="#fff" font-weight="700">⚙️ Server</text>
+  <line x1="${X1}" y1="60" x2="${X1}" y2="510" stroke="#2e3f66" stroke-dasharray="4 5"/><line x1="${X2}" y1="60" x2="${X2}" y2="510" stroke="#2e3f66" stroke-dasharray="4 5"/>`;
+  ST.forEach((s,i)=>{const y=Y0+i*DY,col=pc[s.ph];const notif=!s.j.id&&s.d!=='x';
+    if(s.d==='x')h+=`<g class="arrow" id="ar${i}"><line x1="${X1}" y1="${y}" x2="${X2}" y2="${y}" stroke="${col}" stroke-width="2" stroke-dasharray="2 6"/><text x="320" y="${y-8}" text-anchor="middle" fill="${col}" font-family="JetBrains Mono" font-size="12">✂ ${s.l}</text></g>`;
+    else{const a=s.d==='c'?X1:X2,b=s.d==='c'?X2-4:X1+4;
+      h+=`<g class="arrow" id="ar${i}"><line x1="${a}" y1="${y}" x2="${b}" y2="${y}" stroke="${col}" stroke-width="2" ${notif?'stroke-dasharray="6 4"':''} marker-end="url(#ah)"/><text x="320" y="${y-8}" text-anchor="middle" fill="#e7ecff" font-family="JetBrains Mono" font-size="12">${s.l}</text><circle class="dot" r="6" fill="${col}" cx="${a}" cy="${y}" opacity="0"/></g>`}});
+  [['INIT',0,2],['OPERATE',3,7],['SHUTDOWN',8,8]].forEach(([p,a,b])=>{h+=`<rect x="8" y="${Y0+a*DY-24}" width="6" height="${(b-a)*DY+34}" rx="3" fill="${pc[p]}"/><text x="22" y="${Y0+a*DY-12}" fill="${pc[p]}" font-family="JetBrains Mono" font-size="10" font-weight="700">${p}</text>`});
+  svg.innerHTML=h;
+  function go(n){cur=Math.max(0,Math.min(ST.length,n));$('#lfStep').textContent=`step ${cur} / ${ST.length}`;
+    ST.forEach((s,i)=>{const g=$('#ar'+i);g.classList.toggle('shown',i<cur);g.classList.toggle('cur',i===cur-1)});
+    if(!cur){$('#lifeJson').innerHTML='<b>Press Play to begin ▶</b>';return}
+    const s=ST[cur-1],g=$('#ar'+(cur-1)),dot=g.querySelector('.dot');
+    if(dot){const a=s.d==='c'?X1:X2,b=s.d==='c'?X2:X1;dot.setAttribute('opacity',1);const t0=performance.now();
+      (function an(t){const k=Math.min(1,(t-t0)/700);dot.setAttribute('cx',a+(b-a)*k);if(k<1)requestAnimationFrame(an);else dot.setAttribute('opacity',0)})(t0)}
+    const kind=s.d==='x'?'TRANSPORT':(s.j.id?(s.j.method?'REQUEST':'RESPONSE'):'NOTIFICATION');
+    $('#lifeJson').innerHTML=`<span class="phase" style="background:${pc[s.ph]}22;color:${pc[s.ph]}">${s.ph}</span> <span class="tag">${kind}</span> <span class="tag">${s.d==='c'?'client → server':s.d==='s'?'server → client':'both'}</span><p>${s.n}</p>${jsonHTML(s.j)}`}
+  const stop=()=>{clearInterval(timer);timer=null;$('#lfPlay').textContent='▶ Play'};
+  $('#lfNext').onclick=()=>{stop();go(cur+1)};$('#lfPrev').onclick=()=>{stop();go(cur-1)};$('#lfReset').onclick=()=>{stop();go(0)};
+  $('#lfPlay').onclick=()=>{if(timer)return stop();if(cur>=ST.length)go(0);$('#lfPlay').textContent='⏸ Pause';go(cur+1);timer=setInterval(()=>{if(cur>=ST.length)return stop();go(cur+1)},2600)};
+})();
+
+/* ================= Flow simulator ================= */
+(()=>{
+  const A=[['user','👤','User','asks'],['host','🖥️','Host app','orchestrates'],['llm','🧠','LLM','decides'],['client','🔌','MCP Client','speaks MCP'],['server','⚙️','MCP Server','does work'],['api','🌐','External API','real data']];
+  $('#actors').innerHTML=A.map(a=>`<div class="actor" id="ac-${a[0]}"><div class="av">${a[1]}</div><div class="nm2">${a[2]}</div><div class="sb">${a[3]}</div></div>`).join('');
+  const SC={
+    weather:{tool:'get_forecast',args:{latitude:48.85,longitude:2.35},q:'What\'s the weather in Paris?',api:'GET api.open-meteo.com/v1/forecast?latitude=48.85…',data:'{"temperature_2m": 18.2, "weather": "cloudy"}',res:'18.2°C, cloudy',ans:'It\'s currently 18 °C and cloudy in Paris. ☁️',srv:'Weather'},
+    math:{tool:'multiply',args:{a:23,b:19},q:'What is 23 × 19?',api:'(no external API, computed locally in Python)',data:'23 * 19 = 437',res:'437',ans:'23 × 19 = 437.',srv:'Math'},
+    github:{tool:'ask_wiki_question',args:{repoName:'langchain-ai/langgraph',question:'What is it?'},q:'Summarise the langgraph repo',api:'DeepWiki index of github.com/langchain-ai/langgraph',data:'"LangGraph is a library for building stateful, multi-actor LLM apps as graphs…"',res:'LangGraph = graphs for stateful agents…',ans:'LangGraph is a framework for building stateful, multi-step agents as graphs (nodes + edges + shared state).',srv:'DeepWiki'}};
+  let sc='weather',running=false;
+  function steps(s){return[
+    ['host','client','startup','🔌 On startup, before any question: the client connects and runs <code>initialize</code>, then <code>tools/list</code>.',null],
+    ['client','server','initialize + tools/list',`The <b>${s.srv}</b> server replies with its tools, including <code>${s.tool}</code>, with descriptions and schemas.`,{jsonrpc:'2.0',id:1,method:'tools/list'}],
+    ['server','client','tools: ['+s.tool+', …]','The tool list comes back. The host now knows what is possible.',null],
+    ['user','host','"'+s.q+'"','👤 The user types a question.',null],
+    ['host','llm','question + tool schemas','The host sends the conversation <b>and the tool definitions</b> to the LLM.',null],
+    ['llm','host','tool_call: '+s.tool,`🧠 The LLM can't answer from memory, so it replies with a <b>tool call</b> instead of text.`,{type:'tool_use',name:s.tool,input:s.args}],
+    ['host','client','run '+s.tool,'The host (optionally after asking the user for approval) hands the call to the right client.',null],
+    ['client','server','tools/call',`Now the real MCP request goes over the wire:`,{jsonrpc:'2.0',id:2,method:'tools/call',params:{name:s.tool,arguments:s.args}}],
+    ['server','api',s.api.slice(0,30)+'…',`⚙️ The server does the actual work: <code>${s.api}</code>`,null],
+    ['api','server','raw data',`🌐 The real system answers: <code>${s.data}</code>`,null],
+    ['server','client','result content','The server wraps the data as MCP content:',{jsonrpc:'2.0',id:2,result:{content:[{type:'text',text:s.res}],isError:false}}],
+    ['client','host','tool result','The client passes the result back to the host.',null],
+    ['host','llm','tool result → LLM','The host adds the tool result to the conversation and calls the LLM again.',null],
+    ['llm','host','final answer','🧠 With real data in context, the LLM writes the answer.',null],
+    ['host','user','"'+s.ans.slice(0,26)+'…"',`✅ <b>${s.ans}</b>`,null]]}
+  function cx(id){const el=$('#ac-'+id+' .av'),st=$('#stage').getBoundingClientRect(),r=el.getBoundingClientRect();return r.left-st.left+r.width/2}
+  async function play(){if(running)return;running=true;$('#flowLog').innerHTML='';const env=$('#envelope'),slow=$('#flowSlow').checked?2:1;
+    const ss=steps(SC[sc]);
+    for(let i=0;i<ss.length;i++){const [f,t,lab,txt,js]=ss[i];
+      $$('.actor').forEach(a=>a.classList.remove('on'));$('#ac-'+f).classList.add('on');
+      env.style.transition='none';env.style.left=cx(f)+'px';env.style.opacity=1;env.querySelector('.e').textContent='✉ '+lab;void env.offsetWidth;
+      env.style.transition='';await sleep(80);env.style.left=cx(t)+'px';
+      $('#bubble').innerHTML=`<span class="tag">step ${i+1} / ${ss.length}</span> <span class="tag">${f} → ${t}</span><p style="margin:8px 0">${txt}</p>${js?jsonHTML(js):''}`;
+      await sleep(950);$('#ac-'+t).classList.add('on');
+      const d=document.createElement('div');d.innerHTML=`<span style="color:#66729a">${String(i+1).padStart(2,'0')}</span> <span style="color:#22d3ee">${f}</span> → <span style="color:#a78bfa">${t}</span>  ${esc(lab)}`;$('#flowLog').appendChild(d);$('#flowLog').scrollTop=1e5;
+      await sleep((js?2400:1500)*slow)}
+    env.style.opacity=0;running=false}
+  $$('[data-sc]').forEach(b=>b.onclick=()=>{if(running)return;$$('[data-sc]').forEach(x=>x.classList.remove('on'));b.classList.add('on');sc=b.dataset.sc});
+  $('#flowPlay').onclick=play;
+})();
+
+/* ================= Raw client terminal ================= */
+async function typeTerm(el,lines,speed=1){el.innerHTML='';for(const [txt,col,wait] of lines){const d=document.createElement('div');d.style.color=col||'#c9d4f5';el.appendChild(d);
+  for(let i=0;i<txt.length;i+=3){d.textContent=txt.slice(0,i+3);await sleep(6*speed)}el.scrollTop=1e5;await sleep((wait||250)*speed)}
+  el.insertAdjacentHTML('beforeend','<span class="cursor"></span>')}
+const RAW=[["Connected to 'Math' (protocol 2025-11-25)",'#34d399',400],['  tool: add        - Add two numbers and return the sum.'],['  tool: multiply   - Multiply two numbers and return the product.'],['  tool: power      - Raise base to the power of exponent.',0,400],['multiply(6, 7) = 42.0','#fbbf24',400],['resource math://constants -> pi = 3.14159 | e = 2.71828 | golden_ratio = 1.61803','#22d3ee',400],['prompt -> Solve step by step. Use the math tools for EVERY calculation:','#f472b6'],['2^10 + 5','#f472b6',400],["Done. (that is exactly what LangGraph's adapter does for you)",'#97a3c4']];
+new IntersectionObserver((es,o)=>es.forEach(e=>{if(e.isIntersecting){typeTerm($('#rawTerm'),RAW);o.disconnect()}}),{threshold:.4}).observe($('#rawTerm'));
+
+/* ================= LangGraph graph ================= */
+(()=>{
+  const N={start:[260,40,'START','#34d399'],agent:[260,170,'🧠 agent','#fbbf24'],tools:[260,320,'🔧 tools','#a78bfa'],end:[440,170,'END','#f87171']};
+  const svg=$('#lgSvg');
+  let h=`<defs><marker id="lga" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5a6a98"/></marker></defs>
+  <path d="M260 62 V136" stroke="#5a6a98" stroke-width="2" marker-end="url(#lga)"/>
+  <path d="M240 204 C 200 250, 200 260, 236 290" stroke="#5a6a98" stroke-width="2" fill="none" marker-end="url(#lga)" stroke-dasharray="6 4"/><text x="120" y="252" fill="#fbbf24" font-family="JetBrains Mono" font-size="11">has tool_calls</text>
+  <path d="M284 290 C 320 260, 320 250, 284 206" stroke="#5a6a98" stroke-width="2" fill="none" marker-end="url(#lga)"/><text x="322" y="252" fill="#a78bfa" font-family="JetBrains Mono" font-size="11">results</text>
+  <path d="M330 170 H404" stroke="#5a6a98" stroke-width="2" marker-end="url(#lga)" stroke-dasharray="6 4"/><text x="336" y="160" fill="#f87171" font-family="JetBrains Mono" font-size="11">no tool_calls</text>
+  <g opacity=".9"><rect x="40" y="370" width="440" height="48" rx="10" fill="#0d1428" stroke="#2e3f66"/>
+  <text x="56" y="390" fill="#97a3c4" font-family="JetBrains Mono" font-size="11">tools node → MultiServerMCPClient → MCP servers:</text>
+  <text x="56" y="408" fill="#e7ecff" font-family="JetBrains Mono" font-size="11" id="lgSrv">math · weather · notes · fetch · time · deepwiki</text></g>`;
+  for(const k in N){const [x,y,l,c]=N[k];h+=k==='start'||k==='end'?`<g id="n-${k}"><circle cx="${x}" cy="${y}" r="${k==='end'?34:22}" fill="#141e37" stroke="${c}" stroke-width="2"/><text x="${x}" y="${y+4}" text-anchor="middle" fill="${c}" font-family="JetBrains Mono" font-size="11" font-weight="700">${l}</text></g>`
+    :`<g id="n-${k}"><rect x="${x-70}" y="${y-32}" width="140" height="64" rx="14" fill="#141e37" stroke="${c}" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">${l}</text></g>`}
+  h+=`<circle id="tok" r="9" fill="#22d3ee" opacity="0" filter="url(#glow)"/>`;
+  svg.innerHTML=`<defs><filter id="glow2"><feGaussianBlur stdDeviation="3"/></filter></defs>`+h;$('#tok').setAttribute('filter','');
+  const tok=$('#tok');
+  const seq=[['start','START: user asks "Time in Tokyo and temperature in Hyderabad?"'],['agent','agent: LLM decides it needs 2 tools → tool_calls = [get_current_time, get_current_weather]'],['tools','tools: MCP tools/call → time server + weather server (Open-Meteo)'],['agent','agent: reads results. Wants °C → °F too → tool_call multiply'],['tools','tools: MCP tools/call → math server multiply(31.4, 1.8)…'],['agent','agent: has everything → writes final answer (no tool_calls)'],['end','END: answer returned to the user ✅']];
+  const at=k=>[N[k][0],N[k][1]];let busy=false;
+  const glow=(k,on)=>{const e=$('#n-'+k+' rect, #n-'+k+' circle');e.style.filter=on?'drop-shadow(0 0 12px '+N[k][3]+')':'';e.setAttribute('fill',on?N[k][3]+'33':'#141e37')};
+  async function move(a,b){const [x1,y1]=at(a),[x2,y2]=at(b);const t0=performance.now();
+    await new Promise(r=>(function f(t){const k=Math.min(1,(t-t0)/800),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      const bend=(a==='agent'&&b==='tools')?-60*Math.sin(Math.PI*e):(a==='tools'&&b==='agent')?60*Math.sin(Math.PI*e):0;
+      tok.setAttribute('cx',x1+(x2-x1)*e+bend);tok.setAttribute('cy',y1+(y2-y1)*e);k<1?requestAnimationFrame(f):r()})(t0))}
+  $('#lgPlay').onclick=async()=>{if(busy)return;busy=true;tok.setAttribute('opacity',1);const [sx,sy]=at('start');tok.setAttribute('cx',sx);tok.setAttribute('cy',sy);
+    let log='';for(let i=0;i<seq.length;i++){const [k,msg]=seq[i];if(i)await move(seq[i-1][0],k);Object.keys(N).forEach(n=>glow(n,n===k));$('#lgState').textContent='node: '+k;
+      log+=`<div style="margin:6px 0;opacity:0;animation:fadein .4s forwards"><span class="tag" style="color:${N[k][3]}">${k}</span> ${msg}</div>`;$('#lgInfo').innerHTML='<b>Live trace</b>'+log;await sleep(1300)}
+    tok.setAttribute('opacity',0);Object.keys(N).forEach(n=>glow(n,false));$('#lgState').textContent='done';busy=false};
+})();
+
+/* code tabs */
+$$('#lgTabs .btn').forEach(b=>b.onclick=()=>{$$('#lgTabs .btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');const el=$('#lgCode');el.dataset.src=b.dataset.c;
+  el.dataset.lang=b.dataset.c==='c-req'?'none':b.dataset.c==='c-run'?'bash':'python';el.dataset.title=b.textContent;renderCode(el)});
+
+/* agent terminal */
+const AG=[['Connecting to MCP servers...','#97a3c4',300],['  [ok]   math      -> add, multiply, power','#34d399'],['  [ok]   weather   -> get_current_weather, get_forecast','#34d399'],['  [ok]   notes     -> add_note, list_notes, search_notes','#34d399'],['  [ok]   fetch     -> fetch','#34d399'],['  [ok]   time      -> get_current_time, convert_time','#34d399'],['  [ok]   deepwiki  -> ask_wiki_question, read_wiki_contents, read_wiki_structure','#34d399',500],
+  ['',0,0],['Ask me anything (live weather, time, math, web pages, GitHub repos, notes). \'quit\' to exit.','#97a3c4',400],['',0,0],
+  ['You: What time is it in Tokyo, and how hot is Hyderabad right now in °F?','#fff',600],
+  ["  -> [agent] calls get_current_time({'timezone': 'Asia/Tokyo'})",'#fbbf24'],["  -> [agent] calls get_current_weather({'city': 'Hyderabad'})",'#fbbf24',400],
+  ['  <- [tool:get_current_time] {"timezone": "Asia/Tokyo", "datetime": "2026-11-17T01:12:44+09:00", "is_dst": false}','#a78bfa'],['  <- [tool:get_current_weather] {"city": "Hyderabad", "temperature_c": 27.3, "humidity_pct": 48, "conditions": "partly cloudy"}','#a78bfa',400],
+  ["  -> [agent] calls multiply({'a': 27.3, 'b': 1.8})",'#fbbf24'],['  <- [tool:multiply] 49.14','#a78bfa'],["  -> [agent] calls add({'a': 49.14, 'b': 32})",'#fbbf24'],['  <- [tool:add] 81.14','#a78bfa',500],
+  ['','',0],['Agent: It is 01:12 AM (Tue) in Tokyo (time tool). Hyderabad is currently 27.3 °C ≈ 81.1 °F and partly cloudy (weather tool, converted with the math tools).','#22d3ee',600],['',0,0],
+  ['You: Save that as a note called "travel check"','#fff',500],["  -> [agent] calls add_note({'title': 'travel check', 'body': 'Tokyo 01:12 AM; Hyderabad 27.3C / 81.1F'})",'#fbbf24'],['  <- [tool:add_note] Saved note #1: travel check','#a78bfa'],['',0,0],['Agent: Done! Saved as note #1 "travel check" in the notes server.','#22d3ee']];
+let agRunning=false;
+async function runAg(){if(agRunning)return;agRunning=true;await typeTerm($('#agentTerm'),AG,.7);agRunning=false}
+$('#termPlay').onclick=runAg;
+new IntersectionObserver((es,o)=>es.forEach(e=>{if(e.isIntersecting){runAg();o.disconnect()}}),{threshold:.3}).observe($('#agentTerm'));
+
+/* ================= Quiz ================= */
+(()=>{
+  const Q=[
+    ['What problem does MCP mainly solve?',['Making LLMs smarter','The N×M custom-integration problem between AI apps and tools','Replacing REST APIs','Training models faster'],1,'MCP standardises the connection so N apps + M tools need only N+M implementations.'],
+    ['Who actually sends the tools/call message to the server?',['The LLM directly','The user','The MCP client inside the host','The external API'],2,'The LLM only <i>requests</i> a tool call. The host\'s MCP client sends the JSON-RPC message.'],
+    ['Which primitive is controlled by the MODEL?',['Tools','Resources','Prompts','Roots'],0,'Tools are model-controlled, resources are app-controlled, and prompts are user-controlled.'],
+    ['A JSON-RPC message with no "id" is a…',['Request','Response','Notification','Error'],2,'Notifications have no id and get no reply.'],
+    ['What is the FIRST message of every MCP session?',['tools/list','ping','initialize','notifications/initialized'],2,'The client sends initialize with its protocolVersion and capabilities.'],
+    ['Why must a stdio server never print() to stdout?',['It is slow','stdout IS the protocol channel, so prints corrupt the JSON stream','Python forbids it','It leaks memory'],1,'In stdio, stdout carries JSON-RPC messages. Log to stderr instead.'],
+    ['Which transport would you use for a server shared by many users over the internet?',['stdio','Streamable HTTP','Bluetooth','WebRTC'],1,'Streamable HTTP: one /mcp endpoint, sessions, and OAuth 2.1.'],
+    ['What does "sampling" let a server do?',['Collect user analytics','Ask the client\'s LLM to generate a completion','Sample random tools','Compress data'],1,'The server borrows the host\'s model, so it needs no API key and the user stays in control.'],
+    ['In LangGraph, which class turns MCP servers into LangChain tools?',['ToolNode','StateGraph','MultiServerMCPClient','MemorySaver'],2,'MultiServerMCPClient (langchain-mcp-adapters) connects and converts. ToolNode then executes them.'],
+    ['In the ReAct graph, when does the agent go to END?',['After exactly one tool call','When the LLM reply has no tool_calls','When a tool errors','After 10 seconds'],1,'tools_condition routes to "tools" if there are tool_calls, otherwise to END.']];
+  let score=0,done=0;
+  $('#quizBox').innerHTML=Q.map((q,i)=>`<div class="card q reveal" id="q${i}"><span class="tag">Q${i+1}</span> <b>${q[0]}</b><div class="opts">${q[1].map((o,j)=>`<button class="opt" data-q="${i}" data-o="${j}">${String.fromCharCode(65+j)}. ${o}</button>`).join('')}</div><div class="why">💡 ${q[3]}</div></div>`).join('');
+  $$('#quizBox .reveal').forEach(el=>io.observe(el));
+  $$('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.q,j=+b.dataset.o,box=$('#q'+i);if(box.classList.contains('answered'))return;box.classList.add('answered');
+    box.querySelectorAll('.opt').forEach((x,k)=>{x.disabled=true;if(k===Q[i][2])x.classList.add('right')});if(j!==Q[i][2])b.classList.add('wrong');else score++;done++;
+    $('#score').textContent=`${score} / ${Q.length}`;
+    if(done===Q.length){$('#verdict').innerHTML=score>=8?'🦸 <b style="color:var(--green)">MCP HERO unlocked!</b> You understand MCP from the protocol to agents.':score>=5?'🧭 Solid! Re-watch chapters 07 & 09, then try again.':'🌱 Good start. Scroll back up and replay the animations.';if(score>=8)confetti()}});
+})();
+function confetti(){const c=$('#confetti'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;
+  const P=Array.from({length:220},()=>({x:innerWidth/2,y:innerHeight/2,vx:(Math.random()-.5)*18,vy:Math.random()*-18-4,c:['#22d3ee','#a78bfa','#f472b6','#fbbf24','#34d399'][Math.random()*5|0],s:4+Math.random()*6,r:Math.random()*6}));let f=0;
+  (function a(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.45;p.r+=.2;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});if(++f<180)requestAnimationFrame(a);else x.clearRect(0,0,c.width,c.height)})()}
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "math": {
+      "command": "python",
+      "args": ["D:/getwork/day_21_mcp/servers/math_server.py"]
+    },
+    "time": {
+      "command": "python",
+      "args": ["-m", "mcp_server_time"]
+    }
+  }
+}

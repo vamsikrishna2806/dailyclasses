@@ -1,0 +1,8 @@
+mcp[cli]>=1.9
+langchain>=1.0
+langchain-mcp-adapters>=0.1
+langgraph>=1.0
+langchain-ollama>=0.3
+langchain-core>=0.3
+mcp-server-fetch
+mcp-server-time

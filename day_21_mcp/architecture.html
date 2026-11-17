@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP Agent Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060914;--panel:#0f172b;--line:#22304f;--text:#e7ecff;--muted:#97a3c4;--cyan:#22d3ee;--violet:#a78bfa;--amber:#fbbf24;--green:#34d399;--pink:#f472b6;--red:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:48px 16px}
+h1{font-size:clamp(30px,5vw,48px);margin:0 0 6px;letter-spacing:-.02em}
+h1 span{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{margin:56px 0 6px;font-size:26px}
+p{color:var(--muted);max-width:800px}
+.k{font:700 12px 'JetBrains Mono',monospace;color:var(--cyan);letter-spacing:.16em}
+svg{width:100%;height:auto;background:#0a0f1f;border:1px solid var(--line);border-radius:16px;margin-top:14px}
+text{font-family:Inter,sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+table{width:100%;border-collapse:collapse;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:15px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:#1a2442;padding:.1em .4em;border-radius:5px}
+.flow{stroke-dasharray:6 6;animation:dash 1.2s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-24}}
+a{color:var(--cyan)}
+</style>
+</head>
+<body><div class="wrap">
+<div class="k">DAY 21 · ARCHITECTURE</div>
+<h1>The <span>MCP + LangGraph</span> agent</h1>
+<p>Four views of the same system: the components, the graph, what happens at startup, and what happens on every question. For the animated walkthrough, open <a href="index.html">index.html</a>.</p>
+
+<!-- 1. COMPONENT VIEW -->
+<h2>1 · Component view</h2>
+<p>One <b>host</b> process (<code>agent_graph.py</code>) contains the LLM, the LangGraph graph and one MCP client per server. Each server wraps a real system.</p>
+<svg viewBox="0 0 1060 560">
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5a6a98"/></marker></defs>
+  <rect x="16" y="16" width="470" height="528" rx="18" fill="#22d3ee0d" stroke="#22d3ee" stroke-dasharray="6 6"/>
+  <text x="36" y="44" fill="#22d3ee" class="mono" font-size="13" font-weight="700">HOST · agent/agent_graph.py</text>
+  <rect x="40" y="64" width="200" height="70" rx="12" fill="#141e37" stroke="#fbbf24"/><text x="140" y="94" text-anchor="middle" fill="#fff" font-weight="700">🧠 ChatOllama</text><text x="140" y="116" text-anchor="middle" fill="#97a3c4" font-size="12">llama3.2 · .bind_tools(tools)</text>
+  <rect x="262" y="64" width="200" height="70" rx="12" fill="#141e37" stroke="#34d399"/><text x="362" y="94" text-anchor="middle" fill="#fff" font-weight="700">🗺️ StateGraph</text><text x="362" y="116" text-anchor="middle" fill="#97a3c4" font-size="12">agent ⇄ tools · MemorySaver</text>
+  <rect x="40" y="156" width="422" height="56" rx="12" fill="#141e37" stroke="#a78bfa"/><text x="251" y="182" text-anchor="middle" fill="#fff" font-weight="700">🔄 MultiServerMCPClient</text><text x="251" y="200" text-anchor="middle" fill="#97a3c4" font-size="12">langchain-mcp-adapters · MCP tools → LangChain tools</text>
+  <g id="cl"></g>
+  <text x="560" y="44" fill="#a78bfa" class="mono" font-size="13" font-weight="700">MCP SERVERS</text>
+  <text x="860" y="44" fill="#34d399" class="mono" font-size="13" font-weight="700">REAL SYSTEMS</text>
+  <g id="sv"></g>
+</svg>
+
+<!-- 2. GRAPH VIEW -->
+<h2>2 · LangGraph view (the ReAct loop)</h2>
+<p><code>tools_condition</code> looks at the last AI message. If it contains <code>tool_calls</code>, the graph goes to <b>tools</b>; otherwise it goes to <b>END</b>. <code>ToolNode</code> runs each call, and each one is an MCP <code>tools/call</code>.</p>
+<svg viewBox="0 0 1060 300">
+  <defs><marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#97a3c4"/></marker></defs>
+  <circle cx="90" cy="150" r="38" fill="#141e37" stroke="#34d399" stroke-width="2"/><text x="90" y="155" text-anchor="middle" fill="#34d399" class="mono" font-weight="700" font-size="13">START</text>
+  <path d="M128 150 H330" stroke="#97a3c4" stroke-width="2" marker-end="url(#b)" class="flow"/><text x="230" y="140" text-anchor="middle" fill="#97a3c4" font-size="12">HumanMessage</text>
+  <rect x="335" y="105" width="200" height="90" rx="16" fill="#141e37" stroke="#fbbf24" stroke-width="2"/><text x="435" y="145" text-anchor="middle" fill="#fff" font-weight="800" font-size="18">🧠 agent</text><text x="435" y="170" text-anchor="middle" fill="#97a3c4" font-size="12">SYSTEM + messages → LLM</text>
+  <path d="M480 195 C 520 260, 640 270, 680 220" stroke="#fbbf24" stroke-width="2" fill="none" marker-end="url(#b)" class="flow"/><text x="560" y="278" text-anchor="middle" fill="#fbbf24" class="mono" font-size="12">tool_calls present</text>
+  <rect x="660" y="105" width="200" height="90" rx="16" fill="#141e37" stroke="#a78bfa" stroke-width="2"/><text x="760" y="145" text-anchor="middle" fill="#fff" font-weight="800" font-size="18">🔧 tools</text><text x="760" y="170" text-anchor="middle" fill="#97a3c4" font-size="12">ToolNode → MCP tools/call</text>
+  <path d="M700 105 C 660 40, 560 40, 500 100" stroke="#a78bfa" stroke-width="2" fill="none" marker-end="url(#b)" class="flow"/><text x="600" y="38" text-anchor="middle" fill="#a78bfa" class="mono" font-size="12">ToolMessage results</text>
+  <path d="M435 105 V60 H960 V108" stroke="#f87171" stroke-width="2" fill="none" marker-end="url(#b)" stroke-dasharray="4 5"/><text x="960" y="52" text-anchor="end" fill="#f87171" class="mono" font-size="12">no tool_calls → final answer</text>
+  <circle cx="960" cy="150" r="40" fill="#141e37" stroke="#f87171" stroke-width="2"/><text x="960" y="155" text-anchor="middle" fill="#f87171" class="mono" font-weight="700" font-size="13">END</text>
+</svg>
+
+<!-- 3. STARTUP -->
+<h2>3 · Startup: discovery</h2>
+<p>Before the first question, the host connects to every server and asks what it offers. The LLM only knows tools that were discovered here.</p>
+<svg viewBox="0 0 1060 330" id="seq1"></svg>
+
+<!-- 4. ONE TURN -->
+<h2>4 · One question, end to end</h2>
+<p>"What's the weather in Hyderabad?" Notice that the LLM never talks to an MCP server. It only returns a <code>tool_call</code>, and the host does the rest.</p>
+<svg viewBox="0 0 1060 520" id="seq2"></svg>
+
+<h2>Files → architecture roles</h2>
+<table>
+<tr><th>File</th><th>Role</th><th>Transport</th></tr>
+<tr><td><code>agent/agent_graph.py</code></td><td>Host + MCP clients + LangGraph custom graph</td><td>—</td></tr>
+<tr><td><code>agent/agent_prebuilt.py</code></td><td>Same host using <code>create_agent</code></td><td>—</td></tr>
+<tr><td><code>raw_client.py</code></td><td>A bare MCP client with no LLM</td><td>stdio</td></tr>
+<tr><td><code>servers/math_server.py</code></td><td>Server: tools + resource + prompt</td><td>stdio</td></tr>
+<tr><td><code>servers/weather_server.py</code></td><td>Server wrapping the Open-Meteo REST API (live)</td><td>stdio</td></tr>
+<tr><td><code>servers/notes_server.py</code></td><td>Server as a web service</td><td>Streamable HTTP :8000/mcp</td></tr>
+<tr><td><code>mcp-server-fetch</code> / <code>mcp-server-time</code></td><td>Official servers (pip packages)</td><td>stdio</td></tr>
+<tr><td><code>mcp.deepwiki.com/mcp</code></td><td>Public remote server</td><td>Streamable HTTP (internet)</td></tr>
+</table>
+</div>
+<script>
+const S=[['math','🧮 math_server.py','stdio','🐍 Python code','#a78bfa'],['weather','🌦️ weather_server.py','stdio','🌐 Open-Meteo API','#34d399'],['notes','📝 notes_server.py','HTTP :8000','💾 in-memory list','#f472b6'],['fetch','🌐 mcp-server-fetch','stdio · official','🌍 any web page','#22d3ee'],['time','⏰ mcp-server-time','stdio · official','🕐 system clock + tz db','#fbbf24'],['deepwiki','📚 DeepWiki','HTTPS · remote','🐙 GitHub repo wikis','#60a5fa']];
+let c='',s='';
+S.forEach((o,i)=>{const y=236+i*50;
+ c+=`<rect x="40" y="${y}" width="422" height="40" rx="10" fill="#101a33" stroke="#22304f"/><text x="56" y="${y+25}" fill="#e7ecff" font-size="13">🔌 client · <tspan class="mono" fill="${o[4]}">${o[0]}</tspan></text><text x="446" y="${y+25}" text-anchor="end" fill="#97a3c4" font-size="11" class="mono">${o[2]}</text>
+ <path d="M462 ${y+20} H560" stroke="${o[4]}" stroke-width="2" class="flow"/>`;
+ s+=`<rect x="560" y="${y}" width="240" height="40" rx="10" fill="#141e37" stroke="${o[4]}"/><text x="680" y="${y+25}" text-anchor="middle" fill="#fff" font-size="13" font-weight="600">${o[1]}</text>
+ <path d="M800 ${y+20} H860" stroke="#2e3f66" stroke-width="2"/><rect x="860" y="${y+4}" width="184" height="32" rx="9" fill="#0d1a1c" stroke="#34d399" stroke-dasharray="4 4"/><text x="952" y="${y+25}" text-anchor="middle" fill="#cdf5e5" font-size="12">${o[3]}</text>`});
+document.getElementById('cl').innerHTML=c;document.getElementById('sv').innerHTML=s;
+
+function seq(id,actors,msgs,top=90,dy=42){
+ const svg=document.getElementById(id),W=1060,gap=(W-140)/(actors.length-1),X=i=>70+i*gap;
+ let h=`<defs><marker id="m${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>`;
+ actors.forEach((a,i)=>{h+=`<rect x="${X(i)-62}" y="18" width="124" height="40" rx="10" fill="#141e37" stroke="#2e3f66"/><text x="${X(i)}" y="44" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">${a}</text><line x1="${X(i)}" y1="58" x2="${X(i)}" y2="${top+msgs.length*dy}" stroke="#22304f" stroke-dasharray="4 5"/>`});
+ msgs.forEach(([f,t,l,col],k)=>{const y=top+k*dy,x1=X(f),x2=X(t),dir=x2>x1?-1:1;
+  h+=`<line x1="${x1}" y1="${y}" x2="${x2+dir*4}" y2="${y}" stroke="${col}" stroke-width="2" marker-end="url(#m${id})"><animate attributeName="stroke-opacity" values=".3;1;.3" dur="3s" begin="${k*.25}s" repeatCount="indefinite"/></line><text x="${(x1+x2)/2}" y="${y-7}" text-anchor="middle" fill="#e7ecff" font-size="12" class="mono">${l}</text>`});
+ svg.innerHTML=h}
+const C='#22d3ee',V='#a78bfa',A='#fbbf24',G='#34d399';
+seq('seq1',['🖥️ Host','🔌 MCP Client','⚙️ Server'],[
+ [0,1,'MultiServerMCPClient(SERVERS)',C],[1,2,'spawn process (stdio) / open HTTP session',C],[1,2,'initialize {protocolVersion, capabilities}',C],[2,1,'result {serverInfo, capabilities}',V],[1,2,'notifications/initialized',A],[1,2,'tools/list',C],[2,1,'result {tools:[name, description, inputSchema]}',V],[1,0,'LangChain StructuredTools → llm.bind_tools()',G]]);
+seq('seq2',['👤 User','🖥️ Host / graph','🧠 LLM','🔌 Client','⚙️ weather','🌐 Open-Meteo'],[
+ [0,1,'"Weather in Hyderabad?"',C],[1,2,'SYSTEM + messages + tool schemas',C],[2,1,'tool_calls: get_current_weather',A],[1,3,'ToolNode → tool.ainvoke()',C],[3,4,'tools/call {city:"Hyderabad"}',C],[4,5,'GET geocoding + forecast',C],[5,4,'{temperature_2m: 25.7 …}',V],[4,3,'result content (JSON text)',V],[3,1,'ToolMessage',V],[1,2,'messages + ToolMessage',C],[2,1,'"Clear sky, 25.7 °C …" (no tool_calls)',G],[1,0,'final answer → END',G]]);
+</script>
+</body></html>
