@@ -20,6 +20,11 @@ def multiply(a: float, b: float) -> float:
 
 
 @mcp.tool()
+def div(a: float, b: float) -> float:
+    """div of two numbers"""
+    return a / b
+
+@mcp.tool()
 def power(base: float, exponent: float) -> float:
     """Raise base to the power of exponent."""
     return base ** exponent

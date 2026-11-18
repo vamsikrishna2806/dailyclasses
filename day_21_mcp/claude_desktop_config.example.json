@@ -1,11 +1,11 @@
 {
   "mcpServers": {
     "math": {
-      "command": "python",
+      "command": "D:/getwork/day_21_mcp/.venv/Scripts/python.exe",
       "args": ["D:/getwork/day_21_mcp/servers/math_server.py"]
     },
     "time": {
-      "command": "python",
+      "command": "D:/getwork/day_21_mcp/.venv/Scripts/python.exe",
       "args": ["-m", "mcp_server_time"]
     }
   }

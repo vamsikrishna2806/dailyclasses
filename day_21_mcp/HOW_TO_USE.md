@@ -44,12 +44,29 @@ Double-click `index.html` (or open it in any browser). Go through chapters 01 �
 
 ### Step B: test a server by hand with the MCP Inspector
 ```powershell
-mcp dev servers/math_server.py
+npx @modelcontextprotocol/inspector .venv\Scripts\python.exe servers/math_server.py
 ```
 In the browser UI: **Connect** → **Tools** → **List Tools** → `multiply` → `a=6, b=7` → **Run**. You should see `42.0`.
 Do the same for the live weather server:
 ```powershell
-mcp dev servers/weather_server.py
+npx @modelcontextprotocol/inspector .venv\Scripts\python.exe servers/weather_server.py
+```
+> This starts the same Inspector as `mcp dev servers/math_server.py`, but without needing `mcp.exe` or `uv`.
+> `mcp dev` requires `uv` to be installed. Some Windows machines also block the unsigned `mcp.exe` launcher (Device Guard).
+
+**Stopping the Inspector and freeing its ports.** The Inspector uses port **6274** for the browser UI and port **6277** for its proxy. To stop it, press **Ctrl+C** in its terminal (answer `Y` if asked `Terminate batch job?`). This also stops the server it launched.
+
+If you closed the terminal or a port is still in use, check what is listening:
+```powershell
+Get-NetTCPConnection -LocalPort 6274,6277 -State Listen -ErrorAction SilentlyContinue | Select-Object LocalPort, OwningProcess
+```
+If that prints anything, stop those processes (no output means the ports are already free):
+```powershell
+Get-NetTCPConnection -LocalPort 6274,6277 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+```
+To run on different ports instead, set them before starting:
+```powershell
+$env:CLIENT_PORT=7000; $env:SERVER_PORT=7001; npx @modelcontextprotocol/inspector .venv\Scripts\python.exe servers/weather_server.py
 ```
 Run `get_current_weather` with `city = Hyderabad`. It returns the real current temperature.
 
@@ -111,7 +128,7 @@ It asks one fixed question (Tokyo time + Hyderabad weather) and prints the answe
 ### Step G: use your servers in Claude Desktop / Cursor / VS Code
 Copy `claude_desktop_config.example.json` into your host's MCP config. For Claude Desktop that's
 `%APPDATA%\Claude\claude_desktop_config.json`. Restart the app. The same servers then work there with no code changes.
-Use the full path to your venv's `python.exe` as `"command"`, so the host finds the installed packages.
+The example already points `"command"` at `D:/getwork/day_21_mcp/.venv/Scripts/python.exe`, so the host uses the venv's installed packages. Change that path if your project lives elsewhere.
 
 ---
 

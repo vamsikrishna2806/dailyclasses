@@ -20,6 +20,9 @@ An animated, interactive, beginner-to-advanced tutorial on the **Model Context P
 
 ## Quick run
 ```powershell
+cd D:\getwork\day_21_mcp
+python -m venv .venv
+.venv\Scriptsctivate
 pip install -r requirements.txt
 ollama pull llama3.2
 python agent/agent_graph.py
