@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 23</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.ln{border:1px solid var(--line);border-radius:10px;margin:10px 0;overflow:hidden;background:var(--panel)}
+.ln pre{margin:0;border-radius:0}
+.ln .ex{padding:8px 14px}
+.ln .ex ul{margin:4px 0;padding-left:20px}
+.sec{font:800 13px ui-monospace,Consolas,monospace;color:var(--ok);letter-spacing:.08em;text-transform:uppercase;margin:22px 0 4px}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY_23</div>
+<h1>Day 23 &mdash; Ollama talks to a live MCP server</h1>
+<p class="lead">A local Ollama model (llama3.2) connects to a free, public MCP server on the internet (DeepWiki) and uses its tools to answer questions about any GitHub repo.</p>
+
+<div class="card">
+<div class="path">day_23/ollama_mcp_client.py</div>
+<p><b>What it does:</b> you type a question about a GitHub repo. Ollama decides to call a DeepWiki tool, the program runs that tool on the remote server, and Ollama writes the final answer from the result.</p>
+
+<div class="label">Setup with a venv (Windows)</div>
+<div class="run">cd D:\getwork\day_23
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+ollama pull llama3.2</div>
+<p>macOS/Linux: use <code>source .venv/bin/activate</code> instead. When the venv is active, your prompt starts with <code>(.venv)</code>.</p>
+<div class="label">Run</div>
+<div class="run">python ollama_mcp_client.py</div>
+<div class="note"><b>PowerShell error "running scripts is disabled"?</b> Run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> once, or skip activating and run the venv's Python directly: <code>.venv\Scripts\python.exe ollama_mcp_client.py</code>. Type <code>deactivate</code> to leave the venv. The <code>.venv</code> folder is in <code>.gitignore</code>, so it is not committed.</div>
+<div class="note"><b>Why <code>mcp&lt;2</code> in requirements.txt?</b> In <code>mcp</code> version 2, <code>streamablehttp_client</code> was renamed, so this program fails with <code>ImportError</code>. Installing from requirements.txt gets version 1.x, which works.</div>
+<div class="label">What you need</div>
+<ul>
+<li>Python 3.10 or newer</li>
+<li>Ollama installed and running (<a href="https://ollama.com">ollama.com</a>), with the <code>llama3.2</code> model pulled</li>
+<li>Internet connection (the MCP server is online)</li>
+<li>No API key and no account: DeepWiki is free</li>
+</ul>
+
+<div class="label">Logic step by step</div>
+<ol class="steps">
+<li><b>Connect.</b> <code>streamablehttp_client("https://mcp.deepwiki.com/mcp")</code> opens an HTTP connection. <code>ClientSession</code> wraps it and <code>initialize()</code> does the MCP handshake.</li>
+<li><b>Get tools.</b> <code>session.list_tools()</code> asks the server what it can do. DeepWiki returns 3 tools: <code>read_wiki_structure</code>, <code>read_wiki_contents</code>, <code>ask_wiki_question</code>.</li>
+<li><b>Convert tools.</b> Each MCP tool (name, description, inputSchema) is put into the format Ollama wants: <code>{"type":"function","function":{...}}</code>.</li>
+<li><b>Ask Ollama.</b> The question and the tool list go to <code>ollama.chat(...)</code>. Ollama does not run tools itself &mdash; it only replies with <code>tool_calls</code> saying which tool and which arguments.</li>
+<li><b>Run the tool.</b> For each tool call, <code>session.call_tool(name, args)</code> sends it to DeepWiki over the internet. The text result is added to <code>messages</code> with <code>role: "tool"</code>.</li>
+<li><b>Final answer.</b> <code>ollama.chat</code> is called again with the whole conversation. Now Ollama has real data and writes the answer.</li>
+</ol>
+
+<div class="label">The messages list grows like this</div>
+<div class="tw"><table>
+<tr><th>#</th><th>role</th><th>content</th></tr>
+<tr><td>1</td><td><code>user</code></td><td>What is the repo modelcontextprotocol/python-sdk about?</td></tr>
+<tr><td>2</td><td><code>assistant</code></td><td>tool_calls: <code>ask_wiki_question(repoName=..., question=...)</code></td></tr>
+<tr><td>3</td><td><code>tool</code></td><td>Text answer from DeepWiki (cut to 6000 chars)</td></tr>
+<tr><td>4</td><td><code>assistant</code></td><td>Final answer written by Ollama</td></tr>
+</table></div>
+
+<div class="label">Sample output</div>
+<pre>Ask about a GitHub repo: What is the GitHub repo modelcontextprotocol/python-sdk about?
+Calling tool: ask_wiki_question
+
+Answer: The GitHub repository modelcontextprotocol/python-sdk is the official
+Python SDK for the Model Context Protocol (MCP) ...</pre>
+
+<h2>Every line explained</h2>
+<p>What happens inside, in the order the program runs.</p>
+
+<div class="sec">Comments</div>
+<div class="ln"><pre># Ollama + free live MCP server (DeepWiki) - very simple version
+# pip install -r requirements.txt      |      ollama pull llama3.2</pre>
+<div class="ex">Notes for humans. Python skips them. The second line says what to install first: the packages in <code>requirements.txt</code> and the <code>llama3.2</code> model.</div></div>
+
+<div class="sec">Imports</div>
+<div class="ln"><pre>import asyncio</pre>
+<div class="ex">Lets Python <b>wait</b> for slow things (network replies) without freezing. The MCP library is built on it.</div></div>
+
+<div class="ln"><pre>import ollama</pre>
+<div class="ex">The Ollama library. <code>ollama.chat(...)</code> sends an HTTP request to the Ollama app on your computer (<code>http://localhost:11434</code>). The model runs there, not inside Python.</div></div>
+
+<div class="ln"><pre>from mcp import ClientSession</pre>
+<div class="ex">The object that <b>speaks MCP</b>. It turns Python calls like <code>list_tools()</code> into MCP messages and turns replies back into Python objects.</div></div>
+
+<div class="ln"><pre>from mcp.client.streamable_http import streamablehttp_client</pre>
+<div class="ex">The <b>transport</b>, the "phone line" to a remote MCP server over HTTP. It only sends and receives raw messages. <code>ClientSession</code> understands what they mean.</div></div>
+
+<div class="sec">Main function</div>
+<div class="ln"><pre>async def main():</pre>
+<div class="ex"><code>async def</code> makes a function that can use <code>await</code>. We need it because talking to the server takes time.</div></div>
+
+<div class="sec">Connect to the MCP server</div>
+<div class="ln"><pre>async with streamablehttp_client("https://mcp.deepwiki.com/mcp") as (read, write, _):</pre>
+<div class="ex"><ul>
+<li>Opens an HTTP connection to DeepWiki's free MCP server.</li>
+<li>Gives back 3 things: <code>read</code> (receive messages), <code>write</code> (send messages), and a session-id helper we don't need, so we call it <code>_</code>.</li>
+<li><code>async with</code> closes the connection automatically when the block ends, even after an error.</li></ul></div></div>
+
+<div class="ln"><pre>async with ClientSession(read, write) as session:</pre>
+<div class="ex">Wraps the raw streams in an MCP session. From now on we only use <code>session</code>.</div></div>
+
+<div class="ln"><pre>await session.initialize()</pre>
+<div class="ex">The MCP <b>handshake</b>. The client says hello with its protocol version, and the server answers with its version and what it offers ("I have tools"). Every MCP connection starts with this.</div></div>
+
+<div class="sec">Step 1: Get the tools</div>
+<div class="ln"><pre>tools = (await session.list_tools()).tools</pre>
+<div class="ex"><ul>
+<li>Sends a <code>tools/list</code> request to the server.</li>
+<li>DeepWiki replies with 3 tools: <code>read_wiki_structure</code>, <code>read_wiki_contents</code>, <code>ask_wiki_question</code>.</li>
+<li>Each tool has a <code>name</code>, a <code>description</code> and an <code>inputSchema</code> (which arguments it needs).</li>
+<li><code>.tools</code> takes the list out of the reply.</li></ul></div></div>
+
+<div class="ln"><pre>ollama_tools = [{"type": "function", "function": {"name": t.name, "description": t.description, "parameters": t.inputSchema}} for t in tools]</pre>
+<div class="ex">MCP and Ollama describe tools in slightly different formats, so this line <b>translates</b> them. For each tool <code>t</code> it builds a dictionary in Ollama's format, and MCP's <code>inputSchema</code> becomes Ollama's <code>parameters</code>. Now Ollama can read the "tool menu".</div></div>
+
+<div class="sec">Step 2: Ask Ollama</div>
+<div class="ln"><pre>question = input("Ask about a GitHub repo: ")</pre>
+<div class="ex">Waits for the student to type a question, for example <i>"What is modelcontextprotocol/python-sdk about?"</i></div></div>
+
+<div class="ln"><pre>messages = [{"role": "user", "content": question}]</pre>
+<div class="ex">Starts the <b>conversation history</b>. LLMs have no memory, so we send the whole conversation every time. <code>role: "user"</code> means "the human said this".</div></div>
+
+<div class="ln"><pre>reply = ollama.chat(model="llama3.2", messages=messages, tools=ollama_tools)</pre>
+<div class="ex"><ul>
+<li>Sends the question <b>and</b> the tool menu to Ollama.</li>
+<li>The model reads the tool descriptions and decides a tool would help, so it picks <code>ask_wiki_question</code>.</li>
+<li>It does <b>not</b> run the tool. It only replies with a request: <code>ask_wiki_question(repoName="modelcontextprotocol/python-sdk", question="...")</code></li></ul></div></div>
+
+<div class="ln"><pre>messages.append(reply.message)</pre>
+<div class="ex">Saves Ollama's reply (with its tool request) in the history, so next time Ollama remembers it asked for this tool.</div></div>
+
+<div class="sec">Step 3: Run the tool</div>
+<div class="ln"><pre>for call in reply.message.tool_calls or []:</pre>
+<div class="ex">Loops over every tool Ollama asked for. <code>or []</code> is a safety trick: if Ollama asked for no tool, <code>tool_calls</code> is <code>None</code>, so the loop runs zero times instead of crashing.</div></div>
+
+<div class="ln"><pre>print("Calling tool:", call.function.name)</pre>
+<div class="ex">Shows which tool was chosen, for example <code>Calling tool: ask_wiki_question</code>.</div></div>
+
+<div class="ln"><pre>result = await session.call_tool(call.function.name, call.function.arguments)</pre>
+<div class="ex">The <b>real work</b>. Python sends a <code>tools/call</code> request over the internet with the tool name and the arguments Ollama chose. DeepWiki looks up the repo and sends back text.</div></div>
+
+<div class="ln"><pre>messages.append({"role": "tool", "content": result.content[0].text[:6000]})</pre>
+<div class="ex"><ul>
+<li><code>result.content</code> is a list of pieces, and <code>[0].text</code> takes the first piece's text.</li>
+<li><code>[:6000]</code> keeps only the first 6000 characters, so a small model isn't overloaded.</li>
+<li><code>role: "tool"</code> tells Ollama "this is the tool's result".</li></ul></div></div>
+
+<div class="sec">Step 4: Final answer</div>
+<div class="ln"><pre>final = ollama.chat(model="llama3.2", messages=messages)</pre>
+<div class="ex">Calls Ollama <b>again</b> with the full history: the question, the tool request and the facts from DeepWiki. Now the model has real facts and writes a proper answer. We don't pass <code>tools</code> this time because we just want the answer.</div></div>
+
+<div class="ln"><pre>print("\nAnswer:", final.message.content)</pre>
+<div class="ex">Prints the answer. <code>\n</code> adds a blank line first.</div></div>
+
+<div class="sec">Run it</div>
+<div class="ln"><pre>asyncio.run(main())</pre>
+<div class="ex"><code>main()</code> is async, so it can't be called like a normal function. <code>asyncio.run</code> starts the event loop, runs <code>main()</code> to the end, then closes everything.</div></div>
+
+<div class="label">The whole thing in one picture</div>
+<pre>You ──question──► Python ──question + tools──► Ollama 🧠
+                                                  │
+                     "please run ask_wiki_question"
+                                                  ▼
+DeepWiki 🧰 ◄──tools/call── Python ◄──────────────┘
+     │
+     └──result──► Python ──history + result──► Ollama 🧠 ──answer──► You</pre>
+
+<div class="idea"><b>Key idea:</b> the LLM chooses the tool, your Python code runs it. MCP is just the standard way to list and call tools on a server &mdash; local or remote.</div>
+<div class="note"><b>Note:</b> use a model that supports tool calling (llama3.2, qwen2.5). <code>[:6000]</code> keeps the tool result small so a small model is not overloaded. If the model answers without calling a tool, the loop simply runs zero times.</div>
+
+<div class="label">Lesson pages in this folder</div>
+<ul><li><a href="animation.html">animation.html</a> &mdash; 6 step-by-step motion graphics (Day 13 style)</li><li><a href="flow.html">flow.html</a> &mdash; animated message flow</li><li><a href="PROMPT.md">PROMPT.md</a> &mdash; prompt used to generate these pages</li></ul>
+</div>
+</div><a class="top" href="#top">&uarr; Top</a></body></html>

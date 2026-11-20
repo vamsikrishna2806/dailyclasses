@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 6: Task manager with Flask and SQLite</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 6</div>
+<h1>Day 6: Task manager with Flask and SQLite</h1>
+<p class="lead">A full web app in 3 layers: a browser page (<code>static/app.js</code>), a Flask API (<code>app.py</code>), and a SQLite database (<code>database.py</code>).</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">database.py: all the SQL</a></li><li><a href="#p2">app.py: the Flask API</a></li><li><a href="#p3">static/app.js: the page logic</a></li></ol></nav>
+<h2>How the 3 files work together</h2>
+<div class="group"><p>The browser never touches the database. It calls the API; the API checks the input; <code>database.py</code> runs SQL.</p><pre>browser (app.js) ──fetch /api/tasks──▶ Flask (app.py) ──function call──▶ database.py ──SQL──▶ tasks.db</pre></div>
+<section class="card" id="p1">
+<h3>1. database.py: all the SQL</h3>
+<div class="path">database.py</div>
+<div class="label">What it does</div>
+<p class="what">Creates the <code>tasks</code> table and has one function for each action: list, add, toggle done, delete.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>get_db_connection()</code> opens <code>tasks.db</code>. Setting <code>row_factory = sqlite3.Row</code> lets you read a column by name, like <code>row[&#x27;title&#x27;]</code>.</li>
+<li><code>init_db()</code> runs <code>CREATE TABLE IF NOT EXISTS tasks (id, title, done, created_at)</code>, so the table is created the first time and left alone after that.</li>
+<li><code>get_all_tasks()</code> runs <code>SELECT ... ORDER BY id DESC</code> (newest first) and turns each row into a Python dictionary.</li>
+<li><code>add_task(title)</code> runs <code>INSERT ... VALUES (?, 0, ?)</code>. The <code>?</code> placeholders keep user text out of the SQL itself, which prevents SQL injection. It then returns the new task, using <code>cursor.lastrowid</code> as its id.</li>
+<li><code>toggle_task(id)</code> first SELECTs the task (and returns <code>None</code> if it doesn&#x27;t exist), then flips <code>done</code> between 0 and 1 with an UPDATE.</li>
+<li><code>delete_task(id)</code> runs DELETE and returns <code>True</code> only if a row was actually removed (<code>cursor.rowcount &gt; 0</code>).</li>
+</ol>
+<details><summary>Show the full source of database.py (145 lines)</summary><pre>import sqlite3
+from datetime import datetime
+
+# Name of the SQLite database file stored locally
+DATABASE_NAME = &quot;tasks.db&quot;
+
+
+def get_db_connection():
+    &quot;&quot;&quot;
+    Connect to the SQLite database file.
+    Row factory allows accessing query results by column name like dictionaries (e.g., row[&#x27;title&#x27;]).
+    &quot;&quot;&quot;
+    conn = sqlite3.connect(DATABASE_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    &quot;&quot;&quot;
+    Creates the &#x27;tasks&#x27; table automatically if it does not already exist.
+    Columns:
+      - id: unique number for each task, auto-increments
+      - title: text description of the task (required)
+      - done: integer flag (0 = not done, 1 = done, defaults to 0)
+      - created_at: readable timestamp string showing when the task was added
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(&quot;&quot;&quot;
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            done INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        );
+    &quot;&quot;&quot;)
+
+    conn.commit()
+    conn.close()
+
+
+def get_all_tasks():
+    &quot;&quot;&quot;
+    Fetch all tasks from the database, sorted newest first (highest id first).
+    Returns a list of task dictionaries.
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Query all tasks ordered newest first using parameterized SQL (best practice)
+    cursor.execute(&quot;SELECT id, title, done, created_at FROM tasks ORDER BY id DESC&quot;)
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Convert each sqlite3.Row object into a standard Python dictionary
+    tasks = []
+    for row in rows:
+        tasks.append({
+            &quot;id&quot;: row[&quot;id&quot;],
+            &quot;title&quot;: row[&quot;title&quot;],
+            &quot;done&quot;: row[&quot;done&quot;],
+            &quot;created_at&quot;: row[&quot;created_at&quot;]
+        })
+    return tasks
+
+
+def add_task(title):
+    &quot;&quot;&quot;
+    Insert a new task into the database using a parameterized query (?).
+    Returns the newly created task dictionary.
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Current timestamp formatted as YYYY-MM-DD HH:MM:SS
+    created_at = datetime.now().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;)
+
+    # Use the &#x27;?&#x27; placeholder to safely pass user input and prevent SQL injection
+    cursor.execute(
+        &quot;INSERT INTO tasks (title, done, created_at) VALUES (?, 0, ?)&quot;,
+        (title, created_at)
+    )
+
+    new_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+
+    return {
+        &quot;id&quot;: new_id,
+        &quot;title&quot;: title,
+        &quot;done&quot;: 0,
+        &quot;created_at&quot;: created_at
+    }
+
+
+def toggle_task(task_id):
+    &quot;&quot;&quot;
+    Toggle a task&#x27;s &#x27;done&#x27; status between 0 (not done) and 1 (done).
+    Uses a parameterized query (?) with the task ID.
+    Returns the updated task dictionary, or None if the task does not exist.
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Check if the task exists first
+    cursor.execute(&quot;SELECT id, title, done, created_at FROM tasks WHERE id = ?&quot;, (task_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        conn.close()
+        return None
+
+    # Flip status: if 0 -&gt; 1, if 1 -&gt; 0
+    new_status = 1 if row[&quot;done&quot;] == 0 else 0
+
+    cursor.execute(
+        &quot;UPDATE tasks SET done = ? WHERE id = ?&quot;,
+        (new_status, task_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return {
+        &quot;id&quot;: row[&quot;id&quot;],
+        &quot;title&quot;: row[&quot;title&quot;],
+        &quot;done&quot;: new_status,
+        &quot;created_at&quot;: row[&quot;created_at&quot;]
+    }
+
+
+def delete_task(task_id):
+    &quot;&quot;&quot;
+    Delete a task from the database by its ID using a parameterized query (?).
+    Returns True if a row was deleted, False if the ID was not found.
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(&quot;DELETE FROM tasks WHERE id = ?&quot;, (task_id,))
+    deleted = cursor.rowcount &gt; 0
+
+    conn.commit()
+    conn.close()
+    return deleted
+</pre></details>
+</section>
+<section class="card" id="p2">
+<h3>2. app.py: the Flask API</h3>
+<div class="path">app.py</div>
+<div class="label">What it does</div>
+<p class="what">Serves the web page and offers 4 API routes that the page calls.</p>
+<div class="label">How to run</div>
+<div class="run">cd day6
+pip install -r requirements.txt
+python app.py      # then open http://127.0.0.1:5000</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>database.init_db()</code> runs once at start-up, so the table always exists.</li>
+<li>The POST route reads JSON with <code>request.get_json(silent=True) or {}</code> (so bad JSON doesn&#x27;t crash it), checks that <code>title</code> is text, strips spaces, and checks the length.</li>
+<li>Each route returns <code>jsonify(data), status_code</code>. The status code tells the browser whether it worked.</li>
+</ol>
+<div class="tw"><table><tr><th>Route</th><th>What it does</th><th>Answers</th></tr>
+<tr><td><code>GET /</code></td><td>sends <code>templates/index.html</code></td><td>the page</td></tr>
+<tr><td><code>GET /api/tasks</code></td><td><code>database.get_all_tasks()</code></td><td>200 + list</td></tr>
+<tr><td><code>POST /api/tasks</code></td><td>checks the title, then <code>add_task</code></td><td>201, or 400 if the title is empty or over 200 characters</td></tr>
+<tr><td><code>PATCH /api/tasks/&lt;id&gt;</code></td><td><code>toggle_task</code></td><td>200, or 404</td></tr>
+<tr><td><code>DELETE /api/tasks/&lt;id&gt;</code></td><td><code>delete_task</code></td><td>200, or 404</td></tr>
+</table></div>
+<details><summary>Show the full source of app.py (91 lines)</summary><pre>from flask import Flask, render_template, request, jsonify
+import database
+
+# Initialize the Flask web application
+app = Flask(__name__)
+
+# Automatically create the database file and table if they do not exist
+database.init_db()
+
+
+@app.route(&quot;/&quot;)
+def home():
+    &quot;&quot;&quot;
+    Renders and serves the single-page HTML frontend.
+    &quot;&quot;&quot;
+    return render_template(&quot;index.html&quot;)
+
+
+@app.route(&quot;/api/tasks&quot;, methods=[&quot;GET&quot;])
+def get_tasks():
+    &quot;&quot;&quot;
+    GET /api/tasks
+    Fetches all tasks from the database (newest first) and returns them as JSON.
+    &quot;&quot;&quot;
+    tasks = database.get_all_tasks()
+    return jsonify(tasks), 200
+
+
+@app.route(&quot;/api/tasks&quot;, methods=[&quot;POST&quot;])
+def create_task():
+    &quot;&quot;&quot;
+    POST /api/tasks
+    Expects a JSON body: { &quot;title&quot;: &quot;Study Python&quot; }
+    Validates input:
+      - Title cannot be empty or just whitespace.
+      - Title must be under 200 characters.
+    Returns the newly created task on success, or an error message with status 400.
+    &quot;&quot;&quot;
+    data = request.get_json(silent=True) or {}
+    title = data.get(&quot;title&quot;, &quot;&quot;)
+
+    # Input validation: check for string type, strip whitespace
+    if not isinstance(title, str):
+        return jsonify({&quot;error&quot;: &quot;Task title must be text.&quot;}), 400
+
+    clean_title = title.strip()
+
+    # Rule: title must not be empty
+    if not clean_title:
+        return jsonify({&quot;error&quot;: &quot;Task title cannot be empty.&quot;}), 400
+
+    # Rule: title must be under 200 characters
+    if len(clean_title) &gt; 200:
+        return jsonify({&quot;error&quot;: &quot;Task title must be under 200 characters.&quot;}), 400
+
+    # Save to the database using parameterized query
+    new_task = database.add_task(clean_title)
+    return jsonify(new_task), 201
+
+
+@app.route(&quot;/api/tasks/&lt;int:task_id&gt;&quot;, methods=[&quot;PATCH&quot;])
+def toggle_task(task_id):
+    &quot;&quot;&quot;
+    PATCH /api/tasks/&lt;id&gt;
+    Toggles a task between done (1) and not done (0).
+    Returns the updated task, or 404 if the task ID was not found.
+    &quot;&quot;&quot;
+    updated_task = database.toggle_task(task_id)
+    if updated_task is None:
+        return jsonify({&quot;error&quot;: f&quot;Task with ID {task_id} not found.&quot;}), 404
+
+    return jsonify(updated_task), 200
+
+
+@app.route(&quot;/api/tasks/&lt;int:task_id&gt;&quot;, methods=[&quot;DELETE&quot;])
+def remove_task(task_id):
+    &quot;&quot;&quot;
+    DELETE /api/tasks/&lt;id&gt;
+    Deletes a task by ID.
+    Returns a success message, or 404 if the task ID was not found.
+    &quot;&quot;&quot;
+    deleted = database.delete_task(task_id)
+    if not deleted:
+        return jsonify({&quot;error&quot;: f&quot;Task with ID {task_id} not found.&quot;}), 404
+
+    return jsonify({&quot;message&quot;: &quot;Task deleted successfully.&quot;}), 200
+
+
+if __name__ == &quot;__main__&quot;:
+    # Run the server locally on port 5000
+    app.run(debug=True, port=5000)
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. static/app.js: the page logic</h3>
+<div class="path">static/app.js</div>
+<div class="label">What it does</div>
+<p class="what">Draws the task list and calls the API when you add, tick or delete a task.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>loadTasks()</code> runs <code>fetch(&#x27;/api/tasks&#x27;)</code> and passes the list to <code>renderTaskList(tasks)</code>, which builds one list item per task, each with a checkbox and a delete button.</li>
+<li>Submitting the form POSTs <code>{title}</code>. If the server answers with an error, <code>showError(message)</code> shows the server&#x27;s message.</li>
+<li>The checkbox calls <code>toggleTask(id)</code> (PATCH) and the button calls <code>deleteTask(id)</code> (DELETE). After each one, the list is loaded again.</li>
+</ol>
+<details><summary>Show the full source of static/app.js (219 lines)</summary><pre>// ======================================================
+// STUDENT TASK TRACKER - FRONTEND JAVASCRIPT
+// Uses vanilla JavaScript and the standard fetch() API
+// to communicate with the Flask backend.
+// ======================================================
+
+// Grab references to key HTML DOM elements
+const taskForm = document.getElementById(&quot;taskForm&quot;);
+const taskTitleInput = document.getElementById(&quot;taskTitleInput&quot;);
+const charCounter = document.getElementById(&quot;charCounter&quot;);
+const errorBanner = document.getElementById(&quot;errorBanner&quot;);
+const taskList = document.getElementById(&quot;taskList&quot;);
+const emptyState = document.getElementById(&quot;emptyState&quot;);
+const taskStats = document.getElementById(&quot;taskStats&quot;);
+
+// Run loadTasks as soon as the HTML document is fully loaded
+document.addEventListener(&quot;DOMContentLoaded&quot;, () =&gt; {
+    loadTasks();
+});
+
+// Update the character counter while the user types (max 200 characters)
+taskTitleInput.addEventListener(&quot;input&quot;, () =&gt; {
+    const length = taskTitleInput.value.length;
+    charCounter.textContent = `${length}/200`;
+    if (length &gt; 0) {
+        clearError();
+    }
+});
+
+// Helper function to show error messages on the page
+function showError(message) {
+    errorBanner.textContent = message;
+    errorBanner.style.display = &quot;block&quot;;
+}
+
+// Helper function to hide the error message banner
+function clearError() {
+    errorBanner.textContent = &quot;&quot;;
+    errorBanner.style.display = &quot;none&quot;;
+}
+
+// ======================================================
+// FEATURE 2: See all tasks in a list, newest first
+// ======================================================
+async function loadTasks() {
+    try {
+        const response = await fetch(&quot;/api/tasks&quot;);
+        if (!response.ok) {
+            throw new Error(&quot;Failed to load tasks from server.&quot;);
+        }
+
+        const tasks = await response.json();
+        renderTaskList(tasks);
+    } catch (err) {
+        showError(&quot;Could not connect to the server. Please check if Flask is running.&quot;);
+    }
+}
+
+// Renders the list of tasks inside the &lt;ul&gt; element
+function renderTaskList(tasks) {
+    taskList.innerHTML = &quot;&quot;; // Clear current list
+
+    // Toggle empty state message
+    if (tasks.length === 0) {
+        emptyState.style.display = &quot;block&quot;;
+        taskStats.textContent = &quot;0 tasks&quot;;
+        return;
+    }
+
+    emptyState.style.display = &quot;none&quot;;
+
+    // Count how many tasks are completed
+    const completedCount = tasks.filter(t =&gt; t.done === 1).length;
+    taskStats.textContent = `${completedCount} of ${tasks.length} done`;
+
+    // Loop through tasks and build HTML for each task item
+    tasks.forEach(task =&gt; {
+        const li = document.createElement(&quot;li&quot;);
+        li.className = `task-item ${task.done === 1 ? &quot;is-done&quot; : &quot;&quot;}`;
+        li.setAttribute(&quot;data-id&quot;, task.id);
+
+        // Task content: checkbox and title
+        const taskContent = document.createElement(&quot;div&quot;);
+        taskContent.className = &quot;task-content&quot;;
+
+        // Checkbox (Feature 3: Mark done or not done)
+        const checkbox = document.createElement(&quot;input&quot;);
+        checkbox.type = &quot;checkbox&quot;;
+        checkbox.className = &quot;task-checkbox&quot;;
+        checkbox.checked = task.done === 1;
+        checkbox.setAttribute(&quot;aria-label&quot;, `Mark &quot;${task.title}&quot; as complete`);
+        checkbox.addEventListener(&quot;change&quot;, () =&gt; toggleTask(task.id));
+
+        // Details container (title and timestamp)
+        const details = document.createElement(&quot;div&quot;);
+        details.className = &quot;task-details&quot;;
+
+        const titleSpan = document.createElement(&quot;span&quot;);
+        titleSpan.className = &quot;task-title&quot;;
+        titleSpan.textContent = task.title; // Using textContent prevents XSS attacks
+
+        const timeSpan = document.createElement(&quot;span&quot;);
+        timeSpan.className = &quot;task-time&quot;;
+        timeSpan.textContent = `Added: ${task.created_at}`;
+
+        details.appendChild(titleSpan);
+        details.appendChild(timeSpan);
+
+        taskContent.appendChild(checkbox);
+        taskContent.appendChild(details);
+
+        // Delete button (Feature 4: Delete a task)
+        const deleteBtn = document.createElement(&quot;button&quot;);
+        deleteBtn.className = &quot;btn-delete&quot;;
+        deleteBtn.textContent = &quot;Delete&quot;;
+        deleteBtn.setAttribute(&quot;aria-label&quot;, `Delete task &quot;${task.title}&quot;`);
+        deleteBtn.addEventListener(&quot;click&quot;, () =&gt; deleteTask(task.id));
+
+        li.appendChild(taskContent);
+        li.appendChild(deleteBtn);
+
+        taskList.appendChild(li);
+    });
+}
+
+// ======================================================
+// FEATURE 1: Add a task
+// ======================================================
+taskForm.addEventListener(&quot;submit&quot;, async (e) =&gt; {
+    e.preventDefault(); // Prevent standard page reload
+
+    const title = taskTitleInput.value.trim();
+
+    // Frontend validation: check not empty
+    if (!title) {
+        showError(&quot;Task title cannot be empty. Please enter a task.&quot;);
+        taskTitleInput.focus();
+        return;
+    }
+
+    // Frontend validation: check length under 200 characters
+    if (title.length &gt; 200) {
+        showError(&quot;Task title must be under 200 characters.&quot;);
+        return;
+    }
+
+    clearError();
+
+    try {
+        const response = await fetch(&quot;/api/tasks&quot;, {
+            method: &quot;POST&quot;,
+            headers: {
+                &quot;Content-Type&quot;: &quot;application/json&quot;
+            },
+            body: JSON.stringify({ title: title })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            // Show validation or server error message returned by backend
+            showError(result.error || &quot;Failed to add task.&quot;);
+            return;
+        }
+
+        // Reset input field and character counter on success
+        taskTitleInput.value = &quot;&quot;;
+        charCounter.textContent = &quot;0/200&quot;;
+
+        // Refresh task list to show the new task at the top
+        loadTasks();
+    } catch (err) {
+        showError(&quot;Network error while trying to add task.&quot;);
+    }
+});
+
+// ======================================================
+// FEATURE 3: Mark a task as done or not done with checkbox
+// ======================================================
+async function toggleTask(taskId) {
+    try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: &quot;PATCH&quot;
+        });
+
+        if (!response.ok) {
+            const result = await response.json();
+            showError(result.error || &quot;Failed to update task.&quot;);
+            return;
+        }
+
+        // Refresh list to update strikethrough styling and completed counter
+        loadTasks();
+    } catch (err) {
+        showError(&quot;Network error while updating task.&quot;);
+    }
+}
+
+// ======================================================
+// FEATURE 4: Delete a task with a &quot;Delete&quot; button
+// ======================================================
+async function deleteTask(taskId) {
+    try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: &quot;DELETE&quot;
+        });
+
+        if (!response.ok) {
+            const result = await response.json();
+            showError(result.error || &quot;Failed to delete task.&quot;);
+            return;
+        }
+
+        // Refresh list to remove the deleted task
+        loadTasks();
+    } catch (err) {
+        showError(&quot;Network error while deleting task.&quot;);
+    }
+}
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

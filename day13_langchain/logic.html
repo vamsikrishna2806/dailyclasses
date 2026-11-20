@@ -1,0 +1,1109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 13: LangChain in 23 programs</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 13</div>
+<h1>Day 13: LangChain in 23 programs</h1>
+<p class="lead">Every lesson exists twice: <code>langchain_examples/</code> uses OpenAI and <code>langchain_example_ollama/</code> uses a free local Ollama model. The logic is the same. Only the model line changes (see the table below). The source shown is the Ollama version.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">What changes between the two folders</a></li><li><a href="#p2">01 Setup</a></li><li><a href="#p3">02 First LLM call</a></li><li><a href="#p4">03 Messages and roles</a></li><li><a href="#p5">04 Prompt templates</a></li><li><a href="#p6">05 Chat prompts and placeholders</a></li><li><a href="#p7">06 Output parsers</a></li><li><a href="#p8">07 Structured output (Pydantic)</a></li><li><a href="#p9">08 LCEL and the pipe operator</a></li><li><a href="#p10">09 Runnable building blocks</a></li><li><a href="#p11">10 Streaming and batching</a></li><li><a href="#p12">11 Chat memory</a></li><li><a href="#p13">12 Document loaders</a></li><li><a href="#p14">13 Text splitters</a></li><li><a href="#p15">14 Embeddings</a></li><li><a href="#p16">15 Vector stores</a></li><li><a href="#p17">16 Retrievers</a></li><li><a href="#p18">17 RAG end to end</a></li><li><a href="#p19">18 Tools and function calling</a></li><li><a href="#p20">19 Agents</a></li><li><a href="#p21">20 LangGraph basics</a></li><li><a href="#p22">21 Callbacks and tracing</a></li><li><a href="#p23">22 Errors, retries and fallbacks</a></li><li><a href="#p24">23 Capstone: Study Buddy agent</a></li></ol></nav>
+<h2>OpenAI version vs Ollama version</h2>
+<div class="group"><p>Only these lines differ between the two folders. Everything else is identical.</p></div>
+<section class="card" id="p1">
+<h3>1. What changes between the two folders</h3>
+<div class="label">What it does</div>
+<p class="what">Swap the model class and the model name. LangChain gives every model the same interface (<code>invoke</code>, <code>stream</code>, <code>batch</code>, <code>bind_tools</code>).</p>
+<div class="tw"><table><tr><th></th><th>langchain_examples (OpenAI)</th><th>langchain_example_ollama</th></tr>
+<tr><td>Chat model</td><td><code>ChatOpenAI(model=&quot;gpt-4o-mini&quot;)</code></td><td><code>ChatOllama(model=&quot;llama3.2&quot;)</code></td></tr>
+<tr><td>Embeddings</td><td><code>OpenAIEmbeddings(model=&quot;text-embedding-3-small&quot;)</code></td><td><code>OllamaEmbeddings(model=&quot;nomic-embed-text&quot;)</code></td></tr>
+<tr><td>Needs</td><td><code>OPENAI_API_KEY</code> in <code>.env</code></td><td>Ollama running, plus <code>ollama pull llama3.2</code></td></tr>
+</table></div>
+</section>
+<h2>The 23 lessons</h2>
+<section class="card" id="p2">
+<h3>2. 01 Setup</h3>
+<div class="path">01_setup/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Checks that the libraries are installed and that Ollama is running. It doesn&#x27;t call any AI.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\01_setup
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Loops over the package names and prints <code>importlib.metadata.version(pkg)</code>. A missing package prints the pip command that installs it.</li>
+<li>Reads <code>OLLAMA_HOST</code> (default <code>http://localhost:11434</code>).</li>
+<li>Opens <code>&lt;host&gt;/api/tags</code> with <code>urlopen</code>. If that works, Ollama is running; a <code>URLError</code> means start Ollama first.</li>
+</ol>
+<details><summary>Show the full source of 01_setup/main.py (29 lines)</summary><pre>&quot;&quot;&quot;01 · Setup &amp; Environment
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama. No API key needed.
+Install Ollama from https://ollama.com, then run:  ollama pull llama3.2
+&quot;&quot;&quot;
+
+from importlib.metadata import version, PackageNotFoundError
+from urllib.request import urlopen
+from urllib.error import URLError
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # optional: reads .env (for example OLLAMA_HOST)
+
+for pkg in [&quot;langchain&quot;, &quot;langchain-core&quot;, &quot;langchain-ollama&quot;]:
+    try:
+        print(f&quot;{pkg:&lt;20} {version(pkg)}&quot;)
+    except PackageNotFoundError:
+        print(f&quot;{pkg:&lt;20} NOT INSTALLED -&gt; pip install {pkg}&quot;)
+
+host = os.getenv(&quot;OLLAMA_HOST&quot;, &quot;http://localhost:11434&quot;)
+print(&quot;Ollama host:&quot;, host)
+
+try:
+    with urlopen(f&quot;{host}/api/tags&quot;, timeout=3) as resp:
+        print(&quot;Ollama server is running, status:&quot;, resp.status)
+except URLError:
+    print(&quot;Ollama server NOT reachable -&gt; start Ollama, then run: ollama pull llama3.2&quot;)
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. 02 First LLM call</h3>
+<div class="path">02_first_llm_call/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Sends one question to the model and prints the answer.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\02_first_llm_call
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>ChatOllama(model=&quot;llama3.2&quot;, temperature=0)</code> is the model object. <code>temperature=0</code> means the same answer every time.</li>
+<li><code>llm.invoke(question)</code> sends the text and returns an <code>AIMessage</code>.</li>
+<li><code>response.content</code> is the text, and <code>response.usage_metadata</code> shows the token counts.</li>
+</ol>
+<details><summary>Show the full source of 02_first_llm_call/main.py (18 lines)</summary><pre>&quot;&quot;&quot;02 · Your First LLM Call
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+
+question = &quot;Explain Python in one sentence.&quot;
+response = llm.invoke(question)
+
+print(&quot;Answer:&quot;, response.content)
+print(&quot;Type:&quot;, type(response).__name__)
+print(&quot;Tokens:&quot;, response.usage_metadata)
+</pre></details>
+</section>
+<section class="card" id="p4">
+<h3>4. 03 Messages and roles</h3>
+<div class="path">03_messages/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Has a 2-turn conversation by keeping a list of messages.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\03_messages
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>SystemMessage</code> sets the behaviour (&quot;friendly tutor, 2 sentences&quot;), and <code>HumanMessage</code> is the question.</li>
+<li>After the first answer, the program appends the <code>AIMessage</code> and then a new <code>HumanMessage</code>.</li>
+<li>Sending the whole list again lets the model see the earlier turns. That is how chat &quot;memory&quot; works.</li>
+</ol>
+<details><summary>Show the full source of 03_messages/main.py (25 lines)</summary><pre>&quot;&quot;&quot;03 · Messages &amp; Roles
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+
+messages = [
+    SystemMessage(content=&quot;You are a friendly tutor. Answer in 2 short sentences.&quot;),
+    HumanMessage(content=&quot;What is a variable?&quot;),
+]
+first = llm.invoke(messages)
+print(first.content)
+
+# Keep the conversation: add the reply, then the follow-up question
+messages.append(AIMessage(content=first.content))
+messages.append(HumanMessage(content=&quot;Give me an example in Python.&quot;))
+second = llm.invoke(messages)
+print(second.content)
+</pre></details>
+</section>
+<section class="card" id="p5">
+<h3>5. 04 Prompt templates</h3>
+<div class="path">04_prompt_templates/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Writes a prompt once with blanks, and fills in the blanks for each input.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\04_prompt_templates
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>PromptTemplate.from_template(&quot;Write a {tone} poem about {topic}...&quot;)</code> has two blanks.</li>
+<li><code>template.invoke({&quot;tone&quot;: &quot;funny&quot;, &quot;topic&quot;: topic})</code> fills them in, and <code>.to_string()</code> gives the final prompt.</li>
+<li>The loop makes one poem per topic. <code>temperature=0.7</code> adds some creativity.</li>
+</ol>
+<details><summary>Show the full source of 04_prompt_templates/main.py (18 lines)</summary><pre>&quot;&quot;&quot;04 · Prompt Templates
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.prompts import PromptTemplate
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+template = PromptTemplate.from_template(&quot;Write a {tone} poem about {topic} in 4 lines.&quot;)
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0.7)
+
+for topic in [&quot;Python&quot;, &quot;the moon&quot;]:
+    prompt = template.invoke({&quot;tone&quot;: &quot;funny&quot;, &quot;topic&quot;: topic}).to_string()
+    print(llm.invoke(prompt).content)
+    print(&quot;-&quot; * 20)
+</pre></details>
+</section>
+<section class="card" id="p6">
+<h3>6. 05 Chat prompts and placeholders</h3>
+<div class="path">05_chat_prompt_placeholders/main.py</div>
+<div class="label">What it does</div>
+<p class="what">A chat template that has a slot for earlier messages.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\05_chat_prompt_placeholders
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>ChatPromptTemplate.from_messages([system, MessagesPlaceholder(&quot;history&quot;), (&quot;human&quot;, &quot;{question}&quot;)])</code>.</li>
+<li><code>MessagesPlaceholder</code> is replaced by the whole <code>history</code> list of messages.</li>
+<li><code>prompt.invoke({...})</code> builds the full message list, which goes straight into the model.</li>
+</ol>
+<details><summary>Show the full source of 05_chat_prompt_placeholders/main.py (25 lines)</summary><pre>&quot;&quot;&quot;05 · Chat Prompts &amp; Placeholders
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+prompt = ChatPromptTemplate.from_messages([
+    (&quot;system&quot;, &quot;You are a friendly tutor.&quot;),
+    MessagesPlaceholder(variable_name=&quot;history&quot;),
+    (&quot;human&quot;, &quot;{question}&quot;),
+])
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+
+history = [
+    HumanMessage(content=&quot;I am learning Python.&quot;),
+    AIMessage(content=&quot;Great! Ask me anything.&quot;),
+]
+msgs = prompt.invoke({&quot;history&quot;: history, &quot;question&quot;: &quot;What is a loop?&quot;})
+print(llm.invoke(msgs).content)
+</pre></details>
+</section>
+<section class="card" id="p7">
+<h3>7. 06 Output parsers</h3>
+<div class="path">06_output_parsers/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Turns the model&#x27;s text into Python values.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\06_output_parsers
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>StrOutputParser</code> turns a message into a plain string.</li>
+<li><code>CommaSeparatedListOutputParser</code> adds format instructions to the prompt (&quot;answer as a, b, c&quot;), then splits the reply into a Python list.</li>
+<li><code>JsonOutputParser</code> asks for JSON and turns the reply into a dictionary.</li>
+</ol>
+<details><summary>Show the full source of 06_output_parsers/main.py (26 lines)</summary><pre>&quot;&quot;&quot;06 · Output Parsers
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.output_parsers import StrOutputParser, CommaSeparatedListOutputParser, JsonOutputParser
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+
+# 1. Message -&gt; plain string
+text = StrOutputParser().invoke(llm.invoke(&quot;Say hello in one line&quot;))
+print(type(text).__name__, text)
+
+# 2. Text -&gt; Python list
+list_parser = CommaSeparatedListOutputParser()
+raw = llm.invoke(f&quot;List 4 fruits. {list_parser.get_format_instructions()}&quot;).content
+print(list_parser.invoke(raw))
+
+# 3. Text -&gt; dict
+json_parser = JsonOutputParser()
+raw = llm.invoke(f&quot;Name and age of a fictional person as JSON. {json_parser.get_format_instructions()}&quot;).content
+print(json_parser.invoke(raw))
+</pre></details>
+</section>
+<section class="card" id="p8">
+<h3>8. 07 Structured output (Pydantic)</h3>
+<div class="path">07_structured_output/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Gets a checked Python object back instead of text.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\07_structured_output
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>class Person(BaseModel)</code> has name, age and city. Each <code>Field(description=...)</code> tells the model what to put in that field.</li>
+<li><code>llm.with_structured_output(Person).invoke(&quot;Ravi Kumar is 25...&quot;)</code> returns a <code>Person</code> object, so <code>person.age + 1</code> works.</li>
+<li><code>Person(age=&quot;twenty&quot;)</code> raises a <code>ValidationError</code>, which shows that Pydantic checks the types.</li>
+</ol>
+<details><summary>Show the full source of 07_structured_output/main.py (28 lines)</summary><pre>&quot;&quot;&quot;07 · Structured Output (Pydantic)
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field, ValidationError
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+
+class Person(BaseModel):
+    name: str = Field(description=&quot;full name of the person&quot;)
+    age: int = Field(description=&quot;age in whole years&quot;)
+    city: str | None = Field(default=None, description=&quot;city, if mentioned&quot;)
+
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+person = llm.with_structured_output(Person).invoke(
+    &quot;Ravi Kumar is 25 and lives in Hyderabad.&quot;
+)
+print(person)
+print(&quot;Next year he will be&quot;, person.age + 1)
+
+try:
+    Person(name=&quot;Ravi&quot;, age=&quot;twenty&quot;)
+except ValidationError as e:
+    print(&quot;Validation caught&quot;, e.error_count(), &quot;error(s)&quot;)
+</pre></details>
+</section>
+<section class="card" id="p9">
+<h3>9. 08 LCEL and the pipe operator</h3>
+<div class="path">08_lcel_runnables/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Connects steps with <code>|</code>, so the output of one step becomes the input of the next.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\08_lcel_runnables
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>chain = prompt | llm | StrOutputParser()</code>: fill in the template → ask the model → get a string.</li>
+<li><code>chain.invoke({&quot;topic&quot;: &quot;gravity&quot;})</code> runs it once, and <code>chain.batch([...])</code> runs it for several inputs.</li>
+<li><code>chain.get_graph().print_ascii()</code> draws the chain.</li>
+</ol>
+<details><summary>Show the full source of 08_lcel_runnables/main.py (20 lines)</summary><pre>&quot;&quot;&quot;08 · LCEL &amp; the Pipe Operator
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+prompt = ChatPromptTemplate.from_template(&quot;Explain {topic} to a 10-year-old in 2 lines.&quot;)
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+
+chain = prompt | llm | StrOutputParser()
+
+print(chain.invoke({&quot;topic&quot;: &quot;gravity&quot;}))
+print(chain.batch([{&quot;topic&quot;: &quot;rain&quot;}, {&quot;topic&quot;: &quot;magnets&quot;}]))
+chain.get_graph().print_ascii()
+</pre></details>
+</section>
+<section class="card" id="p10">
+<h3>10. 09 Runnable building blocks</h3>
+<div class="path">09_runnable_primitives/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Splits one input into parallel jobs, passes values through, and picks keys.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\09_runnable_primitives
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>RunnableParallel(praise=..., criticism=..., verdict=...)</code> runs 3 small chains on the same movie, and the result is a dict with 3 keys.</li>
+<li><code>RunnableLambda(show)</code> wraps a normal Python function so it can go inside a chain.</li>
+<li><code>RunnablePassthrough()</code> passes the input on unchanged, next to new computed values.</li>
+<li><code>{&quot;topic&quot;: itemgetter(&quot;subject&quot;)}</code> takes one key out of a bigger input.</li>
+</ol>
+<details><summary>Show the full source of 09_runnable_primitives/main.py (38 lines)</summary><pre>&quot;&quot;&quot;09 · Runnable Building Blocks
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from operator import itemgetter
+from dotenv import load_dotenv
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+
+def make(instr):
+    return ChatPromptTemplate.from_template(instr + &quot; the movie {movie}.&quot;) | llm | StrOutputParser()
+
+# Fork: three answers from one input
+panel = RunnableParallel(
+    praise=make(&quot;Write a 1-line praise review for&quot;),
+    criticism=make(&quot;Write a 1-line criticism for&quot;),
+    verdict=make(&quot;Give a one-word verdict for&quot;),
+)
+
+def show(d: dict) -&gt; str:
+    return &quot;\n&quot;.join(f&quot;== {k.upper()} ==\n{v}&quot; for k, v in d.items())
+
+print((panel | RunnableLambda(show)).invoke({&quot;movie&quot;: &quot;Inception&quot;}))
+
+# Passthrough: keep the question and add its length
+demo = RunnableParallel(question=RunnablePassthrough(), length=lambda x: len(x[&quot;question&quot;]))
+print(demo.invoke({&quot;question&quot;: &quot;hello&quot;}))
+
+# itemgetter: pick one key from a larger input
+pick = {&quot;topic&quot;: itemgetter(&quot;subject&quot;)} | ChatPromptTemplate.from_template(&quot;Write a haiku about {topic}&quot;) | llm | StrOutputParser()
+print(pick.invoke({&quot;subject&quot;: &quot;rain&quot;, &quot;extra&quot;: &quot;ignored&quot;}))
+</pre></details>
+</section>
+<section class="card" id="p11">
+<h3>11. 10 Streaming and batching</h3>
+<div class="path">10_streaming/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Prints the answer while it is being written, and runs many inputs at once.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\10_streaming
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>for chunk in chain.stream(...)</code> prints each piece as it arrives. The program also measures how long the first piece took.</li>
+<li><code>async for chunk in chain.astream(...)</code> is the async version, used in web servers.</li>
+<li><code>chain.batch([...])</code> runs several inputs and keeps the results in the same order.</li>
+</ol>
+<details><summary>Show the full source of 10_streaming/main.py (33 lines)</summary><pre>&quot;&quot;&quot;10 · Streaming &amp; Batching
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+import asyncio, time
+from dotenv import load_dotenv
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+chain = ChatPromptTemplate.from_template(&quot;Write a 4-line poem about {thing}.&quot;) | ChatOllama(model=&quot;llama3.2&quot;) | StrOutputParser()
+
+# 1. Streaming: print as tokens arrive
+start = time.perf_counter()
+for i, chunk in enumerate(chain.stream({&quot;thing&quot;: &quot;the sea&quot;})):
+    if i == 0:
+        print(f&quot;[first chunk after {time.perf_counter() - start:.2f}s]&quot;)
+    print(chunk, end=&quot;&quot;, flush=True)
+print()
+
+# 2. Async streaming (for web apps)
+async def main():
+    async for chunk in chain.astream({&quot;thing&quot;: &quot;the sky&quot;}):
+        print(chunk, end=&quot;&quot;, flush=True)
+    print()
+
+asyncio.run(main())
+
+# 3. Batch: many inputs, results in the same order
+print(chain.batch([{&quot;thing&quot;: &quot;rain&quot;}, {&quot;thing&quot;: &quot;fire&quot;}]))
+</pre></details>
+</section>
+<section class="card" id="p12">
+<h3>12. 11 Chat memory</h3>
+<div class="path">11_chat_memory/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Remembers each user&#x27;s conversation separately.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\11_chat_memory
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>store</code> is a dictionary that maps a session id to an <code>InMemoryChatMessageHistory</code>.</li>
+<li><code>RunnableWithMessageHistory(chain, get_session_history, ...)</code> loads that session&#x27;s history before each call and saves the new messages after it.</li>
+<li>Alice tells it her name and later asks for it, and it remembers. Bob, with a different session id, gets no answer.</li>
+</ol>
+<details><summary>Show the full source of 11_chat_memory/main.py (38 lines)</summary><pre>&quot;&quot;&quot;11 · Chat Memory
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+store = {}
+
+def get_session_history(session_id: str):
+    if session_id not in store:
+        store[session_id] = InMemoryChatMessageHistory()
+    return store[session_id]
+
+prompt = ChatPromptTemplate.from_messages([
+    (&quot;system&quot;, &quot;You are a friendly assistant.&quot;),
+    MessagesPlaceholder(variable_name=&quot;history&quot;),
+    (&quot;human&quot;, &quot;{question}&quot;),
+])
+chain = prompt | ChatOllama(model=&quot;llama3.2&quot;, temperature=0) | StrOutputParser()
+chat = RunnableWithMessageHistory(
+    chain, get_session_history,
+    input_messages_key=&quot;question&quot;, history_messages_key=&quot;history&quot;,
+)
+
+alice = {&quot;configurable&quot;: {&quot;session_id&quot;: &quot;alice&quot;}}
+bob = {&quot;configurable&quot;: {&quot;session_id&quot;: &quot;bob&quot;}}
+
+chat.invoke({&quot;question&quot;: &quot;My name is Ravi.&quot;}, config=alice)
+print(chat.invoke({&quot;question&quot;: &quot;What is my name?&quot;}, config=alice))  # Ravi
+print(chat.invoke({&quot;question&quot;: &quot;What is my name?&quot;}, config=bob))    # does not know
+</pre></details>
+</section>
+<section class="card" id="p13">
+<h3>13. 12 Document loaders</h3>
+<div class="path">12_document_loaders/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Reads files into LangChain <code>Document</code> objects. No AI.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\12_document_loaders
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>It writes <code>notes.txt</code> and <code>students.csv</code> so the lesson works anywhere.</li>
+<li>A <code>Document</code> has <code>page_content</code> (the text) and <code>metadata</code> (where it came from).</li>
+<li><code>TextLoader</code> gives one document per file. <code>CSVLoader</code> gives one document per row.</li>
+</ol>
+<details><summary>Show the full source of 12_document_loaders/main.py (24 lines)</summary><pre>&quot;&quot;&quot;12 · Document Loaders
+
+Run (with the venv active):  python main.py
+Creates notes.txt and students.csv in this folder when run.
+No model or API key needed.
+&quot;&quot;&quot;
+
+from pathlib import Path
+from langchain_community.document_loaders import TextLoader, CSVLoader
+from langchain_core.documents import Document
+
+# Create two small sample files so the lesson runs anywhere
+Path(&quot;notes.txt&quot;).write_text(&quot;Python was created by Guido van Rossum.\nLists are ordered.&quot;, encoding=&quot;utf-8&quot;)
+Path(&quot;students.csv&quot;).write_text(&quot;name,score\nAsha,91\nDev,78\nMeera,85\n&quot;, encoding=&quot;utf-8&quot;)
+
+doc = Document(page_content=&quot;Hello world&quot;, metadata={&quot;source&quot;: &quot;manual&quot;})
+print(doc.page_content, doc.metadata)
+
+text_docs = TextLoader(&quot;notes.txt&quot;, encoding=&quot;utf-8&quot;).load()
+csv_docs = CSVLoader(&quot;students.csv&quot;).load()
+
+print(&quot;text docs:&quot;, len(text_docs), text_docs[0].metadata)
+print(&quot;csv rows:&quot;, len(csv_docs))
+print(csv_docs[0].page_content)
+</pre></details>
+</section>
+<section class="card" id="p14">
+<h3>14. 13 Text splitters</h3>
+<div class="path">13_text_splitters/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Cuts long text into chunks. No AI.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\13_text_splitters
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>RecursiveCharacterTextSplitter(chunk_size, chunk_overlap)</code> tries to split on paragraphs, then sentences, then words, so ideas stay together.</li>
+<li>The loop tries chunk sizes 100, 200 and 400: smaller chunks mean more of them.</li>
+</ol>
+<details><summary>Show the full source of 13_text_splitters/main.py (18 lines)</summary><pre>&quot;&quot;&quot;13 · Text Splitters
+
+Run (with the venv active):  python main.py
+No model or API key needed.
+&quot;&quot;&quot;
+
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+text = (
+    &quot;LangChain helps you split long documents into small pieces. &quot;
+    &quot;Good chunks keep whole ideas together. &quot;
+    &quot;A little overlap protects sentences that fall on a boundary. &quot;
+) * 5
+
+for size in [100, 200, 400]:
+    splitter = RecursiveCharacterTextSplitter(chunk_size=size, chunk_overlap=size // 10)
+    chunks = splitter.split_text(text)
+    print(f&quot;size={size:&lt;4} chunks={len(chunks)}  first: {chunks[0][:40]}...&quot;)
+</pre></details>
+</section>
+<section class="card" id="p15">
+<h3>15. 14 Embeddings</h3>
+<div class="path">14_embeddings/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Turns sentences into vectors (lists of numbers), where similar meaning gives similar numbers.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\14_embeddings
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>OllamaEmbeddings(model=&quot;nomic-embed-text&quot;)</code> is the embedding model.</li>
+<li><code>embed_documents(sentences)</code> gives one vector per sentence, and <code>embed_query(question)</code> gives one for the question.</li>
+<li><code>cosine(a, b)</code> measures how close two vectors are (1 means the same meaning).</li>
+<li>The program sorts the sentences by score. The stock-market sentences rank above the cake sentences for &quot;Why are investors worried?&quot;, even though they share no words.</li>
+</ol>
+<details><summary>Show the full source of 14_embeddings/main.py (29 lines)</summary><pre>&quot;&quot;&quot;14 · Embeddings
+
+Run (with the venv active):  python main.py
+Uses a free local embedding model through Ollama (run: ollama pull nomic-embed-text).
+No API key needed.
+&quot;&quot;&quot;
+
+import math
+from dotenv import load_dotenv
+from langchain_ollama import OllamaEmbeddings
+
+load_dotenv()
+emb = OllamaEmbeddings(model=&quot;nomic-embed-text&quot;)
+
+def cosine(a, b):
+    dot = sum(x * y for x, y in zip(a, b))
+    return dot / (math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b)))
+
+sentences = [
+    &quot;The stock market fell today.&quot;,
+    &quot;Shares dropped sharply.&quot;,
+    &quot;I love baking cakes.&quot;,
+    &quot;Bread needs flour and yeast.&quot;,
+]
+vectors = emb.embed_documents(sentences)
+query = emb.embed_query(&quot;Why are investors worried?&quot;)
+
+for score, s in sorted(((cosine(query, v), s) for v, s in zip(vectors, sentences)), reverse=True):
+    print(round(score, 3), s)
+</pre></details>
+</section>
+<section class="card" id="p16">
+<h3>16. 15 Vector stores</h3>
+<div class="path">15_vector_stores/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Saves documents with their vectors and finds the closest match to a question.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\15_vector_stores
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>InMemoryVectorStore(embeddings)</code> is the store, and <code>add_documents(...)</code> embeds and saves 3 shop policies.</li>
+<li><code>similarity_search(q, k=1)</code> embeds the question and returns the closest document, so &quot;Can I send an item back?&quot; matches the refund policy.</li>
+</ol>
+<details><summary>Show the full source of 15_vector_stores/main.py (24 lines)</summary><pre>&quot;&quot;&quot;15 · Vector Stores
+
+Run (with the venv active):  python main.py
+Uses a free local embedding model through Ollama (run: ollama pull nomic-embed-text).
+No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.documents import Document
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_ollama import OllamaEmbeddings
+
+load_dotenv()
+store = InMemoryVectorStore(OllamaEmbeddings(model=&quot;nomic-embed-text&quot;))
+
+store.add_documents([
+    Document(page_content=&quot;You can return items within 30 days for a full refund.&quot;),
+    Document(page_content=&quot;Delivery takes 3 to 5 working days.&quot;),
+    Document(page_content=&quot;We accept cards, UPI and cash on delivery.&quot;),
+])
+
+for q in [&quot;Can I send an item back?&quot;, &quot;How long does shipping take?&quot;, &quot;Can I pay with UPI?&quot;]:
+    best = store.similarity_search(q, k=1)[0]
+    print(q, &quot;-&gt;&quot;, best.page_content)
+</pre></details>
+</section>
+<section class="card" id="p17">
+<h3>17. 16 Retrievers</h3>
+<div class="path">16_retrievers/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Wraps the store as a retriever and compares two search types.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\16_retrievers
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>store.as_retriever(search_kwargs={&quot;k&quot;: 3})</code> returns the 3 most similar documents.</li>
+<li><code>search_type=&quot;mmr&quot;</code> (Maximal Marginal Relevance) returns results that are relevant but also different from each other, so you don&#x27;t get 3 near-copies.</li>
+</ol>
+<details><summary>Show the full source of 16_retrievers/main.py (28 lines)</summary><pre>&quot;&quot;&quot;16 · Retrievers
+
+Run (with the venv active):  python main.py
+Uses a free local embedding model through Ollama (run: ollama pull nomic-embed-text).
+No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.documents import Document
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_ollama import OllamaEmbeddings
+
+load_dotenv()
+store = InMemoryVectorStore(OllamaEmbeddings(model=&quot;nomic-embed-text&quot;))
+store.add_documents([
+    Document(page_content=&quot;Pay by card, UPI or cash on delivery.&quot;),
+    Document(page_content=&quot;Online payments are processed securely.&quot;),
+    Document(page_content=&quot;Refunds go back to the original payment method.&quot;),
+    Document(page_content=&quot;Delivery takes 3 to 5 working days.&quot;),
+])
+
+similar = store.as_retriever(search_kwargs={&quot;k&quot;: 3})
+varied = store.as_retriever(search_type=&quot;mmr&quot;, search_kwargs={&quot;k&quot;: 3})
+
+for name, r in [(&quot;similarity&quot;, similar), (&quot;mmr&quot;, varied)]:
+    print(&quot;--&quot;, name)
+    for d in r.invoke(&quot;How can I pay?&quot;):
+        print(&quot;  &quot;, d.page_content)
+</pre></details>
+</section>
+<section class="card" id="p18">
+<h3>18. 17 RAG end to end</h3>
+<div class="path">17_rag_pipeline/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Answers questions only from a small handbook (Retrieval-Augmented Generation).</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\17_rag_pipeline
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Index once: write handbook.txt → load → split into chunks → embed into the store → <code>as_retriever(k=2)</code>.</li>
+<li>The chain: <code>{&quot;context&quot;: retriever | format_docs, &quot;question&quot;: RunnablePassthrough()} | prompt | llm | parser</code>.</li>
+<li>Retrieve: the question finds 2 chunks. Augment: they are pasted into the system prompt as context. Generate: the model answers.</li>
+<li>The prompt says &quot;answer ONLY from the context&quot;, so &quot;What is the capital of France?&quot; should get &quot;I don&#x27;t know&quot;.</li>
+</ol>
+<details><summary>Show the full source of 17_rag_pipeline/main.py (50 lines)</summary><pre>&quot;&quot;&quot;17 · RAG End to End
+
+Run (with the venv active):  python main.py
+Creates handbook.txt in this folder when run.
+Uses free local models through Ollama:
+  ollama pull llama3.2
+  ollama pull nomic-embed-text
+&quot;&quot;&quot;
+
+from pathlib import Path
+from dotenv import load_dotenv
+from langchain_community.document_loaders import TextLoader
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+load_dotenv()
+
+# 1. Index (once)
+Path(&quot;handbook.txt&quot;).write_text(
+    &quot;Employees get 20 days of paid leave per year.\n&quot;
+    &quot;Sick leave is 10 days and needs a doctor&#x27;s note after 2 days.\n&quot;
+    &quot;The office is open 9am to 6pm, Monday to Friday.\n&quot;, encoding=&quot;utf-8&quot;)
+docs = TextLoader(&quot;handbook.txt&quot;, encoding=&quot;utf-8&quot;).load()
+chunks = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20).split_documents(docs)
+store = InMemoryVectorStore(OllamaEmbeddings(model=&quot;nomic-embed-text&quot;))
+store.add_documents(chunks)
+retriever = store.as_retriever(search_kwargs={&quot;k&quot;: 2})
+
+# 2-4. Retrieve, augment, generate
+prompt = ChatPromptTemplate.from_messages([
+    (&quot;system&quot;, &quot;Answer ONLY from the context. If it is not there, say you do not know.\n\nContext:\n{context}&quot;),
+    (&quot;human&quot;, &quot;{question}&quot;),
+])
+
+def format_docs(docs):
+    return &quot;\n\n&quot;.join(d.page_content for d in docs)
+
+rag = (
+    {&quot;context&quot;: retriever | format_docs, &quot;question&quot;: RunnablePassthrough()}
+    | prompt
+    | ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+    | StrOutputParser()
+)
+
+print(rag.invoke(&quot;How many leave days do I get?&quot;))
+print(rag.invoke(&quot;What is the capital of France?&quot;))  # should say it does not know
+</pre></details>
+</section>
+<section class="card" id="p19">
+<h3>19. 18 Tools and function calling</h3>
+<div class="path">18_tools/main.py</div>
+<div class="label">What it does</div>
+<p class="what">The model asks for a function, and your code runs it.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\18_tools
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>@tool def add(a, b)</code>: the docstring and type hints become the tool description.</li>
+<li><code>llm.bind_tools([add])</code> tells the model this tool exists.</li>
+<li>The reply has <code>tool_calls</code>, such as add(12, 30). The loop runs <code>add.invoke(call[&quot;args&quot;])</code> and appends a <code>ToolMessage</code> with the matching <code>tool_call_id</code>.</li>
+<li>Calling the model again, with the result included, gives the final sentence.</li>
+</ol>
+<details><summary>Show the full source of 18_tools/main.py (29 lines)</summary><pre>&quot;&quot;&quot;18 · Tools &amp; Function Calling
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.tools import tool
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+
+@tool
+def add(a: int, b: int) -&gt; int:
+    &quot;&quot;&quot;Add two whole numbers and return the sum.&quot;&quot;&quot;
+    return a + b
+
+llm = ChatOllama(model=&quot;llama3.2&quot;, temperature=0).bind_tools([add])
+
+messages = [HumanMessage(content=&quot;What is 12 plus 30?&quot;)]
+ai_msg = llm.invoke(messages)
+messages.append(ai_msg)
+
+for call in ai_msg.tool_calls:          # the model asked for these
+    result = add.invoke(call[&quot;args&quot;])   # YOUR code runs them
+    messages.append(ToolMessage(content=str(result), tool_call_id=call[&quot;id&quot;]))
+
+print(llm.invoke(messages).content)     # final answer
+</pre></details>
+</section>
+<section class="card" id="p20">
+<h3>20. 19 Agents</h3>
+<div class="path">19_agents/main.py</div>
+<div class="label">What it does</div>
+<p class="what">The same tool loop, done automatically by <code>create_agent</code>.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\19_agents
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Two tools: <code>add</code> and <code>today</code>.</li>
+<li><code>create_agent(model, tools, system_prompt)</code> builds the ReAct loop: think → call a tool → read the result → repeat until it can answer.</li>
+<li>The program prints every message, so you can watch each step: human, ai (tool calls), tool, ai (answer).</li>
+</ol>
+<details><summary>Show the full source of 19_agents/main.py (34 lines)</summary><pre>&quot;&quot;&quot;19 · Agents
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+&quot;&quot;&quot;
+
+import datetime
+from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain_core.tools import tool
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+
+@tool
+def add(a: int, b: int) -&gt; int:
+    &quot;&quot;&quot;Add two whole numbers.&quot;&quot;&quot;
+    return a + b
+
+@tool
+def today() -&gt; str:
+    &quot;&quot;&quot;Return today&#x27;s date.&quot;&quot;&quot;
+    return datetime.date.today().isoformat()
+
+agent = create_agent(
+    model=ChatOllama(model=&quot;llama3.2&quot;, temperature=0),
+    tools=[add, today],
+    system_prompt=&quot;You are a helpful assistant. Use tools when they help.&quot;,
+)
+
+result = agent.invoke({&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;What is today&#x27;s date, and what is 15 + 27?&quot;}]})
+
+for msg in result[&quot;messages&quot;]:   # watch every step
+    print(msg.type, &quot;|&quot;, msg.content)
+</pre></details>
+</section>
+<section class="card" id="p21">
+<h3>21. 20 LangGraph basics</h3>
+<div class="path">20_langgraph_intro/main.py</div>
+<div class="label">What it does</div>
+<p class="what">A tiny graph of plain Python steps. No AI.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\20_langgraph_intro
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>State</code> is a TypedDict with <code>text</code> and <code>count</code>. Every node reads the state and returns the keys it changes.</li>
+<li><code>clean</code> strips spaces, then <code>count_words</code> counts the words.</li>
+<li><code>add_conditional_edges(&quot;count&quot;, route, ...)</code>: the <code>route</code> function picks the next node (&quot;long&quot; or &quot;short&quot;).</li>
+<li><code>graph.invoke({...})</code> runs START → clean → count → END and returns the final state.</li>
+</ol>
+<details><summary>Show the full source of 20_langgraph_intro/main.py (31 lines)</summary><pre>&quot;&quot;&quot;20 · LangGraph Basics
+
+Run (with the venv active):  python main.py
+No model or API key needed (this lesson uses plain Python steps).
+&quot;&quot;&quot;
+
+from typing import TypedDict
+from langgraph.graph import StateGraph, START, END
+
+class State(TypedDict):
+    text: str
+    count: int
+
+def clean(state: State):
+    return {&quot;text&quot;: state[&quot;text&quot;].strip()}
+
+def count_words(state: State):
+    return {&quot;count&quot;: len(state[&quot;text&quot;].split())}
+
+def route(state: State) -&gt; str:
+    return &quot;long&quot; if state[&quot;count&quot;] &gt; 5 else &quot;short&quot;
+
+builder = StateGraph(State)
+builder.add_node(&quot;clean&quot;, clean)
+builder.add_node(&quot;count&quot;, count_words)
+builder.add_edge(START, &quot;clean&quot;)
+builder.add_edge(&quot;clean&quot;, &quot;count&quot;)
+builder.add_conditional_edges(&quot;count&quot;, route, {&quot;long&quot;: END, &quot;short&quot;: END})
+
+graph = builder.compile()
+print(graph.invoke({&quot;text&quot;: &quot;  hello big world  &quot;, &quot;count&quot;: 0}))
+</pre></details>
+</section>
+<section class="card" id="p22">
+<h3>22. 21 Callbacks and tracing</h3>
+<div class="path">21_callbacks_tracing/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Runs your own code when the model starts, ends or fails.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\21_callbacks_tracing
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>class Timer(BaseCallbackHandler)</code>: <code>on_chat_model_start</code> starts a timer, and <code>on_llm_end</code> prints how long the call took.</li>
+<li>It is passed in with <code>config={&quot;callbacks&quot;: [Timer()]}</code>.</li>
+<li>LangSmith tracing needs no code at all, only three <code>.env</code> lines.</li>
+</ol>
+<details><summary>Show the full source of 21_callbacks_tracing/main.py (32 lines)</summary><pre>&quot;&quot;&quot;21 · Callbacks &amp; Tracing
+
+Run (with the venv active):  python main.py
+Uses a free local model through Ollama (run: ollama pull llama3.2). No API key needed.
+LangSmith tracing is optional (see the comments at the bottom).
+&quot;&quot;&quot;
+
+import time
+from dotenv import load_dotenv
+from langchain_core.callbacks import BaseCallbackHandler
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+
+class Timer(BaseCallbackHandler):
+    def on_chat_model_start(self, serialized, messages, **kwargs):
+        self.start = time.perf_counter()
+        print(&quot;[start] model called&quot;)
+
+    def on_llm_end(self, response, **kwargs):
+        print(f&quot;[end] took {time.perf_counter() - self.start:.2f}s&quot;)
+
+    def on_llm_error(self, error, **kwargs):
+        print(&quot;[error]&quot;, error)
+
+llm = ChatOllama(model=&quot;llama3.2&quot;)
+llm.invoke(&quot;Explain callbacks in one line.&quot;, config={&quot;callbacks&quot;: [Timer()]})
+
+# LangSmith tracing needs no code change. Put these in .env:
+#   LANGSMITH_TRACING=true
+#   LANGSMITH_API_KEY=your-key
+#   LANGSMITH_PROJECT=langchain-zero-to-hero
+</pre></details>
+</section>
+<section class="card" id="p23">
+<h3>23. 22 Errors, retries and fallbacks</h3>
+<div class="path">22_errors_fallbacks/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Keeps working when the model fails or returns bad output.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\22_errors_fallbacks
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>primary.with_fallbacks([backup])</code>: if llama3.2 fails, qwen2.5 is tried automatically.</li>
+<li><code>get_json</code> tries up to 3 times. If <code>json.loads</code> fails, it re-asks with the error message (&quot;Return ONLY valid JSON&quot;).</li>
+<li>The outer <code>try/except</code> shows a friendly message instead of a crash.</li>
+</ol>
+<details><summary>Show the full source of 22_errors_fallbacks/main.py (31 lines)</summary><pre>&quot;&quot;&quot;22 · Errors, Retries &amp; Fallbacks
+
+Run (with the venv active):  python main.py
+Uses two free local models through Ollama. No API key needed:
+  ollama pull llama3.2     (primary)
+  ollama pull qwen2.5      (backup, used if the primary fails)
+&quot;&quot;&quot;
+
+import json
+from dotenv import load_dotenv
+from langchain_ollama import ChatOllama
+
+load_dotenv()
+
+primary = ChatOllama(model=&quot;llama3.2&quot;, temperature=0)
+backup = ChatOllama(model=&quot;qwen2.5&quot;, temperature=0)  # any other model you have pulled
+robust = primary.with_fallbacks([backup])
+
+def get_json(prompt: str, attempts: int = 3) -&gt; dict:
+    for _ in range(attempts):
+        text = robust.invoke(prompt).content
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as e:
+            prompt = f&quot;Your last answer was not valid JSON ({e}). Return ONLY valid JSON.&quot;
+    raise ValueError(&quot;Model never returned valid JSON&quot;)
+
+try:
+    print(get_json(&#x27;Return JSON with keys &quot;city&quot; and &quot;country&quot; for Paris.&#x27;))
+except Exception as e:
+    print(&quot;Sorry, the assistant is busy. Please try again.&quot;, type(e).__name__)
+</pre></details>
+</section>
+<section class="card" id="p24">
+<h3>24. 23 Capstone: Study Buddy agent</h3>
+<div class="path">23_capstone/main.py</div>
+<div class="label">What it does</div>
+<p class="what">An agent that answers from your own notes and can do arithmetic, with short-term memory.</p>
+<div class="label">How to run</div>
+<div class="run">cd day13_langchain\langchain_example_ollama\23_capstone
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>build_store()</code> loads every <code>.txt</code> file in <code>notes/</code>, splits it into 500-character chunks, and embeds them into a vector store.</li>
+<li>Tool <code>search_notes</code> runs a similarity search (k=3) and returns the passages with their file name.</li>
+<li>Tool <code>calculate</code> allows only the characters 0-9 + - * / ( ) and then uses <code>eval</code>. That is safe only because of the filter.</li>
+<li><code>create_agent</code> gets a system prompt: search before answering, cite the file, and say so when the notes don&#x27;t have the answer.</li>
+<li><code>ask()</code> keeps a <code>history</code> list and sends the last 10 messages, so &quot;Explain that more simply&quot; knows what &quot;that&quot; means. <code>recursion_limit: 8</code> stops endless loops.</li>
+</ol>
+<details><summary>Show the full source of 23_capstone/main.py (68 lines)</summary><pre>&quot;&quot;&quot;23 · Capstone: Study Buddy Agent
+
+Run (with the venv active):  python main.py
+Put your .txt study notes in a notes/ folder next to main.py before running.
+Uses free local models through Ollama:
+  ollama pull llama3.2
+  ollama pull nomic-embed-text
+&quot;&quot;&quot;
+
+from pathlib import Path
+from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain_community.document_loaders import TextLoader
+from langchain_core.tools import tool
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+load_dotenv()
+
+# 1. Ingest: put your .txt study notes in a folder called notes/ first
+def build_store(folder=&quot;notes&quot;):
+    docs = []
+    for path in Path(folder).glob(&quot;*.txt&quot;):
+        docs += TextLoader(str(path), encoding=&quot;utf-8&quot;).load()
+    chunks = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50).split_documents(docs)
+    store = InMemoryVectorStore(OllamaEmbeddings(model=&quot;nomic-embed-text&quot;))
+    store.add_documents(chunks)
+    return store
+
+store = build_store()
+
+# 2. Tools
+@tool
+def search_notes(query: str) -&gt; str:
+    &quot;&quot;&quot;Search the student&#x27;s study notes. Use this for any course question.&quot;&quot;&quot;
+    hits = store.similarity_search(query, k=3)
+    return &quot;\n\n&quot;.join(f&quot;[{d.metadata.get(&#x27;source&#x27;)}] {d.page_content}&quot; for d in hits)
+
+@tool
+def calculate(expression: str) -&gt; str:
+    &quot;&quot;&quot;Evaluate simple arithmetic like &#x27;12 * (3 + 4)&#x27;.&quot;&quot;&quot;
+    if not set(expression) &lt;= set(&quot;0123456789+-*/(). &quot;):
+        return &quot;Only numbers and + - * / ( ) are allowed.&quot;
+    return str(eval(expression))  # safe only because the input is filtered above
+
+# 3. Agent
+SYSTEM = (&quot;You are a Study Buddy. Call search_notes before answering course questions. &quot;
+          &quot;Cite the source file. If the notes do not contain the answer, say so. &quot;
+          &quot;Use calculate for arithmetic.&quot;)
+agent = create_agent(
+    model=ChatOllama(model=&quot;llama3.2&quot;, temperature=0),
+    tools=[search_notes, calculate],
+    system_prompt=SYSTEM,
+)
+
+# 4. Memory: keep the last 10 messages
+history = []
+
+def ask(question: str) -&gt; str:
+    history.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: question})
+    result = agent.invoke({&quot;messages&quot;: history[-10:]}, config={&quot;recursion_limit&quot;: 8})
+    answer = result[&quot;messages&quot;][-1].content
+    history.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: answer})
+    return answer
+
+print(ask(&quot;What is photosynthesis?&quot;))
+print(ask(&quot;Explain that more simply.&quot;))
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

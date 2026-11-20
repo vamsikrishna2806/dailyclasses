@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 19: Four agent architectures with LangGraph</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 19</div>
+<h1>Day 19: Four agent architectures with LangGraph</h1>
+<p class="lead">Each agent is a graph: nodes are steps (often one LLM call each), edges say what runs next, and a shared <code>State</code> dictionary carries the data between them.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">Router agent: pick the right specialist</a></li><li><a href="#p2">Reflection agent: write, critique, revise</a></li><li><a href="#p3">Supervisor agent: a boss directs workers</a></li><li><a href="#p4">Human-in-the-loop agent: nothing is sent until you approve</a></li></ol></nav>
+<section class="card" id="p1">
+<h3>1. Router agent: pick the right specialist</h3>
+<div class="path">router_agent/agent.py · router_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">A customer message is sorted into billing, tech or general, and that specialist answers it.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_19\router_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>router_node</code> asks the LLM for ONE word, using a prompt with examples. The code then searches that word for &quot;billing&quot; or &quot;tech&quot;, and anything else becomes <code>general</code>. That safe fallback matters, because small models add extra words.</li>
+<li><code>add_conditional_edges(&quot;router&quot;, lambda s: s[&quot;route&quot;], {...})</code> is the if/else that chooses the next node.</li>
+<li>The billing and tech specialists are their own small ReAct agents with their own tools. The tools use fake local data (<code>INVOICES</code>, <code>KNOWLEDGE_BASE</code>), so the demo works offline.</li>
+<li>Each specialist writes <code>answer</code> into the state, then the graph ends.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → router ─┬─ billing (agent + lookup_invoice) ─┐
+                 ├─ tech    (agent + search_kb)      ─┼─▶ END
+                 └─ general (plain LLM)              ─┘</pre>
+<details><summary>Show the full source of router_agent/agent.py (108 lines)</summary><pre>from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import lookup_invoice, search_kb
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+
+ROUTER_PROMPT = &quot;&quot;&quot;You are a router for a customer-support team.
+Read the customer message and answer with EXACTLY ONE word:
+  billing  -&gt; invoices, payments, refunds, charges
+  tech     -&gt; bugs, crashes, wifi, passwords, how-to problems
+  general  -&gt; anything else (hours, greetings, feedback)
+
+Examples:
+  &quot;Is invoice 1002 paid?&quot;          -&gt; billing
+  &quot;I was charged twice&quot;            -&gt; billing
+  &quot;The app crashes on startup&quot;     -&gt; tech
+  &quot;I forgot my password&quot;           -&gt; tech
+  &quot;What time do you open?&quot;         -&gt; general
+  &quot;Hello!&quot;                         -&gt; general
+
+Answer with just the one word.&quot;&quot;&quot;
+
+BILLING_PROMPT = &quot;You are a friendly billing specialist. Use lookup_invoice when an invoice number is given.&quot;
+TECH_PROMPT = &quot;You are a patient tech-support engineer. Use search_kb to find fixes, then explain step by step.&quot;
+GENERAL_PROMPT = &quot;You are a polite front-desk assistant. Keep answers short and helpful.&quot;
+
+# Each specialist is its own small agent with its own tools.
+billing_agent = create_react_agent(llm, [lookup_invoice])
+tech_agent = create_react_agent(llm, [search_kb])
+
+
+# ---------- State: what flows through the graph ----------
+class State(TypedDict):
+    question: str
+    route: str
+    answer: str
+
+
+# ---------- Nodes ----------
+def router_node(state: State):
+    reply = llm.invoke([SystemMessage(content=ROUTER_PROMPT), HumanMessage(content=state[&quot;question&quot;])])
+    word = reply.content.strip().lower()
+    route = next((r for r in (&quot;billing&quot;, &quot;tech&quot;) if r in word), &quot;general&quot;)  # safe fallback
+    print(f&quot;  [router] -&gt; {route}&quot;)
+    return {&quot;route&quot;: route}
+
+
+def billing_node(state: State):
+    result = billing_agent.invoke({&quot;messages&quot;: [SystemMessage(content=BILLING_PROMPT), HumanMessage(content=state[&quot;question&quot;])]})
+    return {&quot;answer&quot;: result[&quot;messages&quot;][-1].content}
+
+
+def tech_node(state: State):
+    result = tech_agent.invoke({&quot;messages&quot;: [SystemMessage(content=TECH_PROMPT), HumanMessage(content=state[&quot;question&quot;])]})
+    return {&quot;answer&quot;: result[&quot;messages&quot;][-1].content}
+
+
+def general_node(state: State):
+    reply = llm.invoke([SystemMessage(content=GENERAL_PROMPT), HumanMessage(content=state[&quot;question&quot;])])
+    return {&quot;answer&quot;: reply.content}
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;router&quot;, router_node)
+    g.add_node(&quot;billing&quot;, billing_node)
+    g.add_node(&quot;tech&quot;, tech_node)
+    g.add_node(&quot;general&quot;, general_node)
+
+    g.add_edge(START, &quot;router&quot;)
+    # The &quot;if/else&quot; of agents: pick the next node from state[&quot;route&quot;]
+    g.add_conditional_edges(&quot;router&quot;, lambda s: s[&quot;route&quot;],
+                            {&quot;billing&quot;: &quot;billing&quot;, &quot;tech&quot;: &quot;tech&quot;, &quot;general&quot;: &quot;general&quot;})
+    for name in (&quot;billing&quot;, &quot;tech&quot;, &quot;general&quot;):
+        g.add_edge(name, END)
+    return g.compile()
+
+
+def ask(agent, user_input):
+    return agent.invoke({&quot;question&quot;: user_input})[&quot;answer&quot;]
+
+
+def main():
+    print(&quot;=&quot; * 50)
+    print(&quot;  🚦  Router Agent  (Ollama + LangGraph)&quot;)
+    print(&quot;=&quot; * 50)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Routes: billing / tech / general&quot;)
+    print(&quot;  Try: &#x27;Is invoice 1002 paid?&#x27; or &#x27;My wifi keeps dropping&#x27; or &#x27;What are your hours?&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of router_agent/tools.py (28 lines)</summary><pre>from langchain_core.tools import tool
+
+# Fake &quot;databases&quot; so the demo works offline — no API key needed.
+INVOICES = {
+    &quot;1001&quot;: &quot;Invoice 1001: $49.00, paid on 2026-10-02.&quot;,
+    &quot;1002&quot;: &quot;Invoice 1002: $120.00, OVERDUE since 2026-10-20.&quot;,
+}
+
+KNOWLEDGE_BASE = {
+    &quot;wifi&quot;: &quot;Restart the router, wait 30 seconds, then reconnect. Still stuck? Forget the network and rejoin.&quot;,
+    &quot;password&quot;: &quot;Click &#x27;Forgot password&#x27; on the login page. A reset link is emailed within 2 minutes.&quot;,
+    &quot;crash&quot;: &quot;Update the app to the latest version, then clear the cache in Settings &gt; Storage.&quot;,
+}
+
+
+@tool
+def lookup_invoice(invoice_id: str) -&gt; str:
+    &quot;&quot;&quot;Look up an invoice by its number (e.g. 1001) and return amount and payment status.&quot;&quot;&quot;
+    return INVOICES.get(invoice_id.strip(), f&quot;No invoice found with id &#x27;{invoice_id}&#x27;.&quot;)
+
+
+@tool
+def search_kb(keyword: str) -&gt; str:
+    &quot;&quot;&quot;Search the tech-support knowledge base for a keyword like wifi, password or crash.&quot;&quot;&quot;
+    for key, answer in KNOWLEDGE_BASE.items():
+        if key in keyword.lower():
+            return answer
+    return &quot;No article found. Ask the customer for more details.&quot;
+</pre></details>
+</section>
+<section class="card" id="p2">
+<h3>2. Reflection agent: write, critique, revise</h3>
+<div class="path">reflection_agent/agent.py · reflection_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">A writer drafts text, a critic reviews it, and a reviser improves it. This repeats until the critic approves, or after 3 rounds.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_19\reflection_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>write_node</code> makes the first draft (at most 100 words). <code>clean()</code> removes intros like &quot;Here is the revised text:&quot;.</li>
+<li><code>critique_node</code> sends the request, the word count and the draft to a strict editor prompt. The reply is either exactly APPROVED, or 2-3 suggestions.</li>
+<li>Guard rail: if the draft is over 100 words but the model still says APPROVED, the code overrides it with &quot;too long&quot;. The code enforces the rule, not the model.</li>
+<li><code>should_continue</code> returns &quot;done&quot; if approved or after <code>MAX_ROUNDS</code> (3), otherwise &quot;revise&quot;.</li>
+<li>The edge <code>revise → critique</code> creates the loop. <code>MAX_ROUNDS</code> guarantees it always stops.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → write → critique ──APPROVED or 3 rounds──▶ END
+                    ▲   │ suggestions
+                    └ revise ◀┘</pre>
+<details><summary>Show the full source of reflection_agent/agent.py (131 lines)</summary><pre>from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import count_words
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+MAX_ROUNDS = 3      # safety limit so the loop always stops
+MAX_WORDS = 100     # the writer, critic AND reviser all enforce this
+
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.5)
+
+WRITER_PROMPT = f&quot;&quot;&quot;You are a skilled writer. Write a short, clear piece (max {MAX_WORDS} words)
+for the user&#x27;s request. Return ONLY the text itself — no title, no intro like &quot;Here is...&quot;. &quot;&quot;&quot;
+
+CRITIC_PROMPT = f&quot;&quot;&quot;You are a strict but fair editor. Review the draft against the request.
+Check: clarity, tone, grammar, and whether it fully answers the request.
+HARD RULE: the draft must be {MAX_WORDS} words or fewer. If it is longer, it is NOT approved —
+tell the writer to cut it.
+- If it is good enough AND within the limit, reply with exactly: APPROVED
+- Otherwise reply with 2-3 short, specific suggestions (one line each).&quot;&quot;&quot;
+
+REVISER_PROMPT = f&quot;&quot;&quot;You are a writer revising your draft.
+Rewrite it applying the editor&#x27;s feedback, but keep it to {MAX_WORDS} words or fewer
+(cut words if needed — never make it longer).
+Return ONLY the improved text. Do NOT start with &quot;Here is the revised text&quot; or any intro.&quot;&quot;&quot;
+
+
+# ---------- State ----------
+class State(TypedDict):
+    request: str
+    draft: str
+    feedback: str
+    rounds: int
+
+
+def clean(text: str) -&gt; str:
+    &quot;&quot;&quot;Small models love to add &#x27;Here is the revised text:&#x27; — drop that intro line.&quot;&quot;&quot;
+    lines = text.strip().splitlines()
+    if lines and lines[0].lower().startswith(&quot;here&quot;) and lines[0].rstrip().endswith(&quot;:&quot;):
+        lines = lines[1:]
+    return &quot;\n&quot;.join(lines).strip()
+
+
+def is_approved(feedback: str) -&gt; bool:
+    &quot;&quot;&quot;Approved only if the reply STARTS with APPROVED (not suggestions that end with the word).&quot;&quot;&quot;
+    return feedback.strip().upper().startswith(&quot;APPROVED&quot;)
+
+
+# ---------- Nodes ----------
+def write_node(state: State):
+    reply = llm.invoke([SystemMessage(content=WRITER_PROMPT), HumanMessage(content=state[&quot;request&quot;])])
+    draft = clean(reply.content)
+    print(f&quot;\n  ✍️  [writer] first draft ({count_words.invoke(draft)})&quot;)
+    return {&quot;draft&quot;: draft, &quot;rounds&quot;: 0}
+
+
+def critique_node(state: State):
+    n = len(state[&quot;draft&quot;].split())
+    msg = f&quot;Request: {state[&#x27;request&#x27;]}\n\nWord count: {n} (limit {MAX_WORDS})\n\nDraft:\n{state[&#x27;draft&#x27;]}&quot;
+    reply = llm.invoke([SystemMessage(content=CRITIC_PROMPT), HumanMessage(content=msg)])
+    feedback = reply.content.strip()
+    if n &gt; MAX_WORDS and is_approved(feedback):
+        # Guard rail: a small model may approve anyway, but code enforces the rule.
+        feedback = f&quot;Too long ({n} words). Cut it to {MAX_WORDS} words or fewer.&quot;
+    print(&quot;  🧐 [critic]&quot;)
+    for line in feedback.splitlines():
+        if line.strip():
+            print(f&quot;       {line.strip()}&quot;)
+    return {&quot;feedback&quot;: feedback}
+
+
+def revise_node(state: State):
+    msg = f&quot;Request: {state[&#x27;request&#x27;]}\n\nDraft:\n{state[&#x27;draft&#x27;]}\n\nEditor feedback:\n{state[&#x27;feedback&#x27;]}&quot;
+    reply = llm.invoke([SystemMessage(content=REVISER_PROMPT), HumanMessage(content=msg)])
+    draft = clean(reply.content)
+    rounds = state[&quot;rounds&quot;] + 1
+    print(f&quot;  🔁 [reviser] revision #{rounds} ({count_words.invoke(draft)})&quot;)
+    return {&quot;draft&quot;: draft, &quot;rounds&quot;: rounds}
+
+
+# ---------- Loop decision ----------
+def should_continue(state: State):
+    if is_approved(state[&quot;feedback&quot;]):
+        return &quot;done&quot;
+    if state[&quot;rounds&quot;] &gt;= MAX_ROUNDS:
+        return &quot;done&quot;
+    return &quot;revise&quot;
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;write&quot;, write_node)
+    g.add_node(&quot;critique&quot;, critique_node)
+    g.add_node(&quot;revise&quot;, revise_node)
+
+    g.add_edge(START, &quot;write&quot;)
+    g.add_edge(&quot;write&quot;, &quot;critique&quot;)
+    g.add_conditional_edges(&quot;critique&quot;, should_continue, {&quot;revise&quot;: &quot;revise&quot;, &quot;done&quot;: END})
+    g.add_edge(&quot;revise&quot;, &quot;critique&quot;)  # &lt;-- the loop: revise, then critique again
+    return g.compile()
+
+
+def ask(agent, user_input):
+    return agent.invoke({&quot;request&quot;: user_input})[&quot;draft&quot;]
+
+
+def main():
+    print(&quot;=&quot; * 50)
+    print(&quot;  🪞  Reflection Agent  (Ollama + LangGraph)&quot;)
+    print(&quot;=&quot; * 50)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Loop: write → critique → revise (max {MAX_ROUNDS}, {MAX_WORDS} words)&quot;)
+    print(&quot;  Tell me WHAT to write, e.g. &#x27;Write a short email asking my boss for Friday off&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;What should I write? (q to quit): &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        if len(user_input.split()) &lt; 4:  # &#x27;good&#x27;, &#x27;pls proceed&#x27; are not writing requests
+            print(&quot;   ⚠️  Describe what to write in a few words, e.g. &#x27;Write a poem about rain&#x27;.\n&quot;)
+            continue
+        print(&quot;\nFinal:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of reflection_agent/tools.py (9 lines)</summary><pre>from langchain_core.tools import tool
+
+
+@tool
+def count_words(text: str) -&gt; str:
+    &quot;&quot;&quot;Count the words in a piece of text and report whether it is short, medium or long.&quot;&quot;&quot;
+    n = len(text.split())
+    size = &quot;short&quot; if n &lt; 60 else &quot;medium&quot; if n &lt; 150 else &quot;long&quot;
+    return f&quot;{n} words ({size})&quot;
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. Supervisor agent: a boss directs workers</h3>
+<div class="path">supervisor_agent/agent.py · supervisor_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">A supervisor decides who works next: the researcher (Wikipedia), the writer, or the proofreader. Each worker reports back.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_19\supervisor_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>progress(state)</code> tells the supervisor what&#x27;s done: notes yes/no, article yes/no.</li>
+<li>The supervisor LLM picks one word. Guard rails then enforce the order in code: no notes → researcher, no article → writer, not proofread → proofreader, otherwise FINISH. <code>MAX_STEPS = 6</code> is a safety stop.</li>
+<li>The researcher is a ReAct agent with the <code>wiki_summary</code> tool (Wikipedia REST API), and it saves bullet notes.</li>
+<li>The writer turns the notes into an 80-word article. The proofreader polishes it and adds &quot;(proofread ✔)&quot; as a marker.</li>
+<li>Every worker has an edge back to the supervisor. That is the hub-and-spoke shape.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>          ┌──▶ researcher ──┐
+START → supervisor ──▶ writer ──────┤ (back to supervisor)
+          └──▶ proofreader ─┘
+   supervisor says FINISH → END</pre>
+<details><summary>Show the full source of supervisor_agent/agent.py (123 lines)</summary><pre>from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import wiki_summary
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+MAX_STEPS = 6  # safety limit on supervisor decisions
+
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+
+SUPERVISOR_PROMPT = &quot;&quot;&quot;You are a supervisor managing a team of workers:
+  researcher -&gt; finds facts (Wikipedia)
+  writer     -&gt; turns the facts into a short article
+  proofreader-&gt; fixes grammar and polishes the article
+Look at the progress so far and decide who works NEXT.
+Typical order: researcher, then writer, then proofreader, then FINISH.
+Answer with EXACTLY ONE word: researcher, writer, proofreader, or FINISH.&quot;&quot;&quot;
+
+RESEARCHER_PROMPT = &quot;You are a researcher. Use wiki_summary to get facts about the topic. Report the key facts as bullet points.&quot;
+WRITER_PROMPT = &quot;You are a writer. Using the research notes, write a clear 80-word article. Return only the article.&quot;
+PROOFREADER_PROMPT = &quot;You are a proofreader. Fix grammar and polish this article without changing its meaning. Return only the final article.&quot;
+
+researcher_agent = create_react_agent(llm, [wiki_summary])  # a worker WITH a tool
+
+
+# ---------- State ----------
+class State(TypedDict):
+    task: str
+    notes: str       # researcher output
+    article: str     # writer / proofreader output
+    next: str        # supervisor&#x27;s decision
+    steps: int
+
+
+def progress(state: State) -&gt; str:
+    return (f&quot;Task: {state[&#x27;task&#x27;]}\n&quot;
+            f&quot;Research notes done: {&#x27;yes&#x27; if state[&#x27;notes&#x27;] else &#x27;no&#x27;}\n&quot;
+            f&quot;Article written: {&#x27;yes&#x27; if state[&#x27;article&#x27;] else &#x27;no&#x27;}&quot;)
+
+
+# ---------- Supervisor ----------
+def supervisor_node(state: State):
+    reply = llm.invoke([SystemMessage(content=SUPERVISOR_PROMPT), HumanMessage(content=progress(state))])
+    word = reply.content.strip().lower()
+    choice = next((w for w in (&quot;researcher&quot;, &quot;writer&quot;, &quot;proofreader&quot;) if w in word), &quot;FINISH&quot;)
+    # Guard rails: small models sometimes pick a wrong step, so enforce the order.
+    if not state[&quot;notes&quot;]:
+        choice = &quot;researcher&quot;
+    elif not state[&quot;article&quot;]:
+        choice = &quot;writer&quot;
+    elif &quot;proofread ✔&quot; in state[&quot;article&quot;]:
+        choice = &quot;FINISH&quot;
+    else:
+        choice = &quot;proofreader&quot;
+    if state[&quot;steps&quot;] &gt;= MAX_STEPS:
+        choice = &quot;FINISH&quot;
+    print(f&quot;  🧑‍💼 [supervisor] -&gt; {choice}&quot;)
+    return {&quot;next&quot;: choice, &quot;steps&quot;: state[&quot;steps&quot;] + 1}
+
+
+# ---------- Workers ----------
+def researcher_node(state: State):
+    result = researcher_agent.invoke({&quot;messages&quot;: [SystemMessage(content=RESEARCHER_PROMPT), HumanMessage(content=state[&quot;task&quot;])]})
+    return {&quot;notes&quot;: result[&quot;messages&quot;][-1].content}
+
+
+def writer_node(state: State):
+    msg = f&quot;Topic: {state[&#x27;task&#x27;]}\n\nResearch notes:\n{state[&#x27;notes&#x27;]}&quot;
+    reply = llm.invoke([SystemMessage(content=WRITER_PROMPT), HumanMessage(content=msg)])
+    return {&quot;article&quot;: reply.content}
+
+
+def proofreader_node(state: State):
+    reply = llm.invoke([SystemMessage(content=PROOFREADER_PROMPT), HumanMessage(content=state[&quot;article&quot;])])
+    return {&quot;article&quot;: reply.content + &quot;\n\n(proofread ✔)&quot;}
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;supervisor&quot;, supervisor_node)
+    g.add_node(&quot;researcher&quot;, researcher_node)
+    g.add_node(&quot;writer&quot;, writer_node)
+    g.add_node(&quot;proofreader&quot;, proofreader_node)
+
+    g.add_edge(START, &quot;supervisor&quot;)
+    g.add_conditional_edges(&quot;supervisor&quot;, lambda s: s[&quot;next&quot;],
+                            {&quot;researcher&quot;: &quot;researcher&quot;, &quot;writer&quot;: &quot;writer&quot;,
+                             &quot;proofreader&quot;: &quot;proofreader&quot;, &quot;FINISH&quot;: END})
+    # Every worker reports BACK to the supervisor (that&#x27;s the hub-and-spoke shape).
+    for worker in (&quot;researcher&quot;, &quot;writer&quot;, &quot;proofreader&quot;):
+        g.add_edge(worker, &quot;supervisor&quot;)
+    return g.compile()
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;task&quot;: user_input, &quot;notes&quot;: &quot;&quot;, &quot;article&quot;: &quot;&quot;, &quot;next&quot;: &quot;&quot;, &quot;steps&quot;: 0})
+    return result[&quot;article&quot;]
+
+
+def main():
+    print(&quot;=&quot; * 50)
+    print(&quot;  🧑‍💼  Supervisor Agent  (Ollama + Wikipedia)&quot;)
+    print(&quot;=&quot; * 50)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Workers: researcher, writer, proofreader&quot;)
+    print(&quot;  Try: &#x27;Black holes&#x27; or &#x27;The Eiffel Tower&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;Topic: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print(&quot;\nArticle:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of supervisor_agent/tools.py (19 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+@tool
+def wiki_summary(topic: str) -&gt; str:
+    &quot;&quot;&quot;
+    Get a short factual summary of a topic from Wikipedia.
+    Uses the free Wikipedia REST API — no API key.
+    &quot;&quot;&quot;
+    title = topic.strip().replace(&quot; &quot;, &quot;_&quot;)
+    r = requests.get(
+        f&quot;https://en.wikipedia.org/api/rest_v1/page/summary/{title}&quot;,
+        headers={&quot;User-Agent&quot;: &quot;student-agent-demo/1.0&quot;},
+        timeout=10,
+    )
+    if r.status_code != 200:
+        return f&quot;No Wikipedia page found for &#x27;{topic}&#x27;. Try a simpler or more general title.&quot;
+    return r.json().get(&quot;extract&quot;, &quot;No summary available.&quot;)
+</pre></details>
+</section>
+<section class="card" id="p4">
+<h3>4. Human-in-the-loop agent: nothing is sent until you approve</h3>
+<div class="path">human_in_loop_agent/agent.py · human_in_loop_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">Drafts an email, pauses to show it to you, and sends it only after you type approve. Any other answer is treated as feedback, and it redrafts.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_19\human_in_loop_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>draft_node</code> writes the email using the real names. On later rounds it also gets the previous draft and your feedback.</li>
+<li><code>human_review_node</code> calls <code>interrupt({...})</code>, which pauses the graph and hands the draft to the program.</li>
+<li><code>compile(checkpointer=MemorySaver())</code> is required: it saves the paused state under a <code>thread_id</code>.</li>
+<li><code>run_once()</code> sees <code>__interrupt__</code> in the result, prints the draft and asks you. Then <code>agent.invoke(Command(resume=answer), config)</code> continues from exactly where it paused.</li>
+<li><code>route_after_review</code>: approve/yes → <code>send</code>, anything else → back to <code>draft</code>.</li>
+<li>The <code>send_email</code> tool doesn&#x27;t really email anyone. It appends the email to <code>outbox.txt</code>.</li>
+<li><code>ask_until_valid()</code> keeps asking until the input makes sense (a valid email address, and an empty Enter never sends).</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → draft → human_review ⏸ ── approve ──▶ send → END
+          ▲            │ your feedback
+          └────────────┘</pre>
+<div class="idea"><b>Key idea:</b> Put a human approval step before any risky action, like sending, paying or deleting.</div>
+<details><summary>Show the full source of human_in_loop_agent/agent.py (135 lines)</summary><pre>from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import interrupt, Command
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import send_email
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.4)
+
+DRAFT_PROMPT = &quot;&quot;&quot;You are an email assistant. Write a short, polite email (max 80 words)
+for the user&#x27;s request. Start with &quot;Dear &lt;recipient name&gt;,&quot; and end with
+&quot;Best regards,&quot; followed by the sender&#x27;s name. Use the real names you are given and
+NEVER leave placeholders like [Recipient] or [Your Name].
+Return ONLY the email body — no subject line, no extra comments.&quot;&quot;&quot;
+
+
+# ---------- State ----------
+class State(TypedDict):
+    request: str
+    to: str
+    to_name: str
+    sender: str
+    draft: str
+    feedback: str
+    result: str
+
+
+# ---------- Nodes ----------
+def draft_node(state: State):
+    msg = f&quot;Recipient name: {state[&#x27;to_name&#x27;]}\nSender name: {state[&#x27;sender&#x27;]}\nRequest: {state[&#x27;request&#x27;]}&quot;
+    if state.get(&quot;feedback&quot;):  # second time around: include the human&#x27;s notes
+        msg += f&quot;\n\nPrevious draft:\n{state[&#x27;draft&#x27;]}\n\nHuman feedback — please apply it:\n{state[&#x27;feedback&#x27;]}&quot;
+    reply = llm.invoke([SystemMessage(content=DRAFT_PROMPT), HumanMessage(content=msg)])
+    return {&quot;draft&quot;: reply.content.strip()}
+
+
+def human_review_node(state: State):
+    # interrupt() PAUSES the graph here and hands this payload to the human.
+    # The graph resumes when we call invoke(Command(resume=...)) with their answer.
+    decision = interrupt({&quot;to&quot;: state[&quot;to&quot;], &quot;draft&quot;: state[&quot;draft&quot;]})
+    return {&quot;feedback&quot;: decision}  # &quot;approve&quot; or the human&#x27;s edit instructions
+
+
+def route_after_review(state: State):
+    return &quot;send&quot; if state[&quot;feedback&quot;].strip().lower() in (&quot;approve&quot;, &quot;a&quot;, &quot;yes&quot;, &quot;y&quot;) else &quot;draft&quot;
+
+
+def send_node(state: State):
+    result = send_email.invoke({&quot;to&quot;: state[&quot;to&quot;], &quot;subject&quot;: &quot;Message from my assistant&quot;, &quot;body&quot;: state[&quot;draft&quot;]})
+    return {&quot;result&quot;: result}
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;draft&quot;, draft_node)
+    g.add_node(&quot;human_review&quot;, human_review_node)
+    g.add_node(&quot;send&quot;, send_node)
+
+    g.add_edge(START, &quot;draft&quot;)
+    g.add_edge(&quot;draft&quot;, &quot;human_review&quot;)
+    g.add_conditional_edges(&quot;human_review&quot;, route_after_review, {&quot;send&quot;: &quot;send&quot;, &quot;draft&quot;: &quot;draft&quot;})
+    g.add_edge(&quot;send&quot;, END)
+    # A checkpointer is REQUIRED: it saves the paused state so we can resume later.
+    return g.compile(checkpointer=MemorySaver())
+
+
+# ---------- Console helpers (keep input friendly for students) ----------
+def ask_until_valid(prompt, is_ok, hint):
+    &quot;&quot;&quot;Keep asking until the answer passes is_ok, so bad input never derails the demo.&quot;&quot;&quot;
+    while True:
+        value = input(prompt).strip()
+        if is_ok(value):
+            return value
+        print(f&quot;   ⚠️  {hint}&quot;)
+
+
+def looks_like_email(text):
+    local, _, domain = text.partition(&quot;@&quot;)
+    return bool(local) and &quot;.&quot; in domain and &quot; &quot; not in text
+
+
+def run_once(agent, request, to, to_name, sender, thread_id=&quot;1&quot;):
+    &quot;&quot;&quot;Drive one email from request to sent — asking the human whenever the graph pauses.&quot;&quot;&quot;
+    config = {&quot;configurable&quot;: {&quot;thread_id&quot;: thread_id}}
+    out = agent.invoke({&quot;request&quot;: request, &quot;to&quot;: to, &quot;to_name&quot;: to_name, &quot;sender&quot;: sender,
+                        &quot;draft&quot;: &quot;&quot;, &quot;feedback&quot;: &quot;&quot;, &quot;result&quot;: &quot;&quot;}, config)
+
+    while &quot;__interrupt__&quot; in out:  # graph is paused, waiting for a human
+        payload = out[&quot;__interrupt__&quot;][0].value
+        print(f&quot;\n📧 DRAFT  (to: {to_name} &lt;{payload[&#x27;to&#x27;]}&gt;)&quot;)
+        print(&quot;-&quot; * 40)
+        print(payload[&quot;draft&quot;])
+        print(&quot;-&quot; * 40)
+        # An empty Enter must NOT send — only an explicit answer counts.
+        answer = ask_until_valid(
+            &quot;👉 Type  approve  to SEND, or type what to change (e.g. &#x27;make it shorter&#x27;): &quot;,
+            lambda v: v != &quot;&quot;, &quot;Please type &#x27;approve&#x27; or a change request.&quot;)
+        out = agent.invoke(Command(resume=answer), config)  # resume from the pause
+
+    return out[&quot;result&quot;]
+
+
+def main():
+    print(&quot;=&quot; * 50)
+    print(&quot;  🙋  Human-in-the-Loop Agent  (Ollama + LangGraph)&quot;)
+    print(&quot;=&quot; * 50)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Nothing is sent until YOU approve\n&quot;)
+    agent = build_agent()
+    sender = ask_until_valid(&quot;1) Your name (used to sign the email), e.g. Vamsi: &quot;,
+                             lambda v: v != &quot;&quot; and v.lower() not in (&quot;approve&quot;, &quot;quit&quot;, &quot;q&quot;),
+                             &quot;Please type your real name.&quot;)
+    n = 0
+    while True:
+        try:
+            print(&quot;\n--- New email (type q to quit) ---&quot;)
+            request = ask_until_valid(&quot;2) What should the email say? e.g. &#x27;Ask Priya to move tomorrow&#x27;s meeting to 3pm&#x27;: &quot;,
+                                      lambda v: len(v.split()) &gt;= 3 or v.lower() in (&quot;q&quot;, &quot;quit&quot;, &quot;exit&quot;),
+                                      &quot;Describe the email in a few words, or type q to quit.&quot;)
+            if request.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+                print(&quot;Bye!&quot;); break
+            to = ask_until_valid(&quot;3) Recipient&#x27;s email address: &quot;, looks_like_email,
+                                 &quot;That doesn&#x27;t look like an email (need name@domain.com). Try again.&quot;)
+            to_name = ask_until_valid(&quot;4) Recipient&#x27;s name, e.g. Priya: &quot;, lambda v: v != &quot;&quot;, &quot;Please type a name.&quot;)
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        n += 1
+        print(&quot;\n✅&quot;, run_once(agent, request, to, to_name, sender, thread_id=str(n)))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of human_in_loop_agent/tools.py (18 lines)</summary><pre>from datetime import datetime
+from pathlib import Path
+
+from langchain_core.tools import tool
+
+OUTBOX = Path(__file__).parent / &quot;outbox.txt&quot;
+
+
+@tool
+def send_email(to: str, subject: str, body: str) -&gt; str:
+    &quot;&quot;&quot;
+    &#x27;Send&#x27; an email. For this demo it appends the email to outbox.txt
+    (a real app would call SMTP / Gmail API here). This is the RISKY action
+    that a human must approve first.
+    &quot;&quot;&quot;
+    with OUTBOX.open(&quot;a&quot;, encoding=&quot;utf-8&quot;) as f:
+        f.write(f&quot;[{datetime.now():%Y-%m-%d %H:%M}] To: {to}\nSubject: {subject}\n{body}\n{&#x27;-&#x27; * 40}\n&quot;)
+    return f&quot;Email to {to} saved in {OUTBOX.name}&quot;
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

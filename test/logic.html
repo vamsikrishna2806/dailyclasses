@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>test/: Neumorphic to-do list app</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">TEST</div>
+<h1>test/: Neumorphic to-do list app</h1>
+<p class="lead">A to-do list single-page app: Flask API (<code>app.py</code>), hand-written SQL (<code>db.py</code>), and a vanilla JS frontend (<code>static/script.js</code>).</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">run.py: launcher</a></li><li><a href="#p2">todo_app/db.py: SQL by hand</a></li><li><a href="#p3">todo_app/app.py: Flask REST API</a></li><li><a href="#p4">todo_app/static/script.js: the page</a></li><li><a href="#p5">todo_app/test_app.py: tests</a></li></ol></nav>
+<section class="card" id="p1">
+<h3>1. run.py: launcher</h3>
+<div class="path">run.py</div>
+<div class="label">What it does</div>
+<p class="what">Starts the app from the <code>test/</code> folder.</p>
+<div class="label">How to run</div>
+<div class="run">python test/run.py      # http://127.0.0.1:5000</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Moves into <code>todo_app/</code> (with <code>os.chdir</code> and <code>sys.path</code>) so the relative paths and imports work.</li>
+<li>Calls <code>init_db()</code>, then <code>app.run(port=5000, debug=True)</code>.</li>
+</ol>
+<details><summary>Show the full source of run.py (21 lines)</summary><pre>&quot;&quot;&quot;
+Root Launcher for the Neumorphic To-Do List Application.
+Runs the Flask application located inside the todo_app/ directory.
+&quot;&quot;&quot;
+import os
+import sys
+
+# Change working directory to todo_app so relative paths resolve cleanly
+todo_app_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), &quot;todo_app&quot;)
+sys.path.insert(0, todo_app_dir)
+os.chdir(todo_app_dir)
+
+from app import app, init_db
+
+if __name__ == &quot;__main__&quot;:
+    init_db()
+    print(&quot;=&quot; * 60)
+    print(&quot; Neumorphic To-Do List Server Running &quot;)
+    print(&quot; Open in your browser: http://127.0.0.1:5000&quot;)
+    print(&quot;=&quot; * 60)
+    app.run(host=&quot;127.0.0.1&quot;, port=5000, debug=True)
+</pre></details>
+</section>
+<section class="card" id="p2">
+<h3>2. todo_app/db.py: SQL by hand</h3>
+<div class="path">todo_app/db.py</div>
+<div class="label">What it does</div>
+<p class="what">Creates the table and has one function per action, using plain sqlite3 (no ORM).</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>init_db()</code> creates <code>tasks(id, title, done, created_at, due_date)</code>, and if the table is empty it adds 4 sample tasks.</li>
+<li><code>task_to_dict(row)</code> turns a row into JSON-friendly data (<code>done</code> becomes true/false).</li>
+<li><code>create_task</code>, <code>get_all_tasks</code>, <code>get_task_by_id</code>, <code>update_task</code> and <code>delete_task</code> each run one parameterised SQL statement (with <code>?</code> placeholders).</li>
+<li><code>update_task(id, done=None, title=None, due_date=None)</code> builds its UPDATE only from the fields that were given.</li>
+</ol>
+<details><summary>Show the full source of todo_app/db.py (242 lines)</summary><pre>&quot;&quot;&quot;
+=============================================================================
+LAYER: Database Persistence Layer (db.py)
+DESCRIPTION:
+  This file manages all interactions with the SQLite database.
+  It uses Python&#x27;s built-in `sqlite3` module with 100% hand-crafted SQL
+  queries (no ORM). It is responsible for database initialization, schema
+  creation, seed data insertion, and all CRUD (Create, Read, Update, Delete)
+  operations on the `tasks` table.
+=============================================================================
+&quot;&quot;&quot;
+
+import os
+import sqlite3
+from datetime import datetime
+
+# Resolve database file path relative to this file&#x27;s directory
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), &quot;todo.db&quot;)
+
+
+def get_db_connection():
+    &quot;&quot;&quot;
+    Establish and return a new SQLite database connection.
+    Configures `row_factory` to `sqlite3.Row` so query results can be
+    accessed like dictionaries with column names.
+    &quot;&quot;&quot;
+    conn = sqlite3.connect(DB_PATH)
+    # Enable dict-like column access for fetched rows
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    &quot;&quot;&quot;
+    Initialize the database table and seed initial sample data if empty.
+    Creates the `tasks` table with fields:
+      - id: unique auto-incrementing integer identifier
+      - title: task description string (cannot be null)
+      - done: integer status flag (0 = active, 1 = completed)
+      - created_at: ISO-formatted timestamp of task creation
+      - due_date: optional ISO date string for task deadline (stretch goal)
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Create the tasks table if it does not already exist
+    cursor.execute(&quot;&quot;&quot;
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            done INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            due_date TEXT
+        )
+    &quot;&quot;&quot;)
+
+    # Check if the database has any existing tasks
+    cursor.execute(&quot;SELECT COUNT(*) AS count FROM tasks&quot;)
+    count = cursor.fetchone()[&quot;count&quot;]
+
+    # Seed initial sample data if the table is freshly created and empty
+    if count == 0:
+        sample_tasks = [
+            (
+                &quot;Explore the Neumorphic To-Do App design&quot;,
+                1,
+                datetime.now().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;),
+                datetime.now().strftime(&quot;%Y-%m-%d&quot;),
+            ),
+            (
+                &quot;Test adding a new task with due date&quot;,
+                0,
+                datetime.now().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;),
+                datetime.now().strftime(&quot;%Y-%m-%d&quot;),
+            ),
+            (
+                &quot;Filter tasks by Active and Done status&quot;,
+                0,
+                datetime.now().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;),
+                None,
+            ),
+            (
+                &quot;Review Flask REST API endpoints in app.py&quot;,
+                0,
+                datetime.now().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;),
+                None,
+            ),
+        ]
+
+        # Insert sample rows using parameterized SQL to prevent SQL injection
+        cursor.executemany(
+            &quot;&quot;&quot;
+            INSERT INTO tasks (title, done, created_at, due_date)
+            VALUES (?, ?, ?, ?)
+            &quot;&quot;&quot;,
+            sample_tasks,
+        )
+
+        conn.commit()
+
+    conn.close()
+
+
+def task_to_dict(row):
+    &quot;&quot;&quot;
+    Helper function to convert a sqlite3.Row object into a standard Python dict.
+    Converts SQLite integer boolean (0 or 1) to a Python boolean for clean JSON serialization.
+    &quot;&quot;&quot;
+    if row is None:
+        return None
+    return {
+        &quot;id&quot;: row[&quot;id&quot;],
+        &quot;title&quot;: row[&quot;title&quot;],
+        &quot;done&quot;: bool(row[&quot;done&quot;]),
+        &quot;created_at&quot;: row[&quot;created_at&quot;],
+        &quot;due_date&quot;: row[&quot;due_date&quot;],
+    }
+
+
+def get_all_tasks():
+    &quot;&quot;&quot;
+    Retrieve all tasks from the database ordered by completion status (active first)
+    and then descending by ID (newest first).
+    Returns a list of task dictionaries.
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(&quot;&quot;&quot;
+        SELECT id, title, done, created_at, due_date
+        FROM tasks
+        ORDER BY done ASC, id DESC
+    &quot;&quot;&quot;)
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [task_to_dict(row) for row in rows]
+
+
+def get_task_by_id(task_id):
+    &quot;&quot;&quot;
+    Fetch a single task record by its unique ID.
+    Returns the task dictionary if found, or None if not found.
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        &quot;SELECT id, title, done, created_at, due_date FROM tasks WHERE id = ?&quot;,
+        (task_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    return task_to_dict(row)
+
+
+def create_task(title, due_date=None):
+    &quot;&quot;&quot;
+    Insert a new task into the database.
+    - title: text description (validated by caller)
+    - due_date: optional string in YYYY-MM-DD format
+    Returns the newly inserted task dictionary.
+    &quot;&quot;&quot;
+    created_at = datetime.now().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        &quot;&quot;&quot;
+        INSERT INTO tasks (title, done, created_at, due_date)
+        VALUES (?, 0, ?, ?)
+        &quot;&quot;&quot;,
+        (title.strip(), created_at, due_date.strip() if due_date else None),
+    )
+    new_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+
+    return get_task_by_id(new_id)
+
+
+def update_task(task_id, done=None, title=None, due_date=None):
+    &quot;&quot;&quot;
+    Update specific attributes of an existing task.
+    Supports updating &#x27;done&#x27; status, &#x27;title&#x27;, and/or &#x27;due_date&#x27;.
+    Returns the updated task dictionary if found, or None if task does not exist.
+    &quot;&quot;&quot;
+    # Check if task exists first
+    task = get_task_by_id(task_id)
+    if not task:
+        return None
+
+    # Dynamically build the SQL UPDATE clause based on provided arguments
+    update_clauses = []
+    params = []
+
+    if done is not None:
+        # Convert boolean to integer (1 for True, 0 for False)
+        update_clauses.append(&quot;done = ?&quot;)
+        params.append(1 if done else 0)
+
+    if title is not None:
+        update_clauses.append(&quot;title = ?&quot;)
+        params.append(title.strip())
+
+    if due_date is not None:
+        update_clauses.append(&quot;due_date = ?&quot;)
+        params.append(due_date.strip() if due_date else None)
+
+    # If no fields were provided to update, return the current task
+    if not update_clauses:
+        return task
+
+    # Append task_id for the WHERE clause
+    params.append(task_id)
+    sql = f&quot;UPDATE tasks SET {&#x27;, &#x27;.join(update_clauses)} WHERE id = ?&quot;
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(sql, tuple(params))
+    conn.commit()
+    conn.close()
+
+    return get_task_by_id(task_id)
+
+
+def delete_task(task_id):
+    &quot;&quot;&quot;
+    Delete a task by its ID.
+    Returns True if a record was deleted, or False if no matching record was found.
+    &quot;&quot;&quot;
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(&quot;DELETE FROM tasks WHERE id = ?&quot;, (task_id,))
+    deleted = cursor.rowcount &gt; 0
+    conn.commit()
+    conn.close()
+
+    return deleted
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. todo_app/app.py: Flask REST API</h3>
+<div class="path">todo_app/app.py</div>
+<div class="label">What it does</div>
+<p class="what">Serves the page plus 4 JSON routes.</p>
+<div class="tw"><table><tr><th>Route</th><th>Does</th></tr>
+<tr><td><code>GET /api/tasks</code></td><td>list all tasks</td></tr>
+<tr><td><code>POST /api/tasks</code></td><td>check the JSON (title required, due_date optional text) → 201, or 400</td></tr>
+<tr><td><code>PATCH /api/tasks/&lt;id&gt;</code></td><td>change done / title / due date → 200, or 404</td></tr>
+<tr><td><code>DELETE /api/tasks/&lt;id&gt;</code></td><td>delete → 200, or 404</td></tr>
+</table></div>
+<details><summary>Show the full source of todo_app/app.py (164 lines)</summary><pre>&quot;&quot;&quot;
+=============================================================================
+LAYER: Backend API &amp; Web Server Layer (app.py)
+DESCRIPTION:
+  This file implements the Flask REST API backend and serves the frontend SPA.
+  It handles HTTP routing, request parsing, input validation, and proper HTTP
+  response status codes (200 OK, 201 Created, 400 Bad Request, 404 Not Found).
+  It connects to the Database Layer (db.py) to perform all data operations.
+=============================================================================
+&quot;&quot;&quot;
+
+from flask import Flask, jsonify, render_template, request
+
+# Import hand-crafted database operations from our database layer
+from db import create_task, delete_task, get_all_tasks, get_task_by_id, init_db, update_task
+
+# Initialize Flask application
+app = Flask(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Frontend Route
+# ---------------------------------------------------------------------------
+@app.route(&quot;/&quot;)
+def index():
+    &quot;&quot;&quot;
+    Serve the main single-page application (SPA) HTML shell.
+    All dynamic task management happens client-side via the REST API.
+    &quot;&quot;&quot;
+    return render_template(&quot;index.html&quot;)
+
+
+# ---------------------------------------------------------------------------
+# REST API Endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.route(&quot;/api/tasks&quot;, methods=[&quot;GET&quot;])
+def get_tasks():
+    &quot;&quot;&quot;
+    GET /api/tasks
+    Retrieve all tasks in the database.
+    Returns:
+      - 200 OK: JSON list of all task objects.
+    &quot;&quot;&quot;
+    tasks = get_all_tasks()
+    return jsonify(tasks), 200
+
+
+@app.route(&quot;/api/tasks&quot;, methods=[&quot;POST&quot;])
+def add_task():
+    &quot;&quot;&quot;
+    POST /api/tasks
+    Create a new task record.
+    Expected JSON Body:
+      - title: string (required, non-empty)
+      - due_date: string (optional, format YYYY-MM-DD)
+    Returns:
+      - 201 Created: The newly created task object.
+      - 400 Bad Request: If title is missing, not a string, or empty.
+    &quot;&quot;&quot;
+    # Parse request JSON payload
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data, dict):
+        return jsonify({&quot;error&quot;: &quot;Invalid JSON payload provided.&quot;}), 400
+
+    title = data.get(&quot;title&quot;)
+    due_date = data.get(&quot;due_date&quot;)
+
+    # Validate that the title is provided and not just whitespace
+    if not title or not isinstance(title, str) or not title.strip():
+        return jsonify({&quot;error&quot;: &quot;Task title is required and cannot be empty.&quot;}), 400
+
+    # Optional due_date validation: must be string or None
+    if due_date is not None and not isinstance(due_date, str):
+        return jsonify({&quot;error&quot;: &quot;Due date must be a valid date string.&quot;}), 400
+
+    # Insert into the database
+    new_task = create_task(title=title, due_date=due_date)
+    return jsonify(new_task), 201
+
+
+@app.route(&quot;/api/tasks/&lt;int:task_id&gt;&quot;, methods=[&quot;PATCH&quot;])
+def patch_task(task_id):
+    &quot;&quot;&quot;
+    PATCH /api/tasks/&lt;id&gt;
+    Update an existing task (e.g. toggle completion status, update title/due_date).
+    Expected JSON Body:
+      - done: boolean (optional)
+      - title: string (optional)
+      - due_date: string or null (optional)
+    Returns:
+      - 200 OK: The updated task object.
+      - 400 Bad Request: If no valid update fields are provided.
+      - 404 Not Found: If task with the given ID does not exist.
+    &quot;&quot;&quot;
+    # Verify task existence first
+    existing_task = get_task_by_id(task_id)
+    if not existing_task:
+        return jsonify({&quot;error&quot;: f&quot;Task with id {task_id} not found.&quot;}), 404
+
+    # Parse request JSON payload
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data, dict):
+        return jsonify({&quot;error&quot;: &quot;Invalid JSON payload provided.&quot;}), 400
+
+    # Extract optional fields to update
+    done = data.get(&quot;done&quot;)
+    title = data.get(&quot;title&quot;)
+    due_date = data.get(&quot;due_date&quot;)
+
+    # Ensure at least one update field was provided
+    if done is None and title is None and &quot;due_date&quot; not in data:
+        return jsonify({&quot;error&quot;: &quot;At least one field (&#x27;done&#x27;, &#x27;title&#x27;, &#x27;due_date&#x27;) must be provided.&quot;}), 400
+
+    # Validate done if passed
+    if done is not None and not isinstance(done, (bool, int)):
+        return jsonify({&quot;error&quot;: &quot;Field &#x27;done&#x27; must be a boolean or integer (0 or 1).&quot;}), 400
+
+    # Validate title if passed
+    if title is not None:
+        if not isinstance(title, str) or not title.strip():
+            return jsonify({&quot;error&quot;: &quot;Title cannot be empty.&quot;}), 400
+
+    # Update record in SQLite
+    updated_task = update_task(task_id, done=done, title=title, due_date=due_date)
+    return jsonify(updated_task), 200
+
+
+@app.route(&quot;/api/tasks/&lt;int:task_id&gt;&quot;, methods=[&quot;DELETE&quot;])
+def remove_task(task_id):
+    &quot;&quot;&quot;
+    DELETE /api/tasks/&lt;id&gt;
+    Remove a task by ID.
+    Returns:
+      - 200 OK: Confirmation message and deleted task ID.
+      - 404 Not Found: If task with given ID does not exist.
+    &quot;&quot;&quot;
+    # Verify task existence first
+    existing_task = get_task_by_id(task_id)
+    if not existing_task:
+        return jsonify({&quot;error&quot;: f&quot;Task with id {task_id} not found.&quot;}), 404
+
+    # Perform deletion
+    deleted = delete_task(task_id)
+    if not deleted:
+        return jsonify({&quot;error&quot;: f&quot;Failed to delete task with id {task_id}.&quot;}), 500
+
+    return jsonify({&quot;message&quot;: &quot;Task deleted successfully.&quot;, &quot;id&quot;: task_id}), 200
+
+
+# ---------------------------------------------------------------------------
+# Application Entry Point
+# ---------------------------------------------------------------------------
+if __name__ == &quot;__main__&quot;:
+    # Ensure database table and sample records exist before server starts
+    init_db()
+
+    # Run Flask server locally on port 5000 in debug mode
+    print(&quot;=&quot; * 60)
+    print(&quot; Neumorphic To-Do List Server Running &quot;)
+    print(&quot; Open in your browser: http://127.0.0.1:5000&quot;)
+    print(&quot;=&quot; * 60)
+    app.run(host=&quot;127.0.0.1&quot;, port=5000, debug=True)
+</pre></details>
+</section>
+<section class="card" id="p4">
+<h3>4. todo_app/static/script.js: the page</h3>
+<div class="path">todo_app/static/script.js</div>
+<div class="label">What it does</div>
+<p class="what">Draws the list, the progress bar and the filters, and calls the API.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>loadTasks()</code> fetches the tasks, then <code>renderTasks()</code> draws them for the current filter (all, active or done).</li>
+<li><code>formatDueDateBadge()</code> marks a task overdue when its due date has passed and it isn&#x27;t done.</li>
+<li><code>updateMetrics()</code> shows &quot;3 of 5 tasks done&quot; and sets the progress bar.</li>
+<li><code>handleAddTask</code>, <code>handleToggleDone</code> and <code>handleDeleteTask</code> call POST, PATCH and DELETE, then refresh. <code>showToast</code> shows messages.</li>
+</ol>
+<details><summary>Show the full source of todo_app/static/script.js (511 lines)</summary><pre>/*
+=============================================================================
+LAYER: Frontend Client-Side Logic Layer (static/script.js)
+DESCRIPTION:
+  This file implements the Vanilla JavaScript Single-Page Application (SPA) logic.
+  It performs asynchronous HTTP requests (GET, POST, PATCH, DELETE) to the Flask
+  REST API endpoints, manages local state, handles user interactions, updates
+  the task counter (&quot;X of Y tasks done&quot;), renders the Neumorphic task items,
+  and provides real-time filtering (All / Active / Done) and due date tracking.
+=============================================================================
+*/
+
+// Strict mode ensures cleaner JavaScript and catches common bugs
+&quot;use strict&quot;;
+
+// ---------------------------------------------------------------------------
+// Application State
+// ---------------------------------------------------------------------------
+const state = {
+  // Array of all task objects fetched from the REST API
+  tasks: [],
+  // Current active filter: &#x27;all&#x27; | &#x27;active&#x27; | &#x27;done&#x27;
+  currentFilter: &quot;all&quot;,
+  // Loading status flag
+  isLoading: false,
+};
+
+// ---------------------------------------------------------------------------
+// DOM Elements Cache
+// ---------------------------------------------------------------------------
+const elements = {
+  // Form and inputs
+  addTaskForm: document.getElementById(&quot;add-task-form&quot;),
+  taskTitleInput: document.getElementById(&quot;task-title-input&quot;),
+  taskDateInput: document.getElementById(&quot;task-date-input&quot;),
+  addTaskBtn: document.getElementById(&quot;add-task-btn&quot;),
+  formError: document.getElementById(&quot;form-error&quot;),
+
+  // Metrics and progress
+  tasksCounter: document.getElementById(&quot;tasks-counter&quot;),
+  progressBarFill: document.getElementById(&quot;progress-bar-fill&quot;),
+  percentBadge: document.getElementById(&quot;percent-badge&quot;),
+
+  // Filter tabs and counts
+  filterPills: document.querySelectorAll(&quot;.filter-pill&quot;),
+  countAll: document.getElementById(&quot;count-all&quot;),
+  countActive: document.getElementById(&quot;count-active&quot;),
+  countDone: document.getElementById(&quot;count-done&quot;),
+
+  // Task list and feedback containers
+  tasksList: document.getElementById(&quot;tasks-list&quot;),
+  tasksLoading: document.getElementById(&quot;tasks-loading&quot;),
+  emptyState: document.getElementById(&quot;empty-state&quot;),
+  emptyDescription: document.getElementById(&quot;empty-description&quot;),
+  toastContainer: document.getElementById(&quot;toast-container&quot;),
+};
+
+// ---------------------------------------------------------------------------
+// API Service Layer (REST Calls via fetch)
+// ---------------------------------------------------------------------------
+const API = {
+  // Base URL for tasks endpoint
+  BASE_URL: &quot;/api/tasks&quot;,
+
+  /**
+   * Fetch all tasks from GET /api/tasks
+   */
+  async getAllTasks() {
+    const response = await fetch(this.BASE_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to load tasks (Status: ${response.status})`);
+    }
+    return await response.json();
+  },
+
+  /**
+   * Create a new task via POST /api/tasks
+   */
+  async createTask(title, dueDate) {
+    const response = await fetch(this.BASE_URL, {
+      method: &quot;POST&quot;,
+      headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
+      body: JSON.stringify({
+        title: title,
+        due_date: dueDate || null,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || &quot;Failed to create task&quot;);
+    }
+    return data;
+  },
+
+  /**
+   * Update task status or fields via PATCH /api/tasks/&lt;id&gt;
+   */
+  async updateTask(id, updates) {
+    const response = await fetch(`${this.BASE_URL}/${id}`, {
+      method: &quot;PATCH&quot;,
+      headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
+      body: JSON.stringify(updates),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || &quot;Failed to update task&quot;);
+    }
+    return data;
+  },
+
+  /**
+   * Delete a task via DELETE /api/tasks/&lt;id&gt;
+   */
+  async deleteTask(id) {
+    const response = await fetch(`${this.BASE_URL}/${id}`, {
+      method: &quot;DELETE&quot;,
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || &quot;Failed to delete task&quot;);
+    }
+    return data;
+  },
+};
+
+// ---------------------------------------------------------------------------
+// UI Toast Notifications
+// ---------------------------------------------------------------------------
+function showToast(message, type = &quot;info&quot;) {
+  // Create toast container element
+  const toast = document.createElement(&quot;div&quot;);
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+
+  elements.toastContainer.appendChild(toast);
+
+  // Automatically fade out and remove after 3.2 seconds
+  setTimeout(() =&gt; {
+    toast.style.opacity = &quot;0&quot;;
+    toast.style.transform = &quot;translateY(15px)&quot;;
+    setTimeout(() =&gt; {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 280);
+  }, 3200);
+}
+
+// ---------------------------------------------------------------------------
+// Date Helper &amp; Badge Formatter
+// ---------------------------------------------------------------------------
+function formatDueDateBadge(dateString, isDone) {
+  if (!dateString) return &quot;&quot;;
+
+  // Parse target date and today&#x27;s date (ignoring time component)
+  const targetDate = new Date(dateString + &quot;T00:00:00&quot;);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffTime = targetDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let statusClass = &quot;&quot;;
+  let displayText = &quot;&quot;;
+
+  if (diffDays &lt; 0 &amp;&amp; !isDone) {
+    statusClass = &quot;overdue&quot;;
+    displayText = `Overdue (${Math.abs(diffDays)}d ago)`;
+  } else if (diffDays === 0) {
+    statusClass = &quot;today&quot;;
+    displayText = &quot;Due Today&quot;;
+  } else if (diffDays === 1) {
+    displayText = &quot;Due Tomorrow&quot;;
+  } else {
+    // Format as Month Day (e.g., Oct 25)
+    displayText = targetDate.toLocaleDateString(undefined, {
+      month: &quot;short&quot;,
+      day: &quot;numeric&quot;,
+    });
+  }
+
+  return `
+    &lt;span class=&quot;due-badge ${statusClass}&quot; title=&quot;Due: ${dateString}&quot;&gt;
+      &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
+        &lt;rect x=&quot;3&quot; y=&quot;4&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot; ry=&quot;2&quot;&gt;&lt;/rect&gt;
+        &lt;line x1=&quot;16&quot; y1=&quot;2&quot; x2=&quot;16&quot; y2=&quot;6&quot;&gt;&lt;/line&gt;
+        &lt;line x1=&quot;8&quot; y1=&quot;2&quot; x2=&quot;8&quot; y2=&quot;6&quot;&gt;&lt;/line&gt;
+        &lt;line x1=&quot;3&quot; y1=&quot;10&quot; x2=&quot;21&quot; y2=&quot;10&quot;&gt;&lt;/line&gt;
+      &lt;/svg&gt;
+      ${displayText}
+    &lt;/span&gt;
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// Render &amp; Metric Calculations
+// ---------------------------------------------------------------------------
+
+/**
+ * Update the counters, progress bar, and filter counts.
+ * Requirement 5: Show a counter: &quot;3 of 5 tasks done&quot;
+ */
+function updateMetrics() {
+  const total = state.tasks.length;
+  const doneCount = state.tasks.filter((t) =&gt; t.done).length;
+  const activeCount = total - doneCount;
+
+  // Requirement 5 text update: &quot;3 of 5 tasks done&quot;
+  elements.tasksCounter.textContent = `${doneCount} of ${total} tasks done`;
+
+  // Calculate percentage
+  const percentage = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+  elements.progressBarFill.style.width = `${percentage}%`;
+  elements.percentBadge.textContent = `${percentage}%`;
+
+  // Update filter counts
+  elements.countAll.textContent = total;
+  elements.countActive.textContent = activeCount;
+  elements.countDone.textContent = doneCount;
+}
+
+/**
+ * Filter and render the tasks into the DOM.
+ */
+function renderTasks() {
+  // Filter tasks based on currentFilter
+  let filtered = state.tasks;
+  if (state.currentFilter === &quot;active&quot;) {
+    filtered = state.tasks.filter((t) =&gt; !t.done);
+  } else if (state.currentFilter === &quot;done&quot;) {
+    filtered = state.tasks.filter((t) =&gt; t.done);
+  }
+
+  // Clear existing list items
+  elements.tasksList.innerHTML = &quot;&quot;;
+
+  // Handle empty state
+  if (filtered.length === 0) {
+    elements.emptyState.classList.remove(&quot;hidden&quot;);
+    if (state.tasks.length === 0) {
+      elements.emptyDescription.textContent = &quot;No tasks yet. Create your first task above!&quot;;
+    } else if (state.currentFilter === &quot;active&quot;) {
+      elements.emptyDescription.textContent = &quot;Awesome job! You have no active tasks pending.&quot;;
+    } else if (state.currentFilter === &quot;done&quot;) {
+      elements.emptyDescription.textContent = &quot;No completed tasks yet. Check off a task when finished!&quot;;
+    }
+  } else {
+    elements.emptyState.classList.add(&quot;hidden&quot;);
+
+    // Construct task list items
+    filtered.forEach((task) =&gt; {
+      const li = document.createElement(&quot;li&quot;);
+      li.className = `task-item ${task.done ? &quot;is-done&quot; : &quot;&quot;}`;
+      li.id = `task-item-${task.id}`;
+      li.setAttribute(&quot;data-id&quot;, task.id);
+
+      // Sanitize title for safe display
+      const safeTitle = document.createElement(&quot;div&quot;);
+      safeTitle.textContent = task.title;
+      const sanitizedTitle = safeTitle.innerHTML;
+
+      // Due date markup
+      const dueDateBadge = formatDueDateBadge(task.due_date, task.done);
+
+      li.innerHTML = `
+        &lt;div class=&quot;task-content-wrapper&quot;&gt;
+          &lt;!-- Requirement 3: Checkbox to toggle done status --&gt;
+          &lt;label class=&quot;custom-checkbox-label&quot; title=&quot;Mark as ${task.done ? &#x27;active&#x27; : &#x27;done&#x27;}&quot;&gt;
+            &lt;input 
+              type=&quot;checkbox&quot; 
+              class=&quot;custom-checkbox-input&quot; 
+              ${task.done ? &quot;checked&quot; : &quot;&quot;} 
+              data-action=&quot;toggle-done&quot;
+              data-id=&quot;${task.id}&quot;
+            /&gt;
+            &lt;span class=&quot;checkbox-visual&quot;&gt;
+              &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;3&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
+                &lt;polyline points=&quot;20 6 9 17 4 12&quot;&gt;&lt;/polyline&gt;
+              &lt;/svg&gt;
+            &lt;/span&gt;
+          &lt;/label&gt;
+
+          &lt;div class=&quot;task-info&quot;&gt;
+            &lt;span class=&quot;task-title&quot;&gt;${sanitizedTitle}&lt;/span&gt;
+            ${dueDateBadge ? `&lt;div class=&quot;task-meta&quot;&gt;${dueDateBadge}&lt;/div&gt;` : &quot;&quot;}
+          &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Requirement 4: Delete button --&gt;
+        &lt;button 
+          type=&quot;button&quot; 
+          class=&quot;delete-btn&quot; 
+          data-action=&quot;delete-task&quot; 
+          data-id=&quot;${task.id}&quot;
+          title=&quot;Delete task&quot;
+          aria-label=&quot;Delete task: ${sanitizedTitle}&quot;
+        &gt;
+          &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;
+            &lt;polyline points=&quot;3 6 5 6 21 6&quot;&gt;&lt;/polyline&gt;
+            &lt;path d=&quot;M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2&quot;&gt;&lt;/path&gt;
+            &lt;line x1=&quot;10&quot; y1=&quot;11&quot; x2=&quot;10&quot; y2=&quot;17&quot;&gt;&lt;/line&gt;
+            &lt;line x1=&quot;14&quot; y1=&quot;11&quot; x2=&quot;14&quot; y2=&quot;17&quot;&gt;&lt;/line&gt;
+          &lt;/svg&gt;
+        &lt;/button&gt;
+      `;
+
+      elements.tasksList.appendChild(li);
+    });
+  }
+
+  // Update counters and progress bar
+  updateMetrics();
+}
+
+// ---------------------------------------------------------------------------
+// Event Handlers &amp; User Actions
+// ---------------------------------------------------------------------------
+
+/**
+ * Initial load of all tasks from Flask REST API
+ */
+async function loadTasks() {
+  state.isLoading = true;
+  elements.tasksLoading.classList.remove(&quot;hidden&quot;);
+  elements.tasksList.classList.add(&quot;hidden&quot;);
+
+  try {
+    const tasks = await API.getAllTasks();
+    state.tasks = tasks;
+    renderTasks();
+  } catch (error) {
+    console.error(&quot;Error loading tasks:&quot;, error);
+    showToast(error.message || &quot;Failed to load tasks from server&quot;, &quot;danger&quot;);
+  } finally {
+    state.isLoading = false;
+    elements.tasksLoading.classList.add(&quot;hidden&quot;);
+    elements.tasksList.classList.remove(&quot;hidden&quot;);
+  }
+}
+
+/**
+ * Requirement 2: Add a new task with text box and &quot;Add&quot; button
+ */
+async function handleAddTask(e) {
+  e.preventDefault();
+
+  const title = elements.taskTitleInput.value.trim();
+  const dueDate = elements.taskDateInput.value;
+
+  // Client validation
+  if (!title) {
+    elements.formError.textContent = &quot;Please enter a task description.&quot;;
+    elements.formError.classList.remove(&quot;hidden&quot;);
+    elements.taskTitleInput.focus();
+    return;
+  }
+
+  elements.formError.classList.add(&quot;hidden&quot;);
+  elements.addTaskBtn.disabled = true;
+
+  try {
+    // Call POST /api/tasks
+    const createdTask = await API.createTask(title, dueDate);
+
+    // Add to local state (active tasks appear at the top)
+    state.tasks.unshift(createdTask);
+
+    // Re-render tasks and update progress
+    renderTasks();
+
+    // Reset input fields
+    elements.taskTitleInput.value = &quot;&quot;;
+    elements.taskDateInput.value = &quot;&quot;;
+    elements.taskTitleInput.focus();
+
+    showToast(&quot;Task added successfully!&quot;, &quot;success&quot;);
+  } catch (error) {
+    console.error(&quot;Error adding task:&quot;, error);
+    showToast(error.message || &quot;Could not add task&quot;, &quot;danger&quot;);
+  } finally {
+    elements.addTaskBtn.disabled = false;
+  }
+}
+
+/**
+ * Requirement 3: Toggle task completion status (strike-through style)
+ */
+async function handleToggleDone(taskId, newDoneStatus) {
+  try {
+    // Optimistically update local state for immediate snappy UI feedback
+    const taskIndex = state.tasks.findIndex((t) =&gt; t.id === taskId);
+    if (taskIndex === -1) return;
+
+    const previousDone = state.tasks[taskIndex].done;
+    state.tasks[taskIndex].done = newDoneStatus;
+    renderTasks();
+
+    // Call PATCH /api/tasks/&lt;id&gt;
+    const updated = await API.updateTask(taskId, { done: newDoneStatus });
+
+    // Sync with returned server state
+    state.tasks[taskIndex] = updated;
+    updateMetrics();
+
+    showToast(
+      newDoneStatus ? &quot;Task marked as done!&quot; : &quot;Task marked as active&quot;,
+      &quot;info&quot;
+    );
+  } catch (error) {
+    console.error(&quot;Error updating task status:&quot;, error);
+    showToast(error.message || &quot;Failed to update task&quot;, &quot;danger&quot;);
+    // Reload tasks on error to guarantee consistency with database
+    loadTasks();
+  }
+}
+
+/**
+ * Requirement 4: Delete a task
+ */
+async function handleDeleteTask(taskId) {
+  const taskElement = document.getElementById(`task-item-${taskId}`);
+
+  // Play smooth deletion exit animation
+  if (taskElement) {
+    taskElement.classList.add(&quot;deleting&quot;);
+  }
+
+  try {
+    // Call DELETE /api/tasks/&lt;id&gt;
+    await API.deleteTask(taskId);
+
+    // Remove from local state after small delay for animation
+    setTimeout(() =&gt; {
+      state.tasks = state.tasks.filter((t) =&gt; t.id !== taskId);
+      renderTasks();
+      showToast(&quot;Task deleted&quot;, &quot;danger&quot;);
+    }, 200);
+  } catch (error) {
+    console.error(&quot;Error deleting task:&quot;, error);
+    showToast(error.message || &quot;Failed to delete task&quot;, &quot;danger&quot;);
+    if (taskElement) {
+      taskElement.classList.remove(&quot;deleting&quot;);
+    }
+  }
+}
+
+/**
+ * Stretch Goal: Filter task list by All / Active / Done
+ */
+function handleFilterChange(filterValue) {
+  state.currentFilter = filterValue;
+
+  // Update active pill UI styling
+  elements.filterPills.forEach((pill) =&gt; {
+    const isSelected = pill.getAttribute(&quot;data-filter&quot;) === filterValue;
+    pill.classList.toggle(&quot;active&quot;, isSelected);
+    pill.setAttribute(&quot;aria-selected&quot;, isSelected ? &quot;true&quot; : &quot;false&quot;);
+  });
+
+  renderTasks();
+}
+
+// ---------------------------------------------------------------------------
+// Setup Event Listeners
+// ---------------------------------------------------------------------------
+function setupEventListeners() {
+  // Add task form submission
+  elements.addTaskForm.addEventListener(&quot;submit&quot;, handleAddTask);
+
+  // Clear form error as user types
+  elements.taskTitleInput.addEventListener(&quot;input&quot;, () =&gt; {
+    if (!elements.formError.classList.contains(&quot;hidden&quot;)) {
+      elements.formError.classList.add(&quot;hidden&quot;);
+    }
+  });
+
+  // Filter tabs click handling
+  elements.filterPills.forEach((pill) =&gt; {
+    pill.addEventListener(&quot;click&quot;, () =&gt; {
+      const filter = pill.getAttribute(&quot;data-filter&quot;);
+      handleFilterChange(filter);
+    });
+  });
+
+  // Delegated event listener for task items (checkboxes and delete buttons)
+  elements.tasksList.addEventListener(&quot;click&quot;, (e) =&gt; {
+    // Check if delete button was clicked
+    const deleteBtn = e.target.closest(&#x27;[data-action=&quot;delete-task&quot;]&#x27;);
+    if (deleteBtn) {
+      const taskId = parseInt(deleteBtn.getAttribute(&quot;data-id&quot;), 10);
+      handleDeleteTask(taskId);
+      return;
+    }
+
+    // Check if checkbox was toggled
+    const checkbox = e.target.closest(&#x27;[data-action=&quot;toggle-done&quot;]&#x27;);
+    if (checkbox) {
+      const taskId = parseInt(checkbox.getAttribute(&quot;data-id&quot;), 10);
+      const isChecked = checkbox.checked;
+      handleToggleDone(taskId, isChecked);
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Application Bootstrap
+// ---------------------------------------------------------------------------
+document.addEventListener(&quot;DOMContentLoaded&quot;, () =&gt; {
+  setupEventListeners();
+  loadTasks();
+});
+</pre></details>
+</section>
+<section class="card" id="p5">
+<h3>5. todo_app/test_app.py: tests</h3>
+<div class="path">todo_app/test_app.py</div>
+<div class="label">What it does</div>
+<p class="what">Automatic tests that call every route with Flask&#x27;s test client and check the status codes and the data.</p>
+<div class="label">How to run</div>
+<div class="run">cd test\todo_app
+pytest -q</div>
+<details><summary>Show the full source of todo_app/test_app.py (129 lines)</summary><pre>&quot;&quot;&quot;
+=============================================================================
+LAYER: Test Verification Layer (test_app.py)
+Automated unit &amp; API endpoint tests for the To-Do List application.
+=============================================================================
+&quot;&quot;&quot;
+
+import unittest
+import os
+import json
+
+# Ensure test uses a clean temporary database
+os.environ[&quot;TESTING&quot;] = &quot;1&quot;
+from app import app
+from db import init_db, DB_PATH
+
+class TodoAppTestCase(unittest.TestCase):
+    def setUp(self):
+        # Configure test client
+        self.client = app.test_client()
+        app.config[&quot;TESTING&quot;] = True
+        # Clean up database if exists
+        if os.path.exists(DB_PATH):
+            os.remove(DB_PATH)
+        init_db()
+
+    def tearDown(self):
+        # Clean up test database
+        if os.path.exists(DB_PATH):
+            os.remove(DB_PATH)
+
+    def test_01_index_page(self):
+        &quot;&quot;&quot;Test GET / returns 200 and loads HTML template.&quot;&quot;&quot;
+        response = self.client.get(&quot;/&quot;)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b&quot;TaskFlow&quot;, response.data)
+        self.assertIn(b&quot;tasks-counter&quot;, response.data)
+
+    def test_02_get_seeded_tasks(self):
+        &quot;&quot;&quot;Test GET /api/tasks returns initial seeded tasks.&quot;&quot;&quot;
+        response = self.client.get(&quot;/api/tasks&quot;)
+        self.assertEqual(response.status_code, 200)
+        tasks = response.get_json()
+        self.assertIsInstance(tasks, list)
+        self.assertGreaterEqual(len(tasks), 4)
+        # Check first task structure
+        first = tasks[0]
+        self.assertIn(&quot;id&quot;, first)
+        self.assertIn(&quot;title&quot;, first)
+        self.assertIn(&quot;done&quot;, first)
+        self.assertIn(&quot;created_at&quot;, first)
+
+    def test_03_create_task_success(self):
+        &quot;&quot;&quot;Test POST /api/tasks with valid title returns 201.&quot;&quot;&quot;
+        payload = {&quot;title&quot;: &quot;Test new task&quot;, &quot;due_date&quot;: &quot;2026-10-30&quot;}
+        response = self.client.post(
+            &quot;/api/tasks&quot;,
+            data=json.dumps(payload),
+            content_type=&quot;application/json&quot;
+        )
+        self.assertEqual(response.status_code, 201)
+        created = response.get_json()
+        self.assertEqual(created[&quot;title&quot;], &quot;Test new task&quot;)
+        self.assertEqual(created[&quot;due_date&quot;], &quot;2026-10-30&quot;)
+        self.assertFalse(created[&quot;done&quot;])
+
+    def test_04_create_task_validation_error(self):
+        &quot;&quot;&quot;Test POST /api/tasks with empty or missing title returns 400.&quot;&quot;&quot;
+        # Empty string
+        response = self.client.post(
+            &quot;/api/tasks&quot;,
+            data=json.dumps({&quot;title&quot;: &quot;   &quot;}),
+            content_type=&quot;application/json&quot;
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(&quot;error&quot;, response.get_json())
+
+        # Missing title key
+        response2 = self.client.post(
+            &quot;/api/tasks&quot;,
+            data=json.dumps({&quot;due_date&quot;: &quot;2026-10-30&quot;}),
+            content_type=&quot;application/json&quot;
+        )
+        self.assertEqual(response2.status_code, 400)
+
+    def test_05_patch_task_toggle_done(self):
+        &quot;&quot;&quot;Test PATCH /api/tasks/&lt;id&gt; updates done status.&quot;&quot;&quot;
+        # Toggle task 2 to done: True
+        response = self.client.patch(
+            &quot;/api/tasks/2&quot;,
+            data=json.dumps({&quot;done&quot;: True}),
+            content_type=&quot;application/json&quot;
+        )
+        self.assertEqual(response.status_code, 200)
+        updated = response.get_json()
+        self.assertTrue(updated[&quot;done&quot;])
+
+        # Toggle back to False
+        response2 = self.client.patch(
+            &quot;/api/tasks/2&quot;,
+            data=json.dumps({&quot;done&quot;: False}),
+            content_type=&quot;application/json&quot;
+        )
+        self.assertEqual(response2.status_code, 200)
+        updated2 = response2.get_json()
+        self.assertFalse(updated2[&quot;done&quot;])
+
+    def test_06_patch_nonexistent_task(self):
+        &quot;&quot;&quot;Test PATCH /api/tasks/&lt;id&gt; for non-existent id returns 404.&quot;&quot;&quot;
+        response = self.client.patch(
+            &quot;/api/tasks/9999&quot;,
+            data=json.dumps({&quot;done&quot;: True}),
+            content_type=&quot;application/json&quot;
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_07_delete_task(self):
+        &quot;&quot;&quot;Test DELETE /api/tasks/&lt;id&gt; deletes a task.&quot;&quot;&quot;
+        # Delete task 1
+        response = self.client.delete(&quot;/api/tasks/1&quot;)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()[&quot;id&quot;], 1)
+
+        # Deleting again should return 404
+        response2 = self.client.delete(&quot;/api/tasks/1&quot;)
+        self.assertEqual(response2.status_code, 404)
+
+if __name__ == &quot;__main__&quot;:
+    unittest.main()
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

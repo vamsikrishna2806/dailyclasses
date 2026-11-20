@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 7: Flask vs FastAPI (the same API twice)</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 7</div>
+<h1>Day 7: Flask vs FastAPI (the same API twice)</h1>
+<p class="lead">Both files build the same Task API: list, create, get one, delete. Tasks are stored in a Python list in memory. Read them side by side.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">flask_app/app.py</a></li><li><a href="#p2">fastapi_app/main.py</a></li></ol></nav>
+<section class="card" id="p1">
+<h3>1. flask_app/app.py</h3>
+<div class="path">flask_app/app.py</div>
+<div class="label">What it does</div>
+<p class="what">Task API in Flask. Every input rule is checked by hand.</p>
+<div class="label">How to run</div>
+<div class="run">cd day7\flask_app
+python app.py      # http://127.0.0.1:5000/tasks</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>tasks = []</code> is the &quot;database&quot; and <code>next_id</code> counts up for each new task.</li>
+<li><code>POST /tasks</code> reads the JSON body, then checks each rule itself: title present, 200 characters or fewer, priority a whole number from 1 to 5. Each failed rule returns its own 400 error.</li>
+<li><code>isinstance(priority, bool)</code> is needed because in Python <code>True</code> counts as the number 1. Without it, <code>true</code> would sneak through as a priority.</li>
+<li><code>GET /tasks/&lt;int:task_id&gt;</code> loops through the list and returns 404 if the task isn&#x27;t found.</li>
+</ol>
+<details><summary>Show the full source of flask_app/app.py (67 lines)</summary><pre>&quot;&quot;&quot;
+Day 7 - Task API built with FLASK.
+
+It does exactly the same job as ../fastapi_app/main.py so you can compare
+the two files line by line.
+
+Run:   python app.py
+Open:  http://127.0.0.1:5000/tasks
+&quot;&quot;&quot;
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+tasks = []      # our &quot;database&quot; (a plain Python list in memory)
+next_id = 1
+
+
+@app.get(&quot;/tasks&quot;)
+def list_tasks():
+    return jsonify(tasks)
+
+
+@app.post(&quot;/tasks&quot;)
+def create_task():
+    global next_id
+    data = request.get_json(silent=True) or {}
+
+    # Flask does NOT check the input for you.
+    # Every rule below is written by hand.
+    title = data.get(&quot;title&quot;)
+    if not isinstance(title, str) or not title.strip():
+        return jsonify({&quot;error&quot;: &quot;title is required&quot;}), 400
+    if len(title.strip()) &gt; 200:
+        return jsonify({&quot;error&quot;: &quot;title must be 200 characters or less&quot;}), 400
+
+    priority = data.get(&quot;priority&quot;, 3)
+    # bool is a subclass of int in Python, so True would sneak through without this
+    if isinstance(priority, bool) or not isinstance(priority, int):
+        return jsonify({&quot;error&quot;: &quot;priority must be a whole number&quot;}), 400
+    if not 1 &lt;= priority &lt;= 5:
+        return jsonify({&quot;error&quot;: &quot;priority must be from 1 to 5&quot;}), 400
+
+    task = {&quot;id&quot;: next_id, &quot;title&quot;: title.strip(), &quot;priority&quot;: priority, &quot;done&quot;: False}
+    tasks.append(task)
+    next_id += 1
+    return jsonify(task), 201
+
+
+@app.get(&quot;/tasks/&lt;int:task_id&gt;&quot;)
+def get_task(task_id):
+    for task in tasks:
+        if task[&quot;id&quot;] == task_id:
+            return jsonify(task)
+    return jsonify({&quot;error&quot;: &quot;task not found&quot;}), 404
+
+
+@app.delete(&quot;/tasks/&lt;int:task_id&gt;&quot;)
+def delete_task(task_id):
+    for task in tasks:
+        if task[&quot;id&quot;] == task_id:
+            tasks.remove(task)
+            return &quot;&quot;, 204
+    return jsonify({&quot;error&quot;: &quot;task not found&quot;}), 404
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run(debug=True, port=5000)
+</pre></details>
+</section>
+<section class="card" id="p2">
+<h3>2. fastapi_app/main.py</h3>
+<div class="path">fastapi_app/main.py</div>
+<div class="label">What it does</div>
+<p class="what">The same API in FastAPI. The rules live in a Pydantic model, and FastAPI checks them for you.</p>
+<div class="label">How to run</div>
+<div class="run">cd day7\fastapi_app
+fastapi dev main.py      # http://127.0.0.1:8000/docs</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>class TaskIn(BaseModel)</code> states the rules once: <code>title: str = Field(min_length=1, max_length=200)</code> and <code>priority: int = Field(default=3, ge=1, le=5)</code>.</li>
+<li><code>def create_task(task_in: TaskIn)</code>: because the parameter has the type <code>TaskIn</code>, FastAPI reads the JSON body, checks every rule, and answers 422 by itself if one fails.</li>
+<li><code>Task(id=next_id, **task_in.model_dump())</code> builds the stored task from the checked input.</li>
+<li><code>raise HTTPException(404, ...)</code> replaces Flask&#x27;s <code>return jsonify(...), 404</code>.</li>
+<li>The return type (<code>-&gt; Task</code>, <code>-&gt; list[Task]</code>) tells FastAPI what the answer looks like, and that shows up in the <code>/docs</code> page.</li>
+</ol>
+<div class="idea"><b>Key idea:</b> Flask needs 12 lines of hand-written checks. FastAPI needs 2 lines of type hints, and you get interactive documentation at <code>/docs</code> for free.</div>
+<details><summary>Show the full source of fastapi_app/main.py (61 lines)</summary><pre>&quot;&quot;&quot;
+Day 7 - Task API built with FASTAPI.
+
+It does exactly the same job as ../flask_app/app.py so you can compare
+the two files line by line.
+
+Run:   fastapi dev main.py        (or: uvicorn main:app --reload)
+Open:  http://127.0.0.1:8000/docs  &lt;- free interactive docs!
+&quot;&quot;&quot;
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
+
+app = FastAPI(title=&quot;Task API&quot;, version=&quot;1.0&quot;)
+
+
+# The rules live in the type hints. FastAPI + Pydantic check them for you.
+class TaskIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str = Field(min_length=1, max_length=200)
+    priority: int = Field(default=3, ge=1, le=5)
+
+
+class Task(TaskIn):
+    id: int
+    done: bool = False
+
+
+tasks: list[Task] = []   # our &quot;database&quot; (a plain Python list in memory)
+next_id = 1
+
+
+@app.get(&quot;/tasks&quot;)
+def list_tasks() -&gt; list[Task]:
+    return tasks
+
+
+@app.post(&quot;/tasks&quot;, status_code=201)
+def create_task(task_in: TaskIn) -&gt; Task:
+    global next_id
+    task = Task(id=next_id, **task_in.model_dump())
+    tasks.append(task)
+    next_id += 1
+    return task
+
+
+@app.get(&quot;/tasks/{task_id}&quot;)
+def get_task(task_id: int) -&gt; Task:
+    for task in tasks:
+        if task.id == task_id:
+            return task
+    raise HTTPException(status_code=404, detail=&quot;task not found&quot;)
+
+
+@app.delete(&quot;/tasks/{task_id}&quot;, status_code=204)
+def delete_task(task_id: int) -&gt; None:
+    for task in tasks:
+        if task.id == task_id:
+            tasks.remove(task)
+            return
+    raise HTTPException(status_code=404, detail=&quot;task not found&quot;)
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

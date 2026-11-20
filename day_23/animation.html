@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ollama + MCP Motion</title>
+<meta name="description" content="Animated, step-by-step motion graphics for the Day 23 Ollama + live MCP client.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff7ec; --bg2:#ffeed6; --card:#ffffff; --ink:#2a2342; --muted:#6b6385; --line:#efe2cf;
+  --blue:#3b82f6; --green:#16a34a; --orange:#f97316; --red:#ef4444; --purple:#8b5cf6; --yellow:#d4a106; --pink:#ec4899; --teal:#0d9488;
+  --stage:#f4fbff; --grid:rgba(59,130,246,.10); --shadow:0 10px 30px rgba(80,50,20,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15122a; --bg2:#1d1938; --card:#231f3f; --ink:#f3efff; --muted:#aaa3cc; --line:#352f5c;
+  --stage:#1a1736; --grid:rgba(147,197,253,.08); --shadow:0 10px 30px rgba(0,0,0,.45); --yellow:#eab308;
+}}
+:root[data-theme="dark"]{
+  --bg:#15122a; --bg2:#1d1938; --card:#231f3f; --ink:#f3efff; --muted:#aaa3cc; --line:#352f5c;
+  --stage:#1a1736; --grid:rgba(147,197,253,.08); --shadow:0 10px 30px rgba(0,0,0,.45); --yellow:#eab308;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Baloo 2","Segoe UI",system-ui,sans-serif;font-size:17px;line-height:1.5;overflow-x:hidden}
+a{color:var(--blue)}
+code{font-family:"JetBrains Mono",Consolas,monospace;font-size:.8em;background:var(--bg2);padding:1px 7px;border-radius:6px;white-space:nowrap}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+
+/* hero */
+.hero{padding:34px 0 10px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.1;margin:0 0 6px}
+.hero p{margin:0;color:var(--muted);max-width:760px}
+.orb{width:84px;height:84px;border-radius:24px;background:linear-gradient(135deg,var(--purple),var(--blue));display:grid;place-items:center;font-size:44px;box-shadow:var(--shadow);animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-4deg)}}
+.back{display:inline-block;margin-top:10px;font-weight:700}
+.how{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 0}
+.how span{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-size:15px}
+
+/* nav */
+nav.chips{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);padding:10px 0;border-bottom:2px solid var(--line);margin:18px 0 8px}
+nav.chips .wrap{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin}
+nav.chips a{flex:none;text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:10px;padding:2px 10px;font-weight:700;font-size:14px}
+nav.chips a.on{border-color:var(--purple);background:color-mix(in srgb,var(--purple) 15%,var(--card))}
+
+/* parts */
+.part{margin:34px 0 6px;font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* card */
+.card{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:0;background:var(--card);border:2px solid var(--line);border-radius:22px;box-shadow:var(--shadow);margin:16px 0 26px;overflow:hidden;scroll-margin-top:70px}
+.stage{position:relative;background:var(--stage);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;border-right:2px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+.stage svg{display:block;width:100%;height:auto}
+.bar{height:5px;background:var(--line)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--blue))}
+@keyframes fillbar{from{width:0}to{width:100%}}
+.side{padding:20px 22px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tag{font-size:14px;color:var(--muted);font-weight:700}
+.side h2{margin:0;font-size:27px;line-height:1.15}
+.idea{margin:0;font-weight:600}
+.like{margin:0;color:var(--muted);font-size:15.5px}
+ol.steps{margin:4px 0 0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:4px}
+ol.steps li{counter-increment:st;position:relative;padding:5px 10px 5px 38px;border-radius:10px;cursor:pointer;font-size:15.5px;line-height:1.35;color:var(--muted);transition:background .3s,color .3s}
+ol.steps li::before{content:counter(st);position:absolute;left:8px;top:5px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;background:var(--bg2);color:var(--muted)}
+ol.steps li.done{color:var(--ink)}
+ol.steps li.done::before{content:"✓";background:color-mix(in srgb,var(--green) 22%,var(--card));color:var(--green)}
+ol.steps li.now{background:color-mix(in srgb,var(--purple) 13%,var(--card));color:var(--ink);font-weight:600}
+ol.steps li.now::before{content:counter(st);background:var(--purple);color:#fff}
+.ctrl{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.ctrl button{font:inherit;font-size:15px;font-weight:700;border:2px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:10px;padding:3px 12px;cursor:pointer}
+.ctrl button:hover{border-color:var(--purple)}
+.keys{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+@media (max-width:900px){
+  .card{grid-template-columns:1fr}
+  .stage{border-right:0;border-bottom:2px solid var(--line)}
+}
+
+/* svg vocabulary */
+.a{transition:transform .9s cubic-bezier(.45,.05,.2,1),opacity .55s ease;transform-box:fill-box;transform-origin:center}
+.a.hid{opacity:0}
+.noanim .a{transition:none!important}
+.bx{stroke-width:2}
+.lbl{fill:var(--ink);font-family:"Baloo 2","Segoe UI",sans-serif;font-weight:600}
+.mono{font-family:"JetBrains Mono",Consolas,monospace;font-weight:500}
+.mutx{fill:var(--muted)}
+.dash{stroke-dasharray:6 5}
+.c-blue{fill:color-mix(in srgb,var(--blue) 14%,var(--card));stroke:var(--blue)}
+.c-green{fill:color-mix(in srgb,var(--green) 14%,var(--card));stroke:var(--green)}
+.c-orange{fill:color-mix(in srgb,var(--orange) 14%,var(--card));stroke:var(--orange)}
+.c-red{fill:color-mix(in srgb,var(--red) 14%,var(--card));stroke:var(--red)}
+.c-purple{fill:color-mix(in srgb,var(--purple) 16%,var(--card));stroke:var(--purple)}
+.c-yellow{fill:color-mix(in srgb,var(--yellow) 20%,var(--card));stroke:var(--yellow)}
+.c-pink{fill:color-mix(in srgb,var(--pink) 14%,var(--card));stroke:var(--pink)}
+.c-teal{fill:color-mix(in srgb,var(--teal) 14%,var(--card));stroke:var(--teal)}
+.c-mut{fill:var(--bg2);stroke:var(--muted)}
+.arrow{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0;transition:stroke-dashoffset .8s ease,opacity .35s ease}
+.arrow.hid{stroke-dashoffset:1}
+.arrow.dashy{stroke-dasharray:.03 .025}
+.arrow.dashy.hid{stroke-dashoffset:0}
+.s-mut{stroke:var(--muted)}.s-blue{stroke:var(--blue)}.s-green{stroke:var(--green)}.s-orange{stroke:var(--orange)}.s-red{stroke:var(--red)}.s-purple{stroke:var(--purple)}.s-yellow{stroke:var(--yellow)}.s-pink{stroke:var(--pink)}.s-teal{stroke:var(--teal)}
+.mk-mut{fill:var(--muted)}.mk-blue{fill:var(--blue)}.mk-green{fill:var(--green)}.mk-orange{fill:var(--orange)}.mk-red{fill:var(--red)}.mk-purple{fill:var(--purple)}.mk-yellow{fill:var(--yellow)}.mk-pink{fill:var(--pink)}.mk-teal{fill:var(--teal)}
+.ring{fill:none;stroke-width:3;stroke-dasharray:7 6}
+.halo{fill:none;stroke:var(--orange);stroke-width:5;filter:drop-shadow(0 0 6px var(--orange))}
+.tok{fill:var(--orange);stroke:var(--card);stroke-width:3;filter:drop-shadow(0 0 6px var(--orange))}
+.a.hl>rect,.a.hl>circle{animation:glow 1s ease-in-out infinite alternate}
+@keyframes glow{from{stroke-width:2.5}to{stroke-width:5;filter:drop-shadow(0 0 7px var(--orange))}}
+.spin text{animation:spin 1.6s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.a,.arrow{transition:none!important}.a.hl>rect,.a.hl>circle,.orb,.spin text{animation:none}}
+.mono{white-space:pre}
+.good text{fill:var(--green)} .bad text{fill:var(--red)}
+.deephead{margin:-8px 0 0 28px;padding:10px 16px;border-left:4px solid var(--purple);font-weight:800;font-size:19px;color:var(--purple)}
+.card.sub{margin-left:28px;border-color:color-mix(in srgb,var(--purple) 35%,var(--line))}
+.card.sub .side h2{font-size:23px}
+@media (max-width:900px){.card.sub,.deephead{margin-left:0}}
+.tip{margin:4px 0 0;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--yellow) 16%,var(--card));font-size:15px}
+.codebox{margin-top:6px}
+.codebox summary{cursor:pointer;font-weight:700;font-size:15px}
+.codebox pre{margin:6px 0 0;padding:12px 14px;border-radius:12px;background:#1f1b33;color:#ece8ff;font:12.5px/1.5 "JetBrains Mono",Consolas,monospace;overflow-x:auto;white-space:pre}
+footer{color:var(--muted);text-align:center;padding:30px 0 50px;font-size:15px}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="markers"></defs></svg>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="orb">🎬</div>
+    <div>
+      <h1>Ollama + live MCP in Motion 🧰</h1>
+      <p>The whole ollama_mcp_client.py program as 6 short animations: meet the three helpers, connect to the DeepWiki MCP server, get the tool menu, let Ollama choose a tool, run it, and get the final answer.</p>
+      <a class="back" href="logic.html">← Back to logic.html</a>
+      <div class="how">
+        <span>▶ Plays by itself when you scroll to it</span>
+        <span>⏮ ⏭ Step back or forward</span>
+        <span>👆 Click any step to jump there</span>
+      </div>
+    </div>
+  </header>
+</div>
+
+<nav class="chips" aria-label="Jump to a lesson"><div class="wrap" id="chips"></div></nav>
+
+<main class="wrap" id="scenes"></main>
+
+<footer class="wrap">Day 23 · Ollama + DeepWiki MCP · 6 motion graphics</footer>
+
+<script>
+/* ---------- tiny SVG helpers ---------- */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const da = o => ['show','from','pos','hl','delay'].map(k => o[k]!=null ? ` data-${k}="${o[k]}"` : '').join('');
+const cl = o => 'a' + (o.cls ? ' '+o.cls : '');
+function lines(x, y, h, label, o){
+  if(!label) return '';
+  const fs=o.fs||15, ls=String(label).split('\n'), lh=fs*1.3, cy=y+h/2-(ls.length-1)*lh/2;
+  return ls.map((l,i)=>`<text x="${x}" y="${cy+i*lh}" class="lbl${o.mono?' mono':''}" font-size="${fs}" text-anchor="middle" dominant-baseline="central">${esc(l)}</text>`).join('');
+}
+// Box
+function B(x,y,w,h,c,label='',o={}){
+  return `<g class="${cl(o)}"${da(o)}><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${o.r??12}" class="bx c-${c}${o.dash?' dash':''}"/>${lines(x+w/2,y,h,label,o)}</g>`;
+}
+// Text
+function T(x,y,s,o={}){
+  return `<g class="${cl(o)}"${da(o)}><text x="${x}" y="${y}" class="lbl${o.mono?' mono':''}${o.mut?' mutx':''}" font-size="${o.fs||15}" text-anchor="${o.anchor||'middle'}" dominant-baseline="central"${o.id?` data-id="${o.id}"`:''}>${esc(s)}</text></g>`;
+}
+// Emoji
+function E(x,y,e,fs=32,o={}){
+  return `<g class="${cl(o)}"${da(o)}><text x="${x}" y="${y}" font-size="${fs}" text-anchor="middle" dominant-baseline="central">${e}</text></g>`;
+}
+// Circle with label
+function C(cx,cy,r,c,label='',o={}){
+  return `<g class="${cl(o)}"${da(o)}><circle cx="${cx}" cy="${cy}" r="${r}" class="bx c-${c}"/>${lines(cx,cy-r,2*r,label,o)}</g>`;
+}
+// Arrow (draws itself when shown)
+function A(x1,y1,x2,y2,o={}){
+  const c=o.c||'mut';
+  const d=o.q?`M${x1},${y1} Q${o.q[0]},${o.q[1]} ${x2},${y2}`:`M${x1},${y1} L${x2},${y2}`;
+  return `<path class="a arrow s-${c}${o.dashy?' dashy':''}"${da(o)} d="${d}" pathLength="1" marker-end="url(#ah-${c})"/>`;
+}
+const M = {mono:true};
+const mo = (o={}) => Object.assign({mono:true}, o);
+
+/* ---------- the scenes ---------- */
+const scenes = [
+{ part:'Part 1 · Meet the team', n:'01', slug:'ollama_mcp_client.py', icon:'👥', title:'Three helpers',
+  idea:'Three parts work together: your Python program, Ollama and the DeepWiki MCP server. Each one has one job.',
+  like:'Like a classroom: the student (brain) knows how to think, the library (toolbox) has the books, and a messenger runs between them.',
+  keys:['Python = messenger','Ollama = brain','MCP server = toolbox'],
+  steps:['Your Python program is the messenger 🐍. It carries every message.',
+         'Ollama is the brain 🧠. It runs on your own computer and decides what to do.',
+         'DeepWiki is the toolbox 🧰. It lives on the internet and has the tools.',
+         'The brain and the toolbox never talk directly. Python passes every message between them.'],
+  svg:()=>[
+    B(265,110,190,100,'purple','🐍 Python\n(messenger)',{fs:16,show:'1',from:'0,40'}),
+    B(20,110,190,100,'green','🧠 Ollama\n(brain)',{fs:16,show:'2',from:'-60,0'}),
+    T(115,235,'localhost:11434',mo({fs:11,mut:true,show:'2'})),
+    B(510,110,190,100,'orange','🧰 DeepWiki MCP\n(toolbox)',{fs:16,show:'3',from:'60,0'}),
+    T(605,235,'mcp.deepwiki.com',mo({fs:11,mut:true,show:'3'})),
+    A(262,145,214,145,{show:'4',c:'green'}), A(214,175,262,175,{show:'4',c:'green',delay:.3}),
+    A(458,145,506,145,{show:'4',c:'orange',delay:.5}), A(506,175,458,175,{show:'4',c:'orange',delay:.8}),
+    T(360,55,'🧠  ✖  🧰   no direct talk',{fs:16,show:'4'}),
+    T(360,280,'Python carries every message',{fs:16,show:'4',delay:1}),
+  ].join(''),
+  code:`import ollama                       # talk to the brain
+from mcp import ClientSession       # talk to the toolbox`},
+
+{ part:'Part 2 · Connect to the toolbox', n:'02', slug:'ollama_mcp_client.py', icon:'🔌', title:'Connect and say hello',
+  idea:'Python opens an internet line to the MCP server and does a handshake, so both sides know they speak MCP.',
+  like:'Like calling a shop: the phone line connects, you say hello, and the shop says who they are and what they sell.',
+  keys:['streamablehttp_client','ClientSession','initialize()'],
+  steps:['streamablehttp_client opens an HTTP line to the server.',
+         'It gives back two pipes: read (to receive) and write (to send).',
+         'ClientSession wraps the pipes so we can speak MCP.',
+         'initialize(): Python says hello and which MCP version it speaks.',
+         'The server answers with its name and what it offers: tools. Connected!'],
+  svg:()=>[
+    B(20,100,160,120,'purple','🐍 Python',{fs:17}),
+    B(540,100,160,120,'orange','🧰 DeepWiki\nMCP server',{fs:16}),
+    B(195,145,330,30,'mut','🌐 https://mcp.deepwiki.com/mcp',mo({fs:11,show:'1',from:'-60,0'})),
+    T(360,195,'⬅ read      write ➡',mo({fs:13,show:'2'})),
+    B(25,40,150,40,'blue','ClientSession',mo({fs:13,show:'3',from:'0,-30'})),
+    B(205,60,310,36,'yellow','👋 "Hello, I speak MCP"',{fs:14,show:'4-4',from:'-160,0'}),
+    B(205,225,310,36,'green','✅ "I am DeepWiki. I have tools."',{fs:14,show:'5',from:'160,0'}),
+    T(360,290,'await session.initialize()',mo({fs:12,show:'4'})),
+  ].join(''),
+  code:`async with streamablehttp_client("https://mcp.deepwiki.com/mcp") as (read, write, _):
+    async with ClientSession(read, write) as session:
+        await session.initialize()`},
+
+{ n:'03', slug:'ollama_mcp_client.py', icon:'📋', title:'Get the tool menu',
+  idea:'Python asks the server for its list of tools, then translates the list into the format Ollama understands.',
+  like:'Like asking a restaurant for the menu, then translating it into your friend’s language so they can choose.',
+  keys:['list_tools()','inputSchema','parameters'],
+  steps:['list_tools() asks the server: what tools do you have?',
+         'The server sends back 3 tools.',
+         'Each tool has a name, a description and the inputs it needs.',
+         'We translate every tool into Ollama’s format: inputSchema becomes parameters.'],
+  svg:()=>[
+    B(20,30,150,56,'purple','🐍 Python',{fs:16}),
+    B(550,30,150,56,'orange','🧰 DeepWiki',{fs:16}),
+    A(174,58,546,58,{show:'1',c:'blue'}), T(360,44,'tools/list',mo({fs:12,show:'1'})),
+    B(470,105,230,32,'orange','read_wiki_structure',mo({fs:12,show:'2',from:'0,-50'})),
+    B(470,145,230,32,'orange','read_wiki_contents',mo({fs:12,show:'2',from:'0,-50',delay:.15})),
+    B(470,185,230,32,'orange','ask_wiki_question',mo({fs:12,show:'2',from:'0,-50',delay:.3,hl:'3-3'})),
+    B(20,105,420,112,'yellow','',{show:'3',from:'-40,0'}),
+    T(35,127,'name:        ask_wiki_question',mo({fs:12,anchor:'start',show:'3'})),
+    T(35,152,'description: Ask any question about a repo',mo({fs:12,anchor:'start',show:'3'})),
+    T(35,177,'inputSchema: repoName, question',mo({fs:12,anchor:'start',show:'3'})),
+    T(35,200,'(the inputs it needs)',{fs:12,anchor:'start',mut:true,show:'3'}),
+    A(230,220,230,246,{show:'4',c:'green'}),
+    B(20,250,680,48,'green','{"type": "function", "function": {name, description, parameters}}',mo({fs:12,show:'4',from:'0,30'})),
+  ].join(''),
+  code:`tools = (await session.list_tools()).tools
+ollama_tools = [{"type": "function", "function": {
+    "name": t.name, "description": t.description,
+    "parameters": t.inputSchema}} for t in tools]`},
+
+{ part:'Part 3 · Think, use a tool, answer', n:'04', slug:'ollama_mcp_client.py', icon:'🤔', title:'Ollama decides',
+  idea:'Ollama gets your question and the tool menu. It picks a tool, but it does not run it. It only asks for it.',
+  like:'Like a doctor writing a prescription: the doctor decides the medicine, but the pharmacy hands it over.',
+  keys:['ollama.chat(tools=...)','tool_calls'],
+  steps:['You type a question about a GitHub repo.',
+         'Python sends Ollama the question and the tool menu.',
+         'Ollama reads the tool descriptions and picks the one that helps.',
+         'Ollama does NOT run the tool. It replies with a tool_call: the tool name and the arguments.'],
+  svg:()=>[
+    E(45,57,'🧑‍🎓',34), T(45,92,'you',{fs:13,mut:true}),
+    B(85,35,380,44,'yellow','❓ "What is python-sdk about?"',{fs:14,show:'1',from:'-60,0'}),
+    B(20,150,160,90,'purple','🐍 Python',{fs:17}),
+    B(540,130,160,130,'green','🧠 Ollama\nllama3.2',{fs:16,hl:'3-3'}),
+    B(215,140,290,34,'yellow','❓ question',{fs:13,show:'2-3',from:'-200,0'}),
+    B(215,182,290,34,'orange','🧰 tool menu (3 tools)',{fs:13,show:'2-3',from:'-200,0',delay:.2}),
+    T(620,285,'💭 which tool helps?',{fs:14,show:'3-3'}),
+    B(200,190,320,60,'green','📝 tool_call\nask_wiki_question(repoName=…)',mo({fs:12,show:'4',from:'220,0'})),
+    T(360,290,'ollama.chat(model, messages, tools=ollama_tools)',mo({fs:11,show:'2'})),
+  ].join(''),
+  code:`messages = [{"role": "user", "content": question}]
+reply = ollama.chat(model="llama3.2", messages=messages, tools=ollama_tools)
+messages.append(reply.message)
+# reply.message.tool_calls ->
+#   ask_wiki_question(repoName="modelcontextprotocol/python-sdk", question="...")`},
+
+{ n:'05', slug:'ollama_mcp_client.py', icon:'🛠️', title:'Python runs the tool',
+  idea:'Python takes the tool_call, sends it to DeepWiki over the internet and saves the result in the conversation.',
+  like:'Like the pharmacy: it takes the prescription, gets the medicine from the shelf, and hands it back.',
+  keys:['call_tool()','role: "tool"','[:6000]'],
+  steps:['Python reads the tool_call from Ollama.',
+         'call_tool() sends it to DeepWiki over the internet.',
+         'DeepWiki reads the repo’s wiki and builds an answer.',
+         'The result text comes back to Python.',
+         'Python keeps the first 6000 characters and adds them to messages with role "tool".'],
+  svg:()=>[
+    B(20,110,160,100,'purple','🐍 Python',{fs:17}),
+    B(540,110,160,100,'orange','🧰 DeepWiki',{fs:17,hl:'3-3'}),
+    B(20,30,250,40,'green','📝 ask_wiki_question(…)',mo({fs:12,show:'1-2',pos:'2:270,110'})),
+    T(360,100,'tools/call',mo({fs:12,show:'2-2'})),
+    T(620,240,'📚 reading the wiki…',{fs:14,show:'3-3'}),
+    B(200,140,300,40,'blue','📄 "python-sdk is the official…"',{fs:12,show:'4',from:'260,0'}),
+    B(200,230,500,64,'teal','messages.append({"role": "tool",\n                 "content": text[:6000]})',mo({fs:12,show:'5',from:'0,30'})),
+    T(110,262,'✂ 6000 chars',mo({fs:12,show:'5',delay:.5})),
+  ].join(''),
+  code:`for call in reply.message.tool_calls or []:
+    print("Calling tool:", call.function.name)
+    result = await session.call_tool(call.function.name, call.function.arguments)
+    messages.append({"role": "tool", "content": result.content[0].text[:6000]})`},
+
+{ n:'06', slug:'ollama_mcp_client.py', icon:'✅', title:'The final answer',
+  idea:'Python sends the whole conversation back to Ollama. Now Ollama has real facts and writes the answer.',
+  like:'Like doing homework with the textbook open: the answer is much better when you can read the facts.',
+  keys:['messages','ollama.chat()','.content'],
+  steps:['messages starts with your question.',
+         'Ollama’s tool_call is added.',
+         'The tool result from DeepWiki is added.',
+         'Python sends the whole list to Ollama again.',
+         'Ollama reads the facts and writes the final answer.'],
+  svg:()=>[
+    T(25,25,'messages = [',mo({fs:13,anchor:'start'})),
+    B(20,42,330,44,'blue','🧒 user: "What is python-sdk about?"',{fs:12,show:'1',from:'-40,0'}),
+    B(20,94,330,44,'green','🧠 assistant: tool_call ask_wiki_question',{fs:12,show:'2',from:'-40,0'}),
+    B(20,146,330,44,'orange','🧰 tool: "python-sdk is the official…"',{fs:12,show:'3',from:'-40,0'}),
+    T(25,207,']',mo({fs:13,anchor:'start'})),
+    B(510,50,190,110,'green','🧠 Ollama',{fs:17,hl:'4-5'}),
+    A(355,115,505,115,{show:'4',c:'green'}), T(430,100,'chat(messages)',mo({fs:11,show:'4'})),
+    B(330,205,370,80,'green','💬 "python-sdk is the official\nPython SDK for the Model\nContext Protocol…"',{fs:13,show:'5',from:'0,-40'}),
+  ].join(''),
+  code:`final = ollama.chat(model="llama3.2", messages=messages)
+print("\\nAnswer:", final.message.content)`},
+];
+
+/* ---------- build the page ---------- */
+const COLORS=['mut','blue','green','orange','red','purple','yellow','pink','teal'];
+document.getElementById('markers').innerHTML = COLORS.map(c=>`<marker id="ah-${c}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-${c}"/></marker>`).join('');
+
+const main=document.getElementById('scenes'), chips=document.getElementById('chips');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const sid = n => 's'+n.replace('.','-');
+scenes.forEach(s=>{
+  if(s.part) main.insertAdjacentHTML('beforeend',`<div class="part">${s.part}</div>`);
+  if(s.deephead) main.insertAdjacentHTML('beforeend',`<div class="deephead">${s.deephead}</div>`);
+  if(!s.sub) chips.insertAdjacentHTML('beforeend',`<a href="#${sid(s.n)}" data-n="${s.n}" title="${esc(s.title)}">${s.n} ${s.icon}</a>`);
+  const group = s.sub ? scenes.filter(x=>x.parent===s.parent) : null;
+  const tag = s.sub
+    ? `Lesson ${s.parent} · deep dive ${group.indexOf(s)+1} of ${group.length}`
+    : `Scene ${s.n}${s.slug?` · <a href="${s.slug}">open the file →</a>`:""}${s.deeplink?` · <a href="#${sid(s.deeplink)}">🔬 deep dive below ↓</a>`:''}`;
+  main.insertAdjacentHTML('beforeend',`
+  <article class="card${s.sub?' sub':''}" id="${sid(s.n)}">
+    <div class="stage">
+      <svg viewBox="0 0 720 320" role="img" aria-label="Animation: ${esc(s.title)}">${s.svg()}</svg>
+      <div class="bar"><i></i></div>
+    </div>
+    <div class="side">
+      <div class="tag">${tag}</div>
+      <h2>${s.icon} ${esc(s.title)}</h2>
+      <p class="idea">${esc(s.idea)}</p>
+      <p class="like">💡 ${esc(s.like)}</p>
+      <ol class="steps">${s.steps.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>
+      <div class="ctrl">
+        <button data-act="prev" aria-label="Previous step">⏮</button>
+        <button data-act="play" aria-label="Play or pause">▶ Play</button>
+        <button data-act="next" aria-label="Next step">⏭</button>
+        <button data-act="restart" aria-label="Restart">↻ Replay</button>
+      </div>
+      <div class="keys">${s.keys.map(k=>`<code>${esc(k)}</code>`).join('')}</div>
+      ${s.tip?`<p class="tip">💡 ${esc(s.tip)}</p>`:''}
+      ${s.code?`<details class="codebox" open><summary>🐍 The code (and what it prints)</summary><pre>${esc(s.code)}</pre></details>`:''}
+    </div>
+  </article>`);
+  const card=main.lastElementChild;
+  Object.assign(s,{card, svg:card.querySelector('svg'), els:[...card.querySelectorAll('svg .a')], lis:[...card.querySelectorAll('ol.steps li')],
+    bar:card.querySelector('.bar i'), playBtn:card.querySelector('[data-act=play]'), k:0, playing:false, userPaused:false});
+});
+
+/* ---------- animation engine ---------- */
+function inR(spec,k){ return spec.split(',').some(r=>{ const [a,b]=r.split('-'); return k>=+a && k<=(b===undefined||b===''?99:+b); }); }
+function posAt(spec,k){ let p=[0,0,1]; if(spec) spec.split('|').forEach(seg=>{ const [st,v]=seg.split(':'); if(k>=+st){ p=v.split(',').map(Number); if(p[2]==null||isNaN(p[2])) p[2]=1; } }); return p; }
+const tf=(x,y,sc)=>`translate(${x}px,${y}px) scale(${sc})`;
+
+function setStep(s,k,instant){
+  s.k=k;
+  if(instant) s.svg.classList.add('noanim');
+  s.els.forEach(el=>{
+    const d=el.dataset, wasHid=el.classList.contains('hid');
+    const vis = d.show ? inR(d.show,k) : true;
+    const p=posAt(d.pos,k);
+    el.style.transitionDelay = (!instant && d.delay) ? d.delay+'s' : '0s';
+    if(vis && wasHid && d.from && !instant){
+      const f=d.from.split(',').map(Number);
+      el.style.transition='none';
+      el.style.transform=tf(p[0]+f[0],p[1]+f[1],p[2]);
+      el.getBoundingClientRect();
+      el.style.transition='';
+      el.style.transitionDelay = d.delay ? d.delay+'s' : '0s';
+    }
+    el.classList.toggle('hid',!vis);
+    if(d.hl) el.classList.toggle('hl',inR(d.hl,k));
+    el.style.transform=tf(p[0],p[1],p[2]);
+  });
+  if(instant){ s.svg.getBoundingClientRect(); s.svg.classList.remove('noanim'); }
+  s.lis.forEach((li,i)=>{ li.classList.toggle('now',i===k-1); li.classList.toggle('done',i<k-1 || (k===s.steps.length && i===k-1 && false)); });
+  if(s.hook) s.hook(k,s.svg,instant);
+}
+
+function runBar(s,ms){
+  s.bar.style.animation='none'; s.bar.getBoundingClientRect();
+  s.bar.style.animation=`fillbar ${ms}ms linear forwards`;
+  s.bar.style.animationPlayState = s.playing ? 'running' : 'paused';
+}
+function schedule(s){
+  clearTimeout(s.t);
+  if(!s.playing) return;
+  const base=s.dur||(s.sub?3800:3000), last=s.k>=s.steps.length, ms= last ? base*1.6 : base;
+  runBar(s,ms);
+  s.t=setTimeout(()=>{
+    if(!s.playing) return;
+    if(s.k>=s.steps.length){ setStep(s,0,true); s.t=setTimeout(()=>{ if(s.playing){ setStep(s,1); schedule(s);} },450); }
+    else { setStep(s,s.k+1); schedule(s); }
+  },ms);
+}
+function play(s){
+  s.playing=true; s.playBtn.textContent='⏸ Pause';
+  if(s.k===0) setStep(s,1);
+  schedule(s);
+}
+function pause(s){
+  s.playing=false; clearTimeout(s.t); s.playBtn.textContent='▶ Play';
+  s.bar.style.animationPlayState='paused';
+}
+function jump(s,k){
+  k=Math.max(1,Math.min(s.steps.length,k));
+  setStep(s,k);
+  if(s.playing) schedule(s); else runBar(s,1);
+}
+
+scenes.forEach(s=>{
+  setStep(s,0,true);
+  if(reduce) setStep(s,s.steps.length,true);
+  s.card.querySelector('.ctrl').addEventListener('click',e=>{
+    const act=e.target.closest('button')?.dataset.act; if(!act) return;
+    if(act==='play'){ if(s.playing){ s.userPaused=true; pause(s);} else { s.userPaused=false; play(s);} }
+    if(act==='next') jump(s,s.k+1);
+    if(act==='prev') jump(s,s.k-1);
+    if(act==='restart'){ s.userPaused=false; setStep(s,0,true); s.playing=true; s.playBtn.textContent='⏸ Pause'; setTimeout(()=>{ setStep(s,1); schedule(s); },300); }
+  });
+  s.lis.forEach((li,i)=>li.addEventListener('click',()=>jump(s,i+1)));
+});
+
+/* autoplay when visible + highlight nav chip */
+const chipEls=[...chips.querySelectorAll('a')];
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(en=>{
+    const s=scenes.find(x=>x.svg===en.target); if(!s) return;
+    if(en.isIntersecting && en.intersectionRatio>=.45){
+      if(!reduce && !s.userPaused && !s.playing) play(s);
+      const key=s.parent||s.n;
+      chipEls.forEach(a=>a.classList.toggle('on',a.dataset.n===key));
+      const chip=chipEls.find(a=>a.dataset.n===key); if(chip) chips.scrollTo({left:chip.offsetLeft-chips.clientWidth/2+chip.clientWidth/2,behavior:'smooth'});
+    } else if(s.playing && en.intersectionRatio<.2){ pause(s); }
+  });
+},{threshold:[0,.2,.45,.7]});
+scenes.forEach(s=>io.observe(s.svg));
+</script>
+</body>
+</html>

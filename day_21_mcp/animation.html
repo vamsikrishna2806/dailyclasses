@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP Motion Graphics</title>
+<meta name="description" content="Animated, step-by-step motion graphics for Day 21: MCP from zero to hero.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff7ec; --bg2:#ffeed6; --card:#ffffff; --ink:#2a2342; --muted:#6b6385; --line:#efe2cf;
+  --blue:#3b82f6; --green:#16a34a; --orange:#f97316; --red:#ef4444; --purple:#8b5cf6; --yellow:#d4a106; --pink:#ec4899; --teal:#0d9488;
+  --stage:#f4fbff; --grid:rgba(59,130,246,.10); --shadow:0 10px 30px rgba(80,50,20,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15122a; --bg2:#1d1938; --card:#231f3f; --ink:#f3efff; --muted:#aaa3cc; --line:#352f5c;
+  --stage:#1a1736; --grid:rgba(147,197,253,.08); --shadow:0 10px 30px rgba(0,0,0,.45); --yellow:#eab308;
+}}
+:root[data-theme="dark"]{
+  --bg:#15122a; --bg2:#1d1938; --card:#231f3f; --ink:#f3efff; --muted:#aaa3cc; --line:#352f5c;
+  --stage:#1a1736; --grid:rgba(147,197,253,.08); --shadow:0 10px 30px rgba(0,0,0,.45); --yellow:#eab308;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Baloo 2","Segoe UI",system-ui,sans-serif;font-size:17px;line-height:1.5;overflow-x:hidden}
+a{color:var(--blue)}
+code{font-family:"JetBrains Mono",Consolas,monospace;font-size:.8em;background:var(--bg2);padding:1px 7px;border-radius:6px;white-space:nowrap}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+
+/* hero */
+.hero{padding:34px 0 10px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.1;margin:0 0 6px}
+.hero p{margin:0;color:var(--muted);max-width:760px}
+.orb{width:84px;height:84px;border-radius:24px;background:linear-gradient(135deg,var(--purple),var(--blue));display:grid;place-items:center;font-size:44px;box-shadow:var(--shadow);animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-4deg)}}
+.back{display:inline-block;margin-top:10px;font-weight:700}
+.how{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 0}
+.how span{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-size:15px}
+
+/* nav */
+nav.chips{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);padding:10px 0;border-bottom:2px solid var(--line);margin:18px 0 8px}
+nav.chips .wrap{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin}
+nav.chips a{flex:none;text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:10px;padding:2px 10px;font-weight:700;font-size:14px}
+nav.chips a.on{border-color:var(--purple);background:color-mix(in srgb,var(--purple) 15%,var(--card))}
+
+/* parts */
+.part{margin:34px 0 6px;font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* card */
+.card{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:0;background:var(--card);border:2px solid var(--line);border-radius:22px;box-shadow:var(--shadow);margin:16px 0 26px;overflow:hidden;scroll-margin-top:70px}
+.stage{position:relative;background:var(--stage);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;border-right:2px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+.stage svg{display:block;width:100%;height:auto}
+.bar{height:5px;background:var(--line)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--blue))}
+@keyframes fillbar{from{width:0}to{width:100%}}
+.side{padding:20px 22px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tag{font-size:14px;color:var(--muted);font-weight:700}
+.side h2{margin:0;font-size:27px;line-height:1.15}
+.idea{margin:0;font-weight:600}
+.like{margin:0;color:var(--muted);font-size:15.5px}
+ol.steps{margin:4px 0 0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:4px}
+ol.steps li{counter-increment:st;position:relative;padding:5px 10px 5px 38px;border-radius:10px;cursor:pointer;font-size:15.5px;line-height:1.35;color:var(--muted);transition:background .3s,color .3s}
+ol.steps li::before{content:counter(st);position:absolute;left:8px;top:5px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;background:var(--bg2);color:var(--muted)}
+ol.steps li.done{color:var(--ink)}
+ol.steps li.done::before{content:"✓";background:color-mix(in srgb,var(--green) 22%,var(--card));color:var(--green)}
+ol.steps li.now{background:color-mix(in srgb,var(--purple) 13%,var(--card));color:var(--ink);font-weight:600}
+ol.steps li.now::before{content:counter(st);background:var(--purple);color:#fff}
+.ctrl{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.ctrl button{font:inherit;font-size:15px;font-weight:700;border:2px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:10px;padding:3px 12px;cursor:pointer}
+.ctrl button:hover{border-color:var(--purple)}
+.keys{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+@media (max-width:900px){
+  .card{grid-template-columns:1fr}
+  .stage{border-right:0;border-bottom:2px solid var(--line)}
+}
+
+/* svg vocabulary */
+.a{transition:transform .9s cubic-bezier(.45,.05,.2,1),opacity .55s ease;transform-box:fill-box;transform-origin:center}
+.a.hid{opacity:0}
+.noanim .a{transition:none!important}
+.bx{stroke-width:2}
+.lbl{fill:var(--ink);font-family:"Baloo 2","Segoe UI",sans-serif;font-weight:600}
+.mono{font-family:"JetBrains Mono",Consolas,monospace;font-weight:500}
+.mutx{fill:var(--muted)}
+.dash{stroke-dasharray:6 5}
+.c-blue{fill:color-mix(in srgb,var(--blue) 14%,var(--card));stroke:var(--blue)}
+.c-green{fill:color-mix(in srgb,var(--green) 14%,var(--card));stroke:var(--green)}
+.c-orange{fill:color-mix(in srgb,var(--orange) 14%,var(--card));stroke:var(--orange)}
+.c-red{fill:color-mix(in srgb,var(--red) 14%,var(--card));stroke:var(--red)}
+.c-purple{fill:color-mix(in srgb,var(--purple) 16%,var(--card));stroke:var(--purple)}
+.c-yellow{fill:color-mix(in srgb,var(--yellow) 20%,var(--card));stroke:var(--yellow)}
+.c-pink{fill:color-mix(in srgb,var(--pink) 14%,var(--card));stroke:var(--pink)}
+.c-teal{fill:color-mix(in srgb,var(--teal) 14%,var(--card));stroke:var(--teal)}
+.c-mut{fill:var(--bg2);stroke:var(--muted)}
+.arrow{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0;transition:stroke-dashoffset .8s ease,opacity .35s ease}
+.arrow.hid{stroke-dashoffset:1}
+.arrow.dashy{stroke-dasharray:.03 .025}
+.arrow.dashy.hid{stroke-dashoffset:0}
+.s-mut{stroke:var(--muted)}.s-blue{stroke:var(--blue)}.s-green{stroke:var(--green)}.s-orange{stroke:var(--orange)}.s-red{stroke:var(--red)}.s-purple{stroke:var(--purple)}.s-yellow{stroke:var(--yellow)}.s-pink{stroke:var(--pink)}.s-teal{stroke:var(--teal)}
+.mk-mut{fill:var(--muted)}.mk-blue{fill:var(--blue)}.mk-green{fill:var(--green)}.mk-orange{fill:var(--orange)}.mk-red{fill:var(--red)}.mk-purple{fill:var(--purple)}.mk-yellow{fill:var(--yellow)}.mk-pink{fill:var(--pink)}.mk-teal{fill:var(--teal)}
+.ring{fill:none;stroke-width:3;stroke-dasharray:7 6}
+.halo{fill:none;stroke:var(--orange);stroke-width:5;filter:drop-shadow(0 0 6px var(--orange))}
+.tok{fill:var(--orange);stroke:var(--card);stroke-width:3;filter:drop-shadow(0 0 6px var(--orange))}
+.a.hl>rect,.a.hl>circle{animation:glow 1s ease-in-out infinite alternate}
+@keyframes glow{from{stroke-width:2.5}to{stroke-width:5;filter:drop-shadow(0 0 7px var(--orange))}}
+.spin text{animation:spin 1.6s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.a,.arrow{transition:none!important}.a.hl>rect,.a.hl>circle,.orb,.spin text{animation:none}}
+.mono{white-space:pre}
+.good text{fill:var(--green)} .bad text{fill:var(--red)}
+.deephead{margin:-8px 0 0 28px;padding:10px 16px;border-left:4px solid var(--purple);font-weight:800;font-size:19px;color:var(--purple)}
+.card.sub{margin-left:28px;border-color:color-mix(in srgb,var(--purple) 35%,var(--line))}
+.card.sub .side h2{font-size:23px}
+@media (max-width:900px){.card.sub,.deephead{margin-left:0}}
+.tip{margin:4px 0 0;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--yellow) 16%,var(--card));font-size:15px}
+.codebox{margin-top:6px}
+.codebox summary{cursor:pointer;font-weight:700;font-size:15px}
+.codebox pre{margin:6px 0 0;padding:12px 14px;border-radius:12px;background:#1f1b33;color:#ece8ff;font:12.5px/1.5 "JetBrains Mono",Consolas,monospace;overflow-x:auto;white-space:pre}
+footer{color:var(--muted);text-align:center;padding:30px 0 50px;font-size:15px}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="markers"></defs></svg>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="orb">🎬</div>
+    <div>
+      <h1>MCP in Motion 🔌</h1>
+      <p>Day 21 as 10 short animations: why MCP exists, host / client / server, what servers offer, JSON-RPC messages, the lifecycle, stdio vs HTTP, building a FastMCP server, a raw client, many servers at once, and the LangGraph agent loop.</p>
+      <a class="back" href="index.html">← Back to the Day 21 tutorial</a>
+      <div class="how">
+        <span>▶ Plays by itself when you scroll to it</span>
+        <span>⏮ ⏭ Step back or forward</span>
+        <span>👆 Click any step to jump there</span>
+      </div>
+    </div>
+  </header>
+</div>
+
+<nav class="chips" aria-label="Jump to a lesson"><div class="wrap" id="chips"></div></nav>
+
+<main class="wrap" id="scenes"></main>
+
+<footer class="wrap">Day 21 · MCP Zero → Hero · 10 motion graphics</footer>
+
+<script>
+/* ---------- tiny SVG helpers ---------- */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const da = o => ['show','from','pos','hl','delay'].map(k => o[k]!=null ? ` data-${k}="${o[k]}"` : '').join('');
+const cl = o => 'a' + (o.cls ? ' '+o.cls : '');
+function lines(x, y, h, label, o){
+  if(!label) return '';
+  const fs=o.fs||15, ls=String(label).split('\n'), lh=fs*1.3, cy=y+h/2-(ls.length-1)*lh/2;
+  return ls.map((l,i)=>`<text x="${x}" y="${cy+i*lh}" class="lbl${o.mono?' mono':''}" font-size="${fs}" text-anchor="middle" dominant-baseline="central">${esc(l)}</text>`).join('');
+}
+// Box
+function B(x,y,w,h,c,label='',o={}){
+  return `<g class="${cl(o)}"${da(o)}><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${o.r??12}" class="bx c-${c}${o.dash?' dash':''}"/>${lines(x+w/2,y,h,label,o)}</g>`;
+}
+// Text
+function T(x,y,s,o={}){
+  return `<g class="${cl(o)}"${da(o)}><text x="${x}" y="${y}" class="lbl${o.mono?' mono':''}${o.mut?' mutx':''}" font-size="${o.fs||15}" text-anchor="${o.anchor||'middle'}" dominant-baseline="central"${o.id?` data-id="${o.id}"`:''}>${esc(s)}</text></g>`;
+}
+// Emoji
+function E(x,y,e,fs=32,o={}){
+  return `<g class="${cl(o)}"${da(o)}><text x="${x}" y="${y}" font-size="${fs}" text-anchor="middle" dominant-baseline="central">${e}</text></g>`;
+}
+// Circle with label
+function C(cx,cy,r,c,label='',o={}){
+  return `<g class="${cl(o)}"${da(o)}><circle cx="${cx}" cy="${cy}" r="${r}" class="bx c-${c}"/>${lines(cx,cy-r,2*r,label,o)}</g>`;
+}
+// Arrow (draws itself when shown)
+function A(x1,y1,x2,y2,o={}){
+  const c=o.c||'mut';
+  const d=o.q?`M${x1},${y1} Q${o.q[0]},${o.q[1]} ${x2},${y2}`:`M${x1},${y1} L${x2},${y2}`;
+  return `<path class="a arrow s-${c}${o.dashy?' dashy':''}"${da(o)} d="${d}" pathLength="1" marker-end="url(#ah-${c})"/>`;
+}
+const M = {mono:true};
+const mo = (o={}) => Object.assign({mono:true}, o);
+
+/* ---------- the scenes ---------- */
+const scenes = [
+{ part:'Part 1 · Why MCP', n:'01', slug:'index.html', icon:'🧩', title:'The N × M problem',
+  idea:'Without a standard, every AI app needs its own custom code for every tool. MCP is one shared plug for all of them.',
+  like:'Like phone chargers: before USB-C every phone needed its own cable. Now one plug fits everything.',
+  keys:['N × M','N + M','one standard'],
+  steps:['You have many AI apps: Claude, a chat app, an IDE, an Ollama agent.',
+         'And many tools: GitHub, weather, files, a database.',
+         'Without a standard, every app needs custom code for every tool: 4 × 4 = 16 connections.',
+         'With MCP, each app and each tool learns MCP once: 4 + 4 = 8 connections.'],
+  svg:()=>{
+    const apps=['🤖 Claude','💬 Chat app','🧑‍💻 IDE','🦙 Ollama agent'], tools=['🐙 GitHub','🌦️ Weather','📁 Files','🗄️ Database'];
+    const ys=[40,100,160,220]; let s=[];
+    apps.forEach((a,i)=>s.push(B(20,ys[i],160,44,'purple',a,{fs:14,show:'1',from:'-40,0',delay:i*.12})));
+    tools.forEach((t,i)=>s.push(B(540,ys[i],160,44,'orange',t,{fs:14,show:'2',from:'40,0',delay:i*.12})));
+    ys.forEach(y1=>ys.forEach(y2=>s.push(A(182,y1+22,538,y2+22,{show:'3-3',c:'red'}))));
+    s.push(B(300,112,120,96,'teal','🔌 MCP',{fs:22,show:'4',from:'0,40'}));
+    ys.forEach((y,i)=>{ s.push(A(182,y+22,298,160,{show:'4',c:'teal',delay:.4})); s.push(A(422,160,538,y+22,{show:'4',c:'teal',delay:.7})); });
+    s.push(T(360,295,'N × M = 16 custom connections 😵',{fs:16,show:'3-3'}));
+    s.push(T(360,295,'N + M = 8 MCP connections 🎉',{fs:16,show:'4',delay:.9}));
+    return s.join('');
+  } },
+
+{ n:'02', slug:'architecture.html', icon:'🏠', title:'Host, Client, Server',
+  idea:'The host is the app you use. Inside it, one client talks to one server. Servers offer the tools.',
+  like:'Like a TV remote (client) inside your living room (host) that talks to one TV (server). Three TVs need three remotes.',
+  keys:['Host','Client','Server','1 client ↔ 1 server'],
+  steps:['The Host is the app the user talks to: Claude Desktop, or your own agent.',
+         'Inside the host, there is one Client for each server. Each client keeps one connection.',
+         'Each Server offers its own abilities: weather, math, notes…',
+         'Messages travel between each client and its server as JSON-RPC.'],
+  svg:()=>{
+    const cs=['🔌 Client A','🔌 Client B','🔌 Client C'], ss=['🌦️ weather server','🧮 math server','📝 notes server'], ys=[80,150,220]; let s=[];
+    s.push(B(20,30,290,270,'blue','',{r:16,show:'1'}), T(165,54,'🏠 Host (your agent app)',{fs:15,show:'1'}));
+    cs.forEach((c,i)=>s.push(B(55,ys[i],220,50,'purple',c,{fs:15,show:'2',delay:i*.15})));
+    ss.forEach((c,i)=>s.push(B(480,ys[i],220,50,'orange',c,{fs:15,show:'3',from:'40,0',delay:i*.15})));
+    ys.forEach((y,i)=>{ s.push(A(277,y+18,476,y+18,{show:'4',c:'purple',delay:i*.2})); s.push(A(476,y+34,277,y+34,{show:'4',c:'orange',delay:.4+i*.2})); });
+    s.push(T(378,300,'JSON-RPC messages',mo({fs:12,show:'4'})));
+    return s.join('');
+  } },
+
+{ n:'03', slug:'servers/math_server.py', icon:'🧱', title:'What a server offers',
+  idea:'An MCP server can offer three things: tools (actions), resources (data) and prompts (templates).',
+  like:'Like a kitchen: tools are the machines (blender, oven), resources are the ingredients, prompts are the recipe cards.',
+  keys:['tools','resources','prompts'],
+  steps:['Tools: functions the model can call, like add or get_weather. The model decides when.',
+         'Resources: read-only data with an address, like math://constants. The app decides when.',
+         'Prompts: ready-made templates, like explain_step_by_step. The user picks one.',
+         'Each one has a "list" and a "use" message.'],
+  svg:()=>{
+    const col=[[120,'blue','🔧 Tools','model decides','@mcp.tool()','add(a, b)','tools/list\ntools/call'],
+               [360,'teal','📄 Resources','app decides','@mcp.resource()','math://constants','resources/list\nresources/read'],
+               [600,'pink','💬 Prompts','user picks','@mcp.prompt()','explain_step_by_step','prompts/list\nprompts/get']];
+    let s=[];
+    col.forEach(([cx,c,name,who,dec,ex,msgs],i)=>{ const st=String(i+1);
+      s.push(B(cx-105,30,210,80,c,name+'\n'+who,{fs:15,show:st,from:'0,-30'}),
+        T(cx,138,dec,mo({fs:12,show:st,delay:.3})), T(cx,163,ex,mo({fs:12,show:st,delay:.45})),
+        B(cx-105,205,210,70,'mut',msgs,mo({fs:13,show:'4',delay:i*.15})));
+    });
+    return s.join('');
+  },
+  code:`@mcp.tool()
+def add(a: float, b: float) -> float: ...
+
+@mcp.resource("math://constants")
+def constants() -> str: ...
+
+@mcp.prompt()
+def explain_step_by_step(problem: str) -> str: ...`},
+
+{ part:'Part 2 · How messages travel', n:'04', slug:'index.html', icon:'✉️', title:'A JSON-RPC message',
+  idea:'Every MCP message is a small JSON object. A request has an id, and the response comes back with the same id.',
+  like:'Like a numbered ticket at a bakery: you order with ticket #7, and the order handed back has #7 on it too.',
+  keys:['"jsonrpc": "2.0"','id','method','result'],
+  steps:['Every MCP message is a small JSON object with "jsonrpc": "2.0".',
+         'A request has an id, a method (what to do) and params (the inputs).',
+         'The response comes back with the same id and a result.',
+         'A notification has no id, so nobody replies. Example: notifications/initialized.'],
+  svg:()=>{
+    const req=['{','  "jsonrpc": "2.0",','  "id": 7,','  "method": "tools/call",','  "params": {"name": "add",','    "arguments": {"a": 2, "b": 3}}','}'];
+    const res=['{','  "jsonrpc": "2.0",','  "id": 7,','  "result": {"content": [','    {"type": "text", "text": "5"}]}','}'];
+    let s=[B(20,40,330,195,'blue','',{show:'1'}), T(185,24,'➡ request',{fs:15,show:'1'})];
+    req.forEach((l,i)=>s.push(T(36,60+i*26,l,mo({fs:12.5,anchor:'start',show:(i===0||i===1||i===6)?'1':'2',delay:(i>1&&i<6)?(i-2)*.15:0}))));
+    s.push(B(370,40,330,170,'green','',{show:'3'}), T(535,24,'⬅ response',{fs:15,show:'3'}));
+    res.forEach((l,i)=>s.push(T(386,60+i*26,l,mo({fs:12.5,anchor:'start',show:'3',delay:.2+i*.1}))));
+    s.push(B(20,252,680,50,'yellow','📣 {"jsonrpc": "2.0", "method": "notifications/initialized"}   no id, no reply',mo({fs:11.5,show:'4',from:'0,30'})));
+    return s.join('');
+  } },
+
+{ n:'05', slug:'index.html', icon:'🔁', title:'The lifecycle',
+  idea:'Every connection follows the same order: say hello, confirm, do the work, then close.',
+  like:'Like a phone call: "Hello?" "Hi, this is…" "Great, so…" (the real talk) and then "Bye!".',
+  keys:['initialize','notifications/initialized','tools/call','close'],
+  steps:['initialize: the client sends its MCP version and what it supports.',
+         'The server replies with its version, its name and what it offers.',
+         'notifications/initialized: the client says "I am ready".',
+         'Normal work: tools/list, tools/call, resources/read…',
+         'When the async with block ends, the connection closes.'],
+  svg:()=>[
+    B(60,15,180,40,'purple','🔌 Client',{fs:15}), B(480,15,180,40,'orange','🧰 Server',{fs:15}),
+    B(149,58,2,212,'mut','',{r:1}), B(569,58,2,212,'mut','',{r:1}),
+    A(152,95,565,95,{show:'1',c:'blue'}), T(360,82,'initialize',mo({fs:12,show:'1'})),
+    A(568,135,155,135,{show:'2',c:'green'}), T(360,122,'result: serverInfo, capabilities',mo({fs:12,show:'2'})),
+    A(152,175,565,175,{show:'3',c:'yellow'}), T(360,162,'notifications/initialized',mo({fs:12,show:'3'})),
+    A(152,215,565,215,{show:'4',c:'purple'}), T(360,202,'tools/list · tools/call · …',mo({fs:12,show:'4'})),
+    A(568,245,155,245,{show:'4',c:'purple',delay:.5}), T(360,232,'results',mo({fs:11,mut:true,show:'4',delay:.5})),
+    T(360,292,'🔚 connection closed',{fs:16,show:'5'}),
+  ].join(''),
+  code:`async with ClientSession(read, write) as session:
+    await session.initialize()          # steps 1-3
+    await session.list_tools()          # step 4
+    await session.call_tool("add", {"a": 2, "b": 3})
+# leaving the block closes the connection (step 5)`},
+
+{ n:'06', slug:'HOW_TO_USE.md', icon:'🚚', title:'stdio vs Streamable HTTP',
+  idea:'There are two ways to carry the messages: stdio for a server on your own computer, HTTP for a server at a URL.',
+  like:'stdio is like whispering to someone in the same room. HTTP is like sending a letter: it can go anywhere.',
+  keys:['stdio','StdioServerParameters','streamable-http','url'],
+  steps:['stdio: the client starts the server as a child process on your computer.',
+         'Messages travel through stdin and stdout. Never print() in a stdio server!',
+         'Streamable HTTP: the server is a web service at a URL, local or online.',
+         'Messages travel as HTTP POST requests, so it works over the internet. DeepWiki works this way.'],
+  svg:()=>[
+    T(180,24,'📟 stdio',{fs:17}), T(540,24,'🌐 Streamable HTTP',{fs:17}), B(359,15,2,290,'mut','',{r:1}),
+    B(20,50,135,70,'purple','🔌 client',{fs:14,show:'1'}),
+    B(205,50,135,70,'orange','🧮 math_server\n(child process)',{fs:12,show:'1',from:'-60,0'}),
+    A(157,75,201,75,{show:'2',c:'blue'}), A(201,100,157,100,{show:'2',c:'green'}),
+    T(180,145,'stdin ➡   ⬅ stdout',mo({fs:12,show:'2'})),
+    B(20,170,320,40,'red','🚫 print() breaks the protocol',{fs:13,show:'2',delay:.4}),
+    T(180,245,'StdioServerParameters(command, args)',mo({fs:10.5,show:'1'})),
+    B(380,50,135,70,'purple','🔌 client',{fs:14,show:'3'}),
+    B(565,50,135,70,'orange','📝 notes_server\n:8000/mcp',{fs:12,show:'3',from:'60,0'}),
+    A(517,75,561,75,{show:'4',c:'blue'}), A(561,100,517,100,{show:'4',c:'green'}),
+    T(540,145,'HTTP POST /mcp',mo({fs:12,show:'4'})),
+    B(380,170,320,40,'green','✅ works over the internet',{fs:13,show:'4',delay:.4}),
+    T(540,245,'"url": "https://mcp.deepwiki.com/mcp"',mo({fs:10.5,show:'4'})),
+  ].join('') },
+
+{ part:'Part 3 · Build it yourself', n:'07', slug:'servers/math_server.py', icon:'🏗️', title:'Build a server with FastMCP',
+  idea:'FastMCP turns normal Python functions into MCP tools. It reads your type hints and docstring for you.',
+  like:'Like putting a label on a jar: write the function, stick @mcp.tool() on it, and everyone knows what is inside.',
+  keys:['FastMCP("Math")','@mcp.tool()','@mcp.resource()','mcp.run()'],
+  steps:['mcp = FastMCP("Math") creates the server and gives it a name.',
+         '@mcp.tool() turns a normal Python function into a tool.',
+         'FastMCP reads the type hints and docstring and builds the tool’s schema automatically.',
+         '@mcp.resource and @mcp.prompt add data and templates the same way.',
+         'mcp.run(transport="stdio") starts the server and waits for clients.'],
+  svg:()=>[
+    B(20,30,340,265,'mut','',{r:14}),
+    T(35,55,'mcp = FastMCP("Math")',mo({fs:12,anchor:'start',show:'1'})),
+    T(35,95,'@mcp.tool()',mo({fs:12,anchor:'start',show:'2'})),
+    T(35,120,'def add(a: float, b: float) -> float:',mo({fs:11.5,anchor:'start',show:'2'})),
+    T(35,145,'    """Add two numbers."""',mo({fs:11.5,anchor:'start',show:'2'})),
+    T(35,170,'    return a + b',mo({fs:11.5,anchor:'start',show:'2'})),
+    T(35,210,'@mcp.resource("math://constants")',mo({fs:11.5,anchor:'start',show:'4'})),
+    T(35,235,'@mcp.prompt()',mo({fs:11.5,anchor:'start',show:'4'})),
+    T(35,275,'mcp.run(transport="stdio")',mo({fs:12,anchor:'start',show:'5'})),
+    B(390,30,310,50,'orange','🧰 server "Math"',{fs:15,show:'1',from:'40,0'}),
+    A(362,135,386,150,{show:'3',c:'yellow'}),
+    B(390,95,310,120,'yellow','',{show:'3',from:'40,0'}),
+    T(405,117,'tool: add',mo({fs:12,anchor:'start',show:'3'})),
+    T(405,142,'description: "Add two numbers."',mo({fs:11.5,anchor:'start',show:'3'})),
+    T(405,167,'inputs: a (number), b (number)',mo({fs:11.5,anchor:'start',show:'3'})),
+    T(405,192,'output: number',mo({fs:11.5,anchor:'start',show:'3'})),
+    B(390,228,150,40,'teal','📄 resource',{fs:13,show:'4'}), B(550,228,150,40,'pink','💬 prompt',{fs:13,show:'4',delay:.15}),
+    T(545,292,'🟢 waiting for clients…',{fs:14,show:'5'}),
+  ].join(''),
+  code:`from mcp.server.fastmcp import FastMCP
+mcp = FastMCP("Math")
+
+@mcp.tool()
+def add(a: float, b: float) -> float:
+    """Add two numbers and return the sum."""
+    return a + b
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")`},
+
+{ n:'08', slug:'raw_client.py', icon:'🔍', title:'Talk to a server without an LLM',
+  idea:'Your own code can call an MCP server directly. No AI is involved: your code decides what to call.',
+  like:'Like pressing the buttons on a vending machine yourself instead of asking a friend to choose.',
+  keys:['stdio_client','list_tools()','call_tool()','read_resource()','get_prompt()'],
+  steps:['stdio_client starts math_server.py and connects to it.',
+         'initialize(): the server says its name, Math.',
+         'list_tools() returns add, multiply, div and power.',
+         'call_tool("multiply", {"a": 6, "b": 7}) returns 42.',
+         'read_resource and get_prompt fetch the data and the template.'],
+  svg:()=>[
+    B(20,20,170,64,'purple','🐍 raw_client.py',{fs:14}),
+    B(530,20,170,64,'orange','🧮 math server',{fs:15,show:'1',from:'40,0'}),
+    A(194,52,526,52,{show:'1',c:'blue'}), T(360,38,'stdio',mo({fs:12,show:'1'})),
+    B(20,105,680,195,'mut','',{r:12}),
+    T(36,128,'$ python raw_client.py',mo({fs:12.5,anchor:'start',show:'1'})),
+    T(36,157,`Connected to 'Math'`,mo({fs:12.5,anchor:'start',show:'2'})),
+    T(36,186,'tool: add · multiply · div · power',mo({fs:12.5,anchor:'start',show:'3'})),
+    T(36,215,'multiply(6, 7) = 42',mo({fs:12.5,anchor:'start',show:'4'})),
+    T(36,244,'resource math://constants -> pi = 3.14159 | e = 2.71828 | …',mo({fs:12.5,anchor:'start',show:'5'})),
+    T(36,273,'prompt -> Solve step by step. Use the math tools…',mo({fs:12.5,anchor:'start',show:'5',delay:.4})),
+  ].join(''),
+  code:`async with stdio_client(SERVER) as (read, write):
+    async with ClientSession(read, write) as session:
+        await session.initialize()
+        tools = await session.list_tools()
+        result = await session.call_tool("multiply", {"a": 6, "b": 7})
+        res = await session.read_resource("math://constants")
+        prompt = await session.get_prompt("explain_step_by_step", {"problem": "2^10 + 5"})`},
+
+{ part:'Part 4 · The hero agent', n:'09', slug:'agent/agent_prebuilt.py', icon:'🧲', title:'Many servers at once',
+  idea:'MultiServerMCPClient connects to several MCP servers and gives your agent all their tools in one list.',
+  like:'Like a power strip: plug in many devices, and one cable goes to the wall.',
+  keys:['MultiServerMCPClient','get_tools()','LangChain tools'],
+  steps:['MultiServerMCPClient gets a dictionary: server name → how to reach it.',
+         'It connects to each one: stdio for local servers, HTTP for DeepWiki.',
+         'get_tools() collects every server’s tools into one list.',
+         'Each MCP tool becomes a LangChain tool, ready for the agent.'],
+  svg:()=>{
+    const sv=['🌦️ weather (stdio)','⏰ time (stdio)','🌐 fetch (stdio)','📚 deepwiki (HTTP)'], ys=[20,75,130,185]; let s=[];
+    s.push(B(20,80,210,100,'purple','🧲 MultiServer\nMCPClient',{fs:15,show:'1'}));
+    sv.forEach((t,i)=>s.push(B(500,ys[i],200,45,'orange',t,mo({fs:12,show:'1',from:'40,0',delay:i*.12}))));
+    ys.forEach((y,i)=>s.push(A(232,130,496,y+22,{show:'2',c:'teal',delay:i*.15})));
+    s.push(B(20,250,680,50,'green','🔧 get_current_weather · get_forecast · get_current_time · fetch · ask_wiki_question …',mo({fs:11.5,show:'3-3',from:'0,-60'})));
+    s.push(B(20,250,680,50,'teal','🦜 all of them are now LangChain tools → ready for the agent',{fs:14,show:'4',from:'0,30'}));
+    return s.join('');
+  },
+  code:`client = MultiServerMCPClient({
+    "weather":  {"transport": "stdio", "command": sys.executable, "args": [".../weather_server.py"]},
+    "time":     {"transport": "stdio", "command": sys.executable, "args": ["-m", "mcp_server_time"]},
+    "fetch":    {"transport": "stdio", "command": sys.executable, "args": ["-m", "mcp_server_fetch"]},
+    "deepwiki": {"transport": "streamable_http", "url": "https://mcp.deepwiki.com/mcp"},
+})
+tools = await client.get_tools()     # MCP tools -> LangChain tools`},
+
+{ n:'10', slug:'agent/agent_graph.py', icon:'🔄', title:'The LangGraph agent loop',
+  idea:'The agent loops: the LLM thinks, tools run, the LLM thinks again, until no more tools are needed.',
+  like:'Like solving a puzzle: think, look something up, think again, and stop when you have the answer.',
+  keys:['StateGraph','ToolNode','tools_condition','bind_tools()'],
+  steps:['START → agent: the LLM (Ollama with bind_tools) reads the question.',
+         'tools_condition: did the LLM ask for a tool? Yes → go to "tools".',
+         'ToolNode runs the MCP tools/call for us and adds the result.',
+         'Back to agent: the LLM reads the result. Needs more? It loops again.',
+         'No more tool_calls → END. The last message is the final answer.'],
+  svg:()=>[
+    C(70,160,40,'mut','START',mo({fs:12})),
+    B(190,115,170,90,'green','🧠 agent\n(Ollama LLM)',{fs:15,hl:'1-1,4-4'}),
+    B(510,115,190,90,'orange','🔧 tools\n(ToolNode → MCP)',{fs:14,hl:'3-3'}),
+    C(275,275,30,'mut','END',mo({fs:12})),
+    A(112,160,186,160,{show:'1'}),
+    A(362,145,506,145,{show:'2',c:'orange'}), T(434,130,'tool_calls?',mo({fs:12,show:'2'})),
+    A(506,180,362,180,{show:'4',c:'green'}), T(434,197,'result',mo({fs:12,show:'4'})),
+    A(275,207,275,242,{show:'5',c:'purple'}), T(335,225,'no tools',mo({fs:12,show:'5'})),
+    T(360,30,'g.add_conditional_edges("agent", tools_condition)',mo({fs:12,show:'2'})),
+    T(360,58,'g.add_edge("tools", "agent")',mo({fs:12,show:'4'})),
+    C(70,108,10,'orange','',{show:'1',pos:'1:205,0|2:535,0|4:205,0|5:205,127'}),
+  ].join(''),
+  code:`g = StateGraph(State)
+g.add_node("agent", agent)
+g.add_node("tools", ToolNode(tools))                # runs MCP tools/call for us
+g.add_edge(START, "agent")
+g.add_conditional_edges("agent", tools_condition)   # tool_calls? -> "tools" else END
+g.add_edge("tools", "agent")`},
+];
+
+/* ---------- build the page ---------- */
+const COLORS=['mut','blue','green','orange','red','purple','yellow','pink','teal'];
+document.getElementById('markers').innerHTML = COLORS.map(c=>`<marker id="ah-${c}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-${c}"/></marker>`).join('');
+
+const main=document.getElementById('scenes'), chips=document.getElementById('chips');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const sid = n => 's'+n.replace('.','-');
+scenes.forEach(s=>{
+  if(s.part) main.insertAdjacentHTML('beforeend',`<div class="part">${s.part}</div>`);
+  if(s.deephead) main.insertAdjacentHTML('beforeend',`<div class="deephead">${s.deephead}</div>`);
+  if(!s.sub) chips.insertAdjacentHTML('beforeend',`<a href="#${sid(s.n)}" data-n="${s.n}" title="${esc(s.title)}">${s.n} ${s.icon}</a>`);
+  const group = s.sub ? scenes.filter(x=>x.parent===s.parent) : null;
+  const tag = s.sub
+    ? `Lesson ${s.parent} · deep dive ${group.indexOf(s)+1} of ${group.length}`
+    : `Scene ${s.n}${s.slug?` · <a href="${s.slug}">open the file →</a>`:""}${s.deeplink?` · <a href="#${sid(s.deeplink)}">🔬 deep dive below ↓</a>`:''}`;
+  main.insertAdjacentHTML('beforeend',`
+  <article class="card${s.sub?' sub':''}" id="${sid(s.n)}">
+    <div class="stage">
+      <svg viewBox="0 0 720 320" role="img" aria-label="Animation: ${esc(s.title)}">${s.svg()}</svg>
+      <div class="bar"><i></i></div>
+    </div>
+    <div class="side">
+      <div class="tag">${tag}</div>
+      <h2>${s.icon} ${esc(s.title)}</h2>
+      <p class="idea">${esc(s.idea)}</p>
+      <p class="like">💡 ${esc(s.like)}</p>
+      <ol class="steps">${s.steps.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>
+      <div class="ctrl">
+        <button data-act="prev" aria-label="Previous step">⏮</button>
+        <button data-act="play" aria-label="Play or pause">▶ Play</button>
+        <button data-act="next" aria-label="Next step">⏭</button>
+        <button data-act="restart" aria-label="Restart">↻ Replay</button>
+      </div>
+      <div class="keys">${s.keys.map(k=>`<code>${esc(k)}</code>`).join('')}</div>
+      ${s.tip?`<p class="tip">💡 ${esc(s.tip)}</p>`:''}
+      ${s.code?`<details class="codebox" open><summary>🐍 The code (and what it prints)</summary><pre>${esc(s.code)}</pre></details>`:''}
+    </div>
+  </article>`);
+  const card=main.lastElementChild;
+  Object.assign(s,{card, svg:card.querySelector('svg'), els:[...card.querySelectorAll('svg .a')], lis:[...card.querySelectorAll('ol.steps li')],
+    bar:card.querySelector('.bar i'), playBtn:card.querySelector('[data-act=play]'), k:0, playing:false, userPaused:false});
+});
+
+/* ---------- animation engine ---------- */
+function inR(spec,k){ return spec.split(',').some(r=>{ const [a,b]=r.split('-'); return k>=+a && k<=(b===undefined||b===''?99:+b); }); }
+function posAt(spec,k){ let p=[0,0,1]; if(spec) spec.split('|').forEach(seg=>{ const [st,v]=seg.split(':'); if(k>=+st){ p=v.split(',').map(Number); if(p[2]==null||isNaN(p[2])) p[2]=1; } }); return p; }
+const tf=(x,y,sc)=>`translate(${x}px,${y}px) scale(${sc})`;
+
+function setStep(s,k,instant){
+  s.k=k;
+  if(instant) s.svg.classList.add('noanim');
+  s.els.forEach(el=>{
+    const d=el.dataset, wasHid=el.classList.contains('hid');
+    const vis = d.show ? inR(d.show,k) : true;
+    const p=posAt(d.pos,k);
+    el.style.transitionDelay = (!instant && d.delay) ? d.delay+'s' : '0s';
+    if(vis && wasHid && d.from && !instant){
+      const f=d.from.split(',').map(Number);
+      el.style.transition='none';
+      el.style.transform=tf(p[0]+f[0],p[1]+f[1],p[2]);
+      el.getBoundingClientRect();
+      el.style.transition='';
+      el.style.transitionDelay = d.delay ? d.delay+'s' : '0s';
+    }
+    el.classList.toggle('hid',!vis);
+    if(d.hl) el.classList.toggle('hl',inR(d.hl,k));
+    el.style.transform=tf(p[0],p[1],p[2]);
+  });
+  if(instant){ s.svg.getBoundingClientRect(); s.svg.classList.remove('noanim'); }
+  s.lis.forEach((li,i)=>{ li.classList.toggle('now',i===k-1); li.classList.toggle('done',i<k-1 || (k===s.steps.length && i===k-1 && false)); });
+  if(s.hook) s.hook(k,s.svg,instant);
+}
+
+function runBar(s,ms){
+  s.bar.style.animation='none'; s.bar.getBoundingClientRect();
+  s.bar.style.animation=`fillbar ${ms}ms linear forwards`;
+  s.bar.style.animationPlayState = s.playing ? 'running' : 'paused';
+}
+function schedule(s){
+  clearTimeout(s.t);
+  if(!s.playing) return;
+  const base=s.dur||(s.sub?3800:3000), last=s.k>=s.steps.length, ms= last ? base*1.6 : base;
+  runBar(s,ms);
+  s.t=setTimeout(()=>{
+    if(!s.playing) return;
+    if(s.k>=s.steps.length){ setStep(s,0,true); s.t=setTimeout(()=>{ if(s.playing){ setStep(s,1); schedule(s);} },450); }
+    else { setStep(s,s.k+1); schedule(s); }
+  },ms);
+}
+function play(s){
+  s.playing=true; s.playBtn.textContent='⏸ Pause';
+  if(s.k===0) setStep(s,1);
+  schedule(s);
+}
+function pause(s){
+  s.playing=false; clearTimeout(s.t); s.playBtn.textContent='▶ Play';
+  s.bar.style.animationPlayState='paused';
+}
+function jump(s,k){
+  k=Math.max(1,Math.min(s.steps.length,k));
+  setStep(s,k);
+  if(s.playing) schedule(s); else runBar(s,1);
+}
+
+scenes.forEach(s=>{
+  setStep(s,0,true);
+  if(reduce) setStep(s,s.steps.length,true);
+  s.card.querySelector('.ctrl').addEventListener('click',e=>{
+    const act=e.target.closest('button')?.dataset.act; if(!act) return;
+    if(act==='play'){ if(s.playing){ s.userPaused=true; pause(s);} else { s.userPaused=false; play(s);} }
+    if(act==='next') jump(s,s.k+1);
+    if(act==='prev') jump(s,s.k-1);
+    if(act==='restart'){ s.userPaused=false; setStep(s,0,true); s.playing=true; s.playBtn.textContent='⏸ Pause'; setTimeout(()=>{ setStep(s,1); schedule(s); },300); }
+  });
+  s.lis.forEach((li,i)=>li.addEventListener('click',()=>jump(s,i+1)));
+});
+
+/* autoplay when visible + highlight nav chip */
+const chipEls=[...chips.querySelectorAll('a')];
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(en=>{
+    const s=scenes.find(x=>x.svg===en.target); if(!s) return;
+    if(en.isIntersecting && en.intersectionRatio>=.45){
+      if(!reduce && !s.userPaused && !s.playing) play(s);
+      const key=s.parent||s.n;
+      chipEls.forEach(a=>a.classList.toggle('on',a.dataset.n===key));
+      const chip=chipEls.find(a=>a.dataset.n===key); if(chip) chips.scrollTo({left:chip.offsetLeft-chips.clientWidth/2+chip.clientWidth/2,behavior:'smooth'});
+    } else if(s.playing && en.intersectionRatio<.2){ pause(s); }
+  });
+},{threshold:[0,.2,.45,.7]});
+scenes.forEach(s=>io.observe(s.svg));
+</script>
+</body>
+</html>

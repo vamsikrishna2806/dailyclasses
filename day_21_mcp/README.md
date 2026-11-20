@@ -8,6 +8,7 @@ An animated, interactive, beginner-to-advanced tutorial on the **Model Context P
 3. **[architecture.html](architecture.html)**: component, graph, startup and request-flow diagrams.
 4. **[prompt.md](prompt.md)**: the system prompt explained, plus test prompts for every server.
 5. **[prompt_nontechnical.md](prompt_nontechnical.md)**: MCP explained in plain language.
+6. **[animation.html](animation.html)**: 10 step-by-step motion graphics (same style as Day 13's LangChain animation).
 
 ## Tutorial chapters
 | Level | Chapters |

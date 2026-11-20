@@ -1,0 +1,2123 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 20: Ten multi-agent architectures</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 20</div>
+<h1>Day 20: Ten multi-agent architectures</h1>
+<p class="lead">The same building blocks as Day 19 (State, nodes, edges, conditional edges), arranged into 10 different team shapes. In every folder, agent.py builds the graph and tools.py holds the plain-Python helpers and tools.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">Pipeline (assembly line)</a></li><li><a href="#p2">Parallel (fan-out / fan-in)</a></li><li><a href="#p3">Debate</a></li><li><a href="#p4">Voting panel (majority vote)</a></li><li><a href="#p5">Plan and execute</a></li><li><a href="#p6">Coder ↔ tester (with a real test run)</a></li><li><a href="#p7">RAG team (retrieve, answer, fact-check)</a></li><li><a href="#p8">Swarm (hand-offs, no boss)</a></li><li><a href="#p9">Blackboard (shared workspace)</a></li><li><a href="#p10">Hierarchical (manager → teams → workers)</a></li></ol></nav>
+<h2>What every agent.py has in common</h2>
+<div class="group"><p>1) <code>class State(TypedDict)</code> holds the shared data. 2) Each <code>*_node(state)</code> function makes one LLM call, or runs plain code, and returns the keys it changes. 3) <code>build_agent()</code> adds the nodes and edges, then calls <code>compile()</code>. 4) <code>MAX_*</code> limits guarantee every loop ends. 5) <code>main()</code> asks for input and prints each step.</p></div>
+<section class="card" id="p1">
+<h3>1. Pipeline (assembly line)</h3>
+<div class="path">pipeline_agent/agent.py · pipeline_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">Four writers work in a fixed order to make a blog post.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\pipeline_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>The outliner plans the structure. The writer turns the outline into a first draft, the editor polishes it, and the headline node writes a title.</li>
+<li>Each node reads the previous node&#x27;s output from the state and adds its own key.</li>
+<li><code>quality_gate</code> (plain code, no AI) reports the word count and reading time using <code>count_words</code> and <code>reading_time</code> from tools.py.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → outliner → writer → editor → headline → quality_gate → END</pre>
+<details><summary>Show the full source of pipeline_agent/agent.py (122 lines)</summary><pre>&quot;&quot;&quot;
+PIPELINE (assembly line) multi-agent
+------------------------------------
+Four specialist agents work in a FIXED order. Each one reads what the
+previous one produced and adds its own piece:
+
+    START -&gt; outliner -&gt; writer -&gt; editor -&gt; headline -&gt; quality_gate -&gt; END
+&quot;&quot;&quot;
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import clean_text, count_words, reading_time
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.5)
+
+# ---------- Prompts: one per agent (each agent = one LLM + one job) ----------
+OUTLINER_PROMPT = &quot;&quot;&quot;You are an OUTLINER. Make a 3-point outline for a short blog post about the topic.
+One short line per point. Return ONLY the 3 numbered lines.&quot;&quot;&quot;
+
+WRITER_PROMPT = &quot;&quot;&quot;You are a BLOG WRITER. Write a short blog post (about 120 words) that follows the outline exactly.
+Return ONLY the post text — no title, no intro.&quot;&quot;&quot;
+
+EDITOR_PROMPT = &quot;&quot;&quot;You are an EDITOR. Improve the clarity and grammar of the post, remove repetition,
+and keep about the same length. Return ONLY the edited post.&quot;&quot;&quot;
+
+HEADLINE_PROMPT = &quot;&quot;&quot;You are a HEADLINE WRITER. Write ONE catchy headline (max 10 words) for this post.
+Return ONLY the headline — no quotes, no intro.&quot;&quot;&quot;
+
+
+# ---------- State: the &quot;baton&quot; passed along the line ----------
+class State(TypedDict):
+    topic: str
+    outline: str
+    draft: str
+    edited: str
+    headline: str
+    report: str
+
+
+def ask_llm(system: str, user: str) -&gt; str:
+    return clean_text(llm.invoke([SystemMessage(content=system), HumanMessage(content=user)]).content)
+
+
+# ---------- Agents (nodes) ----------
+def outliner_node(state: State):
+    print(&quot;  1/5 🗂️  [outliner]  planning the structure...&quot;)
+    return {&quot;outline&quot;: ask_llm(OUTLINER_PROMPT, f&quot;Topic: {state[&#x27;topic&#x27;]}&quot;)}
+
+
+def writer_node(state: State):
+    print(&quot;  2/5 ✍️  [writer]    writing the first draft...&quot;)
+    msg = f&quot;Topic: {state[&#x27;topic&#x27;]}\n\nOutline:\n{state[&#x27;outline&#x27;]}&quot;
+    return {&quot;draft&quot;: ask_llm(WRITER_PROMPT, msg)}
+
+
+def editor_node(state: State):
+    print(&quot;  3/5 🧹 [editor]    polishing the draft...&quot;)
+    return {&quot;edited&quot;: ask_llm(EDITOR_PROMPT, state[&quot;draft&quot;])}
+
+
+def headline_node(state: State):
+    print(&quot;  4/5 📰 [headline]  choosing a headline...&quot;)
+    return {&quot;headline&quot;: ask_llm(HEADLINE_PROMPT, state[&quot;edited&quot;]).strip(&#x27;&quot;&#x27;)}
+
+
+def quality_gate_node(state: State):
+    &quot;&quot;&quot;Plain Python (NO LLM): not every node needs AI. This one just measures.&quot;&quot;&quot;
+    print(&quot;  5/5 📏 [quality]   measuring the result (plain code, no AI)&quot;)
+    words = count_words(state[&quot;edited&quot;])
+    return {&quot;report&quot;: f&quot;{words} words · reading time {reading_time(state[&#x27;edited&#x27;])}&quot;}
+
+
+# ---------- Graph: a straight line ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;outliner&quot;, outliner_node)
+    g.add_node(&quot;writer&quot;, writer_node)
+    g.add_node(&quot;editor&quot;, editor_node)
+    g.add_node(&quot;headline&quot;, headline_node)
+    g.add_node(&quot;quality_gate&quot;, quality_gate_node)
+
+    g.add_edge(START, &quot;outliner&quot;)
+    g.add_edge(&quot;outliner&quot;, &quot;writer&quot;)
+    g.add_edge(&quot;writer&quot;, &quot;editor&quot;)
+    g.add_edge(&quot;editor&quot;, &quot;headline&quot;)
+    g.add_edge(&quot;headline&quot;, &quot;quality_gate&quot;)
+    g.add_edge(&quot;quality_gate&quot;, END)
+    return g.compile()
+
+
+def ask(agent, topic):
+    r = agent.invoke({&quot;topic&quot;: topic, &quot;outline&quot;: &quot;&quot;, &quot;draft&quot;: &quot;&quot;, &quot;edited&quot;: &quot;&quot;, &quot;headline&quot;: &quot;&quot;, &quot;report&quot;: &quot;&quot;})
+    return f&quot;# {r[&#x27;headline&#x27;]}\n\n{r[&#x27;edited&#x27;]}\n\n({r[&#x27;report&#x27;]})&quot;
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  🏭  Pipeline Agent  (outline → write → edit → headline)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}&quot;)
+    print(&quot;  Try: &#x27;Why sleep matters&#x27; or &#x27;Learning to cook&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            topic = input(&quot;Blog topic: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not topic: continue
+        if topic.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        print(&quot;\n&quot; + ask(agent, topic) + &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of pipeline_agent/tools.py (20 lines)</summary><pre>import re
+
+
+def clean_text(text: str) -&gt; str:
+    &quot;&quot;&quot;Small models love to start with &#x27;Here is...:&#x27; — drop that intro line.&quot;&quot;&quot;
+    lines = text.strip().splitlines()
+    if lines and lines[0].lower().startswith(&quot;here&quot;) and lines[0].rstrip().endswith(&quot;:&quot;):
+        lines = lines[1:]
+    return &quot;\n&quot;.join(lines).strip()
+
+
+def count_words(text: str) -&gt; int:
+    &quot;&quot;&quot;Count the words in a text.&quot;&quot;&quot;
+    return len(re.findall(r&quot;\b\w[\w&#x27;-]*\b&quot;, text))
+
+
+def reading_time(text: str, wpm: int = 200) -&gt; str:
+    &quot;&quot;&quot;Estimate reading time (average adult reads ~200 words per minute).&quot;&quot;&quot;
+    seconds = round(count_words(text) / wpm * 60)
+    return f&quot;{seconds} sec&quot; if seconds &lt; 90 else f&quot;{seconds / 60:.1f} min&quot;
+</pre></details>
+</section>
+<section class="card" id="p2">
+<h3>2. Parallel (fan-out / fan-in)</h3>
+<div class="path">parallel_agent/agent.py · parallel_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">Flights, hotels and activities specialists work at the same time, then a planner merges their results into a trip plan.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\parallel_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>g.add_edge(START, worker)</code> for all 3 workers means they all start together (fan-out).</li>
+<li>Each worker is a ReAct agent with one lookup tool, which uses fake city data in tools.py.</li>
+<li><code>g.add_edge([&quot;flights&quot;, &quot;hotels&quot;, &quot;activities&quot;], &quot;planner&quot;)</code> makes the planner wait until all 3 have finished (fan-in).</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START ─┬─▶ flights ────┐
+        ├─▶ hotels ─────┼─▶ planner → END
+        └─▶ activities ─┘</pre>
+<details><summary>Show the full source of parallel_agent/agent.py (120 lines)</summary><pre>&quot;&quot;&quot;
+PARALLEL (fan-out / fan-in) multi-agent
+---------------------------------------
+Three independent specialists work AT THE SAME TIME (fan-out).
+When ALL of them finish, one planner merges their results (fan-in).
+
+                 ┌─► flights    ─┐
+    START ───────┼─► hotels     ─┼──► planner ─► END
+                 └─► activities ─┘
+&quot;&quot;&quot;
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import search_flights, search_hotels, search_activities, find_city
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+
+FLIGHTS_PROMPT = &quot;You are a flight specialist. Call search_flights for the city, then list the options as 2 short bullets.&quot;
+HOTELS_PROMPT = &quot;You are a hotel specialist. Call search_hotels for the city, then list the options as 2 short bullets.&quot;
+ACTIVITIES_PROMPT = &quot;You are an activities specialist. Call search_activities for the city, then list the options as short bullets.&quot;
+PLANNER_PROMPT = &quot;&quot;&quot;You are a trip planner. You get flight, hotel and activity research for a city.
+Write a friendly 3-day itinerary (Day 1, Day 2, Day 3, one line each) and finish with a line
+&#x27;Budget tip:&#x27; naming the cheapest flight and hotel. Use ONLY the facts you were given.&quot;&quot;&quot;
+
+# Each worker is a small ReAct agent with exactly ONE tool.
+flights_agent = create_react_agent(llm, [search_flights])
+hotels_agent = create_react_agent(llm, [search_hotels])
+activities_agent = create_react_agent(llm, [search_activities])
+
+
+# ---------- State ----------
+# IMPORTANT: parallel nodes must write to DIFFERENT keys, otherwise they overwrite each other.
+class State(TypedDict):
+    city: str
+    flights: str
+    hotels: str
+    activities: str
+    plan: str
+
+
+def run_worker(agent, prompt, city):
+    out = agent.invoke({&quot;messages&quot;: [SystemMessage(content=prompt), HumanMessage(content=f&quot;City: {city}&quot;)]})
+    return out[&quot;messages&quot;][-1].content
+
+
+# ---------- Workers (they run in parallel) ----------
+def flights_node(state: State):
+    print(&quot;  ✈️  [flights]     searching...&quot;)
+    return {&quot;flights&quot;: run_worker(flights_agent, FLIGHTS_PROMPT, state[&quot;city&quot;])}
+
+
+def hotels_node(state: State):
+    print(&quot;  🏨 [hotels]      searching...&quot;)
+    return {&quot;hotels&quot;: run_worker(hotels_agent, HOTELS_PROMPT, state[&quot;city&quot;])}
+
+
+def activities_node(state: State):
+    print(&quot;  🎡 [activities]  searching...&quot;)
+    return {&quot;activities&quot;: run_worker(activities_agent, ACTIVITIES_PROMPT, state[&quot;city&quot;])}
+
+
+# ---------- Fan-in: waits until all three are done ----------
+def planner_node(state: State):
+    print(&quot;  🧭 [planner]     all 3 reports arrived — merging into one plan&quot;)
+    msg = (f&quot;City: {state[&#x27;city&#x27;]}\n\nFLIGHTS:\n{state[&#x27;flights&#x27;]}\n\n&quot;
+           f&quot;HOTELS:\n{state[&#x27;hotels&#x27;]}\n\nACTIVITIES:\n{state[&#x27;activities&#x27;]}&quot;)
+    return {&quot;plan&quot;: llm.invoke([SystemMessage(content=PLANNER_PROMPT), HumanMessage(content=msg)]).content}
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;flights&quot;, flights_node)
+    g.add_node(&quot;hotels&quot;, hotels_node)
+    g.add_node(&quot;activities&quot;, activities_node)
+    g.add_node(&quot;planner&quot;, planner_node)
+
+    # FAN-OUT: three edges leave START → all three nodes start together
+    for worker in (&quot;flights&quot;, &quot;hotels&quot;, &quot;activities&quot;):
+        g.add_edge(START, worker)
+    # FAN-IN: ONE edge with a LIST of sources → planner waits for ALL of them
+    g.add_edge([&quot;flights&quot;, &quot;hotels&quot;, &quot;activities&quot;], &quot;planner&quot;)
+    g.add_edge(&quot;planner&quot;, END)
+    return g.compile()
+
+
+def ask(agent, text):
+    city = find_city(text)
+    if not city:
+        return &quot;I only know: Paris, Tokyo, Goa, New York. Try one of those!&quot;
+    return agent.invoke({&quot;city&quot;: city, &quot;flights&quot;: &quot;&quot;, &quot;hotels&quot;: &quot;&quot;, &quot;activities&quot;: &quot;&quot;, &quot;plan&quot;: &quot;&quot;})[&quot;plan&quot;]
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  ⚡  Parallel Agent  (3 specialists at once → 1 planner)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Cities: Paris, Tokyo, Goa, New York\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            text = input(&quot;Which city? &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not text: continue
+        if text.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        print(&quot;\nTrip plan:\n&quot; + ask(agent, text) + &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of parallel_agent/tools.py (54 lines)</summary><pre>from langchain_core.tools import tool
+
+# Fake travel &quot;databases&quot; so the demo works offline — no API key needed.
+CITIES = {
+    &quot;paris&quot;: {
+        &quot;flights&quot;: &quot;Air France 08:10 → $420 round trip (7h) | Budget Air 14:30 → $310 round trip (9h, 1 stop)&quot;,
+        &quot;hotels&quot;: &quot;Hotel Lumière (4★) $180/night near Louvre | Hostel Seine (2★) $45/night in Le Marais&quot;,
+        &quot;activities&quot;: &quot;Louvre Museum ($20) | Eiffel Tower summit ($30) | Seine evening cruise ($15) | Montmartre walk (free)&quot;,
+    },
+    &quot;tokyo&quot;: {
+        &quot;flights&quot;: &quot;JAL 11:00 → $950 round trip (13h) | ANA 22:15 → $880 round trip (14h, 1 stop)&quot;,
+        &quot;hotels&quot;: &quot;Shinjuku Grand (4★) $150/night | Capsule Stay (2★) $40/night in Asakusa&quot;,
+        &quot;activities&quot;: &quot;Senso-ji Temple (free) | teamLab Planets ($28) | Tsukiji food tour ($60) | Shibuya Crossing (free)&quot;,
+    },
+    &quot;goa&quot;: {
+        &quot;flights&quot;: &quot;IndiGo 06:20 → $120 round trip (2h) | Air India 18:40 → $150 round trip (2h)&quot;,
+        &quot;hotels&quot;: &quot;Palm Beach Resort (4★) $90/night | Backpackers Nest (2★) $15/night&quot;,
+        &quot;activities&quot;: &quot;Baga Beach (free) | Dudhsagar Falls trip ($25) | Old Goa churches (free) | Sunset cruise ($12)&quot;,
+    },
+    &quot;new york&quot;: {
+        &quot;flights&quot;: &quot;Delta 07:45 → $380 round trip (6h) | JetBlue 19:00 → $290 round trip (7h, 1 stop)&quot;,
+        &quot;hotels&quot;: &quot;Midtown Plaza (4★) $220/night | Brooklyn Bunk (2★) $70/night&quot;,
+        &quot;activities&quot;: &quot;Statue of Liberty ferry ($25) | Central Park (free) | Met Museum ($30) | Broadway show ($110)&quot;,
+    },
+}
+
+
+def find_city(text: str):
+    &quot;&quot;&quot;Return the known city mentioned in the text, or None.&quot;&quot;&quot;
+    t = text.lower()
+    return next((c for c in CITIES if c in t), None)
+
+
+def _lookup(city: str, kind: str) -&gt; str:
+    data = CITIES.get(city.strip().lower())
+    return data[kind] if data else f&quot;No {kind} data for &#x27;{city}&#x27;. Known cities: {&#x27;, &#x27;.join(CITIES)}.&quot;
+
+
+@tool
+def search_flights(city: str) -&gt; str:
+    &quot;&quot;&quot;Find flight options to a city (e.g. Paris, Tokyo, Goa, New York).&quot;&quot;&quot;
+    return _lookup(city, &quot;flights&quot;)
+
+
+@tool
+def search_hotels(city: str) -&gt; str:
+    &quot;&quot;&quot;Find hotel options in a city (e.g. Paris, Tokyo, Goa, New York).&quot;&quot;&quot;
+    return _lookup(city, &quot;hotels&quot;)
+
+
+@tool
+def search_activities(city: str) -&gt; str:
+    &quot;&quot;&quot;Find things to do in a city (e.g. Paris, Tokyo, Goa, New York).&quot;&quot;&quot;
+    return _lookup(city, &quot;activities&quot;)
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. Debate</h3>
+<div class="path">debate_agent/agent.py · debate_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">PRO and CON argue a motion over several rounds, then a neutral judge picks a winner.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\debate_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>speak()</code> sends the motion, the transcript so far, and a reminder of which side the speaker is on. Small models forget their side, so it is repeated every turn.</li>
+<li>Each speech is asked to be at most 50 words, and <code>trim_words</code> cuts it at 60 to be safe. The CON node adds 1 to <code>round</code>, and <code>more_rounds</code> decides whether to loop.</li>
+<li>The judge reads the full transcript, and <code>parse_winner</code> pulls out PRO or CON.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → pro → con ─ more rounds? ─yes─▶ pro …
+                     └─no─▶ judge → END</pre>
+<details><summary>Show the full source of debate_agent/agent.py (124 lines)</summary><pre>&quot;&quot;&quot;
+DEBATE multi-agent
+------------------
+Two agents with OPPOSITE jobs argue in turns. A neutral judge reads the
+whole transcript and picks a winner. Arguing makes both sides stronger.
+
+    START -&gt; pro -&gt; con -&gt; (more rounds?) --yes--&gt; pro ...
+                              |
+                              no
+                              v
+                            judge -&gt; END
+&quot;&quot;&quot;
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import trim_words, format_transcript, parse_winner
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+ROUNDS = 2          # how many times each side speaks
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.7)
+
+PRO_PROMPT = &quot;&quot;&quot;You are the PRO debater. You ARGUE FOR the motion — never switch sides.
+Speak in max 50 words. If the opponent already spoke, answer their last point first.
+Return ONLY your speech.&quot;&quot;&quot;
+
+CON_PROMPT = &quot;&quot;&quot;You are the CON debater. You ARGUE AGAINST the motion — never switch sides.
+Speak in max 50 words. Answer the opponent&#x27;s last point first.
+Return ONLY your speech.&quot;&quot;&quot;
+
+JUDGE_PROMPT = &quot;&quot;&quot;You are a neutral JUDGE. Read the debate. Decide who argued better
+(clear reasons, answered the opponent). Reply in EXACTLY this format:
+Winner: PRO   (or)   Winner: CON
+Reason: &lt;one short sentence&gt;&quot;&quot;&quot;
+
+
+# ---------- State ----------
+class State(TypedDict):
+    motion: str
+    speeches: list    # every speech so far, e.g. &quot;PRO: ...&quot;
+    round: int
+    verdict: str
+    winner: str
+
+
+def speak(system: str, state: State, label: str) -&gt; str:
+    # Small models forget which side they are on, so we REMIND them every turn.
+    stance = &quot;AGREE with&quot; if label == &quot;PRO&quot; else &quot;DISAGREE with&quot;
+    msg = (f&quot;Motion: \&quot;{state[&#x27;motion&#x27;]}\&quot;\nYour side: {label}. You must {stance} this motion.\n\n&quot;
+           f&quot;Debate so far:\n{format_transcript(state[&#x27;speeches&#x27;])}\n\n&quot;
+           f&quot;Your turn. Say &#x27;my opponent&#x27; instead of PRO/CON. Max 50 words:&quot;)
+    speech = llm.invoke([SystemMessage(content=system), HumanMessage(content=msg)]).content.strip().strip(&#x27;&quot;&#x27;)
+    return f&quot;{label}: &quot; + trim_words(speech, 60)
+
+
+# ---------- Agents ----------
+def pro_node(state: State):
+    speech = speak(PRO_PROMPT, state, &quot;PRO&quot;)
+    print(f&quot;\n  🟢 {speech}&quot;)
+    return {&quot;speeches&quot;: state[&quot;speeches&quot;] + [speech]}
+
+
+def con_node(state: State):
+    speech = speak(CON_PROMPT, state, &quot;CON&quot;)
+    print(f&quot;\n  🔴 {speech}&quot;)
+    return {&quot;speeches&quot;: state[&quot;speeches&quot;] + [speech], &quot;round&quot;: state[&quot;round&quot;] + 1}
+
+
+def judge_node(state: State):
+    print(&quot;\n  ⚖️  [judge] reading the whole debate...&quot;)
+    msg = f&quot;Motion: {state[&#x27;motion&#x27;]}\n\nDebate:\n{format_transcript(state[&#x27;speeches&#x27;])}&quot;
+    verdict = llm.invoke([SystemMessage(content=JUDGE_PROMPT), HumanMessage(content=msg)]).content
+    return {&quot;verdict&quot;: verdict.strip(), &quot;winner&quot;: parse_winner(verdict)}
+
+
+def more_rounds(state: State) -&gt; str:
+    &quot;&quot;&quot;Conditional edge: keep debating, or call the judge?&quot;&quot;&quot;
+    return &quot;pro&quot; if state[&quot;round&quot;] &lt; ROUNDS else &quot;judge&quot;
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;pro&quot;, pro_node)
+    g.add_node(&quot;con&quot;, con_node)
+    g.add_node(&quot;judge&quot;, judge_node)
+
+    g.add_edge(START, &quot;pro&quot;)
+    g.add_edge(&quot;pro&quot;, &quot;con&quot;)
+    g.add_conditional_edges(&quot;con&quot;, more_rounds, {&quot;pro&quot;: &quot;pro&quot;, &quot;judge&quot;: &quot;judge&quot;})  # the loop
+    g.add_edge(&quot;judge&quot;, END)
+    return g.compile()
+
+
+def ask(agent, motion):
+    r = agent.invoke({&quot;motion&quot;: motion, &quot;speeches&quot;: [], &quot;round&quot;: 0, &quot;verdict&quot;: &quot;&quot;, &quot;winner&quot;: &quot;&quot;})
+    return r[&quot;verdict&quot;]
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  🥊  Debate Agent  (PRO vs CON, then a judge)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Rounds: {ROUNDS}&quot;)
+    print(&quot;  Try: &#x27;Homework should be banned&#x27; or &#x27;Cats are better than dogs&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            motion = input(&quot;Motion: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not motion: continue
+        if motion.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print(&quot;\n  --- the debate begins ---&quot;)
+        print(&quot;\n⚖️  Verdict:\n&quot; + ask(agent, motion) + &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of debate_agent/tools.py (20 lines)</summary><pre>def trim_words(text: str, limit: int = 60) -&gt; str:
+    &quot;&quot;&quot;Keep a debater&#x27;s speech short: cut after `limit` words.&quot;&quot;&quot;
+    words = text.strip().split()
+    return &quot; &quot;.join(words[:limit]) + (&quot;…&quot; if len(words) &gt; limit else &quot;&quot;)
+
+
+def format_transcript(speeches: list) -&gt; str:
+    &quot;&quot;&quot;Turn the list of speeches into a readable transcript for the next speaker / judge.&quot;&quot;&quot;
+    return &quot;\n&quot;.join(speeches) if speeches else &quot;(no speeches yet)&quot;
+
+
+def parse_winner(verdict: str) -&gt; str:
+    &quot;&quot;&quot;Find PRO or CON in the judge&#x27;s reply. Returns &#x27;PRO&#x27;, &#x27;CON&#x27; or &#x27;TIE&#x27;.&quot;&quot;&quot;
+    text = verdict.upper()
+    pro, con = text.find(&quot;WINNER: PRO&quot;), text.find(&quot;WINNER: CON&quot;)
+    if pro == -1 and con == -1:
+        return &quot;TIE&quot;
+    if pro == -1: return &quot;CON&quot;
+    if con == -1: return &quot;PRO&quot;
+    return &quot;PRO&quot; if pro &lt; con else &quot;CON&quot;
+</pre></details>
+</section>
+<section class="card" id="p4">
+<h3>4. Voting panel (majority vote)</h3>
+<div class="path">voting_agent/agent.py · voting_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">Three jurors with different personalities vote on whether a message is spam. A judge is called only if they can&#x27;t agree.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\voting_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>The 3 jurors run in parallel. The evidence juror also gets hard facts from <code>spam_signals()</code>: the number of links, urgent words, money words and exclamation marks, the share of capital letters, and a total score.</li>
+<li><code>parse_vote</code> turns each reply into SPAM, NOT_SPAM or UNSURE.</li>
+<li><code>tally()</code> (plain code) needs at least 2 votes for one answer and no tie. Otherwise the judge decides.</li>
+<li>One AI can be wrong. A panel is wrong less often.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START ─┬─▶ strict ───┐
+        ├─▶ friendly ─┼─▶ tally ─ majority ─▶ END
+        └─▶ evidence ─┘         └ none ─▶ judge → END</pre>
+<details><summary>Show the full source of voting_agent/agent.py (137 lines)</summary><pre>&quot;&quot;&quot;
+VOTING PANEL multi-agent  (ensemble / majority vote)
+----------------------------------------------------
+Ask three jurors with DIFFERENT personalities the SAME question, at the same time.
+Count the votes in plain Python. Only if the panel cannot agree, a judge breaks the tie.
+One AI can be wrong; a panel is wrong less often.
+
+                ┌─► strict   ─┐
+    START ──────┼─► friendly ─┼──► tally ──┬─ clear majority ─► END
+                └─► evidence ─┘            └─ no majority ────► judge ─► END
+&quot;&quot;&quot;
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import spam_signals, parse_vote, parse_reply, tally
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+
+# Reason FIRST, vote second: small models vote more consistently after they have said why.
+VOTE_FORMAT = &quot;\nReply in exactly two lines:\nReason: &lt;under 12 words&gt;\nVote: SPAM or NOT_SPAM or UNSURE&quot;
+
+STRICT_PROMPT = (&quot;You are a STRICT security guard. You distrust everything: if a message pushes you to click, pay, &quot;
+                 &quot;reply with details or hurry, vote SPAM. Decide if the message is spam.&quot; + VOTE_FORMAT)
+FRIENDLY_PROMPT = (&quot;You are a FRIENDLY, trusting person. You give people the benefit of the doubt: normal chat, &quot;
+                   &quot;reminders, receipts and newsletters from known senders are NOT_SPAM. But obvious scams &quot;
+                   &quot;(prizes, free gift cards, &#x27;claim now&#x27;, strange links) are still SPAM. Decide if the message is spam.&quot; + VOTE_FORMAT)
+EVIDENCE_PROMPT = (&quot;You are a DATA ANALYST. You get a message AND counted warning signs. Follow this rule strictly: &quot;
+                   &quot;score 4 or more -&gt; SPAM; score 0 or 1 -&gt; NOT_SPAM; score 2 or 3 -&gt; UNSURE. &quot;
+                   &quot;Quote the score in your reason.&quot; + VOTE_FORMAT)
+JUDGE_PROMPT = &quot;&quot;&quot;You are the TIE-BREAKER JUDGE. The panel disagreed. Read the message and their reasons and give
+the final call. Reply in exactly two lines:
+Reason: &lt;one short sentence&gt;
+Vote: SPAM or NOT_SPAM&quot;&quot;&quot;
+
+
+# ---------- State: each juror writes to its OWN key (they run in parallel) ----------
+class State(TypedDict):
+    message: str
+    strict: str
+    friendly: str
+    evidence: str
+    counts: str
+    verdict: str
+    decided_by: str
+
+
+def juror(system: str, user: str) -&gt; str:
+    reply = llm.invoke([SystemMessage(content=system), HumanMessage(content=user)]).content
+    return parse_reply(reply)          # -&gt; &quot;SPAM - short reason&quot;
+
+
+# ---------- Jurors (run at the same time) ----------
+def strict_node(state: State):
+    return {&quot;strict&quot;: juror(STRICT_PROMPT, f&quot;Message: {state[&#x27;message&#x27;]}&quot;)}
+
+
+def friendly_node(state: State):
+    return {&quot;friendly&quot;: juror(FRIENDLY_PROMPT, f&quot;Message: {state[&#x27;message&#x27;]}&quot;)}
+
+
+def evidence_node(state: State):
+    signals = spam_signals(state[&quot;message&quot;])           # a TOOL gives this juror hard facts
+    return {&quot;evidence&quot;: juror(EVIDENCE_PROMPT, f&quot;Message: {state[&#x27;message&#x27;]}\n\nWarning signs: {signals}&quot;)}
+
+
+# ---------- Counting (plain Python) ----------
+def tally_node(state: State):
+    votes = [parse_vote(state[k]) for k in (&quot;strict&quot;, &quot;friendly&quot;, &quot;evidence&quot;)]
+    winner, counts = tally(votes)
+    print(f&quot;  🗳️  [strict]   {state[&#x27;strict&#x27;]}&quot;)
+    print(f&quot;  🗳️  [friendly] {state[&#x27;friendly&#x27;]}&quot;)
+    print(f&quot;  🗳️  [evidence] {state[&#x27;evidence&#x27;]}&quot;)
+    print(f&quot;  🧮 [tally]    votes = {dict(counts)}  -&gt;  {winner or &#x27;NO MAJORITY&#x27;}&quot;)
+    if winner:
+        return {&quot;counts&quot;: str(dict(counts)), &quot;verdict&quot;: winner, &quot;decided_by&quot;: &quot;majority vote&quot;}
+    return {&quot;counts&quot;: str(dict(counts)), &quot;verdict&quot;: &quot;&quot;, &quot;decided_by&quot;: &quot;&quot;}
+
+
+def judge_node(state: State):
+    print(&quot;  ⚖️  [judge]    panel is split — breaking the tie&quot;)
+    reasons = f&quot;strict: {state[&#x27;strict&#x27;]}\nfriendly: {state[&#x27;friendly&#x27;]}\nevidence: {state[&#x27;evidence&#x27;]}&quot;
+    reply = juror(JUDGE_PROMPT, f&quot;Message: {state[&#x27;message&#x27;]}\n\nPanel:\n{reasons}&quot;)
+    return {&quot;verdict&quot;: parse_vote(reply) if parse_vote(reply) != &quot;UNSURE&quot; else &quot;SPAM&quot;, &quot;decided_by&quot;: &quot;judge (tie-break)&quot;}
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;strict&quot;, strict_node)
+    g.add_node(&quot;friendly&quot;, friendly_node)
+    g.add_node(&quot;evidence&quot;, evidence_node)
+    g.add_node(&quot;tally&quot;, tally_node)
+    g.add_node(&quot;judge&quot;, judge_node)
+
+    for juror_name in (&quot;strict&quot;, &quot;friendly&quot;, &quot;evidence&quot;):      # fan-out
+        g.add_edge(START, juror_name)
+    g.add_edge([&quot;strict&quot;, &quot;friendly&quot;, &quot;evidence&quot;], &quot;tally&quot;)    # fan-in
+    g.add_conditional_edges(&quot;tally&quot;, lambda s: &quot;done&quot; if s[&quot;verdict&quot;] else &quot;judge&quot;, {&quot;done&quot;: END, &quot;judge&quot;: &quot;judge&quot;})
+    g.add_edge(&quot;judge&quot;, END)
+    return g.compile()
+
+
+def ask(agent, message):
+    r = agent.invoke({&quot;message&quot;: message, &quot;strict&quot;: &quot;&quot;, &quot;friendly&quot;: &quot;&quot;, &quot;evidence&quot;: &quot;&quot;,
+                      &quot;counts&quot;: &quot;&quot;, &quot;verdict&quot;: &quot;&quot;, &quot;decided_by&quot;: &quot;&quot;})
+    icon = &quot;🚫&quot; if r[&quot;verdict&quot;] == &quot;SPAM&quot; else &quot;✅&quot;
+    return f&quot;{icon} FINAL: {r[&#x27;verdict&#x27;]}   (decided by {r[&#x27;decided_by&#x27;]})&quot;
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  🗳️  Voting Panel Agent  (3 jurors → majority → judge if tied)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}&quot;)
+    print(&quot;  Try: &#x27;URGENT!!! You WON a FREE gift card, claim now at http://bit.ly/x1&#x27;&quot;)
+    print(&quot;  Try: &#x27;Hi Sam, are we still meeting for lunch at 1pm tomorrow?&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            message = input(&quot;Message to check: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not message: continue
+        if message.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        print(&quot;\n&quot; + ask(agent, message) + &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of voting_agent/tools.py (51 lines)</summary><pre>import re
+from collections import Counter
+
+URGENT = (&quot;urgent&quot;, &quot;act now&quot;, &quot;limited time&quot;, &quot;last chance&quot;, &quot;immediately&quot;, &quot;expires&quot;, &quot;hurry&quot;)
+MONEY = (&quot;free&quot;, &quot;winner&quot;, &quot;prize&quot;, &quot;cash&quot;, &quot;$$$&quot;, &quot;lottery&quot;, &quot;gift card&quot;, &quot;100% guaranteed&quot;, &quot;claim&quot;)
+
+
+def spam_signals(text: str) -&gt; dict:
+    &quot;&quot;&quot;Count simple, objective spam warning signs. (Plain code — no AI.)&quot;&quot;&quot;
+    t = text.lower()
+    letters = [c for c in text if c.isalpha()]
+    caps = round(sum(c.isupper() for c in letters) / len(letters), 2) if letters else 0
+    signals = {
+        &quot;links&quot;: len(re.findall(r&quot;https?://|www\.|bit\.ly&quot;, t)),
+        &quot;urgent_words&quot;: sum(w in t for w in URGENT),
+        &quot;money_words&quot;: sum(w in t for w in MONEY),
+        &quot;exclamations&quot;: text.count(&quot;!&quot;),
+        &quot;caps_ratio&quot;: caps,
+    }
+    signals[&quot;score&quot;] = (signals[&quot;links&quot;] * 2 + signals[&quot;urgent_words&quot;] * 2 + signals[&quot;money_words&quot;] * 2
+                        + min(signals[&quot;exclamations&quot;], 3) + (2 if caps &gt; 0.4 else 0))
+    return signals
+
+
+def parse_vote(text: str) -&gt; str:
+    &quot;&quot;&quot;Read SPAM / NOT_SPAM / UNSURE from a juror&#x27;s reply.&quot;&quot;&quot;
+    t = text.upper().replace(&quot;NOT SPAM&quot;, &quot;NOT_SPAM&quot;).replace(&quot;NOT-SPAM&quot;, &quot;NOT_SPAM&quot;)
+    first = t.strip()[:30]
+    if &quot;NOT_SPAM&quot; in first: return &quot;NOT_SPAM&quot;
+    if &quot;SPAM&quot; in first: return &quot;SPAM&quot;
+    if &quot;UNSURE&quot; in first: return &quot;UNSURE&quot;
+    return &quot;NOT_SPAM&quot; if &quot;NOT_SPAM&quot; in t else &quot;SPAM&quot; if &quot;SPAM&quot; in t else &quot;UNSURE&quot;
+
+
+def tally(votes: list):
+    &quot;&quot;&quot;Count votes. Returns (winner or None, Counter). A winner needs at least 2 votes.&quot;&quot;&quot;
+    counts = Counter(v for v in votes if v != &quot;UNSURE&quot;)
+    if counts:
+        top, n = counts.most_common(1)[0]
+        if n &gt;= 2 and list(counts.values()).count(n) == 1:
+            return top, counts
+    return None, counts
+
+
+def parse_reply(text: str) -&gt; str:
+    &quot;&quot;&quot;Turn &#x27;Reason: ... / Vote: SPAM&#x27; (two lines) into one tidy line &#x27;SPAM - ...&#x27; (vote first, easy to read).&quot;&quot;&quot;
+    m = re.search(r&quot;vote:\s*([A-Za-z_ -]+)&quot;, text, re.I)
+    vote = parse_vote(m.group(1)) if m else parse_vote(text)
+    r = re.search(r&quot;reason:\s*(.+)&quot;, text, re.I)
+    reason = (r.group(1) if r else text.strip().splitlines()[0]).strip()
+    return f&quot;{vote} - {reason}&quot;
+</pre></details>
+</section>
+<section class="card" id="p5">
+<h3>5. Plan and execute</h3>
+<div class="path">planner_executor_agent/agent.py · planner_executor_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">A planner writes numbered steps, an executor does them one at a time with a real calculator, and an answerer summarises.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\planner_executor_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>The planner writes a plan without using tools, and <code>parse_plan</code> keeps up to 4 numbered steps.</li>
+<li>For each step, the executor LLM sees the task, the earlier results and its step, and replies with one line like <code>CALC: 12 * 3</code>. <code>run_tool</code> pulls out the expression and runs the real <code>calculator</code> tool.</li>
+<li>The calculator parses the expression with Python&#x27;s <code>ast</code> module and allows only + − × ÷ and powers. It never uses <code>eval</code>.</li>
+<li><code>more_steps</code> loops until every step is done, then the answerer turns the results into the final answer.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → planner → executor ─ more steps? ─yes─▶ executor …
+                              └─no─▶ answerer → END</pre>
+<details><summary>Show the full source of planner_executor_agent/agent.py (140 lines)</summary><pre>&quot;&quot;&quot;
+PLAN-AND-EXECUTE multi-agent
+----------------------------
+1. PLANNER  thinks FIRST and writes a numbered plan (no tools).
+2. EXECUTOR does the plan ONE STEP AT A TIME: the LLM picks the tool call,
+   the TOOL (calculator) does the real arithmetic.
+3. ANSWERER  turns the collected results into the final answer.
+
+    START -&gt; planner -&gt; executor -&gt; (more steps?) --yes--&gt; executor ...
+                                          |
+                                          no
+                                          v
+                                       answerer -&gt; END
+&quot;&quot;&quot;
+import re
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import calculator, parse_plan
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+
+PLANNER_PROMPT = &quot;&quot;&quot;You are a PLANNER. Break the task into the FEWEST short numbered steps (1 to 4).
+Each step is ONE calculation. The LAST step gives the final answer.
+Rules: use ONLY the numbers in the task, never invent extra steps (no tax, tips or fees), never write results.
+Return ONLY the numbered lines. Examples:
+
+Task: 2 shirts at $15 and 1 hat at $10. Total?
+1. Multiply 2 shirts by $15
+2. Multiply 1 hat by $10
+3. Add the two results
+
+Task: A $40 coat is 25% off. What do I pay?
+1. Multiply $40 by 0.75
+
+Task: A bike costs $200 and a helmet $30, then 10% off the total. What do I pay?
+1. Add $200 and $30
+2. Multiply the result by 0.9&quot;&quot;&quot;
+
+EXECUTOR_PROMPT = &quot;&quot;&quot;You are an EXECUTOR. You get ONE step and the results of earlier steps.
+Reply with exactly ONE line, the math expression for the calculator tool:
+CALC: &lt;expression with plain numbers&gt;
+Write earlier results into the expression as numbers. Never calculate yourself.
+Example: step &#x27;Add the two results&#x27;, earlier results 30 and 10  -&gt;  CALC: 30 + 10
+Example: step &#x27;Multiply 2 shirts by $15&#x27;  -&gt;  CALC: 2 * 15&quot;&quot;&quot;
+
+ANSWERER_PROMPT = &quot;&quot;&quot;You are an ANSWERER. Using the original task and the step results, give the final answer
+in ONE clear sentence. Use the numbers from the results — do not recalculate.&quot;&quot;&quot;
+
+# ---------- State ----------
+class State(TypedDict):
+    task: str
+    plan: list       # [&quot;Multiply...&quot;, &quot;Add...&quot;]
+    results: list    # result line for each finished step
+    answer: str
+
+
+# ---------- Agents ----------
+def planner_node(state: State):
+    reply = llm.invoke([SystemMessage(content=PLANNER_PROMPT), HumanMessage(content=state[&quot;task&quot;])]).content
+    plan = parse_plan(reply)
+    print(&quot;  🧠 [planner] plan:&quot;)
+    for i, s in enumerate(plan, 1):
+        print(f&quot;       {i}. {s}&quot;)
+    return {&quot;plan&quot;: plan, &quot;results&quot;: []}
+
+
+def run_tool(reply: str) -&gt; str:
+    &quot;&quot;&quot;Read the executor&#x27;s one-line instruction and run the REAL calculator tool. The tool does the maths, not the LLM.&quot;&quot;&quot;
+    m = re.search(r&quot;CALC:\s*(.+)&quot;, reply, re.I)
+    return calculator.invoke({&quot;expression&quot;: (m.group(1) if m else reply).strip()})
+
+
+def executor_node(state: State):
+    i = len(state[&quot;results&quot;])                      # which step are we on?
+    step = state[&quot;plan&quot;][i]
+    done = &quot;\n&quot;.join(f&quot;Step {n + 1} result: {r}&quot; for n, r in enumerate(state[&quot;results&quot;])) or &quot;(none yet)&quot;
+    msg = f&quot;Task: {state[&#x27;task&#x27;]}\n\nEarlier results:\n{done}\n\nYOUR STEP ({i + 1}/{len(state[&#x27;plan&#x27;])}): {step}&quot;
+    instruction = llm.invoke([SystemMessage(content=EXECUTOR_PROMPT), HumanMessage(content=msg)]).content.strip().splitlines()[0]
+    result = run_tool(instruction)
+    print(f&quot;  🔧 [executor] step {i + 1}: {instruction}   =&gt;  {result}&quot;)
+    return {&quot;results&quot;: state[&quot;results&quot;] + [result]}
+
+
+def answerer_node(state: State):
+    steps = &quot;\n&quot;.join(f&quot;{n + 1}. {s} -&gt; {r}&quot; for n, (s, r) in enumerate(zip(state[&quot;plan&quot;], state[&quot;results&quot;])))
+    msg = f&quot;Task: {state[&#x27;task&#x27;]}\n\nSteps and results:\n{steps}&quot;
+    return {&quot;answer&quot;: llm.invoke([SystemMessage(content=ANSWERER_PROMPT), HumanMessage(content=msg)]).content.strip()}
+
+
+def more_steps(state: State) -&gt; str:
+    &quot;&quot;&quot;Conditional edge: is there still a plan step without a result?&quot;&quot;&quot;
+    return &quot;executor&quot; if len(state[&quot;results&quot;]) &lt; len(state[&quot;plan&quot;]) else &quot;answerer&quot;
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;planner&quot;, planner_node)
+    g.add_node(&quot;executor&quot;, executor_node)
+    g.add_node(&quot;answerer&quot;, answerer_node)
+
+    g.add_edge(START, &quot;planner&quot;)
+    g.add_edge(&quot;planner&quot;, &quot;executor&quot;)
+    g.add_conditional_edges(&quot;executor&quot;, more_steps, {&quot;executor&quot;: &quot;executor&quot;, &quot;answerer&quot;: &quot;answerer&quot;})  # loop
+    g.add_edge(&quot;answerer&quot;, END)
+    return g.compile()
+
+
+def ask(agent, task):
+    return agent.invoke({&quot;task&quot;: task, &quot;plan&quot;: [], &quot;results&quot;: [], &quot;answer&quot;: &quot;&quot;})[&quot;answer&quot;]
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  🗺️  Planner-Executor Agent  (plan first, then do)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: calculator&quot;)
+    print(&quot;  Try: &#x27;I buy 3 pens at $2 and 4 notebooks at $5. How much in total?&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            task = input(&quot;Task: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not task: continue
+        if task.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        print(&quot;\nAnswer:&quot;, ask(agent, task), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of planner_executor_agent/tools.py (51 lines)</summary><pre>import ast
+import operator
+import re
+
+from langchain_core.tools import tool
+
+_OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+        ast.Div: operator.truediv, ast.Pow: operator.pow, ast.USub: operator.neg, ast.Mod: operator.mod}
+
+
+def _eval(node):
+    &quot;&quot;&quot;Safely evaluate a math expression tree (numbers and + - * / ** % only).&quot;&quot;&quot;
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
+    if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
+        return _OPS[type(node.op)](_eval(node.left), _eval(node.right))
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _OPS:
+        return _OPS[type(node.op)](_eval(node.operand))
+    raise ValueError(&quot;only numbers and + - * / ** % are allowed&quot;)
+
+
+@tool
+def calculator(expression: str) -&gt; str:
+    &quot;&quot;&quot;Calculate a math expression such as &#x27;3 * 2 + 4 * 5&#x27; or &#x27;(26 * 0.9)&#x27;. Numbers and + - * / only.&quot;&quot;&quot;
+    try:
+        expr = expression.replace(&quot;$&quot;, &quot;&quot;).replace(&quot;,&quot;, &quot;&quot;).replace(&quot;%&quot;, &quot;/100&quot;).strip()
+        result = _eval(ast.parse(expr, mode=&quot;eval&quot;).body)
+        return str(round(result, 4))
+    except Exception as e:
+        return f&quot;Calculator error: {e}. Send a plain expression like 3*2+4*5.&quot;
+
+
+UNITS = {(&quot;km&quot;, &quot;miles&quot;): 0.621371, (&quot;miles&quot;, &quot;km&quot;): 1.60934, (&quot;kg&quot;, &quot;lb&quot;): 2.20462,
+         (&quot;lb&quot;, &quot;kg&quot;): 0.453592, (&quot;m&quot;, &quot;ft&quot;): 3.28084, (&quot;ft&quot;, &quot;m&quot;): 0.3048}
+
+
+@tool
+def unit_convert(value: float, from_unit: str, to_unit: str) -&gt; str:
+    &quot;&quot;&quot;Convert a value between km/miles, kg/lb or m/ft. Example: value=10, from_unit=&#x27;km&#x27;, to_unit=&#x27;miles&#x27;.&quot;&quot;&quot;
+    factor = UNITS.get((from_unit.lower().strip(), to_unit.lower().strip()))
+    if factor is None:
+        return &quot;Unsupported conversion. Supported: km&lt;-&gt;miles, kg&lt;-&gt;lb, m&lt;-&gt;ft.&quot;
+    return f&quot;{round(float(value) * factor, 3)} {to_unit}&quot;
+
+
+def parse_plan(text: str, max_steps: int = 4) -&gt; list:
+    &quot;&quot;&quot;Turn a numbered list (&#x27;1. do this&#x27;, &#x27;2. do that&#x27;) into [&#x27;do this&#x27;, &#x27;do that&#x27;].&quot;&quot;&quot;
+    steps = [re.sub(r&quot;^\s*\d+[.)]\s*&quot;, &quot;&quot;, ln).strip() for ln in text.splitlines() if re.match(r&quot;^\s*\d+[.)]&quot;, ln)]
+    # Guard rail: a small model sometimes writes a RESULT as a step (&quot;4. 108&quot;, &quot;$40 - 30 = $10&quot;). Drop those.
+    steps = [s for s in steps if re.search(r&quot;[A-Za-z]{3,}&quot;, s) and &quot;=&quot; not in s]
+    return steps[:max_steps] or [text.strip()]
+</pre></details>
+</section>
+<section class="card" id="p6">
+<h3>6. Coder ↔ tester (with a real test run)</h3>
+<div class="path">coder_tester_agent/agent.py · coder_tester_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">The coder writes a function, the tester writes asserts, real Python runs them, and the debugger fixes failures.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\coder_tester_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>strip_code_fences</code> removes <code></code><code>python fences from the replies.</code></li>
+<li><code>run_tests_node</code> joins the code and tests into one program (<code>build_test_program</code>) and runs it in a separate process with a 5-second timeout (<code>run_python</code> uses subprocess).</li>
+<li>It reports pass or fail plus the last lines of the traceback. That is real feedback, not an AI opinion.</li>
+<li>The debugger gets the failing code and the error. <code>MAX_FIXES = 3</code> stops the loop.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → coder → tester → run_tests ─ passed? ─yes─▶ END
+                            ▲          └─no─▶ debugger ┘</pre>
+<div class="note"><b>Watch out:</b> It runs AI-written code on your PC. Fine for a classroom demo, but it isn&#x27;t a sandbox.</div>
+<details><summary>Show the full source of coder_tester_agent/agent.py (135 lines)</summary><pre>&quot;&quot;&quot;
+CODER &lt;-&gt; TESTER multi-agent  (generate -&gt; test -&gt; debug loop)
+--------------------------------------------------------------
+The CODER writes a function. The TESTER writes asserts. A REAL Python process
+runs them (no AI there!). If they fail, the DEBUGGER fixes the code and we test again.
+
+    START -&gt; coder -&gt; tester -&gt; run_tests -&gt; passed? --yes--&gt; END
+                                    ^           |
+                                    |           no (and rounds left)
+                                    └─ debugger ┘
+&quot;&quot;&quot;
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import strip_code_fences, code_blocks, build_test_program, run_python
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+MAX_FIXES = 3        # safety limit so the loop always stops
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+
+CODER_PROMPT = &quot;&quot;&quot;You are a PYTHON CODER. Write ONE Python function that solves the task.
+Rules: no input(), no print(), no example usage, no explanation.
+Return ONLY the code inside one ```python block.&quot;&quot;&quot;
+
+TESTER_PROMPT = &quot;&quot;&quot;You are a TESTER. Write 4 simple `assert` lines that test the function (call it by its name).
+Rules: only assert lines, no imports, no explanation, no function definition.
+Return ONLY the asserts inside one ```python block.&quot;&quot;&quot;
+
+DEBUGGER_PROMPT = &quot;&quot;&quot;You are a DEBUGGER. The code failed its tests. You get the code, the tests and the error.
+Either the code OR a test may be wrong (for example a wrong expected value) — decide which and fix it.
+Return TWO ```python blocks and nothing else:
+1) the full corrected function
+2) the full list of assert lines (fix any assert that is itself wrong)&quot;&quot;&quot;
+
+
+# ---------- State ----------
+class State(TypedDict):
+    task: str
+    code: str
+    tests: str
+    passed: bool
+    output: str
+    fixes: int
+
+
+def ask_llm(system: str, user: str) -&gt; str:
+    return strip_code_fences(llm.invoke([SystemMessage(content=system), HumanMessage(content=user)]).content)
+
+
+# ---------- Agents ----------
+def coder_node(state: State):
+    print(&quot;  👩‍💻 [coder]     writing the function...&quot;)
+    return {&quot;code&quot;: ask_llm(CODER_PROMPT, f&quot;Task: {state[&#x27;task&#x27;]}&quot;)}
+
+
+def tester_node(state: State):
+    print(&quot;  🧪 [tester]    writing asserts...&quot;)
+    return {&quot;tests&quot;: ask_llm(TESTER_PROMPT, f&quot;Task: {state[&#x27;task&#x27;]}\n\nCode:\n{state[&#x27;code&#x27;]}&quot;)}
+
+
+def run_tests_node(state: State):
+    &quot;&quot;&quot;NOT an LLM: a real Python process runs code + tests. Facts beat opinions.&quot;&quot;&quot;
+    result = run_python(build_test_program(state[&quot;code&quot;], state[&quot;tests&quot;]))
+    passed = result[&quot;ok&quot;] and &quot;ALL TESTS PASSED&quot; in result[&quot;output&quot;]
+    lines = result[&quot;output&quot;].splitlines()
+    first_problem = lines[1] if lines and lines[0] == &quot;FAILED:&quot; and len(lines) &gt; 1 else (lines[-1] if lines else &quot;no output&quot;)
+    print(f&quot;  ▶️  [runner]    {&#x27;✅ all tests passed&#x27; if passed else &#x27;❌ &#x27; + first_problem[:150]}&quot;)
+    return {&quot;passed&quot;: passed, &quot;output&quot;: result[&quot;output&quot;]}
+
+
+def debugger_node(state: State):
+    print(f&quot;  🐞 [debugger]  fixing the code (fix #{state[&#x27;fixes&#x27;] + 1})...&quot;)
+    msg = f&quot;Code:\n{state[&#x27;code&#x27;]}\n\nTests:\n{state[&#x27;tests&#x27;]}\n\nError:\n{state[&#x27;output&#x27;]}&quot;
+    reply = llm.invoke([SystemMessage(content=DEBUGGER_PROMPT), HumanMessage(content=msg)]).content
+    blocks = code_blocks(reply)
+    code = blocks[0] if blocks else state[&quot;code&quot;]
+    tests = blocks[1] if len(blocks) &gt; 1 else state[&quot;tests&quot;]      # the debugger may fix a wrong test too!
+    return {&quot;code&quot;: code, &quot;tests&quot;: tests, &quot;fixes&quot;: state[&quot;fixes&quot;] + 1}
+
+
+def after_tests(state: State) -&gt; str:
+    &quot;&quot;&quot;Conditional edge: done, or loop back to the debugger?&quot;&quot;&quot;
+    if state[&quot;passed&quot;] or state[&quot;fixes&quot;] &gt;= MAX_FIXES:
+        return &quot;end&quot;
+    return &quot;debugger&quot;
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;coder&quot;, coder_node)
+    g.add_node(&quot;tester&quot;, tester_node)
+    g.add_node(&quot;run_tests&quot;, run_tests_node)
+    g.add_node(&quot;debugger&quot;, debugger_node)
+
+    g.add_edge(START, &quot;coder&quot;)
+    g.add_edge(&quot;coder&quot;, &quot;tester&quot;)
+    g.add_edge(&quot;tester&quot;, &quot;run_tests&quot;)
+    g.add_conditional_edges(&quot;run_tests&quot;, after_tests, {&quot;end&quot;: END, &quot;debugger&quot;: &quot;debugger&quot;})
+    g.add_edge(&quot;debugger&quot;, &quot;run_tests&quot;)      # the loop: fix -&gt; test again
+    return g.compile()
+
+
+def ask(agent, task):
+    r = agent.invoke({&quot;task&quot;: task, &quot;code&quot;: &quot;&quot;, &quot;tests&quot;: &quot;&quot;, &quot;passed&quot;: False, &quot;output&quot;: &quot;&quot;, &quot;fixes&quot;: 0})
+    status = &quot;✅ PASSED all tests&quot; if r[&quot;passed&quot;] else f&quot;⚠️ still failing after {r[&#x27;fixes&#x27;]} fixes&quot;
+    return f&quot;{status}\n\n--- code ---\n{r[&#x27;code&#x27;]}\n\n--- tests ---\n{r[&#x27;tests&#x27;]}&quot;
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  👩‍💻  Coder-Tester Agent  (write → test → debug loop)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Max fixes: {MAX_FIXES}&quot;)
+    print(&quot;  Try: &#x27;is_palindrome(s) that ignores case&#x27; or &#x27;fizzbuzz(n) returning a list&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            task = input(&quot;Coding task: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not task: continue
+        if task.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        print(&quot;\n&quot; + ask(agent, task) + &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of coder_tester_agent/tools.py (70 lines)</summary><pre>import os
+import re
+import subprocess
+import sys
+import tempfile
+
+
+def strip_code_fences(text: str) -&gt; str:
+    &quot;&quot;&quot;Models wrap code in ```python ... ``` — keep only the code inside.&quot;&quot;&quot;
+    m = re.search(r&quot;```(?:python|py)?\s*\n(.*?)```&quot;, text, re.S)
+    return (m.group(1) if m else text).strip()
+
+
+def code_blocks(text: str) -&gt; list:
+    &quot;&quot;&quot;Return EVERY ```python ... ``` block found in the text (in order).&quot;&quot;&quot;
+    return [b.strip() for b in re.findall(r&quot;```(?:python|py)?\s*\n(.*?)```&quot;, text, re.S)]
+
+
+HARNESS = &#x27;&#x27;&#x27;
+import sys
+_failures = []
+for _t in __TESTS__.splitlines():
+    _t = _t.strip()
+    if not _t.startswith(&quot;assert&quot;):
+        continue
+    try:
+        exec(_t)
+    except AssertionError:
+        _msg = _t
+        if &quot; == &quot; in _t:                       # show what the function REALLY returned
+            _left = _t[len(&quot;assert&quot;):].split(&quot; == &quot;, 1)[0]
+            try:
+                _msg += &quot;    -&gt; but it returned &quot; + repr(eval(_left))
+            except Exception as _e:
+                _msg += &quot;    -&gt; error: &quot; + str(_e)
+        _failures.append(_msg)
+    except Exception as _e:
+        _failures.append(_t + &quot;    -&gt; &quot; + type(_e).__name__ + &quot;: &quot; + str(_e))
+if _failures:
+    print(&quot;FAILED:&quot;)
+    print(&quot;\\n&quot;.join(_failures))
+    sys.exit(1)
+print(&quot;ALL TESTS PASSED&quot;)
+&#x27;&#x27;&#x27;
+
+
+def build_test_program(code: str, tests: str) -&gt; str:
+    &quot;&quot;&quot;Code + a small harness that runs each assert and reports WHAT went wrong (like a mini pytest).&quot;&quot;&quot;
+    return code + &quot;\n\n&quot; + HARNESS.replace(&quot;__TESTS__&quot;, repr(tests))
+
+
+def run_python(code: str, timeout: int = 5) -&gt; dict:
+    &quot;&quot;&quot;
+    Run Python code in a SEPARATE process (with a time limit) and report what happened.
+    Returns {&quot;ok&quot;: bool, &quot;output&quot;: str}.
+    ⚠️ Only run code you are comfortable running — this is a classroom demo, not a sandbox.
+    &quot;&quot;&quot;
+    with tempfile.TemporaryDirectory() as folder:
+        path = os.path.join(folder, &quot;snippet.py&quot;)
+        with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as f:
+            f.write(code)
+        try:
+            p = subprocess.run([sys.executable, path], capture_output=True, text=True,
+                               timeout=timeout, cwd=folder)
+        except subprocess.TimeoutExpired:
+            return {&quot;ok&quot;: False, &quot;output&quot;: f&quot;Timed out after {timeout}s (infinite loop?)&quot;}
+    output = (p.stdout + p.stderr).strip()
+    # keep only the last lines of a traceback — that is where the useful error is
+    output = &quot;\n&quot;.join(output.splitlines()[-12:])
+    return {&quot;ok&quot;: p.returncode == 0, &quot;output&quot;: output}
+</pre></details>
+</section>
+<section class="card" id="p7">
+<h3>7. RAG team (retrieve, answer, fact-check)</h3>
+<div class="path">rag_team_agent/agent.py · rag_team_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">Answers HR-handbook questions with citations, and a checker sends back any answer that isn&#x27;t supported by the passages.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\rag_team_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>The rewriter turns a chatty question into search keywords.</li>
+<li>The retriever (plain code, <code>search_docs</code>) scores each handbook passage by how many keywords it shares with the question, keeps the top 2, and drops any passage scoring under 60% of the best. If nothing matches, the graph goes to <code>no_answer</code>.</li>
+<li>The answerer must cite passages like [HR-1]. The checker replies GROUNDED or lists the unsupported claims, which go back as feedback.</li>
+<li><code>MAX_ROUNDS = 2</code> limits how many times an answer is sent back.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → rewriter → retriever ─ none ─▶ no_answer → END
+                        └ found ─▶ answerer → checker ─ GROUNDED ─▶ END
+                                       ▲              └ not ─┘</pre>
+<details><summary>Show the full source of rag_team_agent/agent.py (159 lines)</summary><pre>&quot;&quot;&quot;
+RAG TEAM multi-agent  (retrieve -&gt; answer -&gt; fact-check)
+--------------------------------------------------------
+Four roles make an answer you can TRUST:
+  rewriter   turns a chatty question into search keywords
+  retriever  finds handbook passages (plain code, no AI)
+  answerer   answers ONLY from those passages and cites them like [HR-1]
+  checker    is every claim really in the passages? if not, send it back
+
+    START -&gt; rewriter -&gt; retriever -&gt; found anything? --no--&gt; no_answer -&gt; END
+                                          |yes
+                                          v
+                            answerer -&gt; checker -&gt; grounded? --yes--&gt; END
+                                ^                      |
+                                └──── (feedback) ──────┘ no, and rounds left
+&quot;&quot;&quot;
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import search_docs, format_context, keywords
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+MAX_ROUNDS = 2        # how many times the checker may send the answer back
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+
+REWRITER_PROMPT = &quot;&quot;&quot;You are a SEARCH QUERY WRITER. Turn the user&#x27;s question into 3-5 keywords for a document search.
+Return ONLY the keywords separated by spaces.&quot;&quot;&quot;
+
+ANSWERER_PROMPT = &quot;&quot;&quot;You are a HANDBOOK ASSISTANT. Answer the question using ONLY the CONTEXT passages.
+Be short (max 2 sentences) and end with the source ids in brackets, like [HR-1].
+If the context does not contain the answer, reply exactly: I could not find that in the handbook.&quot;&quot;&quot;
+
+CHECKER_PROMPT = &quot;&quot;&quot;You are a FACT CHECKER. Check ONLY the statements made in the ANSWER (ignore other passages).
+Look for every fact and number of the ANSWER in the CONTEXT.
+- If every fact in the answer appears in the CONTEXT, reply with the single word: GROUNDED
+- If the answer says something the CONTEXT does not say, reply: UNSUPPORTED: &lt;the exact claim that is missing&gt;&quot;&quot;&quot;
+
+
+# ---------- State ----------
+class State(TypedDict):
+    question: str
+    search_query: str
+    docs: list
+    answer: str
+    verdict: str
+    rounds: int
+
+
+def say(system: str, user: str) -&gt; str:
+    return llm.invoke([SystemMessage(content=system), HumanMessage(content=user)]).content.strip()
+
+
+# ---------- Agents ----------
+def rewriter_node(state: State):
+    query = say(REWRITER_PROMPT, state[&quot;question&quot;])
+    print(f&quot;  🔍 [rewriter]   search keywords: {query}&quot;)
+    return {&quot;search_query&quot;: query}
+
+
+def retriever_node(state: State):
+    &quot;&quot;&quot;Plain code (NO LLM). Search with the rewritten query AND the original words.&quot;&quot;&quot;
+    docs = search_docs(state[&quot;search_query&quot;] + &quot; &quot; + &quot; &quot;.join(keywords(state[&quot;question&quot;])))
+    print(f&quot;  📚 [retriever]  found: {[d[&#x27;id&#x27;] for d in docs] or &#x27;nothing&#x27;}&quot;)
+    return {&quot;docs&quot;: docs}
+
+
+def no_answer_node(state: State):
+    return {&quot;answer&quot;: &quot;I could not find that in the handbook.&quot;, &quot;verdict&quot;: &quot;NO SOURCES&quot;}
+
+
+def answerer_node(state: State):
+    msg = f&quot;CONTEXT:\n{format_context(state[&#x27;docs&#x27;])}\n\nQUESTION: {state[&#x27;question&#x27;]}&quot;
+    if state[&quot;verdict&quot;].startswith(&quot;UNSUPPORTED&quot;):
+        msg += f&quot;\n\nYour previous answer was rejected: {state[&#x27;verdict&#x27;]}\nFix it using only the context.&quot;
+    answer = say(ANSWERER_PROMPT, msg)
+    print(f&quot;  💬 [answerer]   {answer}&quot;)
+    return {&quot;answer&quot;: answer}
+
+
+def checker_node(state: State):
+    if state[&quot;answer&quot;].lower().startswith(&quot;i could not find&quot;):
+        # An honest &quot;I don&#x27;t know&quot; makes no claims, so there is nothing to fact-check.
+        print(&quot;  🕵️  [checker]    nothing to check (the answerer admitted it does not know)&quot;)
+        return {&quot;verdict&quot;: &quot;GROUNDED&quot;, &quot;rounds&quot;: state[&quot;rounds&quot;] + 1}
+    msg = f&quot;CONTEXT:\n{format_context(state[&#x27;docs&#x27;])}\n\nANSWER: {state[&#x27;answer&#x27;]}&quot;
+    verdict = say(CHECKER_PROMPT, msg).splitlines()[0]
+    if not verdict.upper().startswith(&quot;UNSUPPORTED&quot;):
+        verdict = &quot;GROUNDED&quot;
+    else:
+        # Verify the verifier! A small model sometimes flags a &quot;missing&quot; claim that is literally in the passages.
+        # Plain Python can settle that: if the flagged text appears in the context, the checker was wrong.
+        claim = verdict.split(&quot;:&quot;, 1)[1].strip(&quot; \&quot;&#x27;.&quot;) if &quot;:&quot; in verdict else &quot;&quot;
+        if len(claim) &lt; 4 or claim.lower() in format_context(state[&quot;docs&quot;]).lower():
+            verdict = &quot;GROUNDED&quot;
+    print(f&quot;  🕵️  [checker]    {verdict}&quot;)
+    return {&quot;verdict&quot;: verdict, &quot;rounds&quot;: state[&quot;rounds&quot;] + 1}
+
+
+def after_retrieval(state: State) -&gt; str:
+    return &quot;answerer&quot; if state[&quot;docs&quot;] else &quot;no_answer&quot;
+
+
+def after_check(state: State) -&gt; str:
+    if state[&quot;verdict&quot;] == &quot;GROUNDED&quot; or state[&quot;rounds&quot;] &gt; MAX_ROUNDS:
+        return &quot;end&quot;
+    return &quot;answerer&quot;
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;rewriter&quot;, rewriter_node)
+    g.add_node(&quot;retriever&quot;, retriever_node)
+    g.add_node(&quot;no_answer&quot;, no_answer_node)
+    g.add_node(&quot;answerer&quot;, answerer_node)
+    g.add_node(&quot;checker&quot;, checker_node)
+
+    g.add_edge(START, &quot;rewriter&quot;)
+    g.add_edge(&quot;rewriter&quot;, &quot;retriever&quot;)
+    g.add_conditional_edges(&quot;retriever&quot;, after_retrieval, {&quot;answerer&quot;: &quot;answerer&quot;, &quot;no_answer&quot;: &quot;no_answer&quot;})
+    g.add_edge(&quot;no_answer&quot;, END)
+    g.add_edge(&quot;answerer&quot;, &quot;checker&quot;)
+    g.add_conditional_edges(&quot;checker&quot;, after_check, {&quot;end&quot;: END, &quot;answerer&quot;: &quot;answerer&quot;})   # the loop
+    return g.compile()
+
+
+def ask(agent, question):
+    r = agent.invoke({&quot;question&quot;: question, &quot;search_query&quot;: &quot;&quot;, &quot;docs&quot;: [], &quot;answer&quot;: &quot;&quot;, &quot;verdict&quot;: &quot;&quot;, &quot;rounds&quot;: 0})
+    badge = {&quot;GROUNDED&quot;: &quot;✅ checked against the handbook&quot;}.get(r[&quot;verdict&quot;], f&quot;⚠️ {r[&#x27;verdict&#x27;]}&quot;)
+    return f&quot;{r[&#x27;answer&#x27;]}\n   ({badge})&quot;
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  📚  RAG Team Agent  (retrieve → answer → fact-check)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Knowledge: a tiny company handbook (see tools.py)&quot;)
+    print(&quot;  Try: &#x27;How many vacation days do I get?&#x27; or &#x27;Can I work from home?&#x27;&quot;)
+    print(&quot;  Try something NOT in the handbook: &#x27;What is the CEO&#x27;s salary?&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            question = input(&quot;Question: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not question: continue
+        if question.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        print(&quot;\nAnswer:&quot;, ask(agent, question), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of rag_team_agent/tools.py (46 lines)</summary><pre>import re
+
+# A tiny made-up company handbook (so the demo works offline and answers are checkable).
+DOCS = [
+    {&quot;id&quot;: &quot;HR-1&quot;, &quot;title&quot;: &quot;Vacation policy&quot;, &quot;text&quot;: &quot;Every employee gets 24 paid vacation days per year. Requests must be made 2 weeks in advance through the HR portal. Up to 5 unused days carry over to the next year.&quot;},
+    {&quot;id&quot;: &quot;HR-2&quot;, &quot;title&quot;: &quot;Sick leave&quot;, &quot;text&quot;: &quot;Employees get 10 paid sick days per year. Tell your manager before 9am on the first day. A doctor&#x27;s note is needed after 3 days in a row.&quot;},
+    {&quot;id&quot;: &quot;HR-3&quot;, &quot;title&quot;: &quot;Remote work&quot;, &quot;text&quot;: &quot;Employees may work from home up to 3 days per week. Tuesday and Thursday are office days for team meetings. Fully remote work needs director approval.&quot;},
+    {&quot;id&quot;: &quot;FIN-1&quot;, &quot;title&quot;: &quot;Expense claims&quot;, &quot;text&quot;: &quot;Submit expense receipts within 30 days in the Finance app. Meals while travelling are reimbursed up to $40 per day. Flights must be booked through the company travel desk.&quot;},
+    {&quot;id&quot;: &quot;IT-1&quot;, &quot;title&quot;: &quot;Laptops&quot;, &quot;text&quot;: &quot;New employees receive a laptop on day one. Laptops are replaced every 3 years. Report a lost or stolen laptop to IT security within 24 hours.&quot;},
+    {&quot;id&quot;: &quot;IT-2&quot;, &quot;title&quot;: &quot;Passwords and security&quot;, &quot;text&quot;: &quot;Passwords must have at least 12 characters and be changed every 90 days. Two-factor authentication is mandatory for email and the VPN.&quot;},
+    {&quot;id&quot;: &quot;OPS-1&quot;, &quot;title&quot;: &quot;Office hours&quot;, &quot;text&quot;: &quot;The office is open Monday to Friday, 8am to 7pm. Core meeting hours are 10am to 4pm. The cafeteria serves lunch from 12pm to 2pm.&quot;},
+    {&quot;id&quot;: &quot;HR-4&quot;, &quot;title&quot;: &quot;Training budget&quot;, &quot;text&quot;: &quot;Each employee has a yearly training budget of $1,200 for courses, books and conferences. Get your manager&#x27;s approval before you buy.&quot;},
+]
+
+STOPWORDS = set(&quot;a an the is are do does how many much what when where who can i my me we our of to in on for and or it be at by with you your get&quot;.split())
+
+
+def keywords(text: str) -&gt; list:
+    words = re.findall(r&quot;[a-z0-9&#x27;]+&quot;, text.lower())
+    # tiny &quot;stemmer&quot;: passwords -&gt; password, days -&gt; day (so singular and plural words match)
+    words = [w[:-1] if len(w) &gt; 3 and w.endswith(&quot;s&quot;) else w for w in words]
+    return [w for w in words if w not in STOPWORDS and len(w) &gt; 2]
+
+
+def search_docs(query: str, k: int = 2) -&gt; list:
+    &quot;&quot;&quot;
+    Very simple search: score each document by how many query keywords it contains.
+    (A real system would use embeddings + a vector store, as you learned on day 12.)
+    &quot;&quot;&quot;
+    terms = set(keywords(query))
+    scored = []
+    for doc in DOCS:
+        words = set(keywords(doc[&quot;title&quot;] + &quot; &quot; + doc[&quot;text&quot;]))
+        score = len(terms &amp; words)
+        if score:
+            scored.append((score, doc))
+    scored.sort(key=lambda p: -p[0])
+    if not scored:
+        return []
+    best = scored[0][0]
+    # keep only passages that are nearly as relevant as the best one (drops weak matches)
+    return [doc for score, doc in scored[:k] if score &gt;= max(1, 0.6 * best)]
+
+
+def format_context(docs: list) -&gt; str:
+    return &quot;\n&quot;.join(f&quot;[{d[&#x27;id&#x27;]}] {d[&#x27;title&#x27;]}: {d[&#x27;text&#x27;]}&quot; for d in docs)
+</pre></details>
+</section>
+<section class="card" id="p8">
+<h3>8. Swarm (hand-offs, no boss)</h3>
+<div class="path">swarm_agent/agent.py · swarm_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">Customer-service agents pass the conversation between themselves, like passing on a phone call.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\swarm_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Each agent ends its reply with <code>HANDOFF: &lt;agent&gt;</code>, and <code>parse_handoff</code> reads it.</li>
+<li><code>next_agent</code> routes to that agent. Guard rails: handing off to yourself, or more than <code>MAX_HOPS = 5</code> hops, means done.</li>
+<li>The orders agent uses <code>get_order_status</code>, and the refunds agent uses <code>issue_refund</code>, which records the refund in <code>REFUND_LOG</code>.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → triage ─▶ orders ─▶ refunds
+           └─────────┴────────┴─▶ DONE → END</pre>
+<details><summary>Show the full source of swarm_agent/agent.py (153 lines)</summary><pre>&quot;&quot;&quot;
+SWARM (hand-off) multi-agent
+----------------------------
+There is NO boss. Every agent decides for itself who should take over next
+by ending its reply with `HANDOFF: &lt;agent&gt;` (like passing a phone call on).
+
+    START -&gt; triage ──► orders ──► refunds
+               │          │           │
+               └──────────┴───────────┴──► DONE -&gt; END
+&quot;&quot;&quot;
+import re
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import get_order_status, issue_refund, parse_handoff
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+MAX_HOPS = 5         # safety limit so agents cannot pass the call around forever
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+
+HANDOFF_RULE = &quot;&quot;&quot;
+Your reply has TWO parts: first your message to the customer, then ONE last line that is exactly one of:
+HANDOFF: orders
+HANDOFF: refunds
+HANDOFF: DONE&quot;&quot;&quot;
+
+TRIAGE_PROMPT = &quot;&quot;&quot;You are the FRONT DESK of an online shop. Write ONE short friendly sentence to the customer.
+If the message mentions an order, delivery, damage or a refund, do NOT ask questions — pass it on with HANDOFF: orders.
+If it is only small talk, answer it and use HANDOFF: DONE.
+
+Example reply:
+Sorry about that, let me get our orders team.
+HANDOFF: orders&quot;&quot;&quot; + HANDOFF_RULE
+
+ORDERS_PROMPT = &quot;&quot;&quot;You are the ORDERS agent. You get the customer&#x27;s message and the TOOL RESULT for their order.
+Tell the customer the status in 1-2 sentences.
+If the customer asks for a refund / their money back AND the status is &#x27;delivered&#x27; -&gt; HANDOFF: refunds
+(you cannot refund yourself — the refunds agent does it). Otherwise -&gt; HANDOFF: DONE.&quot;&quot;&quot; + HANDOFF_RULE
+
+REFUNDS_PROMPT = &quot;&quot;&quot;You are the REFUNDS agent. You get the customer&#x27;s message and the TOOL RESULT of the refund.
+Tell the customer the outcome in 1-2 sentences, using the tool result. Then HANDOFF: DONE.&quot;&quot;&quot; + HANDOFF_RULE
+
+
+# ---------- State ----------
+class State(TypedDict):
+    request: str
+    active: str      # which agent speaks next
+    log: list        # replies so far: [&quot;[triage] ...&quot;, &quot;[orders] ...&quot;]
+    hops: int
+
+
+# Small models sometimes forget the HANDOFF line. Safety net: what to do when it is missing.
+SAFETY_NET = {&quot;triage&quot;: &quot;orders&quot;}          # triage&#x27;s whole job is to pass the customer on
+ICONS = {&quot;triage&quot;: &quot;🛎️ &quot;, &quot;orders&quot;: &quot;📦&quot;, &quot;refunds&quot;: &quot;💸&quot;}
+
+
+def order_id_from(text: str) -&gt; str:
+    &quot;&quot;&quot;Find a 4-digit order number such as 5001 in the customer&#x27;s message.&quot;&quot;&quot;
+    m = re.search(r&quot;\b(\d{4})\b&quot;, text)
+    return m.group(1) if m else &quot;&quot;
+
+
+def conversation(state: State) -&gt; str:
+    seen = &quot;\n&quot;.join(state[&quot;log&quot;]) or &quot;(nobody has replied yet)&quot;
+    return f&quot;Customer message: {state[&#x27;request&#x27;]}\n\nWhat the team already said:\n{seen}&quot;
+
+
+def finish_turn(state: State, name: str, raw: str):
+    &quot;&quot;&quot;Every agent ends the same way: record the reply and choose who is next.&quot;&quot;&quot;
+    message, target = parse_handoff(raw, default=SAFETY_NET.get(name, &quot;done&quot;))
+    message = message or &quot;(no message)&quot;
+    if target == name or state[&quot;hops&quot;] + 1 &gt;= MAX_HOPS:      # guard rails
+        target = &quot;done&quot;
+    print(f&quot;  {ICONS[name]} [{name}] {message}&quot;)
+    print(f&quot;       ↪ hands off to: {target}&quot;)
+    return {&quot;log&quot;: state[&quot;log&quot;] + [f&quot;[{name}] {message}&quot;], &quot;active&quot;: target, &quot;hops&quot;: state[&quot;hops&quot;] + 1}
+
+
+# ---------- Agents ----------
+def triage_node(state: State):
+    raw = llm.invoke([SystemMessage(content=TRIAGE_PROMPT), HumanMessage(content=conversation(state))]).content
+    return finish_turn(state, &quot;triage&quot;, raw)
+
+
+def orders_node(state: State):
+    # Tool-first: plain code finds the order number and runs the tool; the LLM explains the result.
+    result = get_order_status.invoke({&quot;order_id&quot;: order_id_from(state[&quot;request&quot;])})
+    print(f&quot;       🔧 tool get_order_status -&gt; {result}&quot;)
+    msg = conversation(state) + f&quot;\n\nTOOL RESULT: {result}&quot;
+    raw = llm.invoke([SystemMessage(content=ORDERS_PROMPT), HumanMessage(content=msg)]).content
+    return finish_turn(state, &quot;orders&quot;, raw)
+
+
+def refunds_node(state: State):
+    result = issue_refund.invoke({&quot;order_id&quot;: order_id_from(state[&quot;request&quot;])})
+    print(f&quot;       🔧 tool issue_refund -&gt; {result}&quot;)
+    msg = conversation(state) + f&quot;\n\nTOOL RESULT: {result}&quot;
+    raw = llm.invoke([SystemMessage(content=REFUNDS_PROMPT), HumanMessage(content=msg)]).content
+    return finish_turn(state, &quot;refunds&quot;, raw)
+
+
+def next_agent(state: State) -&gt; str:
+    &quot;&quot;&quot;Conditional edge: read the agent&#x27;s own HANDOFF decision.&quot;&quot;&quot;
+    return state[&quot;active&quot;] if state[&quot;active&quot;] in (&quot;triage&quot;, &quot;orders&quot;, &quot;refunds&quot;) else &quot;done&quot;
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;triage&quot;, triage_node)
+    g.add_node(&quot;orders&quot;, orders_node)
+    g.add_node(&quot;refunds&quot;, refunds_node)
+
+    g.add_edge(START, &quot;triage&quot;)
+    routes = {&quot;triage&quot;: &quot;triage&quot;, &quot;orders&quot;: &quot;orders&quot;, &quot;refunds&quot;: &quot;refunds&quot;, &quot;done&quot;: END}
+    for name in (&quot;triage&quot;, &quot;orders&quot;, &quot;refunds&quot;):       # EVERY agent can hand off to any other
+        g.add_conditional_edges(name, next_agent, routes)
+    return g.compile()
+
+
+def ask(agent, request):
+    r = agent.invoke({&quot;request&quot;: request, &quot;active&quot;: &quot;triage&quot;, &quot;log&quot;: [], &quot;hops&quot;: 0})
+    return &quot;\n&quot;.join(r[&quot;log&quot;])
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  🐝  Swarm Agent  (agents hand the customer to each other)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Agents: triage, orders, refunds&quot;)
+    print(&quot;  Orders you can use: 5001 (delivered), 5002 (shipped), 5003 (already refunded)&quot;)
+    print(&quot;  Try: &#x27;Order 5001 arrived broken, I want my money back&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            request = input(&quot;Customer: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not request: continue
+        if request.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        ask(agent, request)
+        print()
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of swarm_agent/tools.py (45 lines)</summary><pre>import re
+
+from langchain_core.tools import tool
+
+# Fake order &quot;database&quot; so the demo works offline — no API key needed.
+ORDERS = {
+    &quot;5001&quot;: {&quot;item&quot;: &quot;Laptop stand&quot;, &quot;status&quot;: &quot;delivered&quot;, &quot;total&quot;: 39.00, &quot;note&quot;: &quot;delivered 2026-11-02&quot;},
+    &quot;5002&quot;: {&quot;item&quot;: &quot;Wireless mouse&quot;, &quot;status&quot;: &quot;shipped&quot;, &quot;total&quot;: 25.00, &quot;note&quot;: &quot;in transit, arrives in 2 days&quot;},
+    &quot;5003&quot;: {&quot;item&quot;: &quot;USB-C cable&quot;, &quot;status&quot;: &quot;refunded&quot;, &quot;total&quot;: 12.00, &quot;note&quot;: &quot;already refunded on 2026-10-28&quot;},
+}
+
+REFUND_LOG = []   # every approved refund is recorded here
+
+
+@tool
+def get_order_status(order_id: str) -&gt; str:
+    &quot;&quot;&quot;Look up an order by its number (e.g. 5001) and return item, status and total.&quot;&quot;&quot;
+    o = ORDERS.get(order_id.strip())
+    if not o:
+        return f&quot;No order found with id &#x27;{order_id}&#x27;.&quot;
+    return f&quot;Order {order_id}: {o[&#x27;item&#x27;]}, ${o[&#x27;total&#x27;]:.2f}, status = {o[&#x27;status&#x27;]} ({o[&#x27;note&#x27;]}).&quot;
+
+
+@tool
+def issue_refund(order_id: str) -&gt; str:
+    &quot;&quot;&quot;Refund an order by its number. Only DELIVERED orders can be refunded.&quot;&quot;&quot;
+    o = ORDERS.get(order_id.strip())
+    if not o:
+        return f&quot;Refund failed: no order &#x27;{order_id}&#x27;.&quot;
+    if o[&quot;status&quot;] != &quot;delivered&quot;:
+        return f&quot;Refund refused: order {order_id} is &#x27;{o[&#x27;status&#x27;]}&#x27;, only delivered orders can be refunded.&quot;
+    o[&quot;status&quot;] = &quot;refunded&quot;
+    REFUND_LOG.append(order_id)
+    return f&quot;Refund approved: ${o[&#x27;total&#x27;]:.2f} for order {order_id} returns to the customer&#x27;s card in 3-5 days.&quot;
+
+
+def parse_handoff(text: str, default: str = &quot;done&quot;):
+    &quot;&quot;&quot;
+    Split an agent reply into (message for the customer, who is next).
+    The agent ends with a line like &#x27;HANDOFF: refunds&#x27;. No valid line =&gt; `default`.
+    &quot;&quot;&quot;
+    matches = re.findall(r&quot;HANDOFF:\s*(orders|refunds|triage|done)&quot;, text, re.I)
+    target = matches[-1].lower() if matches else default
+    message = re.sub(r&quot;HANDOFF:.*&quot;, &quot;&quot;, text, flags=re.I).strip()
+    return message, target
+</pre></details>
+</section>
+<section class="card" id="p9">
+<h3>9. Blackboard (shared workspace)</h3>
+<div class="path">blackboard_agent/agent.py · blackboard_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">Specialists never talk to each other. They read and write a shared board, and a rule-based controller wakes whoever can contribute.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\blackboard_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>controller_node</code> uses no AI. It walks through <code>RULES</code> and picks the first specialist whose rule is true.</li>
+<li>The shopper prices the shopping list with <code>price_of</code> (a fixed <code>PRICES</code> table), and <code>parse_budget</code> reads the $ budget from the request.</li>
+<li>The auditor compares cost with budget. If it&#x27;s over, it erases the menu so the chef must try again (at most <code>MAX_REVISIONS = 2</code> times).</li>
+<li><code>MAX_STEPS = 10</code> is the overall safety stop.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>controller ─▶ nutritionist (needs request → adds constraints)
+          ─▶ chef          (needs constraints → adds menu)
+          ─▶ shopper       (needs menu → adds list + cost)
+          ─▶ auditor       (needs list → too expensive? erase menu)
+   every specialist → back to controller; nobody can act → DONE</pre>
+<details><summary>Show the full source of blackboard_agent/agent.py (171 lines)</summary><pre>&quot;&quot;&quot;
+BLACKBOARD multi-agent  (shared workspace)
+------------------------------------------
+Imagine a whiteboard in a meeting room. Specialists do NOT talk to each other and
+nobody tells them what to do. Each specialist only watches the board:
+&quot;Is there something here I can add to?&quot;  If yes, it writes its part on the board.
+
+    The controller (plain Python rules, NO AI) simply asks:
+    &quot;Who can contribute right now?&quot; and wakes that specialist.
+
+        nutritionist  needs: request           adds: constraints
+        chef          needs: constraints       adds: menu
+        shopper       needs: menu              adds: shopping list + cost
+        auditor       needs: shopping list     adds: verdict  (too expensive? ERASES the menu -&gt; chef redoes it)
+&quot;&quot;&quot;
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import price_of, parse_list, parse_budget, pantry_text
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+MAX_STEPS = 10          # safety limit on controller loops
+MAX_REVISIONS = 2       # how many times the auditor may send the chef back
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+
+NUTRITIONIST_PROMPT = &quot;&quot;&quot;You are a NUTRITIONIST. From the request, write 3 short dietary rules for the meal plan
+(one per line, starting with &#x27;- &#x27;). Return ONLY the 3 lines.&quot;&quot;&quot;
+
+CHEF_PROMPT = &quot;&quot;&quot;You are a CHEF. Plan a menu of 3 simple dishes (one per day) that follows the dietary rules.
+Use ONLY ingredients from the PANTRY list and at most 4 ingredients per dish. Every ingredient has a price —
+the WHOLE menu must stay inside the budget, so prefer cheap items.
+Return ONLY this format, with no extra comments, no totals, no notes:
+Day 1: &lt;dish name&gt;
+- ingredient
+- ingredient
+Day 2: ...
+If there is BUDGET FEEDBACK, the last menu was too expensive: use mostly items that cost $2.5 or less.&quot;&quot;&quot;
+
+SHOPPER_PROMPT = &quot;&quot;&quot;You are a SHOPPER. Read the menu and write ONE shopping list of every ingredient:
+one simple ingredient per line starting with &#x27;- &#x27;, no quantities, no duplicates. Return ONLY the list.&quot;&quot;&quot;
+
+
+def say(system: str, user: str) -&gt; str:
+    return llm.invoke([SystemMessage(content=system), HumanMessage(content=user)]).content.strip()
+
+
+# ---------- State: the BOARD ----------
+class State(TypedDict):
+    board: dict      # the shared workspace everyone reads and writes
+    next: str        # who the controller woke up
+    steps: int
+
+
+def new_board(request: str) -&gt; dict:
+    return {&quot;request&quot;: request, &quot;budget&quot;: parse_budget(request), &quot;constraints&quot;: &quot;&quot;, &quot;menu&quot;: &quot;&quot;,
+            &quot;ingredients&quot;: [], &quot;cost&quot;: 0.0, &quot;verdict&quot;: &quot;&quot;, &quot;feedback&quot;: &quot;&quot;, &quot;revisions&quot;: 0}
+
+
+# ---------- The rules: &quot;when may each specialist contribute?&quot; ----------
+RULES = {
+    &quot;nutritionist&quot;: lambda b: not b[&quot;constraints&quot;],
+    &quot;chef&quot;:         lambda b: b[&quot;constraints&quot;] and not b[&quot;menu&quot;],
+    &quot;shopper&quot;:      lambda b: b[&quot;menu&quot;] and not b[&quot;ingredients&quot;],
+    &quot;auditor&quot;:      lambda b: b[&quot;ingredients&quot;] and not b[&quot;verdict&quot;],
+}
+
+
+def controller_node(state: State):
+    &quot;&quot;&quot;No AI here. First specialist whose rule is true wakes up. Nobody can? We are done.&quot;&quot;&quot;
+    choice = next((name for name, can in RULES.items() if can(state[&quot;board&quot;])), &quot;DONE&quot;)
+    if state[&quot;steps&quot;] &gt;= MAX_STEPS:
+        choice = &quot;DONE&quot;
+    print(f&quot;  📋 [board] -&gt; {choice}&quot;)
+    return {&quot;next&quot;: choice, &quot;steps&quot;: state[&quot;steps&quot;] + 1}
+
+
+# ---------- Specialists ----------
+def nutritionist_node(state: State):
+    b = dict(state[&quot;board&quot;])
+    b[&quot;constraints&quot;] = say(NUTRITIONIST_PROMPT, b[&quot;request&quot;])
+    print(&quot;       🥗 nutritionist wrote dietary rules on the board&quot;)
+    return {&quot;board&quot;: b}
+
+
+def chef_node(state: State):
+    b = dict(state[&quot;board&quot;])
+    msg = (f&quot;Request: {b[&#x27;request&#x27;]}\nBUDGET FOR THE WHOLE MENU: ${b[&#x27;budget&#x27;]:.0f}\n\n&quot;
+           f&quot;Dietary rules:\n{b[&#x27;constraints&#x27;]}\n\nPANTRY (item $price): {pantry_text()}&quot;)
+    if b[&quot;feedback&quot;]:
+        msg += f&quot;\n\nBUDGET FEEDBACK: {b[&#x27;feedback&#x27;]} Make it cheaper!&quot;
+    b[&quot;menu&quot;] = say(CHEF_PROMPT, msg)
+    print(&quot;       👨‍🍳 chef wrote a menu on the board&quot; + (&quot; (cheaper version)&quot; if b[&quot;feedback&quot;] else &quot;&quot;))
+    return {&quot;board&quot;: b}
+
+
+def shopper_node(state: State):
+    b = dict(state[&quot;board&quot;])
+    items = parse_list(say(SHOPPER_PROMPT, b[&quot;menu&quot;]))
+    b[&quot;ingredients&quot;] = items
+    b[&quot;cost&quot;] = round(sum(price_of(i) for i in items), 2)
+    print(f&quot;       🛒 shopper listed {len(items)} items, total ${b[&#x27;cost&#x27;]:.2f}&quot;)
+    return {&quot;board&quot;: b}
+
+
+def auditor_node(state: State):
+    &quot;&quot;&quot;Plain Python judge: compares cost with budget. Too expensive? ERASE the menu so the chef is re-triggered.&quot;&quot;&quot;
+    b = dict(state[&quot;board&quot;])
+    if b[&quot;cost&quot;] &gt; b[&quot;budget&quot;] and b[&quot;revisions&quot;] &lt; MAX_REVISIONS:
+        print(f&quot;       🧾 auditor: ${b[&#x27;cost&#x27;]:.2f} is over ${b[&#x27;budget&#x27;]:.0f} -&gt; erasing menu, chef must redo it&quot;)
+        priciest = sorted(b[&quot;ingredients&quot;], key=price_of, reverse=True)[:3]       # be SPECIFIC so the chef can act
+        pricey_text = &quot;, &quot;.join(f&quot;{i} (${price_of(i):g})&quot; for i in priciest)
+        b.update(menu=&quot;&quot;, ingredients=[], verdict=&quot;&quot;, revisions=b[&quot;revisions&quot;] + 1,
+                 feedback=f&quot;Last menu cost ${b[&#x27;cost&#x27;]:.2f} but the budget is ${b[&#x27;budget&#x27;]:.0f}. &quot;
+                          f&quot;The most expensive items were: {pricey_text}. Do NOT use them again.&quot;)
+    else:
+        ok = b[&quot;cost&quot;] &lt;= b[&quot;budget&quot;]
+        b[&quot;verdict&quot;] = &quot;APPROVED ✅ within budget&quot; if ok else &quot;OVER BUDGET ⚠️ (revision limit reached)&quot;
+        print(f&quot;       🧾 auditor: {b[&#x27;verdict&#x27;]}&quot;)
+    return {&quot;board&quot;: b}
+
+
+# ---------- Graph ----------
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;controller&quot;, controller_node)
+    g.add_node(&quot;nutritionist&quot;, nutritionist_node)
+    g.add_node(&quot;chef&quot;, chef_node)
+    g.add_node(&quot;shopper&quot;, shopper_node)
+    g.add_node(&quot;auditor&quot;, auditor_node)
+
+    g.add_edge(START, &quot;controller&quot;)
+    g.add_conditional_edges(&quot;controller&quot;, lambda s: s[&quot;next&quot;],
+                            {&quot;nutritionist&quot;: &quot;nutritionist&quot;, &quot;chef&quot;: &quot;chef&quot;, &quot;shopper&quot;: &quot;shopper&quot;,
+                             &quot;auditor&quot;: &quot;auditor&quot;, &quot;DONE&quot;: END})
+    for name in (&quot;nutritionist&quot;, &quot;chef&quot;, &quot;shopper&quot;, &quot;auditor&quot;):
+        g.add_edge(name, &quot;controller&quot;)             # everyone writes to the board, then control returns
+    return g.compile()
+
+
+def ask(agent, request):
+    b = agent.invoke({&quot;board&quot;: new_board(request), &quot;next&quot;: &quot;&quot;, &quot;steps&quot;: 0})[&quot;board&quot;]
+    return (f&quot;MENU:\n{b[&#x27;menu&#x27;]}\n\nSHOPPING LIST: {&#x27;, &#x27;.join(b[&#x27;ingredients&#x27;])}\n&quot;
+            f&quot;TOTAL: ${b[&#x27;cost&#x27;]:.2f}  (budget ${b[&#x27;budget&#x27;]:.0f})\nVERDICT: {b[&#x27;verdict&#x27;]}&quot;)
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  📋  Blackboard Agent  (specialists share one board)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Specialists: nutritionist, chef, shopper, auditor&quot;)
+    print(&quot;  Try: &#x27;Vegetarian dinners for 3 days under $20&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            request = input(&quot;Meal request: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not request: continue
+        if request.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        print(&quot;\n&quot; + ask(agent, request) + &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of blackboard_agent/tools.py (42 lines)</summary><pre>import re
+
+# Fake grocery prices (dollars) so the demo works offline.
+PRICES = {
+    &quot;chicken&quot;: 8.0, &quot;beef&quot;: 10.0, &quot;fish&quot;: 9.0, &quot;salmon&quot;: 11.0, &quot;tofu&quot;: 3.0, &quot;eggs&quot;: 3.0,
+    &quot;rice&quot;: 2.0, &quot;pasta&quot;: 2.0, &quot;bread&quot;: 2.5, &quot;potato&quot;: 2.0, &quot;beans&quot;: 1.5, &quot;lentils&quot;: 2.0,
+    &quot;tomato&quot;: 2.0, &quot;onion&quot;: 1.0, &quot;carrot&quot;: 1.5, &quot;broccoli&quot;: 3.0, &quot;spinach&quot;: 2.5, &quot;pepper&quot;: 2.5,
+    &quot;cheese&quot;: 4.0, &quot;milk&quot;: 2.0, &quot;yogurt&quot;: 2.5, &quot;butter&quot;: 3.5, &quot;oil&quot;: 3.0, &quot;garlic&quot;: 1.0,
+}
+DEFAULT_PRICE = 3.0
+
+
+def pantry_text() -&gt; str:
+    &quot;&quot;&quot;The shop&#x27;s price list as one line — the chef may ONLY use these items, so costs are meaningful.&quot;&quot;&quot;
+    return &quot;, &quot;.join(f&quot;{k} ${v:g}&quot; for k, v in PRICES.items())
+
+
+def price_of(item: str) -&gt; float:
+    &quot;&quot;&quot;Price of one grocery item (matches by keyword; unknown items cost $3).&quot;&quot;&quot;
+    name = item.lower()
+    for key, price in PRICES.items():
+        if key in name:
+            return price
+    return DEFAULT_PRICE
+
+
+def parse_list(text: str) -&gt; list:
+    &quot;&quot;&quot;Turn &#x27;- chicken\\n- rice&#x27; into [&#x27;chicken&#x27;, &#x27;rice&#x27;] (no duplicates, original order).&quot;&quot;&quot;
+    items = []
+    for line in text.splitlines():
+        m = re.match(r&quot;^\s*[-*•]\s*(.+)$&quot;, line)
+        if m:
+            item = re.sub(r&quot;[\(\[].*?[\)\]]&quot;, &quot;&quot;, m.group(1)).strip(&quot; .,:;&quot;).lower()
+            if item and item not in items:
+                items.append(item)
+    return items
+
+
+def parse_budget(text: str, default: float = 30.0) -&gt; float:
+    &quot;&quot;&quot;Find &#x27;$25&#x27; or &#x27;25 dollars&#x27; in the request.&quot;&quot;&quot;
+    m = re.search(r&quot;\$\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*dollars&quot;, text)
+    return float(m.group(1) or m.group(2)) if m else default
+</pre></details>
+</section>
+<section class="card" id="p10">
+<h3>10. Hierarchical (manager → teams → workers)</h3>
+<div class="path">hierarchical_agent/agent.py · hierarchical_agent/tools.py</div>
+<div class="label">What it does</div>
+<p class="what">A manager delegates to a product team and a marketing team. Each team is its own small graph inside the main graph.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_20_langgraph\hierarchical_agent
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>_linear_team(w1, w2, lead)</code> builds and compiles a 3-step graph. The product team&#x27;s researcher uses the <code>audience_insights</code> tool.</li>
+<li>In the main graph, <code>product_node</code> and <code>marketing_node</code> just invoke their team&#x27;s graph (a graph inside a graph).</li>
+<li>The manager picks the team that hasn&#x27;t reported yet, and finishes when both have, or after <code>MAX_STEPS = 5</code>.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → manager ─▶ product team   (researcher → spec_writer → lead) ─┐
+            ▲   ─▶ marketing team (copywriter → social_planner → lead) ─┤
+            └──────────────────── report back ──────────────────────────┘</pre>
+<details><summary>Show the full source of hierarchical_agent/agent.py (188 lines)</summary><pre>&quot;&quot;&quot;
+HIERARCHICAL multi-agent  (a company: manager -&gt; team leads -&gt; workers)
+-----------------------------------------------------------------------
+The top MANAGER only talks to TEAMS. Each team is its OWN small graph with its own workers
+(a graph inside a graph). Teams report back to the manager.
+
+                       ┌──────── product team ─────────┐
+    START -&gt; manager ──┤  researcher -&gt; spec_writer -&gt; lead │──┐
+                ^      └────────────────────────────────┘    │
+                │      ┌──────── marketing team ───────┐     │
+                ├──────┤  copywriter -&gt; social_planner -&gt; lead │
+                │      └────────────────────────────────┘    │
+                └───────────────────(report back)────────────┘
+                manager says FINISH -&gt; END
+&quot;&quot;&quot;
+import sys
+from typing import TypedDict
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import audience_insights
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+MAX_STEPS = 5
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+
+MANAGER_PROMPT = &quot;&quot;&quot;You are the MANAGER of a company with two teams:
+  product   -&gt; researches the audience and writes a product spec
+  marketing -&gt; writes the tagline, pitch and social posts
+Decide which team works NEXT. Product comes first, then marketing, then FINISH.
+Answer with EXACTLY ONE word: product, marketing, or FINISH.&quot;&quot;&quot;
+
+RESEARCHER_PROMPT = &quot;You are a RESEARCHER. Call audience_insights with the product idea, then report the audience in 2 short bullets.&quot;
+SPEC_WRITER_PROMPT = &quot;You are a SPEC WRITER. From the idea and audience facts, write 3 short bullet points: the key features. Return only the bullets.&quot;
+PRODUCT_LEAD_PROMPT = &quot;You are the PRODUCT LEAD. Merge the research and features into a &#x27;PRODUCT SPEC&#x27; of 4 short lines. Return only the spec.&quot;
+COPYWRITER_PROMPT = &quot;You are a COPYWRITER. Using the product spec, write a tagline (max 6 words) and a 2-sentence pitch. Return only those.&quot;
+SOCIAL_PLANNER_PROMPT = &quot;You are a SOCIAL PLANNER. Write 3 short social media posts (one line each, with an emoji) for this product.&quot;
+MARKETING_LEAD_PROMPT = &quot;You are the MARKETING LEAD. Combine the copy and posts into a tidy &#x27;CAMPAIGN&#x27; section. Return only the campaign.&quot;
+
+researcher_agent = create_react_agent(llm, [audience_insights])
+
+
+def say(system: str, user: str) -&gt; str:
+    return llm.invoke([SystemMessage(content=system), HumanMessage(content=user)]).content.strip()
+
+
+# =====================================================================
+# LEVEL 2 — each TEAM is its own graph with its own small state
+# =====================================================================
+class TeamState(TypedDict):
+    brief: str     # what the team was asked to do (+ context from other teams)
+    step1: str     # first worker&#x27;s output
+    step2: str     # second worker&#x27;s output
+    report: str    # the lead&#x27;s final report
+
+
+def build_product_team():
+    def researcher(s: TeamState):
+        print(&quot;      🔎 [researcher]     asking the audience tool...&quot;)
+        out = researcher_agent.invoke({&quot;messages&quot;: [SystemMessage(content=RESEARCHER_PROMPT), HumanMessage(content=s[&quot;brief&quot;])]})
+        return {&quot;step1&quot;: out[&quot;messages&quot;][-1].content}
+
+    def spec_writer(s: TeamState):
+        print(&quot;      📝 [spec_writer]    drafting features...&quot;)
+        return {&quot;step2&quot;: say(SPEC_WRITER_PROMPT, f&quot;Idea: {s[&#x27;brief&#x27;]}\n\nAudience:\n{s[&#x27;step1&#x27;]}&quot;)}
+
+    def lead(s: TeamState):
+        print(&quot;      👩‍💼 [product_lead]  merging into the product spec...&quot;)
+        return {&quot;report&quot;: say(PRODUCT_LEAD_PROMPT, f&quot;Audience:\n{s[&#x27;step1&#x27;]}\n\nFeatures:\n{s[&#x27;step2&#x27;]}&quot;)}
+
+    return _linear_team(researcher, spec_writer, lead)
+
+
+def build_marketing_team():
+    def copywriter(s: TeamState):
+        print(&quot;      ✍️  [copywriter]     writing tagline + pitch...&quot;)
+        return {&quot;step1&quot;: say(COPYWRITER_PROMPT, s[&quot;brief&quot;])}
+
+    def social_planner(s: TeamState):
+        print(&quot;      📣 [social_planner] writing social posts...&quot;)
+        return {&quot;step2&quot;: say(SOCIAL_PLANNER_PROMPT, s[&quot;brief&quot;])}
+
+    def lead(s: TeamState):
+        print(&quot;      👨‍💼 [marketing_lead] assembling the campaign...&quot;)
+        return {&quot;report&quot;: say(MARKETING_LEAD_PROMPT, f&quot;Copy:\n{s[&#x27;step1&#x27;]}\n\nPosts:\n{s[&#x27;step2&#x27;]}&quot;)}
+
+    return _linear_team(copywriter, social_planner, lead)
+
+
+def _linear_team(worker1, worker2, lead):
+    g = StateGraph(TeamState)
+    g.add_node(&quot;worker1&quot;, worker1)
+    g.add_node(&quot;worker2&quot;, worker2)
+    g.add_node(&quot;lead&quot;, lead)
+    g.add_edge(START, &quot;worker1&quot;)
+    g.add_edge(&quot;worker1&quot;, &quot;worker2&quot;)
+    g.add_edge(&quot;worker2&quot;, &quot;lead&quot;)
+    g.add_edge(&quot;lead&quot;, END)
+    return g.compile()           # &lt;- a finished graph that we will use as ONE node below
+
+
+product_team = build_product_team()
+marketing_team = build_marketing_team()
+
+
+# =====================================================================
+# LEVEL 1 — the manager&#x27;s graph only sees two big nodes: the teams
+# =====================================================================
+class State(TypedDict):
+    idea: str
+    product: str       # product team&#x27;s report
+    marketing: str     # marketing team&#x27;s report
+    next: str
+    steps: int
+
+
+def manager_node(state: State):
+    progress = (f&quot;Idea: {state[&#x27;idea&#x27;]}\nProduct team done: {&#x27;yes&#x27; if state[&#x27;product&#x27;] else &#x27;no&#x27;}\n&quot;
+                f&quot;Marketing team done: {&#x27;yes&#x27; if state[&#x27;marketing&#x27;] else &#x27;no&#x27;}&quot;)
+    word = say(MANAGER_PROMPT, progress).lower()
+    choice = next((t for t in (&quot;product&quot;, &quot;marketing&quot;) if t in word), &quot;FINISH&quot;)
+    # Guard rails: never repeat a team that is already done.
+    if choice == &quot;product&quot; and state[&quot;product&quot;]:
+        choice = &quot;marketing&quot;
+    if choice == &quot;marketing&quot; and state[&quot;marketing&quot;]:
+        choice = &quot;FINISH&quot;
+    if not state[&quot;product&quot;]:
+        choice = &quot;product&quot;                   # marketing needs the spec first
+    if state[&quot;product&quot;] and state[&quot;marketing&quot;] or state[&quot;steps&quot;] &gt;= MAX_STEPS:
+        choice = &quot;FINISH&quot;
+    print(f&quot;  🏢 [manager] -&gt; {choice}&quot;)
+    return {&quot;next&quot;: choice, &quot;steps&quot;: state[&quot;steps&quot;] + 1}
+
+
+def product_node(state: State):
+    r = product_team.invoke({&quot;brief&quot;: state[&quot;idea&quot;], &quot;step1&quot;: &quot;&quot;, &quot;step2&quot;: &quot;&quot;, &quot;report&quot;: &quot;&quot;})
+    return {&quot;product&quot;: r[&quot;report&quot;]}
+
+
+def marketing_node(state: State):
+    brief = f&quot;Product idea: {state[&#x27;idea&#x27;]}\n\n{state[&#x27;product&#x27;]}&quot;
+    r = marketing_team.invoke({&quot;brief&quot;: brief, &quot;step1&quot;: &quot;&quot;, &quot;step2&quot;: &quot;&quot;, &quot;report&quot;: &quot;&quot;})
+    return {&quot;marketing&quot;: r[&quot;report&quot;]}
+
+
+def build_agent():
+    g = StateGraph(State)
+    g.add_node(&quot;manager&quot;, manager_node)
+    g.add_node(&quot;product&quot;, product_node)
+    g.add_node(&quot;marketing&quot;, marketing_node)
+    g.add_edge(START, &quot;manager&quot;)
+    g.add_conditional_edges(&quot;manager&quot;, lambda s: s[&quot;next&quot;],
+                            {&quot;product&quot;: &quot;product&quot;, &quot;marketing&quot;: &quot;marketing&quot;, &quot;FINISH&quot;: END})
+    g.add_edge(&quot;product&quot;, &quot;manager&quot;)      # teams report back to the manager
+    g.add_edge(&quot;marketing&quot;, &quot;manager&quot;)
+    return g.compile()
+
+
+def ask(agent, idea):
+    r = agent.invoke({&quot;idea&quot;: idea, &quot;product&quot;: &quot;&quot;, &quot;marketing&quot;: &quot;&quot;, &quot;next&quot;: &quot;&quot;, &quot;steps&quot;: 0})
+    return f&quot;{r[&#x27;product&#x27;]}\n\n{r[&#x27;marketing&#x27;]}&quot;
+
+
+def main():
+    if hasattr(sys.stdout, &quot;reconfigure&quot;):
+        sys.stdout.reconfigure(encoding=&quot;utf-8&quot;)
+    print(&quot;=&quot; * 52)
+    print(&quot;  🏢  Hierarchical Agent  (manager → teams → workers)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Teams: product (3 agents), marketing (3 agents)&quot;)
+    print(&quot;  Try: &#x27;a note-taking app&#x27; or &#x27;a language learning app&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            idea = input(&quot;Product idea: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBye!&quot;); break
+        if not idea: continue
+        if idea.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Bye!&quot;); break
+        print()
+        print(&quot;\n&quot; + ask(agent, idea) + &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+<details><summary>Show the full source of hierarchical_agent/tools.py (20 lines)</summary><pre>from langchain_core.tools import tool
+
+# Fake market-research &quot;database&quot; so the demo works offline — no API key needed.
+INSIGHTS = {
+    &quot;note&quot;: &quot;Students and professionals (18-35). Top pain: notes scattered across apps. Wants: fast search, offline mode, sync.&quot;,
+    &quot;fitness&quot;: &quot;Busy adults (25-45). Top pain: no motivation. Wants: short workouts, streaks, progress charts.&quot;,
+    &quot;budget&quot;: &quot;Young earners (20-35). Top pain: not knowing where money goes. Wants: auto-categories, simple charts, alerts.&quot;,
+    &quot;language&quot;: &quot;Learners of all ages. Top pain: forgetting words. Wants: daily practice, spaced repetition, speaking games.&quot;,
+}
+DEFAULT = &quot;General audience (18-45). Wants: simple, fast, free to try, works on phone.&quot;
+
+
+@tool
+def audience_insights(product_idea: str) -&gt; str:
+    &quot;&quot;&quot;Get facts about the target audience for a product idea (e.g. a note app, fitness app, budget app, language app).&quot;&quot;&quot;
+    idea = product_idea.lower()
+    for key, facts in INSIGHTS.items():
+        if key in idea:
+            return facts
+    return DEFAULT
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

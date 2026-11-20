@@ -1,0 +1,2795 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 11: Book GenAI Studio (a complete GenAI app)</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 11</div>
+<h1>Day 11: Book GenAI Studio (a complete GenAI app)</h1>
+<p class="lead">Upload a book, then summarise it, chat with it (with cited passages), or generate quizzes, notes and posts. A FastAPI backend plus a JavaScript frontend. Without an API key it still works in Demo mode, using simple offline algorithms.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">app/config.py: settings</a></li><li><a href="#p2">app/books.py: turning a file into a searchable book</a></li><li><a href="#p3">app/retrieval.py: finding the right passages</a></li><li><a href="#p4">app/prompts.py: every prompt in one place</a></li><li><a href="#p5">app/llm.py: every OpenAI call</a></li><li><a href="#p6">app/tokens.py and app/db.py: counting and storing</a></li><li><a href="#p7">app/services.py: summarise, chat, generate</a></li><li><a href="#p8">app/main.py: the FastAPI routes</a></li><li><a href="#p9">api/index.py: Vercel entry point</a></li><li><a href="#p10">static/app.js: the single-page frontend</a></li><li><a href="#p11">tests/test_app.py: automatic tests</a></li></ol></nav>
+<h2>The big picture</h2>
+<div class="group"><p>Each file has one job. A request passes through them in this order:</p><pre>browser (static/app.js)
+   │ fetch /api/...
+   ▼
+app/main.py        routes + input models + error handlers
+   │
+app/services.py    the 3 features (summarize / chat / generate), live or demo
+   ├── app/books.py      read file → clean → chapters → chunks
+   ├── app/retrieval.py  find the best passages (BM25 + embeddings)
+   ├── app/prompts.py    every prompt, with versions v1/v2
+   ├── app/llm.py        every OpenAI call: retries, errors, cost
+   ├── app/tokens.py     count tokens, estimate cost
+   └── app/db.py         SQLite: usage + feedback
+app/config.py      settings from environment variables</pre></div>
+<section class="card" id="p1">
+<h3>1. app/config.py: settings</h3>
+<div class="path">book_genai_studio/app/config.py</div>
+<div class="label">What it does</div>
+<p class="what">Reads every setting from environment variables (or <code>.env</code>), with sensible defaults.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Detects Vercel (<code>ON_VERCEL</code>) and then stores data in <code>/tmp</code>, the only writable folder there.</li>
+<li>Sets the models (<code>gpt-4o-mini</code>, <code>text-embedding-3-small</code>), timeouts and retries, the upload size limit (4 MB on Vercel, 25 MB locally), the book size limit, and an optional daily spending limit.</li>
+<li><code>PRICES</code> holds the cost per million tokens, used to estimate what each call costs.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/app/config.py (42 lines)</summary><pre>&quot;&quot;&quot;App settings. Everything can be changed with environment variables (or a .env file).&quot;&quot;&quot;
+import os
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:  # python-dotenv is optional
+    pass
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / &quot;static&quot;
+
+# Vercel sets VERCEL=1. Its filesystem is read-only except /tmp, and /tmp is wiped
+# whenever a new server instance starts, so we treat stored data as a cache there.
+ON_VERCEL = bool(os.getenv(&quot;VERCEL&quot;))
+DATA_DIR = Path(os.getenv(&quot;DATA_DIR&quot;) or (&quot;/tmp/book_studio&quot; if ON_VERCEL else BASE_DIR / &quot;data&quot;))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+OPENAI_API_KEY = os.getenv(&quot;OPENAI_API_KEY&quot;, &quot;&quot;).strip()
+CHAT_MODEL = os.getenv(&quot;OPENAI_MODEL&quot;, &quot;gpt-4o-mini&quot;)
+EMBED_MODEL = os.getenv(&quot;OPENAI_EMBED_MODEL&quot;, &quot;text-embedding-3-small&quot;)
+ALLOWED_MODELS = [m.strip() for m in os.getenv(
+    &quot;ALLOWED_MODELS&quot;, &quot;gpt-4o-mini,gpt-4o,gpt-4.1-mini,gpt-4.1&quot;).split(&quot;,&quot;) if m.strip()]
+
+REQUEST_TIMEOUT = float(os.getenv(&quot;OPENAI_TIMEOUT&quot;, &quot;60&quot;))
+MAX_RETRIES = int(os.getenv(&quot;OPENAI_MAX_RETRIES&quot;, &quot;2&quot;))  # SDK retries 429/5xx with backoff
+
+# Vercel rejects request bodies over 4.5 MB, so keep uploads under that there.
+MAX_UPLOAD_MB = float(os.getenv(&quot;MAX_UPLOAD_MB&quot;, &quot;4&quot; if ON_VERCEL else &quot;25&quot;))
+MAX_BOOK_TOKENS = int(os.getenv(&quot;MAX_BOOK_TOKENS&quot;, &quot;800000&quot;))
+DAILY_BUDGET_USD = float(os.getenv(&quot;DAILY_BUDGET_USD&quot;, &quot;0&quot;))  # 0 = no limit
+
+# USD per 1M tokens: (input, output). Check https://openai.com/api/pricing and edit.
+PRICES = {
+    &quot;gpt-4o-mini&quot;: (0.15, 0.60),
+    &quot;gpt-4o&quot;: (2.50, 10.00),
+    &quot;gpt-4.1-mini&quot;: (0.40, 1.60),
+    &quot;gpt-4.1&quot;: (2.00, 8.00),
+    &quot;text-embedding-3-small&quot;: (0.02, 0.0),
+    &quot;text-embedding-3-large&quot;: (0.13, 0.0),
+}
+</pre></details>
+</section>
+<section class="card" id="p2">
+<h3>2. app/books.py: turning a file into a searchable book</h3>
+<div class="path">book_genai_studio/app/books.py</div>
+<div class="label">What it does</div>
+<p class="what">Reads PDF, EPUB, DOCX, TXT, MD and HTML files, finds the chapters, and cuts the text into small overlapping chunks.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>extract(filename, data)</code> picks a reader based on the file extension and returns a list of pages (and the title, if the file has one).</li>
+<li><code>clean(text)</code> fixes spacing and broken lines.</li>
+<li><code>split_chapters(text)</code> uses a regular expression (<code>CHAPTER_RE</code>) to find headings like &quot;Chapter 3&quot; or &quot;CHAPTER TWELVE&quot;. If there are none, it makes equal-sized &quot;Parts&quot;.</li>
+<li><code>make_chunks(...)</code> cuts the text into pieces of about 450 tokens, with 80 tokens of overlap, so an idea isn&#x27;t lost at a chunk boundary. Each chunk remembers its chapter and page.</li>
+<li><code>build()</code> checks the file size, empty files, scanned PDFs (no text) and the token limit, each with a friendly error, and returns the book as a dictionary.</li>
+<li><code>Store</code> keeps books in memory, with a JSON copy on disk.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/app/books.py (373 lines)</summary><pre>&quot;&quot;&quot;Turn an uploaded book into clean text, chapters and searchable chunks.
+
+Pipeline:  file bytes -&gt; pages of text -&gt; cleaned full text -&gt; chapters -&gt; chunks (~450 tokens)
+&quot;&quot;&quot;
+import html
+import io
+import json
+import re
+import time
+import uuid
+import zipfile
+from pathlib import Path
+
+from . import config
+from .tokens import count_tokens
+
+SUPPORTED = {&quot;.txt&quot;, &quot;.md&quot;, &quot;.pdf&quot;, &quot;.docx&quot;, &quot;.epub&quot;, &quot;.html&quot;, &quot;.htm&quot;}
+BOOKS_DIR = config.DATA_DIR / &quot;books&quot;
+BOOKS_DIR.mkdir(parents=True, exist_ok=True)
+
+CHUNK_TOKENS = 450
+OVERLAP_TOKENS = 80
+
+
+class BookError(Exception):
+    def __init__(self, status: int, code: str, message: str, hint: str = &quot;&quot;):
+        super().__init__(message)
+        self.status, self.code, self.message, self.hint = status, code, message, hint
+
+    def to_dict(self):
+        return {&quot;error&quot;: {&quot;code&quot;: self.code, &quot;message&quot;: self.message, &quot;hint&quot;: self.hint}}
+
+
+# ---------------------------------------------------------------- text extraction
+
+def _decode(data: bytes) -&gt; str:
+    for enc in (&quot;utf-8-sig&quot;, &quot;utf-16&quot;, &quot;cp1252&quot;, &quot;latin-1&quot;):
+        try:
+            text = data.decode(enc)
+            if enc == &quot;utf-16&quot; and &quot;\x00&quot; in text:
+                continue
+            return text
+        except UnicodeDecodeError:
+            continue
+    return data.decode(&quot;utf-8&quot;, errors=&quot;replace&quot;)
+
+
+def _html_to_text(markup: str) -&gt; str:
+    markup = re.sub(r&quot;(?is)&lt;(script|style|head)\b.*?&lt;/\1&gt;&quot;, &quot; &quot;, markup)
+    markup = re.sub(r&quot;(?is)&lt;h[1-2][^&gt;]*&gt;(.*?)&lt;/h[1-2]&gt;&quot;, lambda m: &quot;\n\n# &quot; + re.sub(r&quot;&lt;[^&gt;]+&gt;&quot;, &quot;&quot;, m.group(1)).strip() + &quot;\n\n&quot;, markup)
+    markup = re.sub(r&quot;(?i)&lt;br\s*/?&gt;&quot;, &quot;\n&quot;, markup)
+    markup = re.sub(r&quot;(?i)&lt;/(p|div|li|h[3-6]|tr|blockquote|section)&gt;&quot;, &quot;\n\n&quot;, markup)
+    markup = re.sub(r&quot;&lt;[^&gt;]+&gt;&quot;, &quot;&quot;, markup)
+    return html.unescape(markup)
+
+
+def _epub_pages(data: bytes) -&gt; tuple[list[str], str | None]:
+    try:
+        z = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile:
+        raise BookError(422, &quot;bad_epub&quot;, &quot;This EPUB file is damaged.&quot;)
+    title = None
+    order = []
+    try:
+        container = z.read(&quot;META-INF/container.xml&quot;).decode(&quot;utf-8&quot;, &quot;replace&quot;)
+        opf_path = re.search(r&#x27;full-path=&quot;([^&quot;]+)&quot;&#x27;, container).group(1)
+        opf = z.read(opf_path).decode(&quot;utf-8&quot;, &quot;replace&quot;)
+        base = opf_path.rsplit(&quot;/&quot;, 1)[0] + &quot;/&quot; if &quot;/&quot; in opf_path else &quot;&quot;
+        t = re.search(r&quot;&lt;dc:title[^&gt;]*&gt;(.*?)&lt;/dc:title&gt;&quot;, opf, re.S)
+        title = html.unescape(t.group(1).strip()) if t else None
+        manifest = {m.group(1): m.group(2) for m in re.finditer(r&#x27;&lt;item\b[^&gt;]*?id=&quot;([^&quot;]+)&quot;[^&gt;]*?href=&quot;([^&quot;]+)&quot;&#x27;, opf)}
+        manifest.update({m.group(2): m.group(1) for m in re.finditer(r&#x27;&lt;item\b[^&gt;]*?href=&quot;([^&quot;]+)&quot;[^&gt;]*?id=&quot;([^&quot;]+)&quot;&#x27;, opf)})
+        for idref in re.findall(r&#x27;&lt;itemref\b[^&gt;]*idref=&quot;([^&quot;]+)&quot;&#x27;, opf):
+            if idref in manifest:
+                order.append(base + manifest[idref])
+    except (KeyError, AttributeError):
+        pass
+    if not order:
+        order = sorted(n for n in z.namelist() if n.lower().endswith((&quot;.xhtml&quot;, &quot;.html&quot;, &quot;.htm&quot;)))
+    pages = []
+    for name in order:
+        try:
+            pages.append(_html_to_text(z.read(name).decode(&quot;utf-8&quot;, &quot;replace&quot;)))
+        except KeyError:
+            continue
+    return pages, title
+
+
+def extract(filename: str, data: bytes) -&gt; tuple[list[str], str | None, bool]:
+    &quot;&quot;&quot;Returns (pages, title_from_metadata, has_real_page_numbers).&quot;&quot;&quot;
+    ext = Path(filename).suffix.lower()
+    if ext not in SUPPORTED:
+        raise BookError(415, &quot;unsupported_type&quot;, f&quot;“{ext or &#x27;no extension&#x27;}” files aren&#x27;t supported.&quot;,
+                        &quot;Upload PDF, EPUB, DOCX, TXT, MD or HTML.&quot;)
+    if ext in (&quot;.txt&quot;, &quot;.md&quot;):
+        return [_decode(data)], None, False
+    if ext in (&quot;.html&quot;, &quot;.htm&quot;):
+        return [_html_to_text(_decode(data))], None, False
+    if ext == &quot;.epub&quot;:
+        pages, title = _epub_pages(data)
+        return pages, title, False
+    if ext == &quot;.docx&quot;:
+        try:
+            from docx import Document
+            doc = Document(io.BytesIO(data))
+        except Exception:
+            raise BookError(422, &quot;bad_docx&quot;, &quot;Couldn&#x27;t open this Word file.&quot;)
+        lines = []
+        for p in doc.paragraphs:
+            style = (p.style.name if p.style is not None else &quot;&quot;) or &quot;&quot;
+            lines.append((&quot;# &quot; + p.text) if style.startswith((&quot;Heading 1&quot;, &quot;Title&quot;)) and p.text.strip() else p.text)
+        title = doc.core_properties.title or None
+        return [&quot;\n\n&quot;.join(lines)], title, False
+    # PDF
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(io.BytesIO(data))
+        if reader.is_encrypted:
+            reader.decrypt(&quot;&quot;)
+        pages = [(p.extract_text() or &quot;&quot;) for p in reader.pages]
+        title = (reader.metadata.title if reader.metadata else None) or None
+    except Exception:
+        raise BookError(422, &quot;bad_pdf&quot;, &quot;Couldn&#x27;t read this PDF (damaged or password-protected).&quot;)
+    return pages, title, True
+
+
+def clean(text: str) -&gt; str:
+    text = text.replace(&quot;\r\n&quot;, &quot;\n&quot;).replace(&quot;\r&quot;, &quot;\n&quot;).replace(&quot;­&quot;, &quot;&quot;)
+    text = re.sub(r&quot;(\w)-\n(\w)&quot;, r&quot;\1\2&quot;, text)        # join words split across lines
+    text = re.sub(r&quot;[ \t ]+&quot;, &quot; &quot;, text)
+    text = re.sub(r&quot; *\n *&quot;, &quot;\n&quot;, text)
+    text = re.sub(r&quot;\n{3,}&quot;, &quot;\n\n&quot;, text)
+    return text.strip()
+
+
+# ---------------------------------------------------------------- chapters
+
+_NUM = r&quot;(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|[a-z]+teen|twenty[a-z\- ]*|thirty[a-z\- ]*)&quot;
+CHAPTER_RE = re.compile(
+    rf&quot;^(?:#{{1,2}} .{{1,100}}|(?:chapter|part|book|section|act|lesson|unit) {_NUM}\b.{{0,80}}&quot;
+    r&quot;|prologue|epilogue|introduction|preface|foreword|afterword|conclusion|appendix\b.{0,60})$&quot;,
+    re.I | re.M,
+)
+
+
+def split_chapters(text: str) -&gt; list[dict]:
+    marks = [(m.start(), m.group(0).lstrip(&quot;# &quot;).strip()) for m in CHAPTER_RE.finditer(text)]
+    sections = []
+    if marks and marks[0][0] &gt; 0:
+        sections.append([&quot;Opening&quot;, 0])
+    for start, title in marks:
+        sections.append([title[:100], start])
+    if not sections:
+        sections = [[&quot;Opening&quot;, 0]]
+    bounds = []
+    for i, (title, start) in enumerate(sections):
+        end = sections[i + 1][1] if i + 1 &lt; len(sections) else len(text)
+        bounds.append({&quot;title&quot;: title, &quot;start&quot;: start, &quot;end&quot;: end})
+
+    # Merge tiny sections (table-of-contents lines, stray headings) into the next one.
+    merged = []
+    carry_start = None
+    for b in bounds:
+        words = len(text[b[&quot;start&quot;]:b[&quot;end&quot;]].split())
+        start = carry_start if carry_start is not None else b[&quot;start&quot;]
+        if words &lt; 120 and b is not bounds[-1]:
+            carry_start = start
+            continue
+        merged.append({&quot;title&quot;: b[&quot;title&quot;], &quot;start&quot;: start, &quot;end&quot;: b[&quot;end&quot;]})
+        carry_start = None
+
+    # No real chapters? Make even-sized parts so &quot;summarize by chapter&quot; still works.
+    if len(merged) &lt; 2 and count_tokens(text) &gt; 6000:
+        merged, size, pos, n = [], 12000 * 4, 0, 1  # ~3000 words per part
+        while pos &lt; len(text):
+            end = min(len(text), pos + size)
+            if end &lt; len(text):
+                nl = text.rfind(&quot;\n\n&quot;, pos + size // 2, end)
+                end = nl if nl &gt; 0 else end
+            merged.append({&quot;title&quot;: f&quot;Part {n}&quot;, &quot;start&quot;: pos, &quot;end&quot;: end})
+            pos, n = end, n + 1
+    return merged
+
+
+# ---------------------------------------------------------------- chunks
+
+_SENT_RE = re.compile(r&quot;(?&lt;=[.!?…”\&quot;])\s+(?=[A-Z“\&quot;&#x27;(\[])&quot;)
+
+
+def split_sentences(text: str) -&gt; list[str]:
+    &quot;&quot;&quot;Sentences, with short unpunctuated lines (titles, headings) kept as their own items.&quot;&quot;&quot;
+    out = []
+    for para in re.split(r&quot;\n\s*\n&quot;, text):
+        lines, buf = para.split(&quot;\n&quot;), []
+        for line in lines:
+            s = line.strip()
+            if s and len(s.split()) &lt;= 12 and not re.search(r&quot;[.!?…:;,”\&quot;&#x27;)]$&quot;, s):
+                if buf:
+                    out.extend(_SENT_RE.split(&quot; &quot;.join(buf)))
+                    buf = []
+                out.append(s)
+            elif s:
+                buf.append(s)
+        if buf:
+            out.extend(_SENT_RE.split(&quot; &quot;.join(buf)))
+    return [s.strip() for s in out if s.strip()]
+
+
+def _pieces(text: str) -&gt; list[str]:
+    &quot;&quot;&quot;Paragraphs, with very long paragraphs broken into sentence groups.&quot;&quot;&quot;
+    out = []
+    for para in re.split(r&quot;\n\s*\n&quot;, text):
+        para = para.strip()
+        if not para:
+            continue
+        if count_tokens(para) &lt;= CHUNK_TOKENS:
+            out.append(para)
+            continue
+        buf = &quot;&quot;
+        for s in split_sentences(para):
+            if buf and count_tokens(buf + &quot; &quot; + s) &gt; CHUNK_TOKENS:
+                out.append(buf)
+                buf = s
+            else:
+                buf = (buf + &quot; &quot; + s).strip()
+        if buf:
+            out.append(buf)
+    return out
+
+
+def make_chunks(text: str, chapters: list[dict], page_starts: list[int] | None) -&gt; list[dict]:
+    chunks = []
+    for ci, ch in enumerate(chapters):
+        body = text[ch[&quot;start&quot;]:ch[&quot;end&quot;]]
+        buf, buf_tokens, cursor = [], 0, ch[&quot;start&quot;]
+        pieces = _pieces(body)
+
+        def flush():
+            nonlocal cursor
+            chunk_text = &quot;\n\n&quot;.join(buf)
+            pos = text.find(buf[0][:60], cursor)
+            if pos &gt;= 0:
+                cursor = pos
+            page = None
+            if page_starts:
+                page = sum(1 for s in page_starts if s &lt;= max(pos, ch[&quot;start&quot;]))
+            chunks.append({&quot;id&quot;: len(chunks), &quot;chapter&quot;: ci, &quot;page&quot;: page,
+                           &quot;tokens&quot;: count_tokens(chunk_text), &quot;text&quot;: chunk_text})
+
+        for p in pieces:
+            t = count_tokens(p)
+            if buf and buf_tokens + t &gt; CHUNK_TOKENS:
+                flush()
+                last = buf[-1]
+                lt = count_tokens(last)
+                buf, buf_tokens = ([last], lt) if lt &lt;= OVERLAP_TOKENS * 2 else ([], 0)
+            buf.append(p)
+            buf_tokens += t
+        if buf:
+            flush()
+    return chunks
+
+
+# ---------------------------------------------------------------- build + store
+
+def build(filename: str, data: bytes) -&gt; dict:
+    if len(data) &gt; config.MAX_UPLOAD_MB * 1024 * 1024:
+        raise BookError(413, &quot;file_too_large&quot;, f&quot;File is over {config.MAX_UPLOAD_MB:g} MB.&quot;,
+                        &quot;Compress the PDF or upload a .txt version.&quot; +
+                        (&quot; (Vercel&#x27;s free plan limits uploads to about 4.5 MB.)&quot; if config.ON_VERCEL else &quot;&quot;))
+    if not data:
+        raise BookError(400, &quot;empty_file&quot;, &quot;The file is empty.&quot;)
+    pages, meta_title, paged = extract(filename, data)
+    cleaned = [clean(p) for p in pages]
+    text, page_starts = &quot;&quot;, []
+    for p in cleaned:
+        if not p:
+            page_starts.append(len(text))
+            continue
+        if text:
+            text += &quot;\n\n&quot;
+        page_starts.append(len(text))
+        text += p
+    if len(text.split()) &lt; 50:
+        raise BookError(422, &quot;no_text&quot;, &quot;No readable text was found in this file.&quot;,
+                        &quot;If it&#x27;s a scanned PDF, run OCR on it first (e.g. with Google Drive or Adobe).&quot;)
+    n_tokens = count_tokens(text)
+    if n_tokens &gt; config.MAX_BOOK_TOKENS:
+        raise BookError(413, &quot;book_too_long&quot;, f&quot;This book has about {n_tokens:,} tokens; the limit is &quot;
+                        f&quot;{config.MAX_BOOK_TOKENS:,}.&quot;, &quot;Split it into volumes or raise MAX_BOOK_TOKENS.&quot;)
+    chapters = split_chapters(text)
+    chunks = make_chunks(text, chapters, page_starts if paged else None)
+    for i, ch in enumerate(chapters):
+        ch[&quot;idx&quot;] = i
+        ch[&quot;tokens&quot;] = sum(c[&quot;tokens&quot;] for c in chunks if c[&quot;chapter&quot;] == i)
+        ch[&quot;words&quot;] = len(text[ch[&quot;start&quot;]:ch[&quot;end&quot;]].split())
+    title = (meta_title or &quot;&quot;).strip() or Path(filename).stem.replace(&quot;_&quot;, &quot; &quot;).replace(&quot;-&quot;, &quot; &quot;).strip().title()
+    return {
+        &quot;id&quot;: uuid.uuid4().hex[:12],
+        &quot;title&quot;: title[:120],
+        &quot;filename&quot;: filename,
+        &quot;created&quot;: time.time(),
+        &quot;pages&quot;: len(pages) if paged else None,
+        &quot;words&quot;: len(text.split()),
+        &quot;tokens&quot;: n_tokens,
+        &quot;text&quot;: text,
+        &quot;chapters&quot;: chapters,
+        &quot;chunks&quot;: chunks,
+        &quot;embeddings&quot;: None,
+        &quot;cache&quot;: {},
+    }
+
+
+def public(book: dict) -&gt; dict:
+    &quot;&quot;&quot;Book info without the big fields.&quot;&quot;&quot;
+    return {k: book[k] for k in (&quot;id&quot;, &quot;title&quot;, &quot;filename&quot;, &quot;created&quot;, &quot;pages&quot;, &quot;words&quot;, &quot;tokens&quot;)} | {
+        &quot;chapters&quot;: [{k: c[k] for k in (&quot;idx&quot;, &quot;title&quot;, &quot;tokens&quot;, &quot;words&quot;)} for c in book[&quot;chapters&quot;]],
+        &quot;chunks&quot;: len(book[&quot;chunks&quot;]),
+        &quot;semantic_search&quot;: book.get(&quot;embeddings&quot;) is not None,
+    }
+
+
+def portable(book: dict) -&gt; dict:
+    &quot;&quot;&quot;Everything needed to rebuild the book on another server (no embeddings: too big).&quot;&quot;&quot;
+    return {k: book[k] for k in (&quot;id&quot;, &quot;title&quot;, &quot;filename&quot;, &quot;created&quot;, &quot;pages&quot;, &quot;words&quot;, &quot;tokens&quot;,
+                                 &quot;text&quot;, &quot;chapters&quot;, &quot;chunks&quot;)}
+
+
+class Store:
+    &quot;&quot;&quot;Books live in memory, with a JSON copy on disk.&quot;&quot;&quot;
+
+    def __init__(self):
+        self.books: dict[str, dict] = {}
+
+    def _path(self, book_id):
+        return BOOKS_DIR / f&quot;{re.sub(r&#x27;[^a-f0-9]&#x27;, &#x27;&#x27;, book_id)}.json&quot;
+
+    def save(self, book: dict):
+        self.books[book[&quot;id&quot;]] = book
+        try:
+            self._path(book[&quot;id&quot;]).write_text(json.dumps(book), encoding=&quot;utf-8&quot;)
+        except OSError:
+            pass  # disk is optional (e.g. read-only); memory copy still works
+
+    def get(self, book_id: str) -&gt; dict:
+        if book_id in self.books:
+            return self.books[book_id]
+        p = self._path(book_id)
+        if p.exists():
+            book = json.loads(p.read_text(encoding=&quot;utf-8&quot;))
+            self.books[book_id] = book
+            return book
+        raise BookError(404, &quot;book_not_found&quot;, &quot;This server doesn&#x27;t have that book any more.&quot;,
+                        &quot;Your browser has a copy; it will be re-sent automatically.&quot;)
+
+    def all(self) -&gt; list[dict]:
+        for p in BOOKS_DIR.glob(&quot;*.json&quot;):
+            if p.stem not in self.books:
+                try:
+                    self.books[p.stem] = json.loads(p.read_text(encoding=&quot;utf-8&quot;))
+                except (OSError, ValueError):
+                    continue
+        return sorted(self.books.values(), key=lambda b: b[&quot;created&quot;], reverse=True)
+
+    def delete(self, book_id: str):
+        self.books.pop(book_id, None)
+        try:
+            self._path(book_id).unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
+store = Store()
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. app/retrieval.py: finding the right passages</h3>
+<div class="path">book_genai_studio/app/retrieval.py</div>
+<div class="label">What it does</div>
+<p class="what">Given a question, it finds the 6 chunks of the book most likely to contain the answer.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>tokenize()</code> lower-cases the text, removes stop words (the, a, is…) and trims word endings, so &quot;climbing&quot; matches &quot;climb&quot;.</li>
+<li><code>class BM25</code> is a classic keyword search: it scores chunks that contain the question&#x27;s rare words more often.</li>
+<li><code>search()</code> ranks chunks by BM25. If the book has embeddings, it also ranks them by meaning (cosine similarity of vectors).</li>
+<li>The two rankings are merged with Reciprocal Rank Fusion: each chunk gets <code>1/(60+rank)</code> from each list, and the top <code>k</code> win.</li>
+<li><code>extractive_summary</code>, <code>best_sentences</code> and <code>keywords</code> are the offline Demo-mode tools: they pick important sentences without any AI.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/app/retrieval.py (159 lines)</summary><pre>&quot;&quot;&quot;Find the passages of a book that best match a question.
+
+Two searches, combined:
+  * BM25 keyword search  - always available, free, good for names and exact terms
+  * Embedding search     - needs an OpenAI key, good for meaning (&quot;why was she angry?&quot;)
+Results are merged with Reciprocal Rank Fusion (RRF): a passage ranked high by
+either search ends up near the top.
+&quot;&quot;&quot;
+import math
+import re
+from collections import Counter
+
+import numpy as np
+
+WORD = re.compile(r&quot;[a-z0-9]+(?:&#x27;[a-z]+)?&quot;)
+STOP = set(&quot;&quot;&quot;a about above after again against all am an and any are as at be because been before being
+below between both but by can could did do does doing down during each few for from further had has have
+having he her here hers herself him himself his how i if in into is it its itself just me more most my myself
+no nor not now of off on once only or other our ours ourselves out over own same she should so some such than
+that the their theirs them themselves then there these they this those through to too under until up very was
+we were what when where which while who whom why will with would you your yours yourself yourselves also
+said says say one may might shall upon unto thee thou thy&quot;&quot;&quot;.split())
+
+
+INITIALS = re.compile(r&quot;\b(?:[a-z]\.){2,}&quot;)
+
+
+def _stem(w: str) -&gt; str:
+    &quot;&quot;&quot;Tiny stemmer so &#x27;logbooks&#x27;, &#x27;climbed&#x27;, &#x27;climbing&#x27; match &#x27;logbook&#x27;, &#x27;climb&#x27;.&quot;&quot;&quot;
+    for suf in (&quot;ing&quot;, &quot;ed&quot;, &quot;es&quot;, &quot;s&quot;):
+        if w.endswith(suf) and len(w) - len(suf) &gt;= 4 and not w.endswith(&quot;ss&quot;):
+            return w[: -len(suf)]
+    return w
+
+
+def tokenize(text: str) -&gt; list[str]:
+    low = text.lower()
+    words = [_stem(w) for w in WORD.findall(low) if w not in STOP and len(w) &gt; 1]
+    return words + [i.replace(&quot;.&quot;, &quot;&quot;) + &quot;_init&quot; for i in INITIALS.findall(low)]  # keep &quot;A.O.&quot; as one token
+
+
+class BM25:
+    def __init__(self, docs: list[str], k1=1.5, b=0.75):
+        self.k1, self.b = k1, b
+        self.docs = [Counter(tokenize(d)) for d in docs]
+        self.lens = [sum(d.values()) for d in self.docs]
+        self.avg = (sum(self.lens) / len(self.lens)) if self.lens else 0
+        df = Counter()
+        for d in self.docs:
+            df.update(d.keys())
+        n = len(self.docs)
+        self.idf = {w: math.log(1 + (n - f + 0.5) / (f + 0.5)) for w, f in df.items()}
+
+    def scores(self, query: str) -&gt; list[float]:
+        q = tokenize(query)
+        out = []
+        for d, length in zip(self.docs, self.lens):
+            s = 0.0
+            for w in q:
+                f = d.get(w)
+                if f:
+                    s += self.idf[w] * f * (self.k1 + 1) / (f + self.k1 * (1 - self.b + self.b * length / (self.avg or 1)))
+            out.append(s)
+        return out
+
+
+_bm25_cache: dict[str, BM25] = {}
+
+
+def _bm25(book) -&gt; BM25:
+    key = f&quot;{book[&#x27;id&#x27;]}:{len(book[&#x27;chunks&#x27;])}&quot;
+    if key not in _bm25_cache:
+        _bm25_cache[key] = BM25([c[&quot;text&quot;] for c in book[&quot;chunks&quot;]])
+    return _bm25_cache[key]
+
+
+def search(book: dict, query: str, k: int = 6, chapter: int | None = None, query_vec=None) -&gt; list[dict]:
+    chunks = book[&quot;chunks&quot;]
+    allowed = [i for i, c in enumerate(chunks) if chapter is None or c[&quot;chapter&quot;] == chapter]
+    if not allowed:
+        return []
+    bm = _bm25(book).scores(query)
+    ranked_lists = [sorted(allowed, key=lambda i: bm[i], reverse=True)]
+    if query_vec is not None and book.get(&quot;embeddings&quot;):
+        m = np.asarray(book[&quot;embeddings&quot;], dtype=np.float32)
+        q = np.asarray(query_vec, dtype=np.float32)
+        sims = m @ q / (np.linalg.norm(m, axis=1) * np.linalg.norm(q) + 1e-9)
+        ranked_lists.append(sorted(allowed, key=lambda i: sims[i], reverse=True))
+    elif max(bm[i] for i in allowed) == 0:
+        return []  # no keyword overlap at all and no semantic search
+    fused = Counter()
+    for ranked in ranked_lists:
+        for rank, i in enumerate(ranked[:50]):
+            fused[i] += 1 / (60 + rank)
+    top = [i for i, _ in fused.most_common(k)]
+    return [chunks[i] | {&quot;score&quot;: round(fused[i], 5)} for i in top]
+
+
+# ---------------------------------------------------------------- offline helpers (Demo mode)
+
+def extractive_summary(text: str, n_sentences: int = 8) -&gt; list[str]:
+    &quot;&quot;&quot;Pick the sentences that use the text&#x27;s most important words.&quot;&quot;&quot;
+    from .books import split_sentences
+    sents = [s for s in split_sentences(text)
+             if 6 &lt;= len(s.split()) &lt;= 60 and re.search(r&quot;[.!?…”\&quot;&#x27;]$&quot;, s)]
+    if len(sents) &lt;= n_sentences:
+        return sents
+    freq = Counter(tokenize(text))
+    top = max(freq.values()) if freq else 1
+    scored = []
+    for i, s in enumerate(sents):
+        words = tokenize(s)
+        if not words:
+            continue
+        score = sum(freq[w] / top for w in words) / (len(words) ** 0.6)
+        score *= 1.15 if i &lt; len(sents) * 0.1 else 1.0  # openings matter
+        scored.append((score, i))
+    # spread picks across the text: best sentence from each slice
+    picked = set()
+    slices = max(1, n_sentences)
+    size = len(sents) / slices
+    for s in range(slices):
+        lo, hi = int(s * size), int((s + 1) * size)
+        best = max(((sc, i) for sc, i in scored if lo &lt;= i &lt; hi), default=None)
+        if best:
+            picked.add(best[1])
+    return [sents[i] for i in sorted(picked)]
+
+
+def best_sentences(passages: list[str], query: str, n: int = 4) -&gt; list[str]:
+    from .books import split_sentences
+    q = set(tokenize(query))
+    cands = []
+    for p in passages:
+        for s in split_sentences(p):
+            overlap = len(q &amp; set(tokenize(s)))
+            if overlap:
+                cands.append((overlap / (len(s.split()) ** 0.3), s))
+    cands.sort(reverse=True)
+    seen, out = set(), []
+    for _, s in cands:
+        if s not in seen:
+            out.append(s)
+            seen.add(s)
+        if len(out) == n:
+            break
+    return out
+
+
+FILLER = set(&quot;&quot;&quot;every would could like time back still just even much many made make know knew went
+come came first last long little great never always only other into over than then them they well what
+when where which while will with without because before after again away down here there these those
+thought looked something nothing anything everything someone people thing things later another&quot;&quot;&quot;.split())
+
+
+def keywords(text: str, n: int = 12) -&gt; list[str]:
+    freq = Counter(w for w in WORD.findall(text.lower())
+                   if len(w) &gt; 3 and not w.isdigit() and w not in FILLER and w not in STOP)
+    return [w for w, _ in freq.most_common(n)]
+</pre></details>
+</section>
+<section class="card" id="p4">
+<h3>4. app/prompts.py: every prompt in one place</h3>
+<div class="path">book_genai_studio/app/prompts.py</div>
+<div class="label">What it does</div>
+<p class="what">Holds every prompt the app sends, each with a version (v1, v2), so prompts can be compared and improved.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>LENGTHS</code> maps short/medium/detailed to a word count, and <code>STYLES</code> describes bullets, paragraph and so on.</li>
+<li><code>SUMMARIZE</code>, <code>QA</code> and <code>GENERATE</code> each hold a system and user template for v1 and v2.</li>
+<li><code>CONDENSE_PROMPT</code> rewrites a follow-up such as &quot;what did she do next?&quot; into a full search question.</li>
+<li><code>pick_version()</code> uses the version the user asked for, or picks one.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/app/prompts.py (139 lines)</summary><pre>&quot;&quot;&quot;All prompts live here, with versions, so we can A/B test and improve them.
+
+How prompt iteration works in this app:
+  1. Each output is made with one prompt version (v1 or v2), chosen at random when &quot;auto&quot;.
+  2. Users rate the output 1-5 stars.
+  3. The Prompt Lab tab shows the average rating per version.
+  4. Keep the winner, write a new v3 that fixes the complaints, repeat.
+&quot;&quot;&quot;
+import random
+
+LENGTHS = {&quot;short&quot;: 120, &quot;medium&quot;: 300, &quot;detailed&quot;: 700}
+
+STYLES = {
+    &quot;bullets&quot;: &quot;a bulleted list of key points (one idea per bullet)&quot;,
+    &quot;paragraph&quot;: &quot;flowing paragraphs&quot;,
+    &quot;tldr&quot;: &quot;a single TL;DR line followed by 3 bullets&quot;,
+    &quot;eli5&quot;: &quot;very simple words a 10-year-old understands&quot;,
+    &quot;academic&quot;: &quot;a formal academic abstract&quot;,
+    &quot;chapter_notes&quot;: &quot;study notes with headings: Key events, Key ideas, People, Quotes worth remembering&quot;,
+}
+
+# ------------------------------------------------------------------ summarize
+SUMMARIZE = {
+    &quot;v1&quot;: {
+        &quot;label&quot;: &quot;Baseline&quot;,
+        &quot;system&quot;: &quot;You are a helpful assistant that summarizes text.&quot;,
+        &quot;user&quot;: &quot;Summarize the following text in about {words} words as {style}.\n\n{text}&quot;,
+    },
+    &quot;v2&quot;: {
+        &quot;label&quot;: &quot;Grounded editor&quot;,
+        &quot;system&quot;: (
+            &quot;You are an expert book editor. You write faithful summaries: you never add facts that are not &quot;
+            &quot;in the text, you keep important names, numbers and causes, and you explain why things matter. &quot;
+            &quot;Use Markdown.&quot;
+        ),
+        &quot;user&quot;: (
+            &quot;Write a summary of the text below.\n&quot;
+            &quot;- Length: about {words} words\n- Format: {style}\n&quot;
+            &quot;- Start with a bold one-sentence overview.\n&quot;
+            &quot;- If the text is a part of a larger work, say what it sets up next.\n\n&quot;
+            &quot;TEXT:\n\&quot;\&quot;\&quot;\n{text}\n\&quot;\&quot;\&quot;&quot;
+        ),
+    },
+}
+
+# Map step for long texts: turn each piece into dense notes, then combine.
+NOTES_PROMPT = (
+    &quot;Make dense, factual notes of this section of “{title}” ({part}). Keep names, events in order, &quot;
+    &quot;key arguments, numbers and memorable quotes (short). 120-250 words. No intro sentence.\n\n\&quot;\&quot;\&quot;\n{text}\n\&quot;\&quot;\&quot;&quot;
+)
+COMBINE_PROMPT = (
+    &quot;Below are notes for each part of “{title}”, in order. Using only these notes, write the summary.\n&quot;
+    &quot;- Length: about {words} words\n- Format: {style}\n- Start with a bold one-sentence overview.\n\n{text}&quot;
+)
+
+# ------------------------------------------------------------------ Q&amp;A
+QA = {
+    &quot;v1&quot;: {
+        &quot;label&quot;: &quot;Baseline&quot;,
+        &quot;system&quot;: &quot;Answer the user&#x27;s question using the context below.\n\nCONTEXT:\n{context}&quot;,
+    },
+    &quot;v2&quot;: {
+        &quot;label&quot;: &quot;Cited &amp; honest&quot;,
+        &quot;system&quot;: (
+            &quot;You are a reading assistant for the book “{title}”. Answer ONLY from the numbered sources below.\n&quot;
+            &quot;Rules:\n&quot;
+            &quot;1. Cite every claim with its source tag, like [S2]. Put tags right after the sentence.\n&quot;
+            &quot;2. If the sources don&#x27;t contain the answer, say: “I couldn&#x27;t find that in the book.” and suggest &quot;
+            &quot;what the reader could ask instead. Never guess.\n&quot;
+            &quot;3. Quote at most one short phrase when it helps.\n&quot;
+            &quot;4. Keep answers under 200 words unless the user asks for more. Use Markdown.\n\n&quot;
+            &quot;SOURCES:\n{context}&quot;
+        ),
+    },
+}
+GENERAL_CHAT_SYSTEM = (
+    &quot;You are a friendly, precise assistant. Use Markdown. If you are not sure about a fact, say so.&quot;
+)
+CONDENSE_PROMPT = (
+    &quot;Rewrite the user&#x27;s last message as one standalone search question about the book, using the chat &quot;
+    &quot;history to fill in names and pronouns. Reply with the question only.\n\nHISTORY:\n{history}\n\n&quot;
+    &quot;LAST MESSAGE: {question}&quot;
+)
+
+# ------------------------------------------------------------------ content generator
+CONTENT_TYPES = {
+    &quot;quiz&quot;: &quot;a 10-question multiple-choice quiz (4 options each, mark the answer and give a one-line &quot;
+            &quot;explanation after each question)&quot;,
+    &quot;flashcards&quot;: &quot;15 flashcards as a Markdown table with columns Front | Back&quot;,
+    &quot;study_notes&quot;: &quot;structured study notes with headings, key terms in bold, and a 5-point recap&quot;,
+    &quot;blog_post&quot;: &quot;an engaging blog post with a catchy title, intro hook, 3-5 sections with headings, and a conclusion&quot;,
+    &quot;social_thread&quot;: &quot;a 7-post social media thread; number each post, max 270 characters each, first post is a hook&quot;,
+    &quot;newsletter&quot;: &quot;an email newsletter with a subject line, a preview line, and a short body with one call to action&quot;,
+    &quot;discussion_questions&quot;: &quot;10 open-ended discussion questions for a book club, from easy to deep&quot;,
+    &quot;characters&quot;: &quot;profiles of the main characters or key figures: role, traits, motivation, how they change&quot;,
+    &quot;timeline&quot;: &quot;a timeline of key events in order as a Markdown table: # | Event | Why it matters&quot;,
+    &quot;lesson_plan&quot;: &quot;a 45-minute lesson plan: objectives, warm-up, activities with timings, assessment, homework&quot;,
+    &quot;custom&quot;: &quot;exactly what the user&#x27;s extra instructions ask for&quot;,
+}
+
+GENERATE = {
+    &quot;v1&quot;: {
+        &quot;label&quot;: &quot;Baseline&quot;,
+        &quot;system&quot;: &quot;You are a helpful content writer.&quot;,
+        &quot;user&quot;: &quot;Create {spec} about the material below. Tone: {tone}. Audience: {audience}. {extra}\n\n{material}&quot;,
+    },
+    &quot;v2&quot;: {
+        &quot;label&quot;: &quot;Expert creator&quot;,
+        &quot;system&quot;: (
+            &quot;You are a senior content designer who turns books into learning and marketing material. &quot;
+            &quot;Everything you write must be accurate to the source material; do not invent plot points, &quot;
+            &quot;quotes or statistics. Use clean Markdown with no preamble like “Sure, here is…”.&quot;
+        ),
+        &quot;user&quot;: (
+            &quot;TASK: Create {spec}.\nTONE: {tone}\nAUDIENCE: {audience}\nEXTRA INSTRUCTIONS: {extra}\n\n&quot;
+            &quot;SOURCE MATERIAL (from “{title}”):\n\&quot;\&quot;\&quot;\n{material}\n\&quot;\&quot;\&quot;\n\n&quot;
+            &quot;Before finishing, check each item against the source material and fix anything not supported.&quot;
+        ),
+    },
+}
+
+FEATURES = {&quot;summarize&quot;: SUMMARIZE, &quot;qa&quot;: QA, &quot;generate&quot;: GENERATE}
+
+
+def pick_version(feature: str, requested: str | None) -&gt; str:
+    versions = FEATURES[feature]
+    if requested in versions:
+        return requested
+    return random.choice(list(versions))  # &quot;auto&quot; = A/B test
+
+
+def catalog() -&gt; dict:
+    return {
+        &quot;features&quot;: {f: {v: p[&quot;label&quot;] for v, p in versions.items()} for f, versions in FEATURES.items()},
+        &quot;content_types&quot;: list(CONTENT_TYPES),
+        &quot;styles&quot;: list(STYLES),
+        &quot;lengths&quot;: LENGTHS,
+        &quot;prompts&quot;: FEATURES,
+    }
+</pre></details>
+</section>
+<section class="card" id="p5">
+<h3>5. app/llm.py: every OpenAI call</h3>
+<div class="path">book_genai_studio/app/llm.py</div>
+<div class="label">What it does</div>
+<p class="what">The only file that talks to OpenAI. It adds retries, friendly errors, cost tracking and the budget check.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>resolve_key()</code>: a key typed in the browser (the <code>X-OpenAI-Key</code> header) wins over the server&#x27;s key.</li>
+<li><code>_check_budget()</code> refuses the call if today&#x27;s cost is already over <code>DAILY_BUDGET_USD</code>.</li>
+<li><code>chat()</code> sends messages and returns the text. <code>chat_stream()</code> yields the text piece by piece as it arrives.</li>
+<li>After every call, it logs tokens, cost and time to the database (<code>db.log_usage</code>), and a <code>Meter</code> adds up all the calls made for one request.</li>
+<li><code>map_error()</code> turns OpenAI errors (wrong key, rate limit, timeout) into an <code>LLMError</code> with a plain-English hint for the user.</li>
+<li><code>embed()</code> turns texts into vectors for search by meaning.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/app/llm.py (184 lines)</summary><pre>&quot;&quot;&quot;One place for every OpenAI call: retries, friendly errors, token + cost logging.&quot;&quot;&quot;
+import time
+
+import openai
+from openai import OpenAI
+
+from . import config, db
+from .tokens import count_messages, count_tokens, estimate_cost
+
+
+class LLMError(Exception):
+    &quot;&quot;&quot;An error with a status code, a short code, and a hint the UI can show.&quot;&quot;&quot;
+
+    def __init__(self, status: int, code: str, message: str, hint: str = &quot;&quot;):
+        super().__init__(message)
+        self.status, self.code, self.message, self.hint = status, code, message, hint
+
+    def to_dict(self):
+        return {&quot;error&quot;: {&quot;code&quot;: self.code, &quot;message&quot;: self.message, &quot;hint&quot;: self.hint}}
+
+
+class Meter:
+    &quot;&quot;&quot;Adds up tokens and cost across the calls made for one user request.&quot;&quot;&quot;
+
+    def __init__(self):
+        self.prompt_tokens = self.completion_tokens = self.calls = 0
+        self.cost = 0.0
+        self.started = time.time()
+
+    def add(self, pt, ct, cost):
+        self.prompt_tokens += pt
+        self.completion_tokens += ct
+        self.cost += cost
+        self.calls += 1
+
+    def to_dict(self):
+        return {
+            &quot;prompt_tokens&quot;: self.prompt_tokens,
+            &quot;completion_tokens&quot;: self.completion_tokens,
+            &quot;total_tokens&quot;: self.prompt_tokens + self.completion_tokens,
+            &quot;cost_usd&quot;: round(self.cost, 6),
+            &quot;calls&quot;: self.calls,
+            &quot;latency_ms&quot;: int((time.time() - self.started) * 1000),
+        }
+
+
+def resolve_key(header_key: str | None) -&gt; str:
+    &quot;&quot;&quot;A key typed in the UI (sent as X-OpenAI-Key) wins over the server&#x27;s key.&quot;&quot;&quot;
+    return (header_key or &quot;&quot;).strip() or config.OPENAI_API_KEY
+
+
+def resolve_model(requested: str | None) -&gt; str:
+    if requested and requested in config.ALLOWED_MODELS:
+        return requested
+    return config.CHAT_MODEL
+
+
+def map_error(e: Exception) -&gt; LLMError:
+    msg = str(e)
+    if isinstance(e, openai.AuthenticationError):
+        return LLMError(401, &quot;invalid_api_key&quot;, &quot;OpenAI rejected the API key.&quot;,
+                        &quot;Open Settings and paste a valid key (starts with sk-).&quot;)
+    if isinstance(e, openai.PermissionDeniedError):
+        return LLMError(403, &quot;permission_denied&quot;, &quot;This key can&#x27;t use that model.&quot;,
+                        &quot;Pick another model in Settings.&quot;)
+    if isinstance(e, openai.RateLimitError):
+        if &quot;insufficient_quota&quot; in msg or &quot;quota&quot; in msg.lower():
+            return LLMError(402, &quot;quota_exceeded&quot;, &quot;Your OpenAI account is out of credit.&quot;,
+                            &quot;Add billing at platform.openai.com, or keep using Demo mode.&quot;)
+        return LLMError(429, &quot;rate_limited&quot;, &quot;Too many requests to OpenAI right now.&quot;,
+                        &quot;Wait a few seconds and try again.&quot;)
+    if isinstance(e, openai.BadRequestError):
+        if &quot;context_length&quot; in msg or &quot;maximum context&quot; in msg:
+            return LLMError(400, &quot;context_too_long&quot;, &quot;The text is too long for the model.&quot;,
+                            &quot;Pick one chapter, or paste a shorter piece.&quot;)
+        return LLMError(400, &quot;bad_request&quot;, f&quot;OpenAI said the request was invalid: {msg[:200]}&quot;)
+    if isinstance(e, openai.NotFoundError):
+        return LLMError(404, &quot;model_not_found&quot;, &quot;That model doesn&#x27;t exist for this key.&quot;,
+                        &quot;Choose another model in Settings or set OPENAI_MODEL.&quot;)
+    if isinstance(e, openai.APITimeoutError):
+        return LLMError(504, &quot;timeout&quot;, &quot;OpenAI took too long to answer.&quot;, &quot;Try again, or use shorter input.&quot;)
+    if isinstance(e, openai.APIConnectionError):
+        return LLMError(503, &quot;network&quot;, &quot;Couldn&#x27;t reach OpenAI.&quot;, &quot;Check the internet connection.&quot;)
+    if isinstance(e, openai.APIStatusError):
+        return LLMError(502, &quot;upstream_error&quot;, &quot;OpenAI had a server error.&quot;, &quot;Try again in a moment.&quot;)
+    return LLMError(500, &quot;llm_error&quot;, f&quot;Unexpected error: {msg[:200]}&quot;)
+
+
+def _check_budget():
+    if config.DAILY_BUDGET_USD &gt; 0 and db.cost_today() &gt;= config.DAILY_BUDGET_USD:
+        raise LLMError(429, &quot;budget_exceeded&quot;,
+                       f&quot;Today&#x27;s spending limit (${config.DAILY_BUDGET_USD:.2f}) is reached.&quot;,
+                       &quot;Raise DAILY_BUDGET_USD or wait until tomorrow.&quot;)
+
+
+def _client(key: str) -&gt; OpenAI:
+    return OpenAI(api_key=key, timeout=config.REQUEST_TIMEOUT, max_retries=config.MAX_RETRIES)
+
+
+def _create(client, **kwargs):
+    &quot;&quot;&quot;Some newer models reject custom temperature; retry once without it.&quot;&quot;&quot;
+    try:
+        return client.chat.completions.create(**kwargs)
+    except openai.BadRequestError as e:
+        if &quot;temperature&quot; in str(e) and &quot;temperature&quot; in kwargs:
+            kwargs.pop(&quot;temperature&quot;)
+            return client.chat.completions.create(**kwargs)
+        raise
+
+
+def chat(messages, *, key, feature, meter=None, model=None, temperature=0.4, max_tokens=1200) -&gt; str:
+    _check_budget()
+    model = resolve_model(model)
+    t0 = time.time()
+    try:
+        r = _create(_client(key), model=model, messages=messages,
+                    temperature=temperature, max_completion_tokens=max_tokens)
+    except openai.OpenAIError as e:
+        err = map_error(e)
+        db.log_usage(feature, model, 0, 0, 0, int((time.time() - t0) * 1000), ok=False, error=err.code)
+        raise err from e
+    text = r.choices[0].message.content or &quot;&quot;
+    pt = r.usage.prompt_tokens if r.usage else count_messages(messages, model)
+    ct = r.usage.completion_tokens if r.usage else count_tokens(text, model)
+    cost = estimate_cost(model, pt, ct)
+    db.log_usage(feature, model, pt, ct, cost, int((time.time() - t0) * 1000))
+    if meter:
+        meter.add(pt, ct, cost)
+    if r.choices[0].finish_reason == &quot;length&quot;:
+        text += &quot;\n\n_(Stopped at the length limit. Ask for a shorter output or say “continue”.)_&quot;
+    return text
+
+
+def chat_stream(messages, *, key, feature, meter=None, model=None, temperature=0.4, max_tokens=1200):
+    &quot;&quot;&quot;Yields text pieces as they arrive. Logs usage at the end.&quot;&quot;&quot;
+    _check_budget()
+    model = resolve_model(model)
+    t0 = time.time()
+    parts, usage = [], None
+    try:
+        stream = _create(_client(key), model=model, messages=messages, temperature=temperature,
+                         max_completion_tokens=max_tokens, stream=True,
+                         stream_options={&quot;include_usage&quot;: True})
+        for chunk in stream:
+            if chunk.usage:
+                usage = chunk.usage
+            if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                piece = chunk.choices[0].delta.content
+                parts.append(piece)
+                yield piece
+    except openai.OpenAIError as e:
+        err = map_error(e)
+        db.log_usage(feature, model, 0, 0, 0, int((time.time() - t0) * 1000), ok=False, error=err.code)
+        raise err from e
+    text = &quot;&quot;.join(parts)
+    pt = usage.prompt_tokens if usage else count_messages(messages, model)
+    ct = usage.completion_tokens if usage else count_tokens(text, model)
+    cost = estimate_cost(model, pt, ct)
+    db.log_usage(feature, model, pt, ct, cost, int((time.time() - t0) * 1000))
+    if meter:
+        meter.add(pt, ct, cost)
+
+
+def embed(texts: list[str], *, key, feature=&quot;embeddings&quot;, meter=None) -&gt; list[list[float]]:
+    _check_budget()
+    model = config.EMBED_MODEL
+    out = []
+    client = _client(key)
+    for i in range(0, len(texts), 96):
+        batch = texts[i:i + 96]
+        t0 = time.time()
+        try:
+            r = client.embeddings.create(model=model, input=batch)
+        except openai.OpenAIError as e:
+            err = map_error(e)
+            db.log_usage(feature, model, 0, 0, 0, int((time.time() - t0) * 1000), ok=False, error=err.code)
+            raise err from e
+        out.extend(d.embedding for d in r.data)
+        pt = r.usage.prompt_tokens if r.usage else sum(count_tokens(t) for t in batch)
+        cost = estimate_cost(model, pt)
+        db.log_usage(feature, model, pt, 0, cost, int((time.time() - t0) * 1000))
+        if meter:
+            meter.add(pt, 0, cost)
+    return out
+</pre></details>
+</section>
+<section class="card" id="p6">
+<h3>6. app/tokens.py and app/db.py: counting and storing</h3>
+<div class="path">book_genai_studio/app/tokens.py · book_genai_studio/app/db.py</div>
+<div class="label">What it does</div>
+<p class="what">tokens.py counts tokens and estimates cost. db.py stores usage and feedback in SQLite.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>count_tokens()</code> uses the model&#x27;s tokenizer (tiktoken) to count tokens, and <code>truncate()</code> cuts text to a token limit.</li>
+<li><code>estimate_cost()</code> multiplies the token counts by the prices in config.</li>
+<li>db.py creates the <code>usage</code> and <code>feedback</code> tables, then offers <code>log_usage</code>, <code>cost_today</code>, <code>usage_summary</code>, <code>add_feedback</code> and <code>feedback_summary</code>.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/app/tokens.py (61 lines)</summary><pre>&quot;&quot;&quot;Token counting and cost estimates.
+
+Uses tiktoken (the same tokenizer OpenAI uses). If it&#x27;s missing or can&#x27;t load its
+vocabulary file (no internet), falls back to the rule of thumb: 1 token ~ 4 characters.
+&quot;&quot;&quot;
+from . import config
+
+try:
+    import tiktoken
+except ImportError:
+    tiktoken = None
+
+_encoders = {}
+_tiktoken_broken = False
+
+
+def _encoder(model: str):
+    global _tiktoken_broken
+    if tiktoken is None or _tiktoken_broken:
+        return None
+    if model not in _encoders:
+        try:
+            try:
+                _encoders[model] = tiktoken.encoding_for_model(model)
+            except KeyError:
+                _encoders[model] = tiktoken.get_encoding(&quot;o200k_base&quot;)
+        except Exception:
+            _tiktoken_broken = True
+            return None
+    return _encoders[model]
+
+
+def count_tokens(text: str, model: str | None = None) -&gt; int:
+    if not text:
+        return 0
+    enc = _encoder(model or config.CHAT_MODEL)
+    if enc is not None:
+        return len(enc.encode(text, disallowed_special=()))
+    return max(1, len(text) // 4)
+
+
+def count_messages(messages: list[dict], model: str | None = None) -&gt; int:
+    # ~4 extra tokens per message for role/formatting, +2 for the reply primer
+    return sum(count_tokens(m.get(&quot;content&quot;) or &quot;&quot;, model) + 4 for m in messages) + 2
+
+
+def truncate(text: str, max_tokens: int, model: str | None = None) -&gt; str:
+    enc = _encoder(model or config.CHAT_MODEL)
+    if enc is not None:
+        ids = enc.encode(text, disallowed_special=())
+        return text if len(ids) &lt;= max_tokens else enc.decode(ids[:max_tokens])
+    return text[: max_tokens * 4]
+
+
+def estimate_cost(model: str, prompt_tokens: int, completion_tokens: int = 0) -&gt; float:
+    price_in, price_out = config.PRICES.get(model, config.PRICES[&quot;gpt-4o-mini&quot;])
+    return (prompt_tokens * price_in + completion_tokens * price_out) / 1_000_000
+
+
+def tokenizer_name() -&gt; str:
+    return &quot;tiktoken&quot; if _encoder(config.CHAT_MODEL) is not None else &quot;approx (chars/4)&quot;
+</pre></details>
+<details><summary>Show the full source of book_genai_studio/app/db.py (114 lines)</summary><pre>&quot;&quot;&quot;SQLite storage for usage tracking and user feedback.
+
+On Vercel the file lives in /tmp and is lost when the instance restarts, so the
+frontend also keeps its own copy in the browser (see static/app.js).
+&quot;&quot;&quot;
+import sqlite3
+import time
+from contextlib import contextmanager
+
+from . import config
+
+DB_PATH = config.DATA_DIR / &quot;studio.db&quot;
+
+SCHEMA = &quot;&quot;&quot;
+CREATE TABLE IF NOT EXISTS usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts REAL NOT NULL,
+    feature TEXT NOT NULL,
+    model TEXT NOT NULL,
+    prompt_tokens INTEGER DEFAULT 0,
+    completion_tokens INTEGER DEFAULT 0,
+    cost REAL DEFAULT 0,
+    latency_ms INTEGER DEFAULT 0,
+    ok INTEGER DEFAULT 1,
+    error TEXT
+);
+CREATE TABLE IF NOT EXISTS feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts REAL NOT NULL,
+    feature TEXT NOT NULL,
+    prompt_version TEXT,
+    rating INTEGER NOT NULL,
+    comment TEXT,
+    output_id TEXT,
+    output_excerpt TEXT
+);
+&quot;&quot;&quot;
+
+
+@contextmanager
+def connect():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def init():
+    with connect() as c:
+        c.executescript(SCHEMA)
+
+
+def log_usage(feature, model, prompt_tokens, completion_tokens, cost, latency_ms, ok=True, error=None):
+    with connect() as c:
+        c.execute(
+            &quot;INSERT INTO usage (ts, feature, model, prompt_tokens, completion_tokens, cost, latency_ms, ok, error)&quot;
+            &quot; VALUES (?,?,?,?,?,?,?,?,?)&quot;,
+            (time.time(), feature, model, prompt_tokens, completion_tokens, cost, latency_ms, int(ok), error),
+        )
+
+
+def cost_today() -&gt; float:
+    start = time.time() - (time.time() % 86400)
+    with connect() as c:
+        row = c.execute(&quot;SELECT COALESCE(SUM(cost),0) FROM usage WHERE ts &gt;= ?&quot;, (start,)).fetchone()
+    return float(row[0])
+
+
+def usage_summary() -&gt; dict:
+    with connect() as c:
+        totals = dict(c.execute(
+            &quot;SELECT COUNT(*) calls, COALESCE(SUM(prompt_tokens),0) prompt_tokens,&quot;
+            &quot; COALESCE(SUM(completion_tokens),0) completion_tokens, COALESCE(SUM(cost),0) cost,&quot;
+            &quot; COALESCE(AVG(latency_ms),0) avg_latency_ms, COALESCE(SUM(1-ok),0) errors FROM usage&quot;).fetchone())
+        by_feature = [dict(r) for r in c.execute(
+            &quot;SELECT feature, COUNT(*) calls, SUM(prompt_tokens+completion_tokens) tokens, SUM(cost) cost,&quot;
+            &quot; AVG(latency_ms) avg_latency_ms FROM usage GROUP BY feature ORDER BY tokens DESC&quot;)]
+        by_day = [dict(r) for r in c.execute(
+            &quot;SELECT date(ts,&#x27;unixepoch&#x27;) day, SUM(prompt_tokens+completion_tokens) tokens, SUM(cost) cost,&quot;
+            &quot; COUNT(*) calls FROM usage GROUP BY day ORDER BY day DESC LIMIT 14&quot;)]
+        recent = [dict(r) for r in c.execute(
+            &quot;SELECT ts, feature, model, prompt_tokens, completion_tokens, cost, latency_ms, ok, error&quot;
+            &quot; FROM usage ORDER BY id DESC LIMIT 25&quot;)]
+    return {&quot;totals&quot;: totals, &quot;by_feature&quot;: by_feature, &quot;by_day&quot;: by_day[::-1], &quot;recent&quot;: recent,
+            &quot;cost_today&quot;: cost_today(), &quot;daily_budget&quot;: config.DAILY_BUDGET_USD}
+
+
+def clear_usage():
+    with connect() as c:
+        c.execute(&quot;DELETE FROM usage&quot;)
+
+
+def add_feedback(feature, prompt_version, rating, comment, output_id, output_excerpt):
+    with connect() as c:
+        c.execute(
+            &quot;INSERT INTO feedback (ts, feature, prompt_version, rating, comment, output_id, output_excerpt)&quot;
+            &quot; VALUES (?,?,?,?,?,?,?)&quot;,
+            (time.time(), feature, prompt_version, rating, comment, output_id, (output_excerpt or &quot;&quot;)[:500]),
+        )
+
+
+def feedback_summary() -&gt; dict:
+    with connect() as c:
+        by_version = [dict(r) for r in c.execute(
+            &quot;SELECT feature, prompt_version, COUNT(*) n, AVG(rating) avg_rating,&quot;
+            &quot; SUM(CASE WHEN rating&gt;=4 THEN 1 ELSE 0 END) positive FROM feedback&quot;
+            &quot; GROUP BY feature, prompt_version ORDER BY feature, prompt_version&quot;)]
+        recent = [dict(r) for r in c.execute(
+            &quot;SELECT ts, feature, prompt_version, rating, comment, output_excerpt FROM feedback&quot;
+            &quot; ORDER BY id DESC LIMIT 30&quot;)]
+    return {&quot;by_version&quot;: by_version, &quot;recent&quot;: recent}
+</pre></details>
+</section>
+<h2>The three features</h2>
+<section class="card" id="p7">
+<h3>7. app/services.py: summarise, chat, generate</h3>
+<div class="path">book_genai_studio/app/services.py</div>
+<div class="label">What it does</div>
+<p class="what">The brain of the app. Each feature has a live path (OpenAI) and a demo path (offline).</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Summarise: if there&#x27;s no key, it uses <code>extractive_summary</code> plus keywords. If the text fits (under 12,000 tokens), it makes one call.</li>
+<li>If the text is too long, it uses map-reduce: <code>_notes()</code> first writes short notes for each piece (map), then a final call combines the notes (reduce). Whole-book summaries run one chapter at a time, and the notes are cached.</li>
+<li>Chat (<code>chat_events</code>) is a generator that streams Server-Sent Events: <code>meta</code> (the sources), many <code>delta</code> events (pieces of text), then <code>done</code>.</li>
+<li>Chat step 1: if there are earlier questions, the follow-up is rewritten into a standalone search question.</li>
+<li>Chat step 2: <code>search()</code> finds 6 passages, which are tagged [S1]…[S6] with their chapter and page.</li>
+<li>Chat step 3: the passages go into the system prompt, and the model streams an answer that cites [S1], [S2]…</li>
+<li>Generate: <code>_material()</code> collects text (from the book, a chapter, a topic search, or pasted text), then fills the GENERATE prompt for the chosen type: quiz, flashcards, notes, blog and so on.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/app/services.py (277 lines)</summary><pre>&quot;&quot;&quot;The three features. Each one has a live path (OpenAI) and a Demo path (offline, no key).&quot;&quot;&quot;
+import json
+import random
+import re
+import uuid
+from concurrent.futures import ThreadPoolExecutor
+
+from . import llm, prompts
+from .books import split_sentences
+from .llm import LLMError, Meter
+from .retrieval import best_sentences, extractive_summary, keywords, search
+from .tokens import count_tokens, truncate
+
+SINGLE_CALL_LIMIT = 12000   # tokens we send in one summarize call
+WINDOW = 6000               # piece size for map-reduce
+DEMO_NOTE = &quot;\n\n&gt; **Demo mode** – made offline without AI. Add an OpenAI key in Settings for real AI output.&quot;
+
+
+def _out_id():
+    return uuid.uuid4().hex[:10]
+
+
+def _windows(text: str, size: int = WINDOW) -&gt; list[str]:
+    &quot;&quot;&quot;Split text into pieces of about `size` tokens, on paragraph breaks.&quot;&quot;&quot;
+    out, buf = [], []
+    buf_tokens = 0
+    for para in re.split(r&quot;\n\s*\n&quot;, text):
+        t = count_tokens(para)
+        if buf and buf_tokens + t &gt; size:
+            out.append(&quot;\n\n&quot;.join(buf))
+            buf, buf_tokens = [], 0
+        buf.append(truncate(para, size))
+        buf_tokens += min(t, size)
+    if buf:
+        out.append(&quot;\n\n&quot;.join(buf))
+    return out
+
+
+# ================================================================== SUMMARIZE
+
+def _notes(text, title, part, key, model, meter) -&gt; str:
+    &quot;&quot;&quot;Dense notes for one piece of a book (map step).&quot;&quot;&quot;
+    if not key:
+        return &quot; &quot;.join(extractive_summary(text, 6))
+    pieces = _windows(text) if count_tokens(text) &gt; SINGLE_CALL_LIMIT else [text]
+
+    def one(i_piece):
+        i, piece = i_piece
+        label = part if len(pieces) == 1 else f&quot;{part}, piece {i + 1}/{len(pieces)}&quot;
+        return llm.chat([{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompts.NOTES_PROMPT.format(title=title, part=label, text=piece)}],
+                        key=key, feature=&quot;summarize&quot;, meter=meter, model=model, temperature=0.2, max_tokens=500)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        return &quot;\n\n&quot;.join(pool.map(one, enumerate(pieces)))
+
+
+def summarize(*, text, title, scope, length, style, version, key, model, book=None, chapter=None, notes=None):
+    &quot;&quot;&quot;scope: text | chapter | notes (map step for one chapter) | combine (reduce step).&quot;&quot;&quot;
+    meter = Meter()
+    words = prompts.LENGTHS.get(length, 300)
+    style_desc = prompts.STYLES.get(style, prompts.STYLES[&quot;bullets&quot;])
+    version = prompts.pick_version(&quot;summarize&quot;, version)
+    p = prompts.SUMMARIZE[version]
+
+    if scope == &quot;notes&quot;:
+        ch = book[&quot;chapters&quot;][chapter]
+        cache_key = f&quot;notes:{chapter}&quot;
+        cached = (book.get(&quot;cache&quot;) or {}).get(cache_key) if key else None
+        out = cached or _notes(text, title, ch[&quot;title&quot;], key, model, meter)
+        if key and not cached:
+            book.setdefault(&quot;cache&quot;, {})[cache_key] = out
+        return {&quot;output&quot;: out, &quot;cached&quot;: bool(cached), &quot;usage&quot;: meter.to_dict(), &quot;mode&quot;: &quot;live&quot; if key else &quot;demo&quot;}
+
+    if scope == &quot;combine&quot;:
+        joined = &quot;\n\n&quot;.join(f&quot;## {n[&#x27;title&#x27;]}\n{n[&#x27;notes&#x27;]}&quot; for n in notes)
+        text = joined
+
+    tokens_in = count_tokens(text)
+    if not key:
+        n = {&quot;short&quot;: 4, &quot;medium&quot;: 8, &quot;detailed&quot;: 15}.get(length, 8)
+        sents = extractive_summary(text, n)
+        kw = &quot;, &quot;.join(keywords(text, 8))
+        out = f&quot;**Key ideas:** {kw}\n\n&quot; + &quot;\n&quot;.join(f&quot;- {s}&quot; for s in sents) + DEMO_NOTE
+        return {&quot;output&quot;: out, &quot;output_id&quot;: _out_id(), &quot;prompt_version&quot;: &quot;demo&quot;, &quot;usage&quot;: meter.to_dict(),
+                &quot;tokens_in&quot;: tokens_in, &quot;mode&quot;: &quot;demo&quot;}
+
+    if scope == &quot;combine&quot;:
+        msgs = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: prompts.SUMMARIZE[&quot;v2&quot;][&quot;system&quot;]},
+                {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompts.COMBINE_PROMPT.format(
+                    title=title, words=words, style=style_desc, text=truncate(text, SINGLE_CALL_LIMIT * 2))}]
+    else:
+        if tokens_in &gt; SINGLE_CALL_LIMIT:  # long chapter / long paste: map-reduce
+            text = _notes(text, title, &quot;this section&quot;, key, model, meter)
+        msgs = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: p[&quot;system&quot;]},
+                {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: p[&quot;user&quot;].format(words=words, style=style_desc, text=text)}]
+    out = llm.chat(msgs, key=key, feature=&quot;summarize&quot;, meter=meter, model=model,
+                   temperature=0.3, max_tokens=int(words * 2.2) + 200)
+    return {&quot;output&quot;: out, &quot;output_id&quot;: _out_id(), &quot;prompt_version&quot;: version, &quot;usage&quot;: meter.to_dict(),
+            &quot;tokens_in&quot;: tokens_in, &quot;mode&quot;: &quot;live&quot;}
+
+
+# ================================================================== Q&amp;A CHAT
+
+def _sse(event: str, data) -&gt; str:
+    return f&quot;event: {event}\ndata: {json.dumps(data)}\n\n&quot;
+
+
+def _trim_history(messages: list[dict], budget: int = 3000) -&gt; list[dict]:
+    &quot;&quot;&quot;Keep the newest messages that fit in the token budget.&quot;&quot;&quot;
+    kept, used = [], 0
+    for m in reversed(messages):
+        t = count_tokens(m[&quot;content&quot;])
+        if kept and used + t &gt; budget:
+            break
+        kept.append({&quot;role&quot;: m[&quot;role&quot;], &quot;content&quot;: truncate(m[&quot;content&quot;], budget)})
+        used += t
+    return kept[::-1]
+
+
+def _source_label(book, c):
+    ch = book[&quot;chapters&quot;][c[&quot;chapter&quot;]][&quot;title&quot;]
+    return f&quot;{ch}&quot; + (f&quot;, p. {c[&#x27;page&#x27;]}&quot; if c.get(&quot;page&quot;) else &quot;&quot;)
+
+
+def chat_events(*, book, messages, chapter, version, key, model):
+    &quot;&quot;&quot;Generator of Server-Sent Events: meta -&gt; delta* -&gt; done (or error).&quot;&quot;&quot;
+    meter = Meter()
+    out_id = _out_id()
+    try:
+        history = _trim_history(messages)
+        question = history[-1][&quot;content&quot;]
+        if not book:
+            if not key:
+                yield _sse(&quot;meta&quot;, {&quot;sources&quot;: [], &quot;prompt_version&quot;: &quot;demo&quot;, &quot;output_id&quot;: out_id})
+                msg = (&quot;I&#x27;m in **Demo mode**, so I can only answer from an uploaded book. Upload a book and pick &quot;
+                       &quot;it at the top, or add an OpenAI key in Settings to chat about anything.&quot;)
+                yield _sse(&quot;delta&quot;, {&quot;t&quot;: msg})
+                yield _sse(&quot;done&quot;, {&quot;usage&quot;: meter.to_dict(), &quot;mode&quot;: &quot;demo&quot;})
+                return
+            yield _sse(&quot;meta&quot;, {&quot;sources&quot;: [], &quot;prompt_version&quot;: &quot;general&quot;, &quot;output_id&quot;: out_id})
+            msgs = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: prompts.GENERAL_CHAT_SYSTEM}] + history
+            for piece in llm.chat_stream(msgs, key=key, feature=&quot;chat&quot;, meter=meter, model=model):
+                yield _sse(&quot;delta&quot;, {&quot;t&quot;: piece})
+            yield _sse(&quot;done&quot;, {&quot;usage&quot;: meter.to_dict(), &quot;mode&quot;: &quot;live&quot;})
+            return
+
+        # 1. Follow-up questions (&quot;what did she do next?&quot;) -&gt; standalone search question
+        search_q = question
+        user_turns = [m for m in history if m[&quot;role&quot;] == &quot;user&quot;]
+        if key and len(user_turns) &gt; 1:
+            hist = &quot;\n&quot;.join(f&quot;{m[&#x27;role&#x27;]}: {m[&#x27;content&#x27;][:400]}&quot; for m in history[-6:-1])
+            search_q = llm.chat([{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompts.CONDENSE_PROMPT.format(history=hist, question=question)}],
+                                key=key, feature=&quot;qa_rewrite&quot;, meter=meter, model=model, temperature=0, max_tokens=80).strip()
+
+        # 2. Retrieve passages (keyword + semantic when available)
+        qvec = None
+        if key and book.get(&quot;embeddings&quot;):
+            qvec = llm.embed([search_q], key=key, feature=&quot;embeddings&quot;, meter=meter)[0]
+        hits = search(book, search_q, k=6, chapter=chapter, query_vec=qvec)
+        sources = [{&quot;tag&quot;: f&quot;S{i + 1}&quot;, &quot;label&quot;: _source_label(book, c), &quot;chapter&quot;: c[&quot;chapter&quot;],
+                    &quot;page&quot;: c.get(&quot;page&quot;), &quot;text&quot;: c[&quot;text&quot;][:1200]} for i, c in enumerate(hits)]
+        version = prompts.pick_version(&quot;qa&quot;, version)
+        yield _sse(&quot;meta&quot;, {&quot;sources&quot;: sources, &quot;prompt_version&quot;: version if key else &quot;demo&quot;,
+                            &quot;output_id&quot;: out_id, &quot;search_query&quot;: search_q})
+
+        # 3. Answer
+        if not key:
+            if not hits:
+                ans = &quot;I couldn&#x27;t find anything about that in the book. Try other words, like a character&#x27;s name.&quot;
+            else:
+                sents = best_sentences([h[&quot;text&quot;] for h in hits[:4]], search_q, 4)
+                ans = &quot;Here&#x27;s what the book says:\n\n&quot; + &quot;\n&quot;.join(
+                    f&quot;- {s} [S{next((i + 1 for i, h in enumerate(hits) if s[:40] in h[&#x27;text&#x27;].replace(chr(10), &#x27; &#x27;)), 1)}]&quot;
+                    for s in sents) + DEMO_NOTE
+            for w in re.findall(r&quot;\S+\s*&quot;, ans):
+                yield _sse(&quot;delta&quot;, {&quot;t&quot;: w})
+            yield _sse(&quot;done&quot;, {&quot;usage&quot;: meter.to_dict(), &quot;mode&quot;: &quot;demo&quot;})
+            return
+
+        context = &quot;\n\n&quot;.join(f&quot;[{s[&#x27;tag&#x27;]}] ({s[&#x27;label&#x27;]})\n{h[&#x27;text&#x27;]}&quot; for s, h in zip(sources, hits)) \
+            or &quot;(no matching passages found)&quot;
+        system = prompts.QA[version][&quot;system&quot;].format(title=book[&quot;title&quot;], context=context)
+        msgs = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: system}] + history
+        for piece in llm.chat_stream(msgs, key=key, feature=&quot;qa&quot;, meter=meter, model=model, temperature=0.2):
+            yield _sse(&quot;delta&quot;, {&quot;t&quot;: piece})
+        yield _sse(&quot;done&quot;, {&quot;usage&quot;: meter.to_dict(), &quot;mode&quot;: &quot;live&quot;})
+    except LLMError as e:
+        yield _sse(&quot;error&quot;, e.to_dict()[&quot;error&quot;])
+    except Exception as e:  # never leave the browser hanging
+        yield _sse(&quot;error&quot;, {&quot;code&quot;: &quot;server_error&quot;, &quot;message&quot;: str(e)[:200], &quot;hint&quot;: &quot;Try again.&quot;})
+
+
+# ================================================================== CONTENT GENERATOR
+
+def _material(book, chapter, topic, text, budget=9000) -&gt; str:
+    if text:
+        return truncate(text, budget)
+    if chapter is not None:
+        ch = book[&quot;chapters&quot;][chapter]
+        return truncate(book[&quot;text&quot;][ch[&quot;start&quot;]:ch[&quot;end&quot;]], budget)
+    if topic:
+        hits = search(book, topic, k=12)
+        if hits:
+            return &quot;\n\n&quot;.join(h[&quot;text&quot;] for h in hits)
+    # whole book: evenly spaced passages from start to end
+    chunks = book[&quot;chunks&quot;]
+    take = max(1, min(len(chunks), budget // 450))
+    step = len(chunks) / take
+    return &quot;\n\n&quot;.join(chunks[int(i * step)][&quot;text&quot;] for i in range(take))
+
+
+def _demo_content(kind: str, material: str) -&gt; str:
+    sents = extractive_summary(material, 15)
+    kw = keywords(material, 20)
+    if kind == &quot;quiz&quot;:
+        lines, n = [&quot;## Quiz (fill in the blank)&quot;], 0
+        for s in sents:
+            word = next((w for w in kw if re.search(rf&quot;\b{re.escape(w)}\b&quot;, s, re.I)), None)
+            if not word:
+                continue
+            n += 1
+            options = random.sample([w for w in kw if w != word], k=min(3, len(kw) - 1)) + [word]
+            random.shuffle(options)
+            q = re.sub(rf&quot;\b{re.escape(word)}\b&quot;, &quot;_____&quot;, s, count=1, flags=re.I)
+            lines.append(f&quot;**{n}. {q}**\n&quot; + &quot;\n&quot;.join(f&quot;- {chr(65 + i)}) {o}&quot; for i, o in enumerate(options))
+                         + f&quot;\n\n*Answer: {word}*\n&quot;)
+            if n == 8:
+                break
+        return &quot;\n&quot;.join(lines)
+    if kind == &quot;flashcards&quot;:
+        rows, used = [&quot;| Front | Back |&quot;, &quot;|---|---|&quot;], set()
+        for s in sents[:12]:
+            word = next((w for w in kw if w not in used and re.search(rf&quot;\b{re.escape(w)}\b&quot;, s, re.I)), None)
+            if word:
+                used.add(word)
+                rows.append(f&quot;| What does the text say about **{word}**? | {s.replace(&#x27;|&#x27;, &#x27;/&#x27;)} |&quot;)
+        return &quot;\n&quot;.join(rows)
+    if kind == &quot;timeline&quot;:
+        return &quot;| # | Event |\n|---|---|\n&quot; + &quot;\n&quot;.join(f&quot;| {i + 1} | {s.replace(&#x27;|&#x27;, &#x27;/&#x27;)} |&quot; for i, s in enumerate(sents[:10]))
+    return (f&quot;## Key themes\n{&#x27;, &#x27;.join(kw[:10])}\n\n## Main points\n&quot; + &quot;\n&quot;.join(f&quot;- {s}&quot; for s in sents[:10]))
+
+
+def generate(*, book, chapter, topic, text, content_type, tone, audience, extra, version, key, model):
+    meter = Meter()
+    if not text and not book:
+        if not topic:
+            raise LLMError(400, &quot;no_input&quot;, &quot;Pick a book, paste text, or type a topic.&quot;)
+        if not key:
+            raise LLMError(400, &quot;needs_key&quot;, &quot;Demo mode can only create content from a book or pasted text.&quot;,
+                           &quot;Upload a book, paste text, or add an OpenAI key in Settings.&quot;)
+    material = _material(book, chapter, topic, text) if (book or text) else f&quot;Topic: {topic}&quot;
+    title = book[&quot;title&quot;] if book else &quot;the provided material&quot;
+    if not key:
+        out = _demo_content(content_type, material) + DEMO_NOTE
+        return {&quot;output&quot;: out, &quot;output_id&quot;: _out_id(), &quot;prompt_version&quot;: &quot;demo&quot;, &quot;usage&quot;: meter.to_dict(),
+                &quot;tokens_in&quot;: count_tokens(material), &quot;mode&quot;: &quot;demo&quot;}
+    version = prompts.pick_version(&quot;generate&quot;, version)
+    p = prompts.GENERATE[version]
+    spec = prompts.CONTENT_TYPES.get(content_type, prompts.CONTENT_TYPES[&quot;custom&quot;])
+    if topic and (book or text):
+        extra = f&quot;Focus on: {topic}. {extra}&quot;.strip()
+    user = p[&quot;user&quot;].format(spec=spec, tone=tone or &quot;clear and friendly&quot;, audience=audience or &quot;general readers&quot;,
+                            extra=extra or &quot;none&quot;, material=material, title=title)
+    out = llm.chat([{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: p[&quot;system&quot;]}, {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: user}],
+                   key=key, feature=&quot;generate&quot;, meter=meter, model=model, temperature=0.7, max_tokens=2000)
+    return {&quot;output&quot;: out, &quot;output_id&quot;: _out_id(), &quot;prompt_version&quot;: version, &quot;usage&quot;: meter.to_dict(),
+            &quot;tokens_in&quot;: count_tokens(material), &quot;mode&quot;: &quot;live&quot;}
+
+
+def embed_book(book, key) -&gt; dict:
+    meter = Meter()
+    book[&quot;embeddings&quot;] = llm.embed([c[&quot;text&quot;] for c in book[&quot;chunks&quot;]], key=key, meter=meter)
+    return meter.to_dict()
+
+
+def first_sentences(text, n=2):
+    return &quot; &quot;.join(split_sentences(text)[:n])
+</pre></details>
+</section>
+<section class="card" id="p8">
+<h3>8. app/main.py: the FastAPI routes</h3>
+<div class="path">book_genai_studio/app/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Defines every <code>/api/...</code> URL, checks the input with Pydantic models, and turns errors into clean JSON.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>@app.exception_handler(LLMError)</code> and <code>(BookError)</code> send <code>{error: {code, message, hint}}</code> with the right status code. An unknown error becomes a safe 500.</li>
+</ol>
+<div class="tw"><table><tr><th>Route</th><th>Does</th></tr>
+<tr><td><code>POST /api/books</code></td><td>upload a file → <code>books.build</code> → store it (and embed it if there&#x27;s a key)</td></tr>
+<tr><td><code>POST /api/books/restore</code></td><td>the browser re-sends a book the server forgot (Vercel restarts)</td></tr>
+<tr><td><code>POST /api/summarize</code></td><td><code>services.summarize</code></td></tr>
+<tr><td><code>POST /api/chat</code></td><td>a streaming answer (<code>StreamingResponse</code> over <code>chat_events</code>)</td></tr>
+<tr><td><code>POST /api/generate</code></td><td><code>services.generate</code></td></tr>
+<tr><td><code>POST /api/compare</code></td><td>runs prompt v1 and v2 on the same input, for A/B testing</td></tr>
+<tr><td><code>POST /api/tokens</code></td><td>a live token count and cost estimate before you run anything</td></tr>
+<tr><td><code>/api/usage</code>, <code>/api/feedback</code></td><td>usage dashboard data and star ratings</td></tr>
+</table></div>
+<details><summary>Show the full source of book_genai_studio/app/main.py (290 lines)</summary><pre>&quot;&quot;&quot;Book GenAI Studio – FastAPI backend.
+
+Run locally:   uvicorn app.main:app --reload      then open http://127.0.0.1:8000
+API docs:      http://127.0.0.1:8000/docs
+&quot;&quot;&quot;
+from typing import Literal
+
+from fastapi import FastAPI, File, Header, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from . import books, config, db, llm, prompts, services
+from .books import BookError, store
+from .llm import LLMError
+from .tokens import count_tokens, estimate_cost, tokenizer_name
+
+app = FastAPI(title=&quot;Book GenAI Studio&quot;, version=&quot;1.0&quot;,
+              description=&quot;Upload a book, then summarize it, chat with it and create content from it.&quot;)
+db.init()
+app.mount(&quot;/static&quot;, StaticFiles(directory=config.STATIC_DIR), name=&quot;static&quot;)
+
+
+# ------------------------------------------------------------------ errors → friendly JSON
+
+@app.exception_handler(LLMError)
+@app.exception_handler(BookError)
+async def known_error(_: Request, e):
+    return JSONResponse(e.to_dict(), status_code=e.status)
+
+
+@app.exception_handler(Exception)
+async def unknown_error(_: Request, e: Exception):
+    return JSONResponse({&quot;error&quot;: {&quot;code&quot;: &quot;server_error&quot;, &quot;message&quot;: &quot;Something went wrong on the server.&quot;,
+                                   &quot;hint&quot;: str(e)[:200]}}, status_code=500)
+
+
+# ------------------------------------------------------------------ request models
+
+Feature = Literal[&quot;summarize&quot;, &quot;qa&quot;, &quot;generate&quot;, &quot;chat&quot;]
+
+
+class SummarizeIn(BaseModel):
+    book_id: str | None = None
+    text: str | None = Field(None, max_length=400_000)
+    scope: Literal[&quot;text&quot;, &quot;chapter&quot;, &quot;notes&quot;, &quot;combine&quot;] = &quot;text&quot;
+    chapter: int | None = None
+    notes: list[dict] | None = None  # for scope=combine: [{title, notes}]
+    length: Literal[&quot;short&quot;, &quot;medium&quot;, &quot;detailed&quot;] = &quot;medium&quot;
+    style: str = &quot;bullets&quot;
+    prompt_version: str = &quot;auto&quot;
+    model: str | None = None
+
+
+class ChatMessage(BaseModel):
+    role: Literal[&quot;user&quot;, &quot;assistant&quot;]
+    content: str = Field(..., max_length=20_000)
+
+
+class ChatIn(BaseModel):
+    book_id: str | None = None
+    chapter: int | None = None
+    messages: list[ChatMessage] = Field(..., min_length=1, max_length=60)
+    prompt_version: str = &quot;auto&quot;
+    model: str | None = None
+
+
+class GenerateIn(BaseModel):
+    book_id: str | None = None
+    chapter: int | None = None
+    topic: str | None = Field(None, max_length=500)
+    text: str | None = Field(None, max_length=200_000)
+    content_type: str = &quot;study_notes&quot;
+    tone: str = &quot;clear and friendly&quot;
+    audience: str = &quot;general readers&quot;
+    extra: str = Field(&quot;&quot;, max_length=1000)
+    prompt_version: str = &quot;auto&quot;
+    model: str | None = None
+
+
+class CompareIn(BaseModel):
+    feature: Literal[&quot;summarize&quot;, &quot;generate&quot;]
+    summarize: SummarizeIn | None = None
+    generate: GenerateIn | None = None
+
+
+class TokensIn(BaseModel):
+    text: str = Field(&quot;&quot;, max_length=2_000_000)
+    model: str | None = None
+    expected_output_tokens: int = 500
+
+
+class FeedbackIn(BaseModel):
+    feature: Feature
+    prompt_version: str | None = None
+    rating: int = Field(..., ge=1, le=5)
+    comment: str = Field(&quot;&quot;, max_length=2000)
+    output_id: str | None = None
+    output_excerpt: str = &quot;&quot;
+
+
+# ------------------------------------------------------------------ helpers
+
+def _book(book_id):
+    return store.get(book_id) if book_id else None
+
+
+def _chapter_text(book, idx):
+    if idx is None or not (0 &lt;= idx &lt; len(book[&quot;chapters&quot;])):
+        raise BookError(400, &quot;bad_chapter&quot;, &quot;That chapter doesn&#x27;t exist.&quot;)
+    ch = book[&quot;chapters&quot;][idx]
+    return book[&quot;text&quot;][ch[&quot;start&quot;]:ch[&quot;end&quot;]]
+
+
+# ------------------------------------------------------------------ pages
+
+@app.get(&quot;/&quot;, include_in_schema=False)
+def home():
+    return FileResponse(config.STATIC_DIR / &quot;index.html&quot;)
+
+
+@app.get(&quot;/api/health&quot;)
+def health(x_openai_key: str | None = Header(None)):
+    key = llm.resolve_key(x_openai_key)
+    return {&quot;ok&quot;: True, &quot;mode&quot;: &quot;live&quot; if key else &quot;demo&quot;, &quot;server_key&quot;: bool(config.OPENAI_API_KEY),
+            &quot;model&quot;: config.CHAT_MODEL, &quot;models&quot;: config.ALLOWED_MODELS, &quot;tokenizer&quot;: tokenizer_name(),
+            &quot;max_upload_mb&quot;: config.MAX_UPLOAD_MB, &quot;on_vercel&quot;: config.ON_VERCEL, &quot;prices&quot;: config.PRICES}
+
+
+@app.get(&quot;/api/sample&quot;, include_in_schema=False)
+def sample_book():
+    return FileResponse(config.BASE_DIR / &quot;samples&quot; / &quot;the_lighthouse_apprentice.txt&quot;, media_type=&quot;text/plain&quot;)
+
+
+@app.get(&quot;/api/prompts&quot;)
+def prompt_catalog():
+    return prompts.catalog()
+
+
+# ------------------------------------------------------------------ books
+
+@app.post(&quot;/api/books&quot;)
+async def upload_book(file: UploadFile = File(...), x_openai_key: str | None = Header(None)):
+    data = await file.read()
+    book = await run_in_threadpool(books.build, file.filename or &quot;book.txt&quot;, data)
+    key = llm.resolve_key(x_openai_key)
+    warning, usage = None, None
+    if key:
+        try:
+            usage = await run_in_threadpool(services.embed_book, book, key)
+        except LLMError as e:
+            warning = f&quot;Semantic search is off ({e.message}). Keyword search still works.&quot;
+    store.save(book)
+    return {&quot;book&quot;: books.public(book), &quot;portable&quot;: books.portable(book), &quot;warning&quot;: warning, &quot;usage&quot;: usage}
+
+
+@app.post(&quot;/api/books/restore&quot;)
+def restore_book(payload: dict):
+    &quot;&quot;&quot;The browser re-sends a book this server instance forgot (common on Vercel).&quot;&quot;&quot;
+    need = {&quot;id&quot;, &quot;title&quot;, &quot;text&quot;, &quot;chapters&quot;, &quot;chunks&quot;}
+    if not need &lt;= payload.keys():
+        raise BookError(400, &quot;bad_restore&quot;, &quot;Book data is incomplete.&quot;)
+    book = {**payload, &quot;embeddings&quot;: None, &quot;cache&quot;: {}}
+    book.setdefault(&quot;created&quot;, 0)
+    for k in (&quot;filename&quot;, &quot;pages&quot;, &quot;words&quot;, &quot;tokens&quot;):
+        book.setdefault(k, None)
+    store.save(book)
+    return {&quot;book&quot;: books.public(book)}
+
+
+@app.get(&quot;/api/books&quot;)
+def list_books():
+    return [books.public(b) for b in store.all()]
+
+
+@app.get(&quot;/api/books/{book_id}&quot;)
+def get_book(book_id: str):
+    return books.public(store.get(book_id))
+
+
+@app.get(&quot;/api/books/{book_id}/chapters/{idx}&quot;)
+def get_chapter(book_id: str, idx: int):
+    book = store.get(book_id)
+    text = _chapter_text(book, idx)
+    return {&quot;idx&quot;: idx, &quot;title&quot;: book[&quot;chapters&quot;][idx][&quot;title&quot;], &quot;text&quot;: text[:20000],
+            &quot;truncated&quot;: len(text) &gt; 20000}
+
+
+@app.delete(&quot;/api/books/{book_id}&quot;)
+def delete_book(book_id: str):
+    store.delete(book_id)
+    return {&quot;deleted&quot;: book_id}
+
+
+# ------------------------------------------------------------------ features
+
+@app.post(&quot;/api/summarize&quot;)
+async def summarize(body: SummarizeIn, x_openai_key: str | None = Header(None)):
+    key = llm.resolve_key(x_openai_key)
+    book = _book(body.book_id)
+    text, title = body.text or &quot;&quot;, &quot;the text&quot;
+    if book:
+        title = book[&quot;title&quot;]
+        if body.scope in (&quot;chapter&quot;, &quot;notes&quot;):
+            text = _chapter_text(book, body.chapter)
+    if body.scope == &quot;combine&quot; and not body.notes:
+        raise BookError(400, &quot;no_notes&quot;, &quot;Nothing to combine.&quot;)
+    if body.scope in (&quot;chapter&quot;, &quot;notes&quot;) and not book:
+        raise BookError(400, &quot;no_book&quot;, &quot;Pick a book first.&quot;)
+    if body.scope == &quot;text&quot; and len(text.split()) &lt; 20:
+        raise BookError(400, &quot;too_short&quot;, &quot;Paste at least a few sentences (20+ words) to summarize.&quot;)
+    result = await run_in_threadpool(
+        services.summarize, text=text, title=title, scope=body.scope, length=body.length, style=body.style,
+        version=body.prompt_version, key=key, model=body.model, book=book, chapter=body.chapter, notes=body.notes)
+    if book and body.scope == &quot;notes&quot; and key:
+        store.save(book)  # keep cached notes
+    return result
+
+
+@app.post(&quot;/api/chat&quot;)
+def chat(body: ChatIn, x_openai_key: str | None = Header(None)):
+    if body.messages[-1].role != &quot;user&quot;:
+        raise BookError(400, &quot;bad_messages&quot;, &quot;The last message must be from the user.&quot;)
+    book = _book(body.book_id)  # raises book_not_found before the stream starts
+    events = services.chat_events(book=book, messages=[m.model_dump() for m in body.messages],
+                                  chapter=body.chapter, version=body.prompt_version,
+                                  key=llm.resolve_key(x_openai_key), model=body.model)
+    return StreamingResponse(events, media_type=&quot;text/event-stream&quot;,
+                             headers={&quot;Cache-Control&quot;: &quot;no-cache&quot;, &quot;X-Accel-Buffering&quot;: &quot;no&quot;})
+
+
+@app.post(&quot;/api/generate&quot;)
+async def generate(body: GenerateIn, x_openai_key: str | None = Header(None)):
+    book = _book(body.book_id)
+    if body.chapter is not None and book:
+        _chapter_text(book, body.chapter)  # validate
+    return await run_in_threadpool(
+        services.generate, book=book, chapter=body.chapter, topic=body.topic, text=body.text,
+        content_type=body.content_type, tone=body.tone, audience=body.audience, extra=body.extra,
+        version=body.prompt_version, key=llm.resolve_key(x_openai_key), model=body.model)
+
+
+@app.post(&quot;/api/compare&quot;)
+async def compare(body: CompareIn, x_openai_key: str | None = Header(None)):
+    &quot;&quot;&quot;Run the same input through prompt v1 and v2 so a person can pick the better one.&quot;&quot;&quot;
+    results = {}
+    for v in (&quot;v1&quot;, &quot;v2&quot;):
+        if body.feature == &quot;summarize&quot; and body.summarize:
+            req = body.summarize.model_copy(update={&quot;prompt_version&quot;: v, &quot;scope&quot;: &quot;text&quot; if body.summarize.text else body.summarize.scope})
+            results[v] = await summarize(req, x_openai_key)
+        elif body.feature == &quot;generate&quot; and body.generate:
+            results[v] = await generate(body.generate.model_copy(update={&quot;prompt_version&quot;: v}), x_openai_key)
+        else:
+            raise BookError(400, &quot;bad_compare&quot;, &quot;Send the matching request body.&quot;)
+    return results
+
+
+# ------------------------------------------------------------------ tokens, usage, feedback
+
+@app.post(&quot;/api/tokens&quot;)
+def tokens(body: TokensIn):
+    model = llm.resolve_model(body.model)
+    n = count_tokens(body.text, model)
+    return {&quot;tokens&quot;: n, &quot;words&quot;: len(body.text.split()), &quot;chars&quot;: len(body.text), &quot;model&quot;: model,
+            &quot;tokenizer&quot;: tokenizer_name(),
+            &quot;estimated_cost_usd&quot;: round(estimate_cost(model, n, body.expected_output_tokens), 6),
+            &quot;fits_in_one_call&quot;: n &lt;= services.SINGLE_CALL_LIMIT}
+
+
+@app.get(&quot;/api/usage&quot;)
+def usage():
+    return db.usage_summary()
+
+
+@app.delete(&quot;/api/usage&quot;)
+def clear_usage():
+    db.clear_usage()
+    return {&quot;cleared&quot;: True}
+
+
+@app.post(&quot;/api/feedback&quot;)
+def feedback(body: FeedbackIn):
+    db.add_feedback(body.feature, body.prompt_version, body.rating, body.comment, body.output_id, body.output_excerpt)
+    return {&quot;saved&quot;: True}
+
+
+@app.get(&quot;/api/feedback&quot;)
+def feedback_stats():
+    return db.feedback_summary()
+</pre></details>
+</section>
+<section class="card" id="p9">
+<h3>9. api/index.py: Vercel entry point</h3>
+<div class="path">book_genai_studio/api/index.py</div>
+<div class="label">What it does</div>
+<p class="what">Vercel runs serverless functions from <code>api/</code>. This file just imports <code>app</code> from <code>app/main.py</code>, so every request reaches FastAPI.</p>
+<details><summary>Show the full source of book_genai_studio/api/index.py (8 lines)</summary><pre>&quot;&quot;&quot;Vercel entry point. Vercel runs this file as a serverless function and gives it every request
+(see the rewrite in vercel.json). It just imports the normal FastAPI app.&quot;&quot;&quot;
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app.main import app  # noqa: E402,F401
+</pre></details>
+</section>
+<h2>Frontend and tests</h2>
+<section class="card" id="p10">
+<h3>10. static/app.js: the single-page frontend</h3>
+<div class="path">book_genai_studio/static/app.js</div>
+<div class="label">What it does</div>
+<p class="what">Runs the whole user interface: library, summarise, chat, create, Prompt Lab and usage tabs.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>api(path, ...)</code> is the one function that calls the server. If the server answers <code>book_not_found</code>, it re-sends the book from IndexedDB (<code>restoreBook</code>) and tries again.</li>
+<li><code>idb</code> stores processed books in the browser&#x27;s IndexedDB, so they survive server restarts.</li>
+<li><code>uploadFile()</code> checks the size in the browser before sending, then shows the chapters.</li>
+<li><code>runSummarize()</code> summarises a whole book by sending one request per chapter (3 at a time), with a progress bar, and then a final combine request.</li>
+<li><code>streamAnswer()</code> reads the chat stream event by event and adds each <code>delta</code> to the message on screen. Chats are saved in localStorage.</li>
+<li><code>runCompare()</code> shows v1 and v2 outputs blind for A/B testing, and <code>saveFeedback()</code> stores star ratings.</li>
+<li><code>loadUsage()</code> draws bars of tokens and cost per feature and per day.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/static/app.js (762 lines)</summary><pre>/* Book GenAI Studio – frontend (plain JavaScript, no build step). */
+&quot;use strict&quot;;
+
+// ================================================================ small helpers
+const $ = (s, el = document) =&gt; el.querySelector(s);
+const $$ = (s, el = document) =&gt; [...el.querySelectorAll(s)];
+const esc = (s) =&gt; String(s ?? &quot;&quot;).replace(/[&amp;&lt;&gt;&quot;&#x27;]/g, (c) =&gt; ({ &quot;&amp;&quot;: &quot;&amp;amp;&quot;, &quot;&lt;&quot;: &quot;&amp;lt;&quot;, &quot;&gt;&quot;: &quot;&amp;gt;&quot;, &#x27;&quot;&#x27;: &quot;&amp;quot;&quot;, &quot;&#x27;&quot;: &quot;&amp;#39;&quot; }[c]));
+const fmt = (n) =&gt; Number(n || 0).toLocaleString();
+const money = (n) =&gt; &quot;$&quot; + Number(n || 0).toFixed(n &amp;&amp; n &lt; 0.01 ? 5 : 4);
+const uid = () =&gt; Math.random().toString(36).slice(2, 10);
+const debounce = (fn, ms = 350) =&gt; { let t; return (...a) =&gt; { clearTimeout(t); t = setTimeout(() =&gt; fn(...a), ms); }; };
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage full or blocked */ } },
+};
+
+function md(text) {
+  if (window.marked &amp;&amp; window.DOMPurify) return DOMPurify.sanitize(marked.parse(text || &quot;&quot;));
+  return esc(text).replace(/\n/g, &quot;&lt;br&gt;&quot;);
+}
+
+function toast(message, { error = false, hint = &quot;&quot; } = {}) {
+  const t = document.createElement(&quot;div&quot;);
+  t.className = &quot;toast&quot; + (error ? &quot; error&quot; : &quot;&quot;);
+  t.innerHTML = `${esc(message)}${hint ? `&lt;small&gt;${esc(hint)}&lt;/small&gt;` : &quot;&quot;}`;
+  $(&quot;#toasts&quot;).append(t);
+  setTimeout(() =&gt; t.remove(), error ? 7000 : 3000);
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const ta = Object.assign(document.createElement(&quot;textarea&quot;), { value: text });
+    document.body.append(ta); ta.select(); document.execCommand(&quot;copy&quot;); ta.remove();
+  }
+  toast(&quot;Copied to clipboard ✓&quot;);
+}
+
+function download(name, text, type = &quot;text/markdown&quot;) {
+  const a = Object.assign(document.createElement(&quot;a&quot;), { href: URL.createObjectURL(new Blob([text], { type })), download: name });
+  a.click(); setTimeout(() =&gt; URL.revokeObjectURL(a.href), 1000);
+}
+
+// ================================================================ browser book storage (IndexedDB)
+// The browser keeps a copy of every processed book. Free Vercel servers forget files,
+// so when the server says &quot;book_not_found&quot; we quietly send this copy back.
+const idb = (() =&gt; {
+  let dbp;
+  const open = () =&gt; dbp ??= new Promise((res, rej) =&gt; {
+    const r = indexedDB.open(&quot;book-studio&quot;, 1);
+    r.onupgradeneeded = () =&gt; r.result.createObjectStore(&quot;books&quot;, { keyPath: &quot;id&quot; });
+    r.onsuccess = () =&gt; res(r.result); r.onerror = () =&gt; rej(r.error);
+  });
+  const run = async (mode, fn) =&gt; {
+    try {
+      const db = await open();
+      return await new Promise((res, rej) =&gt; {
+        const tx = db.transaction(&quot;books&quot;, mode); const req = fn(tx.objectStore(&quot;books&quot;));
+        tx.oncomplete = () =&gt; res(req?.result); tx.onerror = () =&gt; rej(tx.error);
+      });
+    } catch { return undefined; }
+  };
+  return {
+    put: (b) =&gt; run(&quot;readwrite&quot;, (s) =&gt; s.put(b)),
+    get: (id) =&gt; run(&quot;readonly&quot;, (s) =&gt; s.get(id)),
+    del: (id) =&gt; run(&quot;readwrite&quot;, (s) =&gt; s.delete(id)),
+    all: () =&gt; run(&quot;readonly&quot;, (s) =&gt; s.getAll()),
+  };
+})();
+
+// ================================================================ state
+const state = {
+  settings: store.get(&quot;settings&quot;, { apiKey: &quot;&quot;, model: &quot;&quot; }),
+  health: null,
+  books: {},                       // id -&gt; public book info
+  activeBook: store.get(&quot;activeBook&quot;, &quot;&quot;),
+  convos: store.get(&quot;convos&quot;, []),
+  activeConvo: null,
+  chatAbort: null,
+  catalog: null,
+  genType: &quot;study_notes&quot;,
+  notesCache: {},                  // `${bookId}:${chapter}:${mode}` -&gt; notes
+};
+
+// ================================================================ API wrapper (errors + auto-restore)
+class AppError extends Error {
+  constructor(code, message, hint = &quot;&quot;) { super(message); this.code = code; this.hint = hint; }
+}
+
+async function api(path, { method = &quot;GET&quot;, body, form, stream = false, signal } = {}, retry = true) {
+  const headers = {};
+  if (state.settings.apiKey) headers[&quot;X-OpenAI-Key&quot;] = state.settings.apiKey;
+  let payload;
+  if (form) payload = form;
+  else if (body !== undefined) { headers[&quot;Content-Type&quot;] = &quot;application/json&quot;; payload = JSON.stringify(body); }
+  let res;
+  try { res = await fetch(path, { method, headers, body: payload, signal }); }
+  catch (e) {
+    if (e.name === &quot;AbortError&quot;) throw e;
+    throw new AppError(&quot;network&quot;, &quot;Can&#x27;t reach the server.&quot;, &quot;Check your connection, or that the server is running.&quot;);
+  }
+  if (!res.ok) {
+    let data = {};
+    try { data = await res.json(); } catch { /* not JSON */ }
+    const err = data.error || {};
+    if (Array.isArray(data.detail)) {   // FastAPI validation error
+      const d = data.detail[0];
+      err.code = &quot;invalid_input&quot;; err.message = `${(d.loc || []).slice(1).join(&quot;.&quot;)}: ${d.msg}`;
+    }
+    if (err.code === &quot;book_not_found&quot; &amp;&amp; retry) {
+      const bookId = body?.book_id || path.match(/\/api\/books\/([a-f0-9]+)/)?.[1] || body?.summarize?.book_id || body?.generate?.book_id;
+      if (bookId &amp;&amp; await restoreBook(bookId)) return api(path, { method, body, form, stream, signal }, false);
+    }
+    if (res.status === 413 &amp;&amp; !err.code) { err.code = &quot;too_large&quot;; err.message = &quot;That&#x27;s too big for the server.&quot;; err.hint = &quot;Vercel&#x27;s free plan accepts up to ~4.5 MB per request.&quot;; }
+    throw new AppError(err.code || `http_${res.status}`, err.message || `Server error (${res.status})`, err.hint || &quot;&quot;);
+  }
+  return stream ? res : res.json();
+}
+
+async function restoreBook(id) {
+  const copy = await idb.get(id);
+  if (!copy) return false;
+  try {
+    await api(&quot;/api/books/restore&quot;, { method: &quot;POST&quot;, body: copy }, false);
+    toast(&quot;Re-sent the book to the server (it had restarted).&quot;);
+    return true;
+  } catch { return false; }
+}
+
+function showError(e) {
+  if (e?.name === &quot;AbortError&quot;) return;
+  console.error(e);
+  toast(e.message || &quot;Something went wrong&quot;, { error: true, hint: e.hint });
+}
+
+// local usage log – survives server restarts (Vercel)
+function recordUsage(feature, usage) {
+  if (!usage || !usage.calls) return;
+  const log = store.get(&quot;usageLog&quot;, []);
+  log.push({ ts: Date.now(), feature, tokens: usage.total_tokens, cost: usage.cost_usd });
+  store.set(&quot;usageLog&quot;, log.slice(-1000));
+}
+
+function usageLine(u, extra = {}) {
+  const bits = [];
+  if (extra.mode) bits.push(extra.mode === &quot;live&quot; ? &quot;🤖 Live AI&quot; : &quot;🧩 Demo&quot;);
+  if (extra.version) bits.push(`prompt ${extra.version}`);
+  if (u?.total_tokens) bits.push(`${fmt(u.prompt_tokens)} in + ${fmt(u.completion_tokens)} out tokens`);
+  if (u?.cost_usd) bits.push(money(u.cost_usd));
+  if (u?.calls &gt; 1) bits.push(`${u.calls} calls`);
+  if (u?.latency_ms) bits.push(`${(u.latency_ms / 1000).toFixed(1)}s`);
+  return bits.map((b) =&gt; `&lt;span&gt;${esc(b)}&lt;/span&gt;`).join(&quot;&quot;);
+}
+
+// ================================================================ feedback
+function saveFeedback(fb) {
+  const log = store.get(&quot;feedbackLog&quot;, []);
+  log.push({ ...fb, ts: Date.now() });
+  store.set(&quot;feedbackLog&quot;, log.slice(-2000));
+  return api(&quot;/api/feedback&quot;, { method: &quot;POST&quot;, body: fb }).catch(() =&gt; { /* kept locally anyway */ });
+}
+
+function outputCard({ title, output, result, feature, filename }) {
+  const card = document.createElement(&quot;div&quot;);
+  card.className = &quot;out-card&quot;;
+  card.innerHTML = `
+    &lt;div class=&quot;out-head&quot;&gt;&lt;b&gt;${esc(title)}&lt;/b&gt;&lt;div class=&quot;meta&quot;&gt;${usageLine(result.usage, { mode: result.mode, version: result.prompt_version })}&lt;/div&gt;&lt;/div&gt;
+    &lt;div class=&quot;out-body md&quot;&gt;${md(output)}&lt;/div&gt;
+    &lt;div class=&quot;out-foot&quot;&gt;
+      &lt;button class=&quot;btn small&quot; data-act=&quot;copy&quot;&gt;📋 Copy&lt;/button&gt;
+      &lt;button class=&quot;btn small ghost&quot; data-act=&quot;dl&quot;&gt;⬇ .md&lt;/button&gt;
+      &lt;span class=&quot;muted&quot;&gt;Rate:&lt;/span&gt;
+      &lt;span class=&quot;stars&quot;&gt;${[1, 2, 3, 4, 5].map((n) =&gt; `&lt;button data-star=&quot;${n}&quot; title=&quot;${n} star${n &gt; 1 ? &quot;s&quot; : &quot;&quot;}&quot;&gt;★&lt;/button&gt;`).join(&quot;&quot;)}&lt;/span&gt;
+      &lt;input class=&quot;fb-comment&quot; placeholder=&quot;What could be better? (optional)&quot;&gt;
+      &lt;button class=&quot;btn small&quot; data-act=&quot;fb&quot; disabled&gt;Send&lt;/button&gt;
+    &lt;/div&gt;`;
+  let rating = 0;
+  $$(&quot;[data-star]&quot;, card).forEach((b) =&gt; b.onclick = () =&gt; {
+    rating = +b.dataset.star;
+    $$(&quot;[data-star]&quot;, card).forEach((x) =&gt; x.classList.toggle(&quot;on&quot;, +x.dataset.star &lt;= rating));
+    $(&#x27;[data-act=&quot;fb&quot;]&#x27;, card).disabled = false;
+  });
+  $(&#x27;[data-act=&quot;copy&quot;]&#x27;, card).onclick = () =&gt; copyText(output);
+  $(&#x27;[data-act=&quot;dl&quot;]&#x27;, card).onclick = () =&gt; download(filename || &quot;output.md&quot;, output);
+  $(&#x27;[data-act=&quot;fb&quot;]&#x27;, card).onclick = async (ev) =&gt; {
+    await saveFeedback({ feature, prompt_version: result.prompt_version, rating, comment: $(&quot;.fb-comment&quot;, card).value,
+      output_id: result.output_id, output_excerpt: output.slice(0, 500) });
+    ev.target.textContent = &quot;Thanks ✓&quot;; ev.target.disabled = true;
+  };
+  return card;
+}
+
+// ================================================================ health + settings
+async function loadHealth() {
+  try {
+    state.health = await api(&quot;/api/health&quot;);
+    const h = state.health, badge = $(&quot;#modeBadge&quot;);
+    const model = state.settings.model || h.model;
+    badge.className = &quot;badge &quot; + h.mode;
+    badge.textContent = h.mode === &quot;live&quot; ? `● Live AI · ${model}` : &quot;● Demo mode&quot;;
+    badge.title = h.mode === &quot;live&quot; ? `Using OpenAI (${h.server_key &amp;&amp; !state.settings.apiKey ? &quot;server key&quot; : &quot;your key&quot;}). Tokenizer: ${h.tokenizer}`
+      : &quot;No API key: features run offline with simple algorithms. Add a key in Settings for real AI.&quot;;
+    $(&quot;#maxMb&quot;).textContent = h.max_upload_mb;
+    $(&quot;#modelSelect&quot;).innerHTML = h.models.map((m) =&gt; `&lt;option ${m === model ? &quot;selected&quot; : &quot;&quot;}&gt;${m}&lt;/option&gt;`).join(&quot;&quot;);
+  } catch (e) { showError(e); }
+}
+
+function setupSettings() {
+  const dlg = $(&quot;#settings&quot;);
+  $(&quot;#openSettings&quot;).onclick = () =&gt; { $(&quot;#apiKey&quot;).value = state.settings.apiKey; dlg.showModal(); };
+  $(&quot;#toggleKey&quot;).onclick = () =&gt; { const i = $(&quot;#apiKey&quot;); i.type = i.type === &quot;password&quot; ? &quot;text&quot; : &quot;password&quot;; $(&quot;#toggleKey&quot;).textContent = i.type === &quot;password&quot; ? &quot;Show&quot; : &quot;Hide&quot;; };
+  $(&quot;#saveSettings&quot;).onclick = () =&gt; {
+    const key = $(&quot;#apiKey&quot;).value.trim();
+    if (key &amp;&amp; !key.startsWith(&quot;sk-&quot;)) toast(&quot;That doesn&#x27;t look like an OpenAI key (they start with sk-).&quot;, { error: true });
+    state.settings = { apiKey: key, model: $(&quot;#modelSelect&quot;).value };
+    store.set(&quot;settings&quot;, state.settings);
+    loadHealth();
+    toast(&quot;Settings saved&quot;);
+  };
+}
+const model = () =&gt; state.settings.model || undefined;
+
+// ================================================================ tabs
+function setupTabs() {
+  $$(&quot;.tab&quot;).forEach((t) =&gt; t.onclick = () =&gt; {
+    $$(&quot;.tab&quot;).forEach((x) =&gt; x.classList.toggle(&quot;active&quot;, x === t));
+    $$(&quot;.panel&quot;).forEach((p) =&gt; p.classList.toggle(&quot;active&quot;, p.id === &quot;tab-&quot; + t.dataset.tab));
+    store.set(&quot;tab&quot;, t.dataset.tab);
+    if (t.dataset.tab === &quot;usage&quot;) loadUsage();
+    if (t.dataset.tab === &quot;lab&quot;) loadLab();
+    if (t.dataset.tab === &quot;ask&quot;) $(&quot;#chatInput&quot;).focus();
+  });
+  const saved = store.get(&quot;tab&quot;, &quot;library&quot;);
+  $(`.tab[data-tab=&quot;${saved}&quot;]`)?.click();
+}
+
+// ================================================================ library
+function bookFromPortable(p) {
+  return { id: p.id, title: p.title, filename: p.filename, created: p.created, pages: p.pages, words: p.words, tokens: p.tokens,
+    chapters: p.chapters.map((c, i) =&gt; ({ idx: c.idx ?? i, title: c.title, tokens: c.tokens, words: c.words })),
+    chunks: p.chunks.length, semantic_search: false, localOnly: true };
+}
+
+async function loadBooks() {
+  const local = (await idb.all()) || [];
+  state.books = {};
+  local.forEach((p) =&gt; state.books[p.id] = bookFromPortable(p));
+  try {
+    (await api(&quot;/api/books&quot;)).forEach((b) =&gt; state.books[b.id] = { ...b, localOnly: false });
+  } catch (e) { showError(e); }
+  if (state.activeBook &amp;&amp; !state.books[state.activeBook]) state.activeBook = &quot;&quot;;
+  renderBooks();
+}
+
+function renderBooks() {
+  const list = Object.values(state.books).sort((a, b) =&gt; (b.created || 0) - (a.created || 0));
+  $(&quot;#activeBook&quot;).innerHTML = `&lt;option value=&quot;&quot;&gt;No book (general)&lt;/option&gt;` +
+    list.map((b) =&gt; `&lt;option value=&quot;${b.id}&quot; ${b.id === state.activeBook ? &quot;selected&quot; : &quot;&quot;}&gt;${esc(b.title)}&lt;/option&gt;`).join(&quot;&quot;);
+  $(&quot;#bookList&quot;).innerHTML = list.length ? list.map((b) =&gt; `
+    &lt;div class=&quot;book-item ${b.id === state.activeBook ? &quot;active&quot; : &quot;&quot;}&quot; data-id=&quot;${b.id}&quot;&gt;
+      &lt;div&gt;&lt;b&gt;${esc(b.title)}&lt;/b&gt;
+        &lt;small&gt;${fmt(b.words)} words · ${fmt(b.tokens)} tokens · ${b.chapters.length} chapters${b.pages ? ` · ${b.pages} pages` : &quot;&quot;}
+        ${b.semantic_search ? &quot; · 🧠 meaning search&quot; : &quot; · 🔎 keyword search&quot;}${b.localOnly ? &quot; · saved in browser&quot; : &quot;&quot;}&lt;/small&gt;&lt;/div&gt;
+      &lt;div class=&quot;acts&quot;&gt;&lt;button class=&quot;btn small&quot; data-act=&quot;use&quot;&gt;${b.id === state.activeBook ? &quot;✓ Active&quot; : &quot;Use&quot;}&lt;/button&gt;
+        &lt;button class=&quot;btn small ghost&quot; data-act=&quot;del&quot; title=&quot;Delete&quot;&gt;🗑&lt;/button&gt;&lt;/div&gt;
+    &lt;/div&gt;`).join(&quot;&quot;) : `&lt;p class=&quot;muted&quot;&gt;No books yet. Upload one, or try the sample.&lt;/p&gt;`;
+  $$(&quot;.book-item&quot;).forEach((el) =&gt; {
+    $(&#x27;[data-act=&quot;use&quot;]&#x27;, el).onclick = () =&gt; setActiveBook(el.dataset.id);
+    $(&#x27;[data-act=&quot;del&quot;]&#x27;, el).onclick = () =&gt; deleteBook(el.dataset.id);
+  });
+  updateChapterSelects();
+  renderBookDetail();
+}
+
+function setActiveBook(id) {
+  state.activeBook = id;
+  store.set(&quot;activeBook&quot;, id);
+  renderBooks();
+  renderSuggestions();
+  updateSumMeter();
+}
+
+async function deleteBook(id) {
+  if (!confirm(`Delete “${state.books[id]?.title}” from the server and this browser?`)) return;
+  await api(`/api/books/${id}`, { method: &quot;DELETE&quot; }, false).catch(() =&gt; {});
+  await idb.del(id);
+  if (state.activeBook === id) setActiveBook(&quot;&quot;);
+  loadBooks();
+}
+
+function renderBookDetail() {
+  const b = state.books[state.activeBook], box = $(&quot;#bookDetail&quot;);
+  if (!b) { box.classList.add(&quot;hidden&quot;); return; }
+  const prices = state.health?.prices?.[state.settings.model || state.health?.model] || [0.15, 0.6];
+  const readCost = (b.tokens * prices[0]) / 1e6;
+  box.classList.remove(&quot;hidden&quot;);
+  box.innerHTML = `&lt;h2&gt;📘 ${esc(b.title)}&lt;/h2&gt;
+    &lt;p class=&quot;muted&quot;&gt;Reading the whole book once costs about &lt;b&gt;${money(readCost)}&lt;/b&gt; in input tokens with ${esc(state.settings.model || state.health?.model || &quot;&quot;)}.
+    Click a chapter to preview it.&lt;/p&gt;
+    &lt;div class=&quot;chapters&quot;&gt;${b.chapters.map((c) =&gt; `&lt;button class=&quot;chapter&quot; data-idx=&quot;${c.idx}&quot;&gt;&lt;b&gt;${esc(c.title)}&lt;/b&gt;&lt;small&gt;${fmt(c.words)} words · ${fmt(c.tokens)} tokens&lt;/small&gt;&lt;/button&gt;`).join(&quot;&quot;)}&lt;/div&gt;
+    &lt;div id=&quot;chapterPreview&quot;&gt;&lt;/div&gt;`;
+  $$(&quot;.chapter&quot;, box).forEach((el) =&gt; el.onclick = async () =&gt; {
+    try {
+      const c = await api(`/api/books/${b.id}/chapters/${el.dataset.idx}`);
+      $(&quot;#chapterPreview&quot;).innerHTML = `&lt;div class=&quot;preview&quot;&gt;&lt;b&gt;${esc(c.title)}&lt;/b&gt;\n\n${esc(c.text)}${c.truncated ? &quot;\n\n…(preview cut)&quot; : &quot;&quot;}&lt;/div&gt;`;
+    } catch (e) { showError(e); }
+  });
+}
+
+function updateChapterSelects() {
+  const b = state.books[state.activeBook];
+  const opts = b ? b.chapters.map((c) =&gt; `&lt;option value=&quot;${c.idx}&quot;&gt;${esc(c.title)} (${fmt(c.tokens)} tok)&lt;/option&gt;`).join(&quot;&quot;) : &quot;&lt;option value=&#x27;&#x27;&gt;— pick a book first —&lt;/option&gt;&quot;;
+  [&quot;#sumChapter&quot;, &quot;#genChapter&quot;, &quot;#cmpChapter&quot;].forEach((s) =&gt; $(s).innerHTML = opts);
+  $(&quot;#chatChapter&quot;).innerHTML = `&lt;option value=&quot;&quot;&gt;Whole book&lt;/option&gt;` + (b ? b.chapters.map((c) =&gt; `&lt;option value=&quot;${c.idx}&quot;&gt;${esc(c.title)}&lt;/option&gt;`).join(&quot;&quot;) : &quot;&quot;);
+}
+
+async function uploadFile(file) {
+  const max = state.health?.max_upload_mb || 25;
+  const status = $(&quot;#uploadStatus&quot;);
+  if (file.size &gt; max * 1024 * 1024) {
+    status.className = &quot;status error&quot;;
+    status.textContent = `“${file.name}” is ${(file.size / 1048576).toFixed(1)} MB; the limit here is ${max} MB. Try a .txt version or compress the PDF.`;
+    return;
+  }
+  status.className = &quot;status&quot;;
+  status.textContent = `⏳ Reading “${file.name}”, finding chapters and building the search index…`;
+  const form = new FormData();
+  form.append(&quot;file&quot;, file);
+  try {
+    const r = await api(&quot;/api/books&quot;, { method: &quot;POST&quot;, form });
+    await idb.put(r.portable);
+    status.textContent = `✅ “${r.book.title}” is ready: ${r.book.chapters.length} chapters, ${fmt(r.book.chunks)} passages.` +
+      (r.usage?.cost_usd ? ` Indexing cost ${money(r.usage.cost_usd)}.` : &quot;&quot;) + (r.warning ? ` ⚠ ${r.warning}` : &quot;&quot;);
+    recordUsage(&quot;embeddings&quot;, r.usage);
+    await loadBooks();
+    setActiveBook(r.book.id);
+  } catch (e) {
+    status.className = &quot;status error&quot;;
+    status.textContent = `❌ ${e.message} ${e.hint || &quot;&quot;}`;
+  }
+}
+
+function setupLibrary() {
+  const zone = $(&quot;#dropZone&quot;), input = $(&quot;#fileInput&quot;);
+  input.onchange = () =&gt; input.files[0] &amp;&amp; uploadFile(input.files[0]);
+  [&quot;dragenter&quot;, &quot;dragover&quot;].forEach((ev) =&gt; zone.addEventListener(ev, (e) =&gt; { e.preventDefault(); zone.classList.add(&quot;over&quot;); }));
+  [&quot;dragleave&quot;, &quot;drop&quot;].forEach((ev) =&gt; zone.addEventListener(ev, (e) =&gt; { e.preventDefault(); zone.classList.remove(&quot;over&quot;); }));
+  zone.addEventListener(&quot;drop&quot;, (e) =&gt; e.dataTransfer.files[0] &amp;&amp; uploadFile(e.dataTransfer.files[0]));
+  $(&quot;#loadSample&quot;).onclick = async () =&gt; {
+    const blob = await (await fetch(&quot;/api/sample&quot;)).blob();
+    uploadFile(new File([blob], &quot;the_lighthouse_apprentice.txt&quot;, { type: &quot;text/plain&quot; }));
+  };
+  $(&quot;#activeBook&quot;).onchange = (e) =&gt; setActiveBook(e.target.value);
+}
+
+// ================================================================ summarize
+function needBook() {
+  if (!state.activeBook) { toast(&quot;Pick or upload a book first (Library tab).&quot;, { error: true }); return true; }
+  return false;
+}
+
+const updateSumMeter = debounce(async () =&gt; {
+  const scope = $(&quot;#sumScope&quot;).value, meter = $(&quot;#sumMeter&quot;), b = state.books[state.activeBook];
+  const m = state.settings.model || state.health?.model || &quot;gpt-4o-mini&quot;;
+  const price = state.health?.prices?.[m] || [0.15, 0.6];
+  const est = (tin, tout) =&gt; money((tin * price[0] + tout * price[1]) / 1e6);
+  if (scope === &quot;text&quot;) {
+    const text = $(&quot;#sumText&quot;).value;
+    if (!text.trim()) { meter.textContent = &quot;Paste text to see its token count.&quot;; return; }
+    try {
+      const r = await api(&quot;/api/tokens&quot;, { method: &quot;POST&quot;, body: { text, model: m, expected_output_tokens: 500 } });
+      meter.className = &quot;token-meter&quot; + (r.fits_in_one_call ? &quot;&quot; : &quot; warn&quot;);
+      meter.innerHTML = `&lt;b&gt;${fmt(r.tokens)}&lt;/b&gt; tokens · ${fmt(r.words)} words · est. ${money(r.estimated_cost_usd)}` +
+        (r.fits_in_one_call ? &quot;&quot; : &quot; · long text: will be split and combined (map-reduce)&quot;);
+    } catch { meter.textContent = &quot;—&quot;; }
+  } else if (!b) { meter.textContent = &quot;Pick a book first.&quot;; }
+  else if (scope === &quot;chapter&quot;) {
+    const c = b.chapters[+$(&quot;#sumChapter&quot;).value] || b.chapters[0];
+    meter.className = &quot;token-meter&quot;;
+    meter.innerHTML = `&lt;b&gt;${fmt(c.tokens)}&lt;/b&gt; tokens in this chapter · est. ${est(c.tokens, 600)}`;
+  } else {
+    meter.className = &quot;token-meter&quot;;
+    meter.innerHTML = `&lt;b&gt;${fmt(b.tokens)}&lt;/b&gt; tokens · ${b.chapters.length} chapters → ${b.chapters.length + 1} AI calls · est. ${est(b.tokens * 1.05, b.chapters.length * 300 + 800)}`;
+  }
+}, 300);
+
+async function runSummarize() {
+  const scope = $(&quot;#sumScope&quot;).value, btn = $(&quot;#runSummarize&quot;);
+  const base = { length: $(&quot;#sumLength&quot;).value, style: $(&quot;#sumStyle&quot;).value, prompt_version: $(&quot;#sumVersion&quot;).value, model: model() };
+  if (scope !== &quot;text&quot; &amp;&amp; needBook()) return;
+  btn.disabled = true;
+  const prog = $(&quot;#sumProgress&quot;);
+  try {
+    let result, title;
+    const b = state.books[state.activeBook];
+    if (scope === &quot;text&quot;) {
+      result = await api(&quot;/api/summarize&quot;, { method: &quot;POST&quot;, body: { ...base, scope: &quot;text&quot;, text: $(&quot;#sumText&quot;).value } });
+      title = &quot;Summary of your text&quot;;
+    } else if (scope === &quot;chapter&quot;) {
+      const idx = +$(&quot;#sumChapter&quot;).value;
+      result = await api(&quot;/api/summarize&quot;, { method: &quot;POST&quot;, body: { ...base, scope: &quot;chapter&quot;, book_id: b.id, chapter: idx } });
+      title = `${b.chapters[idx].title} — summary`;
+    } else {
+      // Whole book: one request per chapter (keeps each request short — important on Vercel), then combine.
+      prog.classList.remove(&quot;hidden&quot;);
+      const mode = state.health?.mode, notes = new Array(b.chapters.length), totals = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, cost_usd: 0, calls: 0, latency_ms: 0 };
+      const t0 = Date.now();
+      let done = 0, next = 0;
+      const setP = (txt) =&gt; { prog.style.setProperty(&quot;--p&quot;, `${Math.round((done / (b.chapters.length + 1)) * 100)}%`); $(&quot;span&quot;, prog).textContent = txt; };
+      setP(`Reading chapter 1 of ${b.chapters.length}…`);
+      const worker = async () =&gt; {
+        while (next &lt; b.chapters.length) {
+          const i = next++, key = `${b.id}:${i}:${mode}`;
+          if (!state.notesCache[key]) {
+            const r = await api(&quot;/api/summarize&quot;, { method: &quot;POST&quot;, body: { ...base, scope: &quot;notes&quot;, book_id: b.id, chapter: i } });
+            state.notesCache[key] = r.output;
+            for (const k in totals) totals[k] += r.usage?.[k] || 0;
+          }
+          notes[i] = { title: b.chapters[i].title, notes: state.notesCache[key] };
+          done++; setP(`Read ${done} of ${b.chapters.length} chapters…`);
+        }
+      };
+      await Promise.all([worker(), worker(), worker()]);  // 3 at a time
+      setP(&quot;Writing the final summary…&quot;);
+      result = await api(&quot;/api/summarize&quot;, { method: &quot;POST&quot;, body: { ...base, scope: &quot;combine&quot;, book_id: b.id, notes } });
+      for (const k in totals) result.usage[k] = (result.usage[k] || 0) + totals[k];
+      result.usage.latency_ms = Date.now() - t0;
+      done++; setP(&quot;Done&quot;);
+      title = `${b.title} — whole-book summary`;
+    }
+    recordUsage(&quot;summarize&quot;, result.usage);
+    const out = $(&quot;#sumOutput&quot;);
+    if ($(&quot;.empty&quot;, out)) out.innerHTML = &quot;&quot;;
+    out.prepend(outputCard({ title, output: result.output, result, feature: &quot;summarize&quot;, filename: &quot;summary.md&quot; }));
+  } catch (e) { showError(e); }
+  finally { btn.disabled = false; setTimeout(() =&gt; prog.classList.add(&quot;hidden&quot;), 800); }
+}
+
+function setupSummarize() {
+  const sync = () =&gt; {
+    const s = $(&quot;#sumScope&quot;).value;
+    $(&quot;#sumChapterWrap&quot;).classList.toggle(&quot;hidden&quot;, s !== &quot;chapter&quot;);
+    $(&quot;#sumTextWrap&quot;).classList.toggle(&quot;hidden&quot;, s !== &quot;text&quot;);
+    updateSumMeter();
+  };
+  $(&quot;#sumScope&quot;).onchange = sync;
+  $(&quot;#sumChapter&quot;).onchange = updateSumMeter;
+  $(&quot;#sumText&quot;).oninput = updateSumMeter;
+  $(&quot;#runSummarize&quot;).onclick = runSummarize;
+  sync();
+}
+
+// ================================================================ chat (multi-turn, streaming, sources)
+const saveConvos = () =&gt; store.set(&quot;convos&quot;, state.convos.slice(0, 50));
+
+function newConvo() {
+  const c = { id: uid(), title: &quot;New chat&quot;, bookId: state.activeBook, messages: [], updated: Date.now() };
+  state.convos.unshift(c);
+  state.activeConvo = c.id;
+  saveConvos(); renderConvos(); renderMessages();
+}
+const currentConvo = () =&gt; state.convos.find((c) =&gt; c.id === state.activeConvo);
+
+function renderConvos() {
+  $(&quot;#convos&quot;).innerHTML = state.convos.map((c) =&gt; `&lt;div class=&quot;convo ${c.id === state.activeConvo ? &quot;active&quot; : &quot;&quot;}&quot; data-id=&quot;${c.id}&quot;&gt;
+    &lt;span title=&quot;${esc(c.title)}&quot;&gt;${esc(c.title)}&lt;/span&gt;&lt;button title=&quot;Delete chat&quot;&gt;✕&lt;/button&gt;&lt;/div&gt;`).join(&quot;&quot;);
+  $$(&quot;.convo&quot;).forEach((el) =&gt; {
+    el.onclick = () =&gt; { state.activeConvo = el.dataset.id; renderConvos(); renderMessages(); };
+    $(&quot;button&quot;, el).onclick = (e) =&gt; {
+      e.stopPropagation();
+      state.convos = state.convos.filter((c) =&gt; c.id !== el.dataset.id);
+      if (state.activeConvo === el.dataset.id) state.activeConvo = state.convos[0]?.id;
+      saveConvos(); if (!state.activeConvo) newConvo(); else { renderConvos(); renderMessages(); }
+    };
+  });
+}
+
+function messageEl(m, i) {
+  const el = document.createElement(&quot;div&quot;);
+  el.className = `msg ${m.role}${m.error ? &quot; error&quot; : &quot;&quot;}`;
+  if (m.role === &quot;user&quot;) { el.textContent = m.content; return el; }
+  el.innerHTML = `&lt;div class=&quot;md body&quot;&gt;${md(m.content)}&lt;/div&gt;
+    ${m.sources?.length ? `&lt;div class=&quot;sources&quot;&gt;${m.sources.map((s, j) =&gt; `&lt;button class=&quot;src&quot; data-j=&quot;${j}&quot; title=&quot;Show passage&quot;&gt;${s.tag} · ${esc(s.label)}&lt;/button&gt;`).join(&quot;&quot;)}&lt;/div&gt;&lt;div class=&quot;src-slot&quot;&gt;&lt;/div&gt;` : &quot;&quot;}
+    &lt;div class=&quot;msg-tools&quot;&gt;
+      &lt;button data-act=&quot;copy&quot;&gt;📋 Copy&lt;/button&gt;
+      &lt;button data-act=&quot;up&quot; class=&quot;${m.rating === 5 ? &quot;on&quot; : &quot;&quot;}&quot;&gt;👍&lt;/button&gt;
+      &lt;button data-act=&quot;down&quot; class=&quot;${m.rating === 1 ? &quot;on&quot; : &quot;&quot;}&quot;&gt;👎&lt;/button&gt;
+      ${i === currentConvo().messages.length - 1 ? `&lt;button data-act=&quot;regen&quot;&gt;↻ Regenerate&lt;/button&gt;` : &quot;&quot;}
+      &lt;span&gt;${usageLine(m.usage, { mode: m.mode, version: m.prompt_version })}&lt;/span&gt;
+    &lt;/div&gt;`;
+  $$(&quot;.src&quot;, el).forEach((b) =&gt; b.onclick = () =&gt; {
+    const s = m.sources[+b.dataset.j], slot = $(&quot;.src-slot&quot;, el);
+    slot.innerHTML = slot.dataset.open === b.dataset.j ? &quot;&quot; : `&lt;div class=&quot;src-text&quot;&gt;&lt;b&gt;${esc(s.tag)} · ${esc(s.label)}&lt;/b&gt;\n${esc(s.text)}&lt;/div&gt;`;
+    slot.dataset.open = slot.dataset.open === b.dataset.j ? &quot;&quot; : b.dataset.j;
+  });
+  $(&#x27;[data-act=&quot;copy&quot;]&#x27;, el).onclick = () =&gt; copyText(m.content);
+  const rate = (r) =&gt; { m.rating = r; saveConvos(); renderMessages();
+    saveFeedback({ feature: &quot;qa&quot;, prompt_version: m.prompt_version, rating: r, output_id: m.output_id, output_excerpt: m.content.slice(0, 500), comment: &quot;&quot; }); };
+  $(&#x27;[data-act=&quot;up&quot;]&#x27;, el).onclick = () =&gt; rate(5);
+  $(&#x27;[data-act=&quot;down&quot;]&#x27;, el).onclick = () =&gt; rate(1);
+  const regen = $(&#x27;[data-act=&quot;regen&quot;]&#x27;, el);
+  if (regen) regen.onclick = () =&gt; { currentConvo().messages.pop(); sendChat(null); };
+  return el;
+}
+
+function renderMessages() {
+  const c = currentConvo(), box = $(&quot;#messages&quot;);
+  $(&quot;#chatTitle&quot;).textContent = c.title;
+  const b = state.books[c.bookId];
+  $(&quot;#chatScopeLabel&quot;).textContent = b ? ` — about “${b.title}”` : &quot; — general chat&quot;;
+  box.innerHTML = &quot;&quot;;
+  if (!c.messages.length) {
+    box.innerHTML = `&lt;div class=&quot;welcome&quot;&gt;&lt;div style=&quot;font-size:2rem&quot;&gt;💬&lt;/div&gt;&lt;p&gt;${state.activeBook ? `Ask anything about &lt;b&gt;${esc(state.books[state.activeBook]?.title)}&lt;/b&gt;. Answers cite the passages they come from — click a tag to read it.` : &quot;No book selected: this is a general chat. Pick a book at the top to chat with it.&quot;}&lt;/p&gt;&lt;/div&gt;`;
+  }
+  c.messages.forEach((m, i) =&gt; box.append(messageEl(m, i)));
+  box.scrollTop = box.scrollHeight;
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  const c = currentConvo(), b = state.books[state.activeBook];
+  const qs = b ? [&quot;Who are the main characters?&quot;, &quot;What is the main conflict?&quot;, &quot;Summarize the first chapter in 3 bullets&quot;, &quot;What are the key themes?&quot;, &quot;How does it end?&quot;]
+    : [&quot;Explain tokens in simple words&quot;, &quot;Write a haiku about books&quot;];
+  $(&quot;#suggestions&quot;).innerHTML = c &amp;&amp; !c.messages.length ? qs.map((q) =&gt; `&lt;button class=&quot;chip&quot;&gt;${esc(q)}&lt;/button&gt;`).join(&quot;&quot;) : &quot;&quot;;
+  $$(&quot;#suggestions .chip&quot;).forEach((ch) =&gt; ch.onclick = () =&gt; { $(&quot;#chatInput&quot;).value = ch.textContent; sendChat(); });
+}
+
+async function sendChat(e) {
+  e?.preventDefault?.();
+  const input = $(&quot;#chatInput&quot;), c = currentConvo();
+  const text = input.value.trim();
+  if (e !== null) {           // null = regenerate (reuse last user message)
+    if (!text) return;
+    if (c.bookId !== state.activeBook &amp;&amp; c.messages.length) { newConvo(); return sendChatWith(text); }
+    c.bookId = state.activeBook;
+    input.value = &quot;&quot;; updateChatTokens();
+    c.messages.push({ role: &quot;user&quot;, content: text });
+    if (c.title === &quot;New chat&quot;) c.title = text.slice(0, 40);
+  }
+  return streamAnswer(c);
+}
+function sendChatWith(text) { $(&quot;#chatInput&quot;).value = text; return sendChat(); }
+
+async function streamAnswer(c) {
+  const msg = { role: &quot;assistant&quot;, content: &quot;&quot;, sources: [], usage: null };
+  c.messages.push(msg); c.updated = Date.now();
+  renderConvos(); renderMessages();
+  const bodyEl = () =&gt; $(&quot;#messages&quot;).lastElementChild;
+  bodyEl().classList.add(&quot;typing&quot;);
+  $(&quot;#sendBtn&quot;).classList.add(&quot;hidden&quot;); $(&quot;#stopBtn&quot;).classList.remove(&quot;hidden&quot;);
+  state.chatAbort = new AbortController();
+  const chapterVal = $(&quot;#chatChapter&quot;).value;
+  try {
+    const res = await api(&quot;/api/chat&quot;, { method: &quot;POST&quot;, stream: true, signal: state.chatAbort.signal, body: {
+      book_id: c.bookId || null, chapter: chapterVal === &quot;&quot; ? null : +chapterVal, model: model(),
+      prompt_version: &quot;auto&quot;, messages: c.messages.slice(0, -1).filter((m) =&gt; !m.error).map(({ role, content }) =&gt; ({ role, content })) } });
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    let buf = &quot;&quot;, lastPaint = 0;
+    const paint = (force) =&gt; {
+      if (!force &amp;&amp; Date.now() - lastPaint &lt; 50) return;
+      lastPaint = Date.now();
+      const el = bodyEl(); $(&quot;.body&quot;, el).innerHTML = md(msg.content);
+      const box = $(&quot;#messages&quot;); box.scrollTop = box.scrollHeight;
+    };
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let cut;
+      while ((cut = buf.indexOf(&quot;\n\n&quot;)) &gt;= 0) {
+        const raw = buf.slice(0, cut); buf = buf.slice(cut + 2);
+        const ev = raw.match(/^event: (.*)$/m)?.[1], data = JSON.parse(raw.match(/^data: (.*)$/m)?.[1] || &quot;{}&quot;);
+        if (ev === &quot;meta&quot;) { Object.assign(msg, { sources: data.sources, prompt_version: data.prompt_version, output_id: data.output_id }); }
+        else if (ev === &quot;delta&quot;) { msg.content += data.t; paint(); }
+        else if (ev === &quot;done&quot;) { msg.usage = data.usage; msg.mode = data.mode; recordUsage(&quot;qa&quot;, data.usage); }
+        else if (ev === &quot;error&quot;) { throw new AppError(data.code, data.message, data.hint); }
+      }
+    }
+  } catch (e) {
+    if (e.name === &quot;AbortError&quot;) msg.content += &quot;\n\n_(stopped)_&quot;;
+    else { msg.error = true; msg.content = (msg.content ? msg.content + &quot;\n\n&quot; : &quot;&quot;) + `⚠️ **${e.message}** ${e.hint || &quot;&quot;}`; showError(e); }
+  } finally {
+    state.chatAbort = null;
+    $(&quot;#sendBtn&quot;).classList.remove(&quot;hidden&quot;); $(&quot;#stopBtn&quot;).classList.add(&quot;hidden&quot;);
+    saveConvos(); renderMessages();
+  }
+}
+
+const updateChatTokens = debounce(async () =&gt; {
+  const t = $(&quot;#chatInput&quot;).value;
+  if (!t) { $(&quot;#chatTokens&quot;).textContent = &quot;0 tokens&quot;; return; }
+  try { const r = await api(&quot;/api/tokens&quot;, { method: &quot;POST&quot;, body: { text: t, model: model() } }); $(&quot;#chatTokens&quot;).textContent = `${fmt(r.tokens)} tokens`; } catch { /* ignore */ }
+}, 250);
+
+function setupChat() {
+  $(&quot;#chatForm&quot;).onsubmit = sendChat;
+  $(&quot;#chatInput&quot;).addEventListener(&quot;keydown&quot;, (e) =&gt; { if (e.key === &quot;Enter&quot; &amp;&amp; !e.shiftKey) { e.preventDefault(); sendChat(e); } });
+  $(&quot;#chatInput&quot;).oninput = updateChatTokens;
+  $(&quot;#stopBtn&quot;).onclick = () =&gt; state.chatAbort?.abort();
+  $(&quot;#newChat&quot;).onclick = newConvo;
+  state.activeConvo = state.convos[0]?.id;
+  if (!state.activeConvo) newConvo(); else { renderConvos(); renderMessages(); }
+}
+
+// ================================================================ create
+const TYPES = [
+  [&quot;study_notes&quot;, &quot;📒&quot;, &quot;Study notes&quot;], [&quot;quiz&quot;, &quot;❓&quot;, &quot;Quiz&quot;], [&quot;flashcards&quot;, &quot;🃏&quot;, &quot;Flashcards&quot;],
+  [&quot;blog_post&quot;, &quot;📰&quot;, &quot;Blog post&quot;], [&quot;social_thread&quot;, &quot;🧵&quot;, &quot;Social thread&quot;], [&quot;newsletter&quot;, &quot;✉️&quot;, &quot;Newsletter&quot;],
+  [&quot;discussion_questions&quot;, &quot;🗣️&quot;, &quot;Book club Qs&quot;], [&quot;characters&quot;, &quot;🎭&quot;, &quot;Characters&quot;], [&quot;timeline&quot;, &quot;🕰️&quot;, &quot;Timeline&quot;],
+  [&quot;lesson_plan&quot;, &quot;🎓&quot;, &quot;Lesson plan&quot;], [&quot;custom&quot;, &quot;🛠️&quot;, &quot;Custom&quot;],
+];
+
+async function runGenerate() {
+  const src = $(&quot;#genSource&quot;).value, btn = $(&quot;#runGenerate&quot;);
+  if ([&quot;book&quot;, &quot;chapter&quot;, &quot;topic&quot;].includes(src) &amp;&amp; needBook()) return;
+  const body = { content_type: state.genType, tone: $(&quot;#genTone&quot;).value, audience: $(&quot;#genAudience&quot;).value,
+    extra: $(&quot;#genExtra&quot;).value, prompt_version: $(&quot;#genVersion&quot;).value, model: model() };
+  if (src !== &quot;free&quot; &amp;&amp; src !== &quot;text&quot;) body.book_id = state.activeBook;
+  if (src === &quot;chapter&quot;) body.chapter = +$(&quot;#genChapter&quot;).value;
+  if (src === &quot;topic&quot; || src === &quot;free&quot;) body.topic = $(&quot;#genTopic&quot;).value;
+  if (src === &quot;text&quot;) body.text = $(&quot;#genText&quot;).value;
+  btn.disabled = true; btn.textContent = &quot;Creating…&quot;;
+  try {
+    const r = await api(&quot;/api/generate&quot;, { method: &quot;POST&quot;, body });
+    recordUsage(&quot;generate&quot;, r.usage);
+    const label = TYPES.find((t) =&gt; t[0] === state.genType)[2];
+    const out = $(&quot;#genOutput&quot;);
+    if ($(&quot;.empty&quot;, out)) out.innerHTML = &quot;&quot;;
+    out.prepend(outputCard({ title: label, output: r.output, result: r, feature: &quot;generate&quot;, filename: `${state.genType}.md` }));
+  } catch (e) { showError(e); }
+  finally { btn.disabled = false; btn.textContent = &quot;Create&quot;; }
+}
+
+function setupCreate() {
+  $(&quot;#typeGrid&quot;).innerHTML = TYPES.map(([k, icon, label]) =&gt; `&lt;button class=&quot;type-btn ${k === state.genType ? &quot;active&quot; : &quot;&quot;}&quot; data-k=&quot;${k}&quot;&gt;&lt;span&gt;${icon}&lt;/span&gt;${label}&lt;/button&gt;`).join(&quot;&quot;);
+  $$(&quot;.type-btn&quot;).forEach((b) =&gt; b.onclick = () =&gt; { state.genType = b.dataset.k; $$(&quot;.type-btn&quot;).forEach((x) =&gt; x.classList.toggle(&quot;active&quot;, x === b)); });
+  const sync = () =&gt; {
+    const s = $(&quot;#genSource&quot;).value;
+    $(&quot;#genChapterWrap&quot;).classList.toggle(&quot;hidden&quot;, s !== &quot;chapter&quot;);
+    $(&quot;#genTopicWrap&quot;).classList.toggle(&quot;hidden&quot;, ![&quot;topic&quot;, &quot;free&quot;].includes(s));
+    $(&quot;#genTextWrap&quot;).classList.toggle(&quot;hidden&quot;, s !== &quot;text&quot;);
+  };
+  $(&quot;#genSource&quot;).onchange = sync; sync();
+  $(&quot;#runGenerate&quot;).onclick = runGenerate;
+}
+
+// ================================================================ prompt lab
+async function loadLab() {
+  try {
+    const [fb, cat] = await Promise.all([api(&quot;/api/feedback&quot;), state.catalog || api(&quot;/api/prompts&quot;)]);
+    state.catalog = cat;
+    const rows = fb.by_version;
+    const local = store.get(&quot;feedbackLog&quot;, []);
+    const best = {};
+    rows.forEach((r) =&gt; { if (!best[r.feature] || r.avg_rating &gt; best[r.feature].avg_rating) best[r.feature] = r; });
+    $(&quot;#ratingTable&quot;).innerHTML = rows.length ? `&lt;div class=&quot;table-wrap&quot;&gt;&lt;table class=&quot;data&quot;&gt;&lt;tr&gt;&lt;th&gt;Feature&lt;/th&gt;&lt;th&gt;Prompt&lt;/th&gt;&lt;th&gt;Ratings&lt;/th&gt;&lt;th&gt;Average&lt;/th&gt;&lt;th&gt;% happy (4–5★)&lt;/th&gt;&lt;th&gt;&lt;/th&gt;&lt;/tr&gt;
+      ${rows.map((r) =&gt; `&lt;tr&gt;&lt;td&gt;${r.feature}&lt;/td&gt;&lt;td&gt;${r.prompt_version || &quot;—&quot;} ${esc(cat.features[r.feature]?.[r.prompt_version] || &quot;&quot;)}&lt;/td&gt;&lt;td&gt;${r.n}&lt;/td&gt;
+      &lt;td&gt;${&quot;★&quot;.repeat(Math.round(r.avg_rating))} ${r.avg_rating.toFixed(2)}&lt;/td&gt;&lt;td&gt;${Math.round((r.positive / r.n) * 100)}%&lt;/td&gt;
+      &lt;td&gt;${best[r.feature] === r &amp;&amp; rows.filter((x) =&gt; x.feature === r.feature).length &gt; 1 ? &#x27;&lt;span class=&quot;winner&quot;&gt;🏆 leading&lt;/span&gt;&#x27; : &quot;&quot;}&lt;/td&gt;&lt;/tr&gt;`).join(&quot;&quot;)}&lt;/table&gt;&lt;/div&gt;
+      &lt;p class=&quot;muted&quot;&gt;Tip: wait for 20+ ratings per version before deciding. This browser also keeps ${local.length} rating(s) locally.&lt;/p&gt;`
+      : `&lt;p class=&quot;muted&quot;&gt;No ratings on the server yet${local.length ? ` (this browser has ${local.length} saved locally — export them below)` : &quot;&quot;}. Rate some outputs with ★ or 👍/👎.&lt;/p&gt;`;
+    $(&quot;#promptViewer&quot;).innerHTML = Object.entries(cat.prompts).map(([f, versions]) =&gt;
+      `&lt;h3&gt;${f}&lt;/h3&gt;` + Object.entries(versions).map(([v, p]) =&gt; `&lt;b&gt;${v} – ${esc(p.label)}&lt;/b&gt;
+      &lt;div class=&quot;prompt-box&quot;&gt;SYSTEM: ${esc(p.system)}${p.user ? `\n\nUSER: ${esc(p.user)}` : &quot;&quot;}&lt;/div&gt;`).join(&quot;&quot;)).join(&quot;&quot;);
+  } catch (e) { showError(e); }
+}
+
+async function runCompare() {
+  const src = $(&quot;#cmpSource&quot;).value, btn = $(&quot;#runCompare&quot;);
+  const s = { length: &quot;short&quot;, style: $(&quot;#cmpStyle&quot;).value, model: model() };
+  if (src === &quot;chapter&quot;) { if (needBook()) return; Object.assign(s, { book_id: state.activeBook, scope: &quot;chapter&quot;, chapter: +$(&quot;#cmpChapter&quot;).value }); }
+  else Object.assign(s, { scope: &quot;text&quot;, text: $(&quot;#cmpText&quot;).value });
+  btn.disabled = true; btn.textContent = &quot;Running both prompts…&quot;;
+  try {
+    const r = await api(&quot;/api/compare&quot;, { method: &quot;POST&quot;, body: { feature: &quot;summarize&quot;, summarize: s } });
+    if (r.v1.mode === &quot;demo&quot;) toast(&quot;Demo mode gives identical outputs. Add an API key for a real comparison.&quot;, { error: true });
+    const order = Math.random() &lt; 0.5 ? [&quot;v1&quot;, &quot;v2&quot;] : [&quot;v2&quot;, &quot;v1&quot;];
+    const box = $(&quot;#cmpOutput&quot;);
+    box.innerHTML = order.map((v, i) =&gt; `&lt;div class=&quot;out-card&quot;&gt;&lt;div class=&quot;out-head&quot;&gt;&lt;b&gt;Option ${&quot;AB&quot;[i]}&lt;/b&gt;&lt;div class=&quot;meta reveal&quot; data-v=&quot;${v}&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+      &lt;div class=&quot;out-body md&quot;&gt;${md(r[v].output)}&lt;/div&gt;&lt;div class=&quot;out-foot&quot;&gt;&lt;button class=&quot;btn primary small&quot; data-pick=&quot;${i}&quot;&gt;👈 ${&quot;AB&quot;[i]} is better&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;`).join(&quot;&quot;) +
+      `&lt;div style=&quot;grid-column:1/-1;text-align:center&quot;&gt;&lt;button class=&quot;btn small ghost&quot; data-pick=&quot;tie&quot;&gt;They&#x27;re equal&lt;/button&gt;&lt;/div&gt;`;
+    recordUsage(&quot;summarize&quot;, r.v1.usage); recordUsage(&quot;summarize&quot;, r.v2.usage);
+    $$(&quot;[data-pick]&quot;, box).forEach((b) =&gt; b.onclick = async () =&gt; {
+      const pick = b.dataset.pick;
+      await Promise.all(order.map((v, i) =&gt; saveFeedback({ feature: &quot;summarize&quot;, prompt_version: v, rating: pick === &quot;tie&quot; ? 3 : (+pick === i ? 5 : 2),
+        comment: &quot;blind compare&quot;, output_id: r[v].output_id, output_excerpt: r[v].output.slice(0, 300) })));
+      $$(&quot;.reveal&quot;, box).forEach((m) =&gt; m.textContent = `was prompt ${m.dataset.v} (${state.catalog?.features.summarize[m.dataset.v] || &quot;&quot;})`);
+      $$(&quot;[data-pick]&quot;, box).forEach((x) =&gt; x.disabled = true);
+      toast(&quot;Vote saved – versions revealed&quot;); loadLab();
+    });
+  } catch (e) { showError(e); }
+  finally { btn.disabled = false; btn.textContent = &quot;Run blind compare&quot;; }
+}
+
+function setupLab() {
+  $(&quot;#refreshLab&quot;).onclick = loadLab;
+  $(&quot;#runCompare&quot;).onclick = runCompare;
+  $(&quot;#cmpSource&quot;).onchange = () =&gt; {
+    const t = $(&quot;#cmpSource&quot;).value === &quot;text&quot;;
+    $(&quot;#cmpText&quot;).classList.toggle(&quot;hidden&quot;, !t); $(&quot;#cmpChapterWrap&quot;).classList.toggle(&quot;hidden&quot;, t);
+  };
+  $(&quot;#exportFeedback&quot;).onclick = () =&gt; {
+    const log = store.get(&quot;feedbackLog&quot;, []);
+    if (!log.length) return toast(&quot;No feedback saved in this browser yet.&quot;);
+    const cols = [&quot;ts&quot;, &quot;feature&quot;, &quot;prompt_version&quot;, &quot;rating&quot;, &quot;comment&quot;, &quot;output_id&quot;, &quot;output_excerpt&quot;];
+    const q = (v) =&gt; `&quot;${String(v ?? &quot;&quot;).replace(/&quot;/g, &#x27;&quot;&quot;&#x27;).replace(/\n/g, &quot; &quot;)}&quot;`;
+    download(&quot;feedback.csv&quot;, [cols.join(&quot;,&quot;), ...log.map((r) =&gt; cols.map((c) =&gt; q(c === &quot;ts&quot; ? new Date(r.ts).toISOString() : r[c])).join(&quot;,&quot;))].join(&quot;\n&quot;), &quot;text/csv&quot;);
+  };
+  const fill = () =&gt; $$(&quot;.version-select&quot;).forEach((s) =&gt; s.innerHTML =
+    `&lt;option value=&quot;auto&quot;&gt;Auto (A/B test v1 vs v2)&lt;/option&gt;&lt;option value=&quot;v1&quot;&gt;v1 – Baseline&lt;/option&gt;&lt;option value=&quot;v2&quot;&gt;v2 – Improved&lt;/option&gt;`);
+  fill();
+}
+
+// ================================================================ usage
+function bars(rows, label, value, fmtv) {
+  const max = Math.max(...rows.map((r) =&gt; r[value] || 0), 1);
+  return rows.length ? `&lt;div class=&quot;bars&quot;&gt;${rows.map((r) =&gt; `&lt;div class=&quot;bar-row&quot;&gt;&lt;span&gt;${esc(r[label])}&lt;/span&gt;
+    &lt;div class=&quot;bar-track&quot;&gt;&lt;div class=&quot;bar-fill&quot; style=&quot;width:${((r[value] || 0) / max) * 100}%&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;span class=&quot;num&quot;&gt;${fmtv(r)}&lt;/span&gt;&lt;/div&gt;`).join(&quot;&quot;)}&lt;/div&gt;`
+    : `&lt;p class=&quot;muted&quot;&gt;No calls yet.&lt;/p&gt;`;
+}
+
+async function loadUsage() {
+  try {
+    const u = await api(&quot;/api/usage&quot;), t = u.totals;
+    const local = store.get(&quot;usageLog&quot;, []);
+    const lc = local.reduce((a, r) =&gt; ({ tokens: a.tokens + (r.tokens || 0), cost: a.cost + (r.cost || 0) }), { tokens: 0, cost: 0 });
+    const tiles = [
+      [&quot;AI calls&quot;, fmt(t.calls)], [&quot;Tokens&quot;, fmt(t.prompt_tokens + t.completion_tokens)], [&quot;Cost&quot;, money(t.cost)],
+      [&quot;Avg response&quot;, `${(t.avg_latency_ms / 1000).toFixed(1)}s`], [&quot;Errors&quot;, fmt(t.errors)],
+      [&quot;Today&quot;, money(u.cost_today) + (u.daily_budget ? ` / $${u.daily_budget}` : &quot;&quot;)],
+      [&quot;This browser (all time)&quot;, `${fmt(lc.tokens)} tok · ${money(lc.cost)}`],
+    ];
+    $(&quot;#usageTiles&quot;).innerHTML = tiles.map(([k, v]) =&gt; `&lt;div class=&quot;tile&quot;&gt;&lt;small&gt;${k}&lt;/small&gt;&lt;b&gt;${v}&lt;/b&gt;&lt;/div&gt;`).join(&quot;&quot;);
+    $(&quot;#usageFeatures&quot;).innerHTML = bars(u.by_feature, &quot;feature&quot;, &quot;tokens&quot;, (r) =&gt; `${fmt(r.tokens)} · ${money(r.cost)}`);
+    $(&quot;#usageDays&quot;).innerHTML = bars(u.by_day, &quot;day&quot;, &quot;tokens&quot;, (r) =&gt; `${fmt(r.tokens)} tok`);
+    $(&quot;#usageRecent&quot;).innerHTML = u.recent.length ? `&lt;table class=&quot;data&quot;&gt;&lt;tr&gt;&lt;th&gt;Time&lt;/th&gt;&lt;th&gt;Feature&lt;/th&gt;&lt;th&gt;Model&lt;/th&gt;&lt;th&gt;In&lt;/th&gt;&lt;th&gt;Out&lt;/th&gt;&lt;th&gt;Cost&lt;/th&gt;&lt;th&gt;Time&lt;/th&gt;&lt;th&gt;Status&lt;/th&gt;&lt;/tr&gt;
+      ${u.recent.map((r) =&gt; `&lt;tr&gt;&lt;td&gt;${new Date(r.ts * 1000).toLocaleTimeString()}&lt;/td&gt;&lt;td&gt;${r.feature}&lt;/td&gt;&lt;td&gt;${r.model}&lt;/td&gt;&lt;td&gt;${fmt(r.prompt_tokens)}&lt;/td&gt;
+      &lt;td&gt;${fmt(r.completion_tokens)}&lt;/td&gt;&lt;td&gt;${money(r.cost)}&lt;/td&gt;&lt;td&gt;${r.latency_ms} ms&lt;/td&gt;&lt;td&gt;${r.ok ? &quot;✅&quot; : &quot;❌ &quot; + esc(r.error)}&lt;/td&gt;&lt;/tr&gt;`).join(&quot;&quot;)}&lt;/table&gt;`
+      : `&lt;p class=&quot;muted&quot;&gt;No AI calls yet. In Demo mode nothing is sent to OpenAI, so nothing is logged here.&lt;/p&gt;`;
+  } catch (e) { showError(e); }
+}
+
+function setupUsage() {
+  $(&quot;#refreshUsage&quot;).onclick = loadUsage;
+  $(&quot;#clearUsage&quot;).onclick = async () =&gt; { if (confirm(&quot;Clear the server&#x27;s usage log?&quot;)) { await api(&quot;/api/usage&quot;, { method: &quot;DELETE&quot; }); loadUsage(); } };
+  $(&quot;#calcText&quot;).oninput = debounce(async () =&gt; {
+    const text = $(&quot;#calcText&quot;).value;
+    try {
+      const r = await api(&quot;/api/tokens&quot;, { method: &quot;POST&quot;, body: { text, model: model(), expected_output_tokens: 0 } });
+      $(&quot;#calcOut&quot;).innerHTML = `&lt;b&gt;${fmt(r.tokens)}&lt;/b&gt; tokens · ${fmt(r.words)} words · ${fmt(r.chars)} characters · input cost ≈ ${money(r.estimated_cost_usd)} on ${r.model} (${r.tokenizer})`;
+    } catch (e) { showError(e); }
+  });
+}
+
+// ================================================================ start
+document.addEventListener(&quot;DOMContentLoaded&quot;, async () =&gt; {
+  setupSettings(); setupTabs(); setupLibrary(); setupSummarize(); setupChat(); setupCreate(); setupLab(); setupUsage();
+  await loadHealth();
+  await loadBooks();
+  renderMessages();
+});
+</pre></details>
+</section>
+<section class="card" id="p11">
+<h3>11. tests/test_app.py: automatic tests</h3>
+<div class="path">book_genai_studio/tests/test_app.py</div>
+<div class="label">What it does</div>
+<p class="what">14 pytest tests that check the app without spending money.</p>
+<div class="label">How to run</div>
+<div class="run">cd day11\book_genai_studio
+pip install -r requirements-dev.txt
+pytest -q</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>TestClient</code> calls the real routes in memory.</li>
+<li>Demo-mode tests: chapters are detected, bad files are rejected, chat cites sources, and a quiz is generated.</li>
+<li>The <code>fake_openai</code> fixture replaces OpenAI with a fake (monkeypatch), so the live code paths (follow-up rewriting, map-reduce, compare, error mapping) can be tested for free.</li>
+</ol>
+<details><summary>Show the full source of book_genai_studio/tests/test_app.py (162 lines)</summary><pre>&quot;&quot;&quot;Run with:  pytest -q
+Uses a temporary data folder, Demo mode, and a fake OpenAI for the &quot;live&quot; tests (no money spent).&quot;&quot;&quot;
+import io
+import json
+import os
+import tempfile
+from pathlib import Path
+
+os.environ[&quot;DATA_DIR&quot;] = tempfile.mkdtemp()
+os.environ[&quot;OPENAI_API_KEY&quot;] = &quot;&quot;
+
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+
+from app import llm, main, services  # noqa: E402
+from app.books import split_chapters  # noqa: E402
+
+SAMPLE = Path(__file__).resolve().parent.parent / &quot;samples&quot; / &quot;the_lighthouse_apprentice.txt&quot;
+client = TestClient(main.app)
+
+
+def upload(name=&quot;book.txt&quot;, data=None):
+    data = data if data is not None else SAMPLE.read_bytes()
+    return client.post(&quot;/api/books&quot;, files={&quot;file&quot;: (name, io.BytesIO(data), &quot;text/plain&quot;)})
+
+
+def sse(text):
+    events = []
+    for block in text.strip().split(&quot;\n\n&quot;):
+        ev = next(line[7:] for line in block.splitlines() if line.startswith(&quot;event: &quot;))
+        data = json.loads(next(line[6:] for line in block.splitlines() if line.startswith(&quot;data: &quot;)))
+        events.append((ev, data))
+    return events
+
+
+@pytest.fixture(scope=&quot;module&quot;)
+def book():
+    r = upload(&quot;the_lighthouse_apprentice.txt&quot;)
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+# ---------------------------------------------------------------- books
+def test_chapters_detected(book):
+    titles = [c[&quot;title&quot;] for c in book[&quot;book&quot;][&quot;chapters&quot;]]
+    assert titles == [&quot;Chapter 1: The Letter&quot;, &quot;Chapter 2: Harrow Point&quot;, &quot;Chapter 3: The Logbook&quot;,
+                      &quot;Chapter 4: The Storm&quot;, &quot;Chapter 5: The New Keeper&quot;]
+
+
+def test_unsupported_and_empty_files():
+    assert upload(&quot;virus.exe&quot;, b&quot;abc&quot;).json()[&quot;error&quot;][&quot;code&quot;] == &quot;unsupported_type&quot;
+    assert upload(&quot;empty.txt&quot;, b&quot;&quot;).json()[&quot;error&quot;][&quot;code&quot;] == &quot;empty_file&quot;
+    assert upload(&quot;tiny.txt&quot;, b&quot;hello there&quot;).json()[&quot;error&quot;][&quot;code&quot;] == &quot;no_text&quot;
+
+
+def test_no_headings_makes_parts():
+    text = (&quot;This is a sentence about nothing in particular. &quot; * 2000)
+    parts = split_chapters(text)
+    assert len(parts) &gt; 1 and parts[0][&quot;title&quot;] == &quot;Part 1&quot;
+
+
+def test_restore_after_server_forgets(book):
+    bid = book[&quot;book&quot;][&quot;id&quot;]
+    main.store.delete(bid)
+    assert client.get(f&quot;/api/books/{bid}&quot;).json()[&quot;error&quot;][&quot;code&quot;] == &quot;book_not_found&quot;
+    assert client.post(&quot;/api/books/restore&quot;, json=book[&quot;portable&quot;]).status_code == 200
+    assert client.get(f&quot;/api/books/{bid}&quot;).status_code == 200
+
+
+# ---------------------------------------------------------------- demo mode features
+def test_demo_summarize_chapter(book):
+    r = client.post(&quot;/api/summarize&quot;, json={&quot;book_id&quot;: book[&quot;book&quot;][&quot;id&quot;], &quot;scope&quot;: &quot;chapter&quot;, &quot;chapter&quot;: 3})
+    assert r.status_code == 200 and r.json()[&quot;mode&quot;] == &quot;demo&quot; and &quot;Demo mode&quot; in r.json()[&quot;output&quot;]
+
+
+def test_summarize_needs_enough_text():
+    assert client.post(&quot;/api/summarize&quot;, json={&quot;text&quot;: &quot;too short&quot;}).json()[&quot;error&quot;][&quot;code&quot;] == &quot;too_short&quot;
+
+
+def test_demo_chat_cites_sources(book):
+    r = client.post(&quot;/api/chat&quot;, json={&quot;book_id&quot;: book[&quot;book&quot;][&quot;id&quot;],
+                                       &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Who signed the logbook A.O.?&quot;}]})
+    events = sse(r.text)
+    meta = events[0][1]
+    assert events[0][0] == &quot;meta&quot; and meta[&quot;sources&quot;]
+    assert &quot;Logbook&quot; in meta[&quot;sources&quot;][0][&quot;label&quot;]
+    assert events[-1][0] == &quot;done&quot;
+
+
+def test_demo_generate_quiz(book):
+    r = client.post(&quot;/api/generate&quot;, json={&quot;book_id&quot;: book[&quot;book&quot;][&quot;id&quot;], &quot;content_type&quot;: &quot;quiz&quot;})
+    assert r.status_code == 200 and &quot;Answer:&quot; in r.json()[&quot;output&quot;]
+
+
+def test_tokens_and_validation():
+    r = client.post(&quot;/api/tokens&quot;, json={&quot;text&quot;: &quot;hello world&quot;}).json()
+    assert r[&quot;tokens&quot;] &gt;= 2 and r[&quot;estimated_cost_usd&quot;] &gt;= 0
+    assert client.post(&quot;/api/feedback&quot;, json={&quot;feature&quot;: &quot;qa&quot;, &quot;rating&quot;: 9}).status_code == 422
+
+
+def test_feedback_stats():
+    client.post(&quot;/api/feedback&quot;, json={&quot;feature&quot;: &quot;summarize&quot;, &quot;prompt_version&quot;: &quot;v1&quot;, &quot;rating&quot;: 2})
+    client.post(&quot;/api/feedback&quot;, json={&quot;feature&quot;: &quot;summarize&quot;, &quot;prompt_version&quot;: &quot;v2&quot;, &quot;rating&quot;: 5})
+    rows = {r[&quot;prompt_version&quot;]: r for r in client.get(&quot;/api/feedback&quot;).json()[&quot;by_version&quot;] if r[&quot;feature&quot;] == &quot;summarize&quot;}
+    assert rows[&quot;v2&quot;][&quot;avg_rating&quot;] &gt; rows[&quot;v1&quot;][&quot;avg_rating&quot;]
+
+
+# ---------------------------------------------------------------- &quot;live&quot; mode with a fake OpenAI
+@pytest.fixture
+def fake_openai(monkeypatch):
+    calls = []
+
+    def fake_chat(messages, *, key, feature, meter=None, model=None, **kw):
+        calls.append((feature, messages))
+        if meter:
+            meter.add(100, 20, 0.0001)
+        return f&quot;FAKE {feature} answer [S1]&quot;
+
+    def fake_stream(messages, *, key, feature, meter=None, model=None, **kw):
+        calls.append((feature, messages))
+        if meter:
+            meter.add(100, 20, 0.0001)
+        yield &quot;The answer &quot;
+        yield &quot;is Adaeze [S1].&quot;
+
+    monkeypatch.setattr(llm, &quot;chat&quot;, fake_chat)
+    monkeypatch.setattr(llm, &quot;chat_stream&quot;, fake_stream)
+    return calls
+
+
+def test_live_followup_question_is_rewritten(book, fake_openai):
+    msgs = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Who is Elias?&quot;}, {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: &quot;The keeper.&quot;},
+            {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;What did he promise?&quot;}]
+    r = client.post(&quot;/api/chat&quot;, json={&quot;book_id&quot;: book[&quot;book&quot;][&quot;id&quot;], &quot;messages&quot;: msgs},
+                    headers={&quot;X-OpenAI-Key&quot;: &quot;sk-test&quot;})
+    events = sse(r.text)
+    assert [f for f, _ in fake_openai] == [&quot;qa_rewrite&quot;, &quot;qa&quot;]
+    text = &quot;&quot;.join(d[&quot;t&quot;] for e, d in events if e == &quot;delta&quot;)
+    assert text == &quot;The answer is Adaeze [S1].&quot;
+    assert events[-1][1][&quot;usage&quot;][&quot;calls&quot;] == 2
+
+
+def test_live_compare_runs_both_versions(book, fake_openai):
+    r = client.post(&quot;/api/compare&quot;, headers={&quot;X-OpenAI-Key&quot;: &quot;sk-test&quot;}, json={
+        &quot;feature&quot;: &quot;summarize&quot;, &quot;summarize&quot;: {&quot;book_id&quot;: book[&quot;book&quot;][&quot;id&quot;], &quot;scope&quot;: &quot;chapter&quot;, &quot;chapter&quot;: 0}})
+    j = r.json()
+    assert j[&quot;v1&quot;][&quot;prompt_version&quot;] == &quot;v1&quot; and j[&quot;v2&quot;][&quot;prompt_version&quot;] == &quot;v2&quot;
+
+
+def test_long_text_uses_map_reduce(fake_openai):
+    long_text = &quot;\n\n&quot;.join(f&quot;Paragraph {i}. &quot; + &quot;The keeper climbed the stairs again. &quot; * 60 for i in range(150))
+    r = client.post(&quot;/api/summarize&quot;, json={&quot;text&quot;: long_text}, headers={&quot;X-OpenAI-Key&quot;: &quot;sk-test&quot;})
+    assert r.status_code == 200
+    assert len(fake_openai) &gt; 2  # several note calls + one final call
+
+
+def test_openai_errors_become_friendly(book, monkeypatch):
+    def boom(*a, **k):
+        raise llm.LLMError(401, &quot;invalid_api_key&quot;, &quot;OpenAI rejected the API key.&quot;, &quot;Open Settings&quot;)
+    monkeypatch.setattr(services.llm, &quot;chat&quot;, boom)
+    r = client.post(&quot;/api/generate&quot;, json={&quot;book_id&quot;: book[&quot;book&quot;][&quot;id&quot;]}, headers={&quot;X-OpenAI-Key&quot;: &quot;sk-bad&quot;})
+    assert r.status_code == 401 and r.json()[&quot;error&quot;][&quot;code&quot;] == &quot;invalid_api_key&quot;
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

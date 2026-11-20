@@ -1,0 +1,1604 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 17: AI agents with real tools</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 17</div>
+<h1>Day 17: AI agents with real tools</h1>
+<p class="lead">An agent = a brain (the LLM) + hands (tools) + rules (the system prompt). Twelve of these agents share the same <code>agent.py</code> code. Only the tool in <code>tools.py</code> and the system prompt change. The weather agent is a bigger example that streams every step.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">agent.py: the common pattern</a></li><li><a href="#p2">Air quality agent · tool: get_air_quality(city)</a></li><li><a href="#p3">Country info agent · tool: get_country_info(country)</a></li><li><a href="#p4">Currency agent · tool: convert_currency(amount, from_currency, to_currency)</a></li><li><a href="#p5">Dictionary agent · tool: define_word(word)</a></li><li><a href="#p6">Fun facts agent · tool: get_joke(category), get_number_fact(number)</a></li><li><a href="#p7">GitHub agent · tool: search_github_repos(query)</a></li><li><a href="#p8">Math tutor agent · tool: solve_math(expression)</a></li><li><a href="#p9">Political scenario agent · tool: web_search(query)</a></li><li><a href="#p10">Recipe agent · tool: search_recipe(dish)</a></li><li><a href="#p11">Stock agent · tool: get_stock_price(ticker)</a></li><li><a href="#p12">Travel agent · tool: get_destination_info(city)</a></li><li><a href="#p13">Wikipedia agent · tool: search_wikipedia(query)</a></li><li><a href="#p14">weather_agent/main.py</a></li></ol></nav>
+<h2>The shared agent.py (used by 12 agents)</h2>
+<div class="group"><p>Every agent folder has agent.py (the loop) and tools.py (the hands). agent.py works like this:</p><pre>main(): print a banner → build_agent() → loop: input(&quot;You: &quot;)
+   ask(agent, text):
+      messages = [SystemMessage(rules), HumanMessage(text)]
+      agent.invoke(messages)  ── ReAct loop inside ──▶ LLM decides → call tool → read result → repeat
+      return last message (the answer)</pre></div>
+<section class="card" id="p1">
+<h3>1. agent.py: the common pattern</h3>
+<div class="path">wikipedia_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Builds a ReAct agent from a local Ollama model and one or two tools, then chats in a loop.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>ChatOllama(model=&quot;llama3.2&quot;, temperature=0.3)</code> is the brain.</li>
+<li><code>create_react_agent(llm, [tool])</code> (LangGraph&#x27;s prebuilt agent) builds the think → act → observe loop.</li>
+<li><code>ask()</code> sends the system prompt plus the user&#x27;s question, and returns <code>result[&quot;messages&quot;][-1].content</code>, the last message, which is the answer.</li>
+<li><code>main()</code> loops on <code>input()</code>. Empty input is skipped, <code>quit</code>/<code>exit</code>/<code>q</code> (or Ctrl+C) ends the program.</li>
+</ol>
+<div class="idea"><b>Key idea:</b> A tool is a normal Python function with <code>@tool</code>. Its docstring is what the model reads to decide when to use it, so write the docstring clearly.</div>
+<details><summary>Show the full source of wikipedia_agent/agent.py (43 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import search_wikipedia
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a knowledgeable research assistant with access to Wikipedia.
+When a user asks about any topic, person, event, or concept, use the search_wikipedia
+tool to get factual information. Summarise clearly, highlight the most important points,
+and add context to make the information meaningful. Always mention the Wikipedia source URL.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+    return create_react_agent(llm, [search_wikipedia])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 52)
+    print(&quot;  📚  Wikipedia Agent  (Ollama + Wikipedia API)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: search_wikipedia&quot;)
+    print(&quot;  Try: &#x27;Who is Marie Curie?&#x27; or &#x27;Explain the French Revolution&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nKeep exploring!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Keep exploring!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<h2>Each agent&#x27;s tool</h2>
+<section class="card" id="p2">
+<h3>2. Air quality agent · tool: get_air_quality(city)</h3>
+<div class="path">air_quality_agent/tools.py · air_quality_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Tells you how clean the air is in a city, with health advice.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\air_quality_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Geocoding: the Open-Meteo search API turns the city name into latitude and longitude.</li>
+<li>Calls the Open-Meteo Air Quality API for the current European AQI, PM2.5, PM10, NO₂, ozone and CO.</li>
+<li>Walks through <code>AQI_LABELS</code> (20 Good, 40 Fair, … 100 Very Poor) and picks the first band the AQI fits into, with its advice.</li>
+<li>Returns a formatted text block, and the model explains it in friendly words.</li>
+</ol>
+<details><summary>Show the full source of air_quality_agent/tools.py (66 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+AQI_LABELS = [
+    (20,  &quot;Good&quot;,           &quot;Air quality is excellent. Safe for all outdoor activities.&quot;),
+    (40,  &quot;Fair&quot;,           &quot;Air quality is acceptable. Sensitive groups should monitor.&quot;),
+    (60,  &quot;Moderate&quot;,       &quot;Some pollutants present. Unusually sensitive people may notice.&quot;),
+    (80,  &quot;Poor&quot;,           &quot;Everyone may start to experience health effects.&quot;),
+    (100, &quot;Very Poor&quot;,      &quot;Health warnings. Limit prolonged outdoor exertion.&quot;),
+    (999, &quot;Extremely Poor&quot;, &quot;Health alert — everyone should avoid outdoor activity.&quot;),
+]
+
+
+@tool
+def get_air_quality(city: str) -&gt; str:
+    &quot;&quot;&quot;
+    Get current air quality index (AQI) and pollution levels for any city.
+    Returns PM2.5, PM10, ozone, NO₂, CO readings and health advice.
+    Uses Open-Meteo Air Quality API — free, no API key.
+    &quot;&quot;&quot;
+    # Geocode city
+    geo = requests.get(
+        &quot;https://geocoding-api.open-meteo.com/v1/search&quot;,
+        params={&quot;name&quot;: city.strip(), &quot;count&quot;: 1},
+        timeout=10
+    ).json()
+
+    if not geo.get(&quot;results&quot;):
+        return f&quot;City &#x27;{city}&#x27; not found.&quot;
+
+    loc = geo[&quot;results&quot;][0]
+    lat, lon = loc[&quot;latitude&quot;], loc[&quot;longitude&quot;]
+    full_name = f&quot;{loc[&#x27;name&#x27;]}, {loc.get(&#x27;country&#x27;, &#x27;&#x27;)}&quot;
+
+    # Fetch air quality
+    aq = requests.get(
+        &quot;https://air-quality-api.open-meteo.com/v1/air-quality&quot;,
+        params={
+            &quot;latitude&quot;: lat,
+            &quot;longitude&quot;: lon,
+            &quot;current&quot;: &quot;european_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,ozone&quot;,
+        },
+        timeout=10
+    ).json()
+
+    cur = aq.get(&quot;current&quot;, {})
+    aqi = cur.get(&quot;european_aqi&quot;, None)
+
+    label, advice = &quot;Unknown&quot;, &quot;No advice available.&quot;
+    if aqi is not None:
+        for threshold, lbl, adv in AQI_LABELS:
+            if aqi &lt;= threshold:
+                label, advice = lbl, adv
+                break
+
+    return (
+        f&quot;Air Quality: {full_name}\n&quot;
+        f&quot;AQI (European) : {aqi} — {label}\n&quot;
+        f&quot;Health Advice  : {advice}\n\n&quot;
+        f&quot;PM2.5 : {cur.get(&#x27;pm2_5&#x27;, &#x27;N/A&#x27;)} µg/m³\n&quot;
+        f&quot;PM10  : {cur.get(&#x27;pm10&#x27;, &#x27;N/A&#x27;)} µg/m³\n&quot;
+        f&quot;NO₂   : {cur.get(&#x27;nitrogen_dioxide&#x27;, &#x27;N/A&#x27;)} µg/m³\n&quot;
+        f&quot;Ozone : {cur.get(&#x27;ozone&#x27;, &#x27;N/A&#x27;)} µg/m³\n&quot;
+        f&quot;CO    : {cur.get(&#x27;carbon_monoxide&#x27;, &#x27;N/A&#x27;)} µg/m³&quot;
+    )
+</pre></details>
+<details><summary>Show the full source of air_quality_agent/agent.py (45 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import get_air_quality
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a helpful environmental health assistant.
+When a user asks about air quality in a city, use the get_air_quality tool.
+Explain the AQI reading in plain language — what it means for daily activities,
+who might be most affected (children, elderly, people with asthma), and practical
+advice like whether to exercise outdoors, wear a mask, or keep windows closed.
+Be clear, caring, and actionable.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+    return create_react_agent(llm, [get_air_quality])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 56)
+    print(&quot;  🌿  Air Quality Agent  (Ollama + Open-Meteo AQ API)&quot;)
+    print(&quot;=&quot; * 56)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: get_air_quality&quot;)
+    print(&quot;  Try: &#x27;Is the air safe in Delhi today?&#x27; or &#x27;Air quality in London&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nBreath easy!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Breathe easy!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. Country info agent · tool: get_country_info(country)</h3>
+<div class="path">country_info_agent/tools.py · country_info_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Answers questions about any country: capital, population, languages, currency and borders.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\country_info_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Calls <code>restcountries.com/v3.1/name/&lt;country&gt;</code>. A non-200 answer means the country wasn&#x27;t found.</li>
+<li>Takes the first result and pulls out each field, using a default of &quot;N/A&quot; whenever one is missing.</li>
+<li>Joins the languages and currencies into readable text, and formats the population with commas.</li>
+</ol>
+<details><summary>Show the full source of country_info_agent/tools.py (44 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+@tool
+def get_country_info(country: str) -&gt; str:
+    &quot;&quot;&quot;
+    Get detailed facts about any country: capital, population, area, languages,
+    currency, region, and more. Uses RestCountries API — free, no API key.
+    &quot;&quot;&quot;
+    r = requests.get(
+        f&quot;https://restcountries.com/v3.1/name/{country.strip()}&quot;,
+        timeout=10
+    )
+    if r.status_code != 200:
+        return f&quot;Country &#x27;{country}&#x27; not found. Try the full English name.&quot;
+
+    data = r.json()[0]
+    capital = (data.get(&quot;capital&quot;) or [&quot;N/A&quot;])[0]
+    population = data.get(&quot;population&quot;, 0)
+    area = data.get(&quot;area&quot;, 0)
+    region = data.get(&quot;region&quot;, &quot;N/A&quot;)
+    subregion = data.get(&quot;subregion&quot;, &quot;N/A&quot;)
+    languages = &quot;, &quot;.join(data.get(&quot;languages&quot;, {}).values()) or &quot;N/A&quot;
+    currencies = &quot;, &quot;.join(
+        f&quot;{v[&#x27;name&#x27;]} ({v.get(&#x27;symbol&#x27;, &#x27;&#x27;)})&quot;
+        for v in data.get(&quot;currencies&quot;, {}).values()
+    ) or &quot;N/A&quot;
+    timezones = &quot;, &quot;.join(data.get(&quot;timezones&quot;, [])[:3])
+    un_member = &quot;Yes&quot; if data.get(&quot;unMember&quot;) else &quot;No&quot;
+    borders = &quot;, &quot;.join(data.get(&quot;borders&quot;, [])) or &quot;None / Island nation&quot;
+
+    return (
+        f&quot;Country    : {data[&#x27;name&#x27;][&#x27;common&#x27;]} ({data[&#x27;name&#x27;][&#x27;official&#x27;]})\n&quot;
+        f&quot;Capital    : {capital}\n&quot;
+        f&quot;Region     : {region} → {subregion}\n&quot;
+        f&quot;Population : {population:,}\n&quot;
+        f&quot;Area       : {area:,.0f} km²\n&quot;
+        f&quot;Languages  : {languages}\n&quot;
+        f&quot;Currency   : {currencies}\n&quot;
+        f&quot;Timezones  : {timezones}\n&quot;
+        f&quot;Borders    : {borders}\n&quot;
+        f&quot;UN Member  : {un_member}&quot;
+    )
+</pre></details>
+<details><summary>Show the full source of country_info_agent/agent.py (44 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import get_country_info
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are an expert geography and world knowledge assistant.
+When a user asks about a country, use the get_country_info tool to fetch the facts.
+Present the data in a clear and interesting way — highlight the country&#x27;s culture,
+significance, interesting facts about its size or population, and anything that
+makes it unique. Make geography feel fascinating.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+    return create_react_agent(llm, [get_country_info])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 54)
+    print(&quot;  🌐  Country Info Agent  (Ollama + RestCountries API)&quot;)
+    print(&quot;=&quot; * 54)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: get_country_info&quot;)
+    print(&quot;  Try: &#x27;Tell me about Japan&#x27; or &#x27;What language do they speak in Brazil?&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nGoodbye!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Goodbye!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p4">
+<h3>4. Currency agent · tool: convert_currency(amount, from_currency, to_currency)</h3>
+<div class="path">currency_agent/tools.py · currency_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Converts money between currencies using today&#x27;s real exchange rate.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\currency_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Upper-cases the codes (usd → USD).</li>
+<li>Calls <code>api.frankfurter.app/latest?from=USD&amp;to=INR</code>.</li>
+<li>If <code>rates</code> is missing, the codes were wrong. Otherwise it computes <code>amount * rate</code> and shows the rate and its date.</li>
+<li>The model pulls the three arguments out of a sentence like &quot;How much is 100 dollars in rupees?&quot;.</li>
+</ol>
+<details><summary>Show the full source of currency_agent/tools.py (32 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+@tool
+def convert_currency(amount: float, from_currency: str, to_currency: str) -&gt; str:
+    &quot;&quot;&quot;
+    Convert an amount between any two currencies using live exchange rates.
+    Example: amount=100, from_currency=&#x27;USD&#x27;, to_currency=&#x27;INR&#x27;.
+    Uses Frankfurter.app — free, no API key, updated daily.
+    &quot;&quot;&quot;
+    frm = from_currency.upper().strip()
+    to = to_currency.upper().strip()
+
+    r = requests.get(
+        &quot;https://api.frankfurter.app/latest&quot;,
+        params={&quot;from&quot;: frm, &quot;to&quot;: to},
+        timeout=10
+    )
+    data = r.json()
+
+    if &quot;rates&quot; not in data:
+        return f&quot;Could not get exchange rate for {frm} → {to}. Check the currency codes.&quot;
+
+    rate = data[&quot;rates&quot;][to]
+    converted = amount * rate
+
+    return (
+        f&quot;{amount:,.2f} {frm} = {converted:,.2f} {to}\n&quot;
+        f&quot;Exchange rate : 1 {frm} = {rate} {to}\n&quot;
+        f&quot;Rate date     : {data.get(&#x27;date&#x27;, &#x27;N/A&#x27;)}&quot;
+    )
+</pre></details>
+<details><summary>Show the full source of currency_agent/agent.py (44 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import convert_currency
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a helpful currency and finance assistant.
+When a user asks to convert money or asks about exchange rates, use the
+convert_currency tool with the correct amount and currency codes (e.g. USD, EUR, INR, GBP, JPY).
+Present the result clearly, mention the rate date, and add brief context
+about the currencies involved if relevant.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.1)
+    return create_react_agent(llm, [convert_currency])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 52)
+    print(&quot;  💱  Currency Agent  (Ollama + Frankfurter.app)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: convert_currency&quot;)
+    print(&quot;  Try: &#x27;Convert 500 USD to INR&#x27; or &#x27;100 euros in Japanese yen&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nGoodbye!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Goodbye!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p5">
+<h3>5. Dictionary agent · tool: define_word(word)</h3>
+<div class="path">dictionary_agent/tools.py · dictionary_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Defines English words, with examples and synonyms.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\dictionary_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Calls <code>api.dictionaryapi.dev/api/v2/entries/en/&lt;word&gt;</code>.</li>
+<li>For up to 3 meanings (noun, verb…), it takes up to 2 definitions each, with an example and 5 synonyms if there are any.</li>
+</ol>
+<details><summary>Show the full source of dictionary_agent/tools.py (34 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+@tool
+def define_word(word: str) -&gt; str:
+    &quot;&quot;&quot;
+    Look up the definition, pronunciation, part of speech, usage examples,
+    and synonyms for any English word. Uses Free Dictionary API — no API key.
+    &quot;&quot;&quot;
+    r = requests.get(
+        f&quot;https://api.dictionaryapi.dev/api/v2/entries/en/{word.strip()}&quot;,
+        timeout=10
+    )
+    if r.status_code != 200:
+        return f&quot;Word &#x27;{word}&#x27; not found. Check spelling or try a simpler form.&quot;
+
+    data = r.json()[0]
+    phonetic = data.get(&quot;phonetic&quot;, &quot;&quot;)
+    result = f&quot;Word: {data[&#x27;word&#x27;]}  {phonetic}\n\n&quot;
+
+    for meaning in data.get(&quot;meanings&quot;, [])[:3]:
+        pos = meaning.get(&quot;partOfSpeech&quot;, &quot;&quot;)
+        result += f&quot;[{pos}]\n&quot;
+        for defn in meaning.get(&quot;definitions&quot;, [])[:2]:
+            result += f&quot;  Definition : {defn.get(&#x27;definition&#x27;, &#x27;&#x27;)}\n&quot;
+            if defn.get(&quot;example&quot;):
+                result += f&quot;  Example    : {defn[&#x27;example&#x27;]}\n&quot;
+        synonyms = meaning.get(&quot;synonyms&quot;, [])[:5]
+        if synonyms:
+            result += f&quot;  Synonyms   : {&#x27;, &#x27;.join(synonyms)}\n&quot;
+        result += &quot;\n&quot;
+
+    return result.strip()
+</pre></details>
+<details><summary>Show the full source of dictionary_agent/agent.py (44 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import define_word
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a knowledgeable vocabulary and language assistant.
+When a user asks about a word, use the define_word tool to look it up.
+Explain the definition clearly, highlight interesting usage, provide examples
+in context, and suggest when and how to use the word naturally in conversation.
+Help users expand their vocabulary in an engaging way.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+    return create_react_agent(llm, [define_word])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 50)
+    print(&quot;  📖  Dictionary Agent  (Ollama + Free Dictionary API)&quot;)
+    print(&quot;=&quot; * 50)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: define_word&quot;)
+    print(&quot;  Try: &#x27;What does ephemeral mean?&#x27; or &#x27;Define serendipity&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nKeep learning!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Keep learning!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p6">
+<h3>6. Fun facts agent · tool: get_joke(category), get_number_fact(number)</h3>
+<div class="path">fun_facts_agent/tools.py · fun_facts_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Tells jokes and number trivia. It has 2 tools, and the model picks the right one.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\fun_facts_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>get_joke</code> checks the category against an allowed list (anything else becomes &quot;Any&quot;) and calls JokeAPI with rude jokes blocked.</li>
+<li>JokeAPI returns either a single joke or a setup plus a punchline, and both shapes are handled.</li>
+<li><code>get_number_fact</code> calls numbersapi.com for a number, a year, or &quot;random&quot;.</li>
+</ol>
+<details><summary>Show the full source of fun_facts_agent/tools.py (48 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+@tool
+def get_joke(category: str = &quot;Any&quot;) -&gt; str:
+    &quot;&quot;&quot;
+    Get a random joke. Categories: Any, Programming, Misc, Dark, Pun, Spooky, Christmas.
+    Uses JokeAPI — free, no API key required.
+    &quot;&quot;&quot;
+    valid = [&quot;Any&quot;, &quot;Programming&quot;, &quot;Misc&quot;, &quot;Dark&quot;, &quot;Pun&quot;, &quot;Spooky&quot;, &quot;Christmas&quot;]
+    cat = category.strip().title()
+    if cat not in valid:
+        cat = &quot;Any&quot;
+
+    r = requests.get(
+        f&quot;https://v2.jokeapi.dev/joke/{cat}&quot;,
+        params={&quot;blacklistFlags&quot;: &quot;nsfw,explicit,racist,sexist&quot;},
+        timeout=10
+    )
+    data = r.json()
+
+    if data.get(&quot;type&quot;) == &quot;single&quot;:
+        return f&quot;😄 {data[&#x27;joke&#x27;]}&quot;
+    elif data.get(&quot;type&quot;) == &quot;twopart&quot;:
+        return f&quot;😄 {data[&#x27;setup&#x27;]}\n\n...{data[&#x27;delivery&#x27;]} 🥁&quot;
+    return &quot;Could not fetch a joke right now. Try again!&quot;
+
+
+@tool
+def get_number_fact(number: str) -&gt; str:
+    &quot;&quot;&quot;
+    Get an interesting trivia fact about a number, year, or date.
+    Examples: &#x27;42&#x27;, &#x27;1969&#x27;, &#x27;random&#x27;. Uses NumbersAPI — free, no API key.
+    &quot;&quot;&quot;
+    n = number.strip().lower()
+    if n == &quot;random&quot;:
+        url = &quot;http://numbersapi.com/random/trivia&quot;
+    else:
+        url = f&quot;http://numbersapi.com/{n}/trivia&quot;
+
+    try:
+        r = requests.get(url, timeout=10)
+        if r.status_code == 200:
+            return f&quot;🔢 {r.text}&quot;
+        return f&quot;No fact found for &#x27;{number}&#x27;.&quot;
+    except Exception as e:
+        return f&quot;Could not fetch fact: {str(e)}&quot;
+</pre></details>
+<details><summary>Show the full source of fun_facts_agent/agent.py (45 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import get_joke, get_number_fact
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a cheerful and witty entertainment assistant.
+You have two tools: get_joke to fetch jokes (categories: Any, Programming, Pun, Misc)
+and get_number_fact to get interesting facts about numbers.
+When someone asks for a joke, fetch one and add a fun reaction.
+When someone asks about a number, fetch the fact and explain why it&#x27;s interesting.
+Keep the energy light, playful, and fun!&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.7)
+    return create_react_agent(llm, [get_joke, get_number_fact])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 52)
+    print(&quot;  🎉  Fun Facts Agent  (Ollama + JokeAPI + NumbersAPI)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tools: get_joke, get_number_fact&quot;)
+    print(&quot;  Try: &#x27;Tell me a programming joke&#x27; or &#x27;Give me a fact about 42&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nStay fun!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Stay fun!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p7">
+<h3>7. GitHub agent · tool: search_github_repos(query)</h3>
+<div class="path">github_agent/tools.py · github_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Finds the most-starred GitHub projects on a topic.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\github_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Calls the GitHub search API with <code>sort=stars</code>, <code>per_page=5</code>.</li>
+<li>For each repo it prints the name, stars, forks, language, description and link.</li>
+</ol>
+<details><summary>Show the full source of github_agent/tools.py (35 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+@tool
+def search_github_repos(query: str) -&gt; str:
+    &quot;&quot;&quot;
+    Search GitHub for public repositories matching a topic, technology, or keyword.
+    Returns top 5 results with stars, description, and URL.
+    Uses GitHub public API — free, no API key required.
+    &quot;&quot;&quot;
+    r = requests.get(
+        &quot;https://api.github.com/search/repositories&quot;,
+        params={&quot;q&quot;: query, &quot;sort&quot;: &quot;stars&quot;, &quot;order&quot;: &quot;desc&quot;, &quot;per_page&quot;: 5},
+        headers={&quot;Accept&quot;: &quot;application/vnd.github.v3+json&quot;},
+        timeout=10
+    )
+    data = r.json()
+
+    if not data.get(&quot;items&quot;):
+        return f&quot;No GitHub repositories found for &#x27;{query}&#x27;.&quot;
+
+    total = data.get(&quot;total_count&quot;, 0)
+    result = f&quot;GitHub Search: &#x27;{query}&#x27; — {total:,} total repos found\nTop 5:\n\n&quot;
+
+    for i, repo in enumerate(data[&quot;items&quot;], 1):
+        result += (
+            f&quot;[{i}] {repo[&#x27;full_name&#x27;]}\n&quot;
+            f&quot;     ⭐ {repo[&#x27;stargazers_count&#x27;]:,} stars  &quot;
+            f&quot;🍴 {repo[&#x27;forks_count&#x27;]:,} forks  &quot;
+            f&quot;[{repo.get(&#x27;language&#x27;, &#x27;N/A&#x27;)}]\n&quot;
+            f&quot;     {repo.get(&#x27;description&#x27;, &#x27;No description&#x27;) or &#x27;No description&#x27;}\n&quot;
+            f&quot;     {repo[&#x27;html_url&#x27;]}\n\n&quot;
+        )
+    return result.strip()
+</pre></details>
+<details><summary>Show the full source of github_agent/agent.py (44 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import search_github_repos
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a helpful open-source code discovery assistant.
+When a user asks about code, libraries, or projects on GitHub, use the
+search_github_repos tool to find the best repositories.
+Summarise the top results, explain what each project does, highlight star counts
+as a measure of popularity, and recommend which one might be best for the user&#x27;s needs.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+    return create_react_agent(llm, [search_github_repos])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 54)
+    print(&quot;  🐙  GitHub Agent  (Ollama + GitHub Public API)&quot;)
+    print(&quot;=&quot; * 54)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: search_github_repos&quot;)
+    print(&quot;  Try: &#x27;Find the best Python web frameworks&#x27; or &#x27;LangChain repos&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nHappy coding!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Happy coding!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p8">
+<h3>8. Math tutor agent · tool: solve_math(expression)</h3>
+<div class="path">math_tutor_agent/tools.py · math_tutor_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Solves maths exactly with SymPy (locally, no internet), while the model explains the steps.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\math_tutor_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Looks at the first word of the expression to decide what to do.</li>
+<li><code>solve x^2 - 9</code> → <code>sp.solve(...)</code> (if there is an <code>=</code>, it moves everything to one side first).</li>
+<li><code>diff ...</code> → <code>sp.diff</code> (derivative). <code>integrate ...</code> → <code>sp.integrate</code> (plus C).</li>
+<li>Anything else → <code>sympify(...).evalf()</code> for the number and <code>simplify</code> for the tidy form.</li>
+<li>Any error returns a hint (&quot;try &#x27;solve x^2 - 4&#x27;&quot;) instead of crashing.</li>
+</ol>
+<div class="idea"><b>Key idea:</b> The model is bad at arithmetic but good at explaining. The tool does the exact maths.</div>
+<details><summary>Show the full source of math_tutor_agent/tools.py (55 lines)</summary><pre>from langchain_core.tools import tool
+
+
+@tool
+def solve_math(expression: str) -&gt; str:
+    &quot;&quot;&quot;
+    Solve or evaluate any mathematical expression, equation, derivative, or integral.
+    Examples:
+      &#x27;2 + 2&#x27;            → arithmetic
+      &#x27;sqrt(144)&#x27;        → functions
+      &#x27;solve x^2 - 9&#x27;    → find roots
+      &#x27;diff x^3 + 2*x&#x27;   → derivative
+      &#x27;integrate sin(x)&#x27; → integral
+    Uses SymPy — runs locally, no internet needed.
+    &quot;&quot;&quot;
+    import sympy as sp
+
+    x, y, z = sp.symbols(&quot;x y z&quot;)
+    expr = expression.strip()
+    lower = expr.lower()
+
+    try:
+        if lower.startswith(&quot;solve&quot;):
+            eq_str = lower.replace(&quot;solve&quot;, &quot;&quot;, 1).strip()
+            if &quot;=&quot; in eq_str:
+                lhs, rhs = eq_str.split(&quot;=&quot;, 1)
+                eq = sp.sympify(lhs) - sp.sympify(rhs)
+            else:
+                eq = sp.sympify(eq_str)
+            solutions = sp.solve(eq, x)
+            return f&quot;Equation : {expr}\nSolutions: x = {solutions}&quot;
+
+        elif lower.startswith((&quot;diff&quot;, &quot;derivative&quot;)):
+            expr_str = lower.replace(&quot;derivative&quot;, &quot;&quot;).replace(&quot;diff&quot;, &quot;&quot;, 1).strip()
+            result = sp.diff(sp.sympify(expr_str), x)
+            simplified = sp.simplify(result)
+            return f&quot;d/dx [ {expr_str} ] = {simplified}&quot;
+
+        elif lower.startswith((&quot;integrate&quot;, &quot;integral&quot;)):
+            expr_str = lower.replace(&quot;integral&quot;, &quot;&quot;).replace(&quot;integrate&quot;, &quot;&quot;, 1).strip()
+            result = sp.integrate(sp.sympify(expr_str), x)
+            return f&quot;∫ {expr_str} dx = {result} + C&quot;
+
+        else:
+            parsed = sp.sympify(expr)
+            evaluated = parsed.evalf()
+            simplified = sp.simplify(parsed)
+            return (
+                f&quot;Expression : {expr}\n&quot;
+                f&quot;Result     : {evaluated}\n&quot;
+                f&quot;Simplified : {simplified}&quot;
+            )
+
+    except Exception as e:
+        return f&quot;Could not evaluate &#x27;{expr}&#x27;: {str(e)}\nTry rewording, e.g. &#x27;solve x^2 - 4&#x27;&quot;
+</pre></details>
+<details><summary>Show the full source of math_tutor_agent/agent.py (47 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import solve_math
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a patient and encouraging mathematics tutor.
+When a user asks a maths question, use the solve_math tool to compute the answer.
+Then explain the solution step by step in simple language — how you got there,
+what concept is involved, and why it works. Use the solve_math tool for:
+  - Arithmetic: &#x27;2 + 2&#x27;, &#x27;15% of 200&#x27;
+  - Algebra: &#x27;solve x^2 - 9&#x27;, &#x27;solve 2*x + 5 = 15&#x27;
+  - Calculus: &#x27;diff x^3 + 2*x&#x27;, &#x27;integrate sin(x)&#x27;
+Make maths feel less scary and more logical.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.2)
+    return create_react_agent(llm, [solve_math])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 52)
+    print(&quot;  🧮  Math Tutor Agent  (Ollama + SymPy)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: solve_math&quot;)
+    print(&quot;  Try: &#x27;Solve x^2 - 9 = 0&#x27; or &#x27;What is the derivative of x^3?&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nKeep calculating!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Keep calculating!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p9">
+<h3>9. Political scenario agent · tool: web_search(query)</h3>
+<div class="path">political_scenario_agent/tools.py · political_scenario_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Analyses current political events using live web search results.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\political_scenario_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>The tool searches DuckDuckGo (<code>DDGS().text(query, max_results=5)</code>) and returns titles, URLs and snippets.</li>
+<li>The system prompt asks for balanced analysis: search first, give several perspectives, name the key players, the risks and the history, and cite sources.</li>
+<li>The model can search several times before it writes the analysis.</li>
+</ol>
+<details><summary>Show the full source of political_scenario_agent/tools.py (32 lines)</summary><pre>from duckduckgo_search import DDGS
+from langchain_core.tools import tool
+
+
+@tool
+def web_search(query: str) -&gt; str:
+    &quot;&quot;&quot;
+    Search the web for current political news, events, policies, elections,
+    geopolitical developments, or any factual information about world affairs.
+    Returns the top 5 search results with title, URL, and snippet.
+    Uses DuckDuckGo — free, no API key required.
+    &quot;&quot;&quot;
+    try:
+        with DDGS() as ddgs:
+            results = list(ddgs.text(query, max_results=5))
+
+        if not results:
+            return f&quot;No results found for: &#x27;{query}&#x27;&quot;
+
+        output_lines = [f&quot;Web Search Results for: &#x27;{query}&#x27;\n&quot;]
+        for i, r in enumerate(results, 1):
+            title = r.get(&quot;title&quot;, &quot;No title&quot;)
+            href = r.get(&quot;href&quot;, &quot;&quot;)
+            body = r.get(&quot;body&quot;, &quot;No snippet available&quot;)
+            output_lines.append(f&quot;[{i}] {title}&quot;)
+            output_lines.append(f&quot;    URL : {href}&quot;)
+            output_lines.append(f&quot;    Info: {body}\n&quot;)
+
+        return &quot;\n&quot;.join(output_lines)
+
+    except Exception as e:
+        return f&quot;Search failed: {str(e)}. Try rephrasing the query.&quot;
+</pre></details>
+<details><summary>Show the full source of political_scenario_agent/agent.py (74 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+
+from tools import web_search
+
+# Change to any model you have pulled: llama3.2, mistral, qwen2.5, etc.
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are an expert political analyst and geopolitical strategist.
+Your role is to analyze political scenarios, current events, elections, policy decisions,
+international relations, and world affairs with clarity and balance.
+
+When analyzing a scenario:
+1. Use the web_search tool to find current, factual information.
+2. Present multiple perspectives without personal bias.
+3. Explain the key players, their motivations, and likely outcomes.
+4. Highlight risks, opportunities, and historical context where relevant.
+5. Keep your analysis concise, structured, and evidence-based.
+
+Always cite your sources by mentioning where you found the information.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+    tools = [web_search]
+    agent = create_react_agent(llm, tools)
+    return agent
+
+
+def ask(agent, user_input: str) -&gt; str:
+    messages = [
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(content=user_input),
+    ]
+    result = agent.invoke({&quot;messages&quot;: messages})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 58)
+    print(&quot;  🏛️  Political Scenario Agent  (Ollama + DuckDuckGo)&quot;)
+    print(&quot;=&quot; * 58)
+    print(f&quot;  Model  : {OLLAMA_MODEL}&quot;)
+    print(f&quot;  Tool   : web_search (DuckDuckGo — free, no API key)&quot;)
+    print(&quot;  Type &#x27;quit&#x27; to exit\n&quot;)
+    print(&quot;  Example queries:&quot;)
+    print(&quot;  - What is the current political situation in France?&quot;)
+    print(&quot;  - Analyze the impact of US-China trade tensions.&quot;)
+    print(&quot;  - What are the key issues in the upcoming UK elections?\n&quot;)
+
+    agent = build_agent()
+
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nGoodbye!&quot;)
+            break
+
+        if not user_input:
+            continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Stay informed!&quot;)
+            break
+
+        print(&quot;\nAgent: &quot;, end=&quot;&quot;, flush=True)
+        response = ask(agent, user_input)
+        print(response)
+        print()
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p10">
+<h3>10. Recipe agent · tool: search_recipe(dish)</h3>
+<div class="path">recipe_agent/tools.py · recipe_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Finds a recipe with its ingredients and steps.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\recipe_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Calls TheMealDB search for the dish.</li>
+<li>The API stores ingredients as <code>strIngredient1..20</code> and <code>strMeasure1..20</code>, so a loop joins each pair (such as &quot;2 cups flour&quot;) and skips the empty ones.</li>
+<li>The instructions are cut to 1,000 characters.</li>
+</ol>
+<details><summary>Show the full source of recipe_agent/tools.py (34 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+@tool
+def search_recipe(dish: str) -&gt; str:
+    &quot;&quot;&quot;
+    Search for a recipe by dish name. Returns ingredients, measurements,
+    and step-by-step cooking instructions. Uses TheMealDB — free, no API key.
+    &quot;&quot;&quot;
+    r = requests.get(
+        &quot;https://www.themealdb.com/api/json/v1/1/search.php&quot;,
+        params={&quot;s&quot;: dish}, timeout=10
+    )
+    data = r.json()
+    if not data.get(&quot;meals&quot;):
+        return f&quot;No recipe found for &#x27;{dish}&#x27;. Try a different dish name.&quot;
+
+    meal = data[&quot;meals&quot;][0]
+    ingredients = []
+    for i in range(1, 21):
+        ing = (meal.get(f&quot;strIngredient{i}&quot;) or &quot;&quot;).strip()
+        meas = (meal.get(f&quot;strMeasure{i}&quot;) or &quot;&quot;).strip()
+        if ing:
+            ingredients.append(f&quot;{meas} {ing}&quot;.strip())
+
+    instructions = (meal.get(&quot;strInstructions&quot;) or &quot;&quot;)[:1000]
+
+    return (
+        f&quot;Recipe: {meal[&#x27;strMeal&#x27;]}\n&quot;
+        f&quot;Cuisine: {meal.get(&#x27;strArea&#x27;, &#x27;N/A&#x27;)} | Category: {meal.get(&#x27;strCategory&#x27;, &#x27;N/A&#x27;)}\n\n&quot;
+        f&quot;Ingredients:\n&quot; + &quot;\n&quot;.join(f&quot;  • {i}&quot; for i in ingredients) +
+        f&quot;\n\nInstructions:\n{instructions}...&quot;
+    )
+</pre></details>
+<details><summary>Show the full source of recipe_agent/agent.py (44 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import search_recipe
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a friendly and passionate chef assistant.
+When a user asks for a recipe or cooking help, use the search_recipe tool to find it.
+Present the ingredients clearly, explain the steps in simple language, and add
+helpful cooking tips — substitutions, serving suggestions, or difficulty notes.
+Make cooking feel approachable and fun for everyone.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.4)
+    return create_react_agent(llm, [search_recipe])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 50)
+    print(&quot;  🍳  Recipe Agent  (Ollama + TheMealDB)&quot;)
+    print(&quot;=&quot; * 50)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: search_recipe&quot;)
+    print(&quot;  Try: &#x27;How do I make biryani?&#x27; or &#x27;Give me a pasta recipe&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nHappy cooking!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Happy cooking!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p11">
+<h3>11. Stock agent · tool: get_stock_price(ticker)</h3>
+<div class="path">stock_agent/tools.py · stock_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Shows a stock&#x27;s live price and today&#x27;s change.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\stock_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>yf.Ticker(symbol).history(period=&quot;2d&quot;)</code> gets the last 2 days of prices.</li>
+<li>The change is <code>today&#x27;s close − yesterday&#x27;s close</code>, and the percentage is <code>change / previous × 100</code>.</li>
+<li><code>stock.info</code> adds the company name, 52-week high and low, market cap and sector.</li>
+</ol>
+<details><summary>Show the full source of stock_agent/tools.py (38 lines)</summary><pre>import yfinance as yf
+from langchain_core.tools import tool
+
+
+@tool
+def get_stock_price(ticker: str) -&gt; str:
+    &quot;&quot;&quot;
+    Get the current stock price, today&#x27;s change, volume, and 52-week range
+    for any stock ticker symbol (e.g. AAPL, TSLA, INFY.NS, RELIANCE.NS).
+    Uses yfinance — free, no API key required.
+    &quot;&quot;&quot;
+    symbol = ticker.upper().strip()
+    try:
+        stock = yf.Ticker(symbol)
+        hist = stock.history(period=&quot;2d&quot;)
+        info = stock.info
+
+        if hist.empty:
+            return f&quot;No data found for ticker &#x27;{symbol}&#x27;. Check the symbol.&quot;
+
+        current = hist[&quot;Close&quot;].iloc[-1]
+        prev_close = hist[&quot;Close&quot;].iloc[-2] if len(hist) &gt;= 2 else hist[&quot;Open&quot;].iloc[-1]
+        change = current - prev_close
+        pct = (change / prev_close) * 100
+        volume = hist[&quot;Volume&quot;].iloc[-1]
+
+        return (
+            f&quot;Stock : {info.get(&#x27;longName&#x27;, symbol)} ({symbol})\n&quot;
+            f&quot;Price : ${current:.2f}\n&quot;
+            f&quot;Change: {change:+.2f} ({pct:+.2f}%) vs previous close\n&quot;
+            f&quot;Volume: {volume:,.0f}\n&quot;
+            f&quot;52w High : ${info.get(&#x27;fiftyTwoWeekHigh&#x27;, &#x27;N/A&#x27;)}\n&quot;
+            f&quot;52w Low  : ${info.get(&#x27;fiftyTwoWeekLow&#x27;, &#x27;N/A&#x27;)}\n&quot;
+            f&quot;Market Cap: ${info.get(&#x27;marketCap&#x27;, 0):,.0f}\n&quot;
+            f&quot;Sector: {info.get(&#x27;sector&#x27;, &#x27;N/A&#x27;)}&quot;
+        )
+    except Exception as e:
+        return f&quot;Could not fetch data for &#x27;{symbol}&#x27;: {str(e)}&quot;
+</pre></details>
+<details><summary>Show the full source of stock_agent/agent.py (45 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import get_stock_price
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a stock market data assistant.
+When a user asks about a stock, use the get_stock_price tool with the correct
+ticker symbol (e.g. AAPL for Apple, TSLA for Tesla, RELIANCE.NS for Indian stocks).
+Present the data clearly — price, change, and key stats.
+Note: This is live market data for informational purposes only.
+Never give financial advice or buy/sell recommendations.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.1)
+    return create_react_agent(llm, [get_stock_price])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 50)
+    print(&quot;  📈  Stock Agent  (Ollama + yfinance)&quot;)
+    print(&quot;=&quot; * 50)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: get_stock_price&quot;)
+    print(&quot;  Try: &#x27;What is Apple stock price?&#x27; or &#x27;How is TSLA doing today?&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nGoodbye!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Goodbye!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p12">
+<h3>12. Travel agent · tool: get_destination_info(city)</h3>
+<div class="path">travel_agent/tools.py · travel_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Gives weather-based travel advice for a city.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\travel_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Step 1: geocode the city to latitude and longitude.</li>
+<li>Step 2: get the current weather plus a 3-day forecast from Open-Meteo.</li>
+<li>Turns the weather codes into words with <code>WMO_CODES</code> (0 → &quot;Clear sky&quot;, 61 → &quot;Light rain&quot;…).</li>
+<li>Chooses a packing tip from the temperature: under 5 °C pack winter clothes, 15-28 °C pleasant, over 35 °C extremely hot.</li>
+<li>The model turns this into friendly trip advice.</li>
+</ol>
+<details><summary>Show the full source of travel_agent/tools.py (97 lines)</summary><pre>import requests
+from langchain_core.tools import tool
+
+
+WMO_CODES = {
+    0: &quot;Clear sky&quot;, 1: &quot;Mainly clear&quot;, 2: &quot;Partly cloudy&quot;, 3: &quot;Overcast&quot;,
+    45: &quot;Foggy&quot;, 48: &quot;Icy fog&quot;, 51: &quot;Light drizzle&quot;, 53: &quot;Moderate drizzle&quot;,
+    61: &quot;Light rain&quot;, 63: &quot;Moderate rain&quot;, 65: &quot;Heavy rain&quot;,
+    71: &quot;Light snow&quot;, 73: &quot;Moderate snow&quot;, 75: &quot;Heavy snow&quot;,
+    80: &quot;Rain showers&quot;, 81: &quot;Moderate showers&quot;, 82: &quot;Heavy showers&quot;,
+    95: &quot;Thunderstorm&quot;, 96: &quot;Thunderstorm with hail&quot;,
+}
+
+
+@tool
+def get_destination_info(city: str) -&gt; str:
+    &quot;&quot;&quot;
+    Get current weather and 3-day travel forecast for any destination city.
+    Returns temperature, conditions, humidity, wind speed, and travel tips.
+    Uses free Open-Meteo API — no API key required.
+    &quot;&quot;&quot;
+    # Step 1: Geocode city → lat/lon
+    geo_resp = requests.get(
+        &quot;https://geocoding-api.open-meteo.com/v1/search&quot;,
+        params={&quot;name&quot;: city, &quot;count&quot;: 1, &quot;language&quot;: &quot;en&quot;, &quot;format&quot;: &quot;json&quot;},
+        timeout=10,
+    )
+    geo_data = geo_resp.json()
+
+    if not geo_data.get(&quot;results&quot;):
+        return f&quot;Sorry, I could not find the location &#x27;{city}&#x27;. Please check the city name.&quot;
+
+    loc = geo_data[&quot;results&quot;][0]
+    lat, lon = loc[&quot;latitude&quot;], loc[&quot;longitude&quot;]
+    country = loc.get(&quot;country&quot;, &quot;Unknown&quot;)
+    full_name = f&quot;{loc[&#x27;name&#x27;]}, {country}&quot;
+
+    # Step 2: Fetch current weather + 3-day forecast
+    weather_resp = requests.get(
+        &quot;https://api.open-meteo.com/v1/forecast&quot;,
+        params={
+            &quot;latitude&quot;: lat,
+            &quot;longitude&quot;: lon,
+            &quot;current&quot;: &quot;temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode,apparent_temperature&quot;,
+            &quot;daily&quot;: &quot;temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&quot;,
+            &quot;timezone&quot;: &quot;auto&quot;,
+            &quot;forecast_days&quot;: 3,
+        },
+        timeout=10,
+    )
+    data = weather_resp.json()
+
+    cur = data.get(&quot;current&quot;, {})
+    daily = data.get(&quot;daily&quot;, {})
+
+    temp = cur.get(&quot;temperature_2m&quot;, &quot;N/A&quot;)
+    feels = cur.get(&quot;apparent_temperature&quot;, &quot;N/A&quot;)
+    humidity = cur.get(&quot;relative_humidity_2m&quot;, &quot;N/A&quot;)
+    wind = cur.get(&quot;wind_speed_10m&quot;, &quot;N/A&quot;)
+    condition = WMO_CODES.get(cur.get(&quot;weathercode&quot;, 0), &quot;Unknown&quot;)
+
+    # Build 3-day forecast string
+    forecast_lines = []
+    for i in range(min(3, len(daily.get(&quot;time&quot;, [])))):
+        date = daily[&quot;time&quot;][i]
+        hi = daily[&quot;temperature_2m_max&quot;][i]
+        lo = daily[&quot;temperature_2m_min&quot;][i]
+        rain = daily[&quot;precipitation_probability_max&quot;][i]
+        cond = WMO_CODES.get(daily[&quot;weathercode&quot;][i], &quot;Unknown&quot;)
+        forecast_lines.append(f&quot;  {date}: {lo}°C – {hi}°C | {cond} | Rain: {rain}%&quot;)
+
+    # Travel tip based on current temp
+    try:
+        t = float(temp)
+        if t &lt; 5:
+            tip = &quot;Very cold — pack heavy winter clothing.&quot;
+        elif t &lt; 15:
+            tip = &quot;Cool weather — bring a jacket.&quot;
+        elif t &lt;= 28:
+            tip = &quot;Pleasant weather — great for sightseeing!&quot;
+        elif t &lt;= 35:
+            tip = &quot;Warm — stay hydrated and use sunscreen.&quot;
+        else:
+            tip = &quot;Extremely hot — limit outdoor activities midday.&quot;
+    except (ValueError, TypeError):
+        tip = &quot;Check local conditions before travelling.&quot;
+
+    forecast_text = &quot;\n&quot;.join(forecast_lines) if forecast_lines else &quot;  Not available&quot;
+
+    return (
+        f&quot;=== Travel Info: {full_name} ===\n&quot;
+        f&quot;Current Conditions: {condition}\n&quot;
+        f&quot;Temperature: {temp}°C (feels like {feels}°C)\n&quot;
+        f&quot;Humidity: {humidity}%  |  Wind: {wind} km/h\n\n&quot;
+        f&quot;3-Day Forecast:\n{forecast_text}\n\n&quot;
+        f&quot;Travel Tip: {tip}&quot;
+    )
+</pre></details>
+<details><summary>Show the full source of travel_agent/agent.py (63 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+
+from tools import get_destination_info
+
+# Change to any model you have pulled: llama3.2, mistral, qwen2.5, etc.
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a friendly and knowledgeable travel assistant.
+When a user asks about a travel destination, use the get_destination_info tool
+to fetch real-time weather and conditions. Based on the data, give helpful,
+concise travel advice — what to pack, best activities, and anything relevant
+for the trip. Always be encouraging and practical.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+    tools = [get_destination_info]
+    agent = create_react_agent(llm, tools)
+    return agent
+
+
+def ask(agent, user_input: str) -&gt; str:
+    messages = [
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(content=user_input),
+    ]
+    result = agent.invoke({&quot;messages&quot;: messages})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 55)
+    print(&quot;  🌍  Travel Agent  (Ollama + LangGraph + Open-Meteo)&quot;)
+    print(&quot;=&quot; * 55)
+    print(f&quot;  Model : {OLLAMA_MODEL}&quot;)
+    print(f&quot;  Tool  : get_destination_info (Open-Meteo — free)&quot;)
+    print(&quot;  Type &#x27;quit&#x27; to exit\n&quot;)
+
+    agent = build_agent()
+
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nGoodbye!&quot;)
+            break
+
+        if not user_input:
+            continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Safe travels!&quot;)
+            break
+
+        print(&quot;\nAgent: &quot;, end=&quot;&quot;, flush=True)
+        response = ask(agent, user_input)
+        print(response)
+        print()
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<section class="card" id="p13">
+<h3>13. Wikipedia agent · tool: search_wikipedia(query)</h3>
+<div class="path">wikipedia_agent/tools.py · wikipedia_agent/agent.py</div>
+<div class="label">What it does</div>
+<p class="what">Answers &quot;who/what is…&quot; questions from Wikipedia.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\wikipedia_agent
+pip install -r requirements.txt
+python agent.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>wikipedia.search(query)</code> finds the 3 best titles, and the program uses the first.</li>
+<li>It gets the page and a 5-sentence summary.</li>
+<li>If the title is ambiguous (a <code>DisambiguationError</code>, for example &quot;Mercury&quot;), it uses the first option instead.</li>
+<li>Returns the title, URL and summary, and the system prompt asks the model to mention the URL.</li>
+</ol>
+<details><summary>Show the full source of wikipedia_agent/tools.py (29 lines)</summary><pre>import wikipedia
+from langchain_core.tools import tool
+
+
+@tool
+def search_wikipedia(query: str) -&gt; str:
+    &quot;&quot;&quot;
+    Search Wikipedia for a summary about any topic, person, place, or concept.
+    Returns a 5-sentence summary and the article URL. Free, no API key.
+    &quot;&quot;&quot;
+    try:
+        results = wikipedia.search(query, results=3)
+        if not results:
+            return f&quot;No Wikipedia results found for &#x27;{query}&#x27;.&quot;
+
+        try:
+            page = wikipedia.page(results[0], auto_suggest=False)
+            summary = wikipedia.summary(results[0], sentences=5, auto_suggest=False)
+        except wikipedia.exceptions.DisambiguationError as e:
+            page = wikipedia.page(e.options[0], auto_suggest=False)
+            summary = wikipedia.summary(e.options[0], sentences=5, auto_suggest=False)
+
+        return (
+            f&quot;Wikipedia: {page.title}\n&quot;
+            f&quot;URL      : {page.url}\n\n&quot;
+            f&quot;{summary}&quot;
+        )
+    except Exception as e:
+        return f&quot;Could not fetch Wikipedia page: {str(e)}&quot;
+</pre></details>
+<details><summary>Show the full source of wikipedia_agent/agent.py (43 lines)</summary><pre>from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, SystemMessage
+from tools import search_wikipedia
+
+OLLAMA_MODEL = &quot;llama3.2&quot;
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are a knowledgeable research assistant with access to Wikipedia.
+When a user asks about any topic, person, event, or concept, use the search_wikipedia
+tool to get factual information. Summarise clearly, highlight the most important points,
+and add context to make the information meaningful. Always mention the Wikipedia source URL.&quot;&quot;&quot;
+
+
+def build_agent():
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0.3)
+    return create_react_agent(llm, [search_wikipedia])
+
+
+def ask(agent, user_input):
+    result = agent.invoke({&quot;messages&quot;: [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_input)]})
+    return result[&quot;messages&quot;][-1].content
+
+
+def main():
+    print(&quot;=&quot; * 52)
+    print(&quot;  📚  Wikipedia Agent  (Ollama + Wikipedia API)&quot;)
+    print(&quot;=&quot; * 52)
+    print(f&quot;  Model: {OLLAMA_MODEL}  |  Tool: search_wikipedia&quot;)
+    print(&quot;  Try: &#x27;Who is Marie Curie?&#x27; or &#x27;Explain the French Revolution&#x27;\n&quot;)
+    agent = build_agent()
+    while True:
+        try:
+            user_input = input(&quot;You: &quot;).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(&quot;\nKeep exploring!&quot;); break
+        if not user_input: continue
+        if user_input.lower() in (&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;):
+            print(&quot;Keep exploring!&quot;); break
+        print(&quot;\nAgent:&quot;, ask(agent, user_input), &quot;\n&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre></details>
+</section>
+<h2>Weather prediction agent (the detailed example)</h2>
+<section class="card" id="p14">
+<h3>14. weather_agent/main.py</h3>
+<div class="path">weather_agent/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Predicts tomorrow&#x27;s maximum temperature from the last 7 real days, shows every think/act/observe step, and then compares the guess with the official forecast.</p>
+<div class="label">How to run</div>
+<div class="run">cd day_17_agents\weather_agent
+python main.py Hyderabad</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>The helpers <code>find_city</code> and <code>fetch_daily</code> (plain Python, not tools) do the geocoding and fetch the daily max/min temperatures from Open-Meteo.</li>
+<li>Tool 1, <code>get_past_temperatures(city)</code>: the last 7 days plus today, one line per day.</li>
+<li>Tool 2, <code>temperature_trend(city)</code>: fits a straight line through the max temperatures (least-squares slope) and returns °C per day, the next value on the line, and the average of the last 3 days.</li>
+<li>It fetches the numbers itself, because small models often break when copying lists of numbers into a tool call.</li>
+<li>The system prompt fixes the order: call tool 1, then tool 2, then answer with one number. Never invent temperatures.</li>
+<li><code>agent.stream(..., stream_mode=&quot;values&quot;)</code> gives the growing message list after each step. The loop prints only the new messages: AI with tool calls (THINK → ACT), tool messages (OBSERVE), and the final AI answer.</li>
+<li>Last, <code>official_forecast()</code> prints Open-Meteo&#x27;s own forecast for tomorrow, so you can check the agent.</li>
+</ol>
+<details><summary>Show the full source of weather_agent/main.py (133 lines)</summary><pre>&quot;&quot;&quot;Weather Prediction Agent · LangChain + Ollama
+
+The agent gets the last 7 days of real temperatures for a city from a free
+weather API (Open-Meteo, no API key), works out the trend, and predicts
+tomorrow&#x27;s max temperature. At the end we compare its guess with
+Open-Meteo&#x27;s official forecast.
+
+Run (with the venv active):
+    python main.py                 # asks for a city
+    python main.py Hyderabad       # or pass the city directly
+
+Needs Ollama running with:  ollama pull llama3.2
+&quot;&quot;&quot;
+
+import sys
+import requests
+from langchain.agents import create_agent
+from langchain_core.tools import tool
+from langchain_ollama import ChatOllama
+
+GEO_URL = &quot;https://geocoding-api.open-meteo.com/v1/search&quot;
+WEATHER_URL = &quot;https://api.open-meteo.com/v1/forecast&quot;
+MODEL = &quot;llama3.2&quot;
+
+
+# ---------- helpers (plain Python, not tools) ----------
+
+def find_city(city: str) -&gt; dict:
+    &quot;&quot;&quot;Turn a city name into latitude/longitude.&quot;&quot;&quot;
+    r = requests.get(GEO_URL, params={&quot;name&quot;: city, &quot;count&quot;: 1}, timeout=15)
+    r.raise_for_status()
+    results = r.json().get(&quot;results&quot;)
+    if not results:
+        raise ValueError(f&quot;City &#x27;{city}&#x27; not found&quot;)
+    return results[0]
+
+
+def fetch_daily(city: str, past_days: int, forecast_days: int) -&gt; dict:
+    &quot;&quot;&quot;Get daily max/min temperatures from Open-Meteo.&quot;&quot;&quot;
+    place = find_city(city)
+    r = requests.get(WEATHER_URL, params={
+        &quot;latitude&quot;: place[&quot;latitude&quot;],
+        &quot;longitude&quot;: place[&quot;longitude&quot;],
+        &quot;daily&quot;: &quot;temperature_2m_max,temperature_2m_min&quot;,
+        &quot;past_days&quot;: past_days,
+        &quot;forecast_days&quot;: forecast_days,
+        &quot;timezone&quot;: &quot;auto&quot;,
+    }, timeout=15)
+    r.raise_for_status()
+    return {&quot;place&quot;: place, &quot;daily&quot;: r.json()[&quot;daily&quot;]}
+
+
+# ---------- TOOLS: the agent&#x27;s &quot;hands&quot; ----------
+
+@tool
+def get_past_temperatures(city: str) -&gt; str:
+    &quot;&quot;&quot;Get the real daily max and min temperatures (°C) for the last 7 days
+    in a city, plus today. Use this first to see recent weather.&quot;&quot;&quot;
+    data = fetch_daily(city, past_days=7, forecast_days=1)
+    d, p = data[&quot;daily&quot;], data[&quot;place&quot;]
+    lines = [f&quot;{p[&#x27;name&#x27;]}, {p.get(&#x27;country&#x27;, &#x27;&#x27;)}:&quot;]
+    for day, tmax, tmin in zip(d[&quot;time&quot;], d[&quot;temperature_2m_max&quot;], d[&quot;temperature_2m_min&quot;]):
+        lines.append(f&quot;{day}: max {tmax}°C, min {tmin}°C&quot;)
+    return &quot;\n&quot;.join(lines)
+
+
+@tool
+def temperature_trend(city: str) -&gt; str:
+    &quot;&quot;&quot;Calculate the trend of the last 7 days of max temperatures in a city:
+    how much it changes per day and the next value on the trend line.
+    Use this to do the maths instead of guessing.&quot;&quot;&quot;
+    # The tool fetches the numbers itself. Small local models (llama3.2 3B)
+    # often break when they have to copy a list of numbers into a tool call.
+    max_temps = fetch_daily(city, past_days=7, forecast_days=1)[&quot;daily&quot;][&quot;temperature_2m_max&quot;]
+    max_temps = [t for t in max_temps if t is not None]
+    n = len(max_temps)
+    if n &lt; 2:
+        return &quot;Need at least 2 temperatures.&quot;
+    xs = range(n)
+    x_mean = sum(xs) / n
+    y_mean = sum(max_temps) / n
+    slope = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, max_temps)) / \
+            sum((x - x_mean) ** 2 for x in xs)
+    next_value = y_mean + slope * (n - x_mean)
+    avg_last3 = sum(max_temps[-3:]) / min(3, n)
+    return (f&quot;trend: {slope:+.2f} °C per day | &quot;
+            f&quot;straight-line next value: {next_value:.1f} °C | &quot;
+            f&quot;average of last 3 days: {avg_last3:.1f} °C&quot;)
+
+
+# ---------- THE AGENT: brain (LLM) + hands (tools) + rules (system prompt) ----------
+
+agent = create_agent(
+    model=ChatOllama(model=MODEL, temperature=0),
+    tools=[get_past_temperatures, temperature_trend],
+    system_prompt=(
+        &quot;You are a weather analyst. To predict tomorrow&#x27;s max temperature:\n&quot;
+        &quot;1. Call get_past_temperatures for the city.\n&quot;
+        &quot;2. Call temperature_trend for the same city.\n&quot;
+        &quot;3. Answer with: the predicted max temperature for tomorrow (one number in °C), &quot;
+        &quot;and one or two short sentences explaining why, based on the data.\n&quot;
+        &quot;Never invent temperatures. Only use numbers that came from the tools.&quot;
+    ),
+)
+
+
+def official_forecast(city: str) -&gt; str:
+    &quot;&quot;&quot;Open-Meteo&#x27;s own forecast for tomorrow, to check the agent&#x27;s guess.&quot;&quot;&quot;
+    d = fetch_daily(city, past_days=0, forecast_days=2)[&quot;daily&quot;]
+    return f&quot;{d[&#x27;time&#x27;][1]}: max {d[&#x27;temperature_2m_max&#x27;][1]}°C, min {d[&#x27;temperature_2m_min&#x27;][1]}°C&quot;
+
+
+if __name__ == &quot;__main__&quot;:
+    city = &quot; &quot;.join(sys.argv[1:]) or input(&quot;City: &quot;).strip() or &quot;Hyderabad&quot;
+    question = f&quot;Predict tomorrow&#x27;s maximum temperature in {city}.&quot;
+    print(f&quot;\n🧑 You: {question}\n&quot;)
+
+    # stream_mode=&quot;values&quot; shows each step of the loop as it happens
+    seen = 1  # skip our own question (message 0)
+    for step in agent.stream({&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: question}]},
+                             stream_mode=&quot;values&quot;):
+        # the agent may call several tools at once, so print every new message
+        for msg in step[&quot;messages&quot;][seen:]:
+            if msg.type == &quot;ai&quot; and msg.tool_calls:
+                for call in msg.tool_calls:
+                    print(f&quot;🧠 THINK → 🛠️ ACT: call {call[&#x27;name&#x27;]}({call[&#x27;args&#x27;]})&quot;)
+            elif msg.type == &quot;tool&quot;:
+                print(f&quot;🔎 OBSERVE ({msg.name}):\n{msg.content}\n&quot;)
+            elif msg.type == &quot;ai&quot;:
+                print(f&quot;🤖 Agent&#x27;s prediction:\n{msg.content}\n&quot;)
+        seen = len(step[&quot;messages&quot;])
+
+    print(f&quot;📡 Official Open-Meteo forecast for tomorrow → {official_forecast(city)}&quot;)
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

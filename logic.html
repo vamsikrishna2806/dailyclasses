@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Program logic: every day</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">GETWORK COURSE</div>
+<h1>Program logic: every day</h1>
+<p class="lead">One page per folder. Each page explains, in plain English, what every program does and how its logic works, with the real source code underneath.</p>
+
+<div class="tw"><table><tr><th>Folder</th><th>What its programs teach</th><th>Programs</th></tr><tr><td><a href="day1/logic.html">day1</a></td><td>Theory day: reading pages only, no programs.</td><td>0</td></tr><tr><td><a href="day2/logic.html">day2</a></td><td>Theory day: Claude, GPT, Gemini and open-source models compared, plus a GenAI timeline. No programs.</td><td>0</td></tr><tr><td><a href="day3/logic.html">day3</a></td><td>Your first call to three AI APIs (OpenAI, Gemini, Claude).</td><td>3</td></tr><tr><td><a href="day4/logic.html">day4</a></td><td>Theory day: the prompt engineering guide. No programs.</td><td>0</td></tr><tr><td><a href="day5/logic.html">day5</a></td><td>A browser page that sends a question to ChatGPT with JavaScript <code>fetch</code>.</td><td>1</td></tr><tr><td><a href="day6/logic.html">day6</a></td><td>A Flask + SQLite task list: a backend API with a browser frontend.</td><td>3</td></tr><tr><td><a href="day7/logic.html">day7</a></td><td>The same Task API written twice: Flask vs FastAPI.</td><td>2</td></tr><tr><td><a href="day8_fastapi/logic.html">day8_fastapi</a></td><td>21 small FastAPI programs: routes, validation, security, databases, WebSockets.</td><td>21</td></tr><tr><td><a href="day9/logic.html">day9</a></td><td>21 small FastAPI programs: routes, validation, security, databases, WebSockets. (The examples are an exact copy of Day 8.)</td><td>21</td></tr><tr><td><a href="day10_localllms/logic.html">day10_localllms</a></td><td>Theory and setup day: CPU/GPU/RAM for local models, Mixture of Experts, and installing and using Ollama. No programs.</td><td>0</td></tr><tr><td><a href="day11/logic.html">day11</a></td><td>Book GenAI Studio: a full GenAI web app (summarise, chat with a book, generate content).</td><td>11</td></tr><tr><td><a href="day12_rag/logic.html">day12_rag</a></td><td>Interactive lesson pages about embeddings and RAG. No Python programs. The RAG code is in Day 13 (lessons 14-17).</td><td>0</td></tr><tr><td><a href="day13_langchain/logic.html">day13_langchain</a></td><td>23 LangChain lessons: from the first model call to RAG and agents (OpenAI and Ollama versions).</td><td>24</td></tr><tr><td><a href="day_17_agents/logic.html">day_17_agents</a></td><td>13 AI agents that call free web APIs (weather, stocks, Wikipedia…) as tools.</td><td>14</td></tr><tr><td><a href="day_18_langgraph/logic.html">day_18_langgraph</a></td><td>Animated lesson pages explaining LangGraph. No programs. The LangGraph code starts in Day 19.</td><td>0</td></tr><tr><td><a href="day_19/logic.html">day_19</a></td><td>4 LangGraph agent designs: router, reflection loop, supervisor, human-in-the-loop.</td><td>4</td></tr><tr><td><a href="day_20_langgraph/logic.html">day_20_langgraph</a></td><td>10 multi-agent architectures in LangGraph (pipeline, parallel, debate, voting, swarm…).</td><td>10</td></tr><tr><td><a href="day_21_mcp/logic.html">day_21_mcp</a></td><td>MCP: build 3 servers (math, weather, notes) and a LangGraph agent that uses them.</td><td>6</td></tr><tr><td><a href="day_22/logic.html">day_22</a></td><td>Only an animation page (flow.html, a copy of the Day 21 MCP message flow). No programs.</td><td>0</td></tr><tr><td><a href="day_23/logic.html">day_23</a></td><td>Simple MCP clients: Ollama and ChatGPT models using the online DeepWiki MCP server.</td><td>3</td></tr><tr><td><a href="codes/logic.html">codes</a></td><td>Small practice files (prime checker) plus the root sample.ipynb.</td><td>4</td></tr><tr><td><a href="sql/logic.html">sql</a></td><td>A SQL lesson page. No programs.</td><td>0</td></tr><tr><td><a href="test/logic.html">test</a></td><td>Neumorphic to-do list: Flask REST API + raw SQLite + single-page JavaScript, with tests.</td><td>5</td></tr></table></div>
+</div><a class="top" href="#top">↑ Top</a></body></html>

@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 8: FastAPI from zero, in 21 programs</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 8</div>
+<h1>Day 8: FastAPI from zero, in 21 programs</h1>
+<p class="lead">Each folder in <code>fastapi_examples/</code> is one runnable lesson. Run it, then open http://127.0.0.1:8000/docs to try every route in the browser.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">01 Hello World</a></li><li><a href="#p2">02 HTTP methods (CRUD)</a></li><li><a href="#p3">03 Path parameters</a></li><li><a href="#p4">04 Query parameters</a></li><li><a href="#p5">05 Request body with Pydantic</a></li><li><a href="#p6">06 Extra validation</a></li><li><a href="#p7">07 Response models</a></li><li><a href="#p8">08 Status codes and errors</a></li><li><a href="#p9">09 Headers, cookies, forms, files</a></li><li><a href="#p10">10 Interactive docs</a></li><li><a href="#p11">11 async and await</a></li><li><a href="#p12">12 Dependency injection</a></li><li><a href="#p13">13 Security: OAuth2 and JWT</a></li><li><a href="#p14">14 Middleware and CORS</a></li><li><a href="#p15">15 Background tasks</a></li><li><a href="#p16">16 APIRouter project structure</a></li><li><a href="#p17">17 Database with SQLModel</a></li><li><a href="#p18">18 Lifespan and settings</a></li><li><a href="#p19">19 WebSockets chat</a></li><li><a href="#p20">20 Responses, static files, templates</a></li><li><a href="#p21">21 Todo API mini project</a></li></ol></nav>
+<section class="card" id="p1">
+<h3>1. 01 Hello World</h3>
+<div class="path">01_hello_world/main.py</div>
+<div class="label">What it does</div>
+<p class="what">The smallest FastAPI app: two GET routes that return JSON.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\01_hello_world
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>app = FastAPI()</code> creates the application.</li>
+<li><code>@app.get(&quot;/&quot;)</code> connects the URL <code>/</code> to the function under it. Whatever that function returns, FastAPI turns into JSON.</li>
+<li>In <code>read_item(item_id: int, q: str | None = None)</code>, <code>item_id</code> comes from the path (<code>/items/5</code>) and is converted to an int. <code>q</code> is an optional query parameter (<code>?q=hi</code>).</li>
+<li><code>uvicorn.run(&quot;main:app&quot;, reload=True)</code> starts the web server, so <code>python main.py</code> works. <code>reload=True</code> restarts it whenever you save the file.</li>
+</ol>
+<details><summary>Show the full source of 01_hello_world/main.py (18 lines)</summary><pre>from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get(&quot;/&quot;)
+def read_root():
+    return {&quot;message&quot;: &quot;Hello World&quot;}
+
+@app.get(&quot;/items/{item_id}&quot;)
+def read_item(item_id: int, q: str | None = None):
+    return {&quot;item_id&quot;: item_id, &quot;q&quot;: q}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p2">
+<h3>2. 02 HTTP methods (CRUD)</h3>
+<div class="path">02_http_methods_crud/main.py</div>
+<div class="label">What it does</div>
+<p class="what">One URL per action on a <code>books</code> dictionary: Create, Read, Update, Delete.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\02_http_methods_crud
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>GET reads a book: <code>books.get(book_id)</code> returns <code>None</code> if the id isn&#x27;t there.</li>
+<li>POST creates one: the new id is <code>max(books) + 1</code>.</li>
+<li>PUT replaces the title stored at an id.</li>
+<li>DELETE removes it with <code>books.pop(book_id, None)</code>. The <code>None</code> means a missing id causes no error.</li>
+<li>Here <code>title: str</code> is a simple parameter (not a model), so FastAPI reads it from the query string: <code>POST /books?title=Dune</code>.</li>
+</ol>
+<details><summary>Show the full source of 02_http_methods_crud/main.py (31 lines)</summary><pre>from fastapi import FastAPI
+
+app = FastAPI()
+books = {1: &quot;Harry Potter&quot;}
+
+@app.get(&quot;/books/{book_id}&quot;)          # READ
+def read_book(book_id: int):
+    return {&quot;id&quot;: book_id, &quot;title&quot;: books.get(book_id)}
+
+@app.post(&quot;/books&quot;)                   # CREATE
+def create_book(title: str):
+    new_id = max(books) + 1
+    books[new_id] = title
+    return {&quot;id&quot;: new_id, &quot;title&quot;: title}
+
+@app.put(&quot;/books/{book_id}&quot;)          # REPLACE
+def replace_book(book_id: int, title: str):
+    books[book_id] = title
+    return {&quot;id&quot;: book_id, &quot;title&quot;: title}
+
+@app.delete(&quot;/books/{book_id}&quot;)       # DELETE
+def delete_book(book_id: int):
+    books.pop(book_id, None)
+    return {&quot;deleted&quot;: book_id}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. 03 Path parameters</h3>
+<div class="path">03_path_parameters/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Different ways to read values from the URL path.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\03_path_parameters
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>user_id: int</code> converts the value and checks it: <code>/users/abc</code> gets a 422 error.</li>
+<li>Order matters: <code>/files/me</code> is declared before <code>/files/{owner}</code>, so &quot;me&quot; matches the fixed route first.</li>
+<li><code>class Model(str, Enum)</code> allows only <code>alexnet</code> or <code>resnet</code>, and <code>/docs</code> shows them as a dropdown.</li>
+<li><code>{file_path:path}</code> lets the value contain slashes: <code>/download/docs/a/b.txt</code> gives <code>&quot;docs/a/b.txt&quot;</code>.</li>
+</ol>
+<details><summary>Show the full source of 03_path_parameters/main.py (43 lines)</summary><pre>from enum import Enum
+from fastapi import FastAPI
+
+app = FastAPI()
+
+# 1. Basic: the type hint converts + validates
+@app.get(&quot;/users/{user_id}&quot;)
+def get_user(user_id: int):
+    return {&quot;user_id&quot;: user_id}
+
+# 2. ORDER MATTERS: put fixed paths BEFORE variable ones
+@app.get(&quot;/me&quot;)                       # fine, different path
+def who_am_i():
+    return {&quot;user&quot;: &quot;current user&quot;}
+
+@app.get(&quot;/files/me&quot;)                 # declared first, so it wins
+def my_files():
+    return {&quot;owner&quot;: &quot;me&quot;}
+
+@app.get(&quot;/files/{owner}&quot;)            # otherwise &quot;me&quot; would land here
+def files_of(owner: str):
+    return {&quot;owner&quot;: owner}
+
+# 3. Allowed values only: use an Enum (shows as a dropdown in /docs)
+class Model(str, Enum):
+    alexnet = &quot;alexnet&quot;
+    resnet = &quot;resnet&quot;
+
+@app.get(&quot;/models/{name}&quot;)
+def get_model(name: Model):
+    return {&quot;model&quot;: name, &quot;is_resnet&quot;: name is Model.resnet}
+
+# 4. A path that contains slashes
+@app.get(&quot;/download/{file_path:path}&quot;)
+def download(file_path: str):
+    return {&quot;file&quot;: file_path}        # /download/docs/a/b.txt -&gt; &quot;docs/a/b.txt&quot;
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p4">
+<h3>4. 04 Query parameters</h3>
+<div class="path">04_query_parameters/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Values after the <code>?</code> in the URL.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\04_query_parameters
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Any function parameter that isn&#x27;t in the path becomes a query parameter.</li>
+<li>A parameter with a default is optional (<code>limit: int = 10</code>). One without a default is required (<code>term: str</code>).</li>
+<li><code>in_stock: bool</code> accepts true/false, 1/0, yes/no, on/off.</li>
+</ol>
+<details><summary>Show the full source of 04_query_parameters/main.py (20 lines)</summary><pre>from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get(&quot;/users/{user_id}/items&quot;)
+def read_items(user_id: int, q: str | None = None, limit: int = 10):
+    #           ^ path param   ^ optional query     ^ query with default
+    return {&quot;user_id&quot;: user_id, &quot;q&quot;: q, &quot;limit&quot;: limit}
+
+@app.get(&quot;/search&quot;)
+def search(term: str, in_stock: bool = False):   # term has no default = REQUIRED
+    return {&quot;term&quot;: term, &quot;in_stock&quot;: in_stock}
+    # in_stock accepts: true/false, 1/0, yes/no, on/off
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p5">
+<h3>5. 05 Request body with Pydantic</h3>
+<div class="path">05_request_body_pydantic/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Reading a JSON body into a checked Python object.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\05_request_body_pydantic
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>class User(BaseModel)</code> lists each field with its rules: <code>Field(min_length=2)</code>, <code>Field(gt=0)</code>, <code>EmailStr</code>, and a default for <code>is_active</code>.</li>
+<li>A parameter whose type is a model is read from the request body, so <code>create_user(user: User)</code> receives a checked <code>User</code> object.</li>
+<li><code>user.model_dump()</code> turns it back into a plain dictionary.</li>
+</ol>
+<details><summary>Show the full source of 05_request_body_pydantic/main.py (22 lines)</summary><pre>from fastapi import FastAPI
+from pydantic import BaseModel, EmailStr, Field
+
+app = FastAPI()
+
+class User(BaseModel):
+    name: str = Field(min_length=2)       # text, at least 2 characters
+    age: int = Field(gt=0)                # whole number, greater than 0
+    email: EmailStr                       # must look like an email
+    is_active: bool = True                # optional, default True
+
+@app.post(&quot;/users&quot;)
+def create_user(user: User):              # a model type = read from the BODY
+    print(user.name, user.age)            # real attributes, with autocomplete!
+    return {&quot;saved&quot;: user.model_dump()}   # model_dump() -&gt; plain dict
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p6">
+<h3>6. 06 Extra validation</h3>
+<div class="path">06_extra_validation/main.py · 06_extra_validation/models.py</div>
+<div class="label">What it does</div>
+<p class="what">Rules for path, query and body values, plus custom validators (in models.py).</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\06_extra_validation
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>Annotated[int, Path(ge=1, le=1000)]</code> adds rules to a path value. <code>Query(min_length=3)</code> adds rules to query values.</li>
+<li><code>tags: list[str] = Query()</code> reads repeated keys: <code>?tags=a&amp;tags=b</code> gives <code>[&quot;a&quot;, &quot;b&quot;]</code>.</li>
+<li><code>Field(pattern=r&quot;^[A-Z]{3}-\d{3}$&quot;)</code> makes <code>code</code> look like <code>ABC-123</code>.</li>
+<li><code>Body(ge=1, le=5)</code> reads one extra value, <code>importance</code>, from the body next to the <code>Product</code> model.</li>
+<li>In models.py, <code>@field_validator(&quot;username&quot;)</code> rejects spaces and lower-cases the name, and <code>@model_validator(mode=&quot;after&quot;)</code> checks that <code>password == confirm</code>.</li>
+</ol>
+<details><summary>Show the full source of 06_extra_validation/main.py (31 lines)</summary><pre>from typing import Annotated
+from fastapi import FastAPI, Path, Query, Body
+from pydantic import BaseModel, Field
+
+app = FastAPI()
+
+@app.get(&quot;/items/{item_id}&quot;)
+def read_item(
+    item_id: Annotated[int, Path(ge=1, le=1000, title=&quot;The item ID&quot;)],
+    q: Annotated[str | None, Query(min_length=3, max_length=50)] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    tags: Annotated[list[str], Query()] = [],     # ?tags=a&amp;tags=b -&gt; [&quot;a&quot;, &quot;b&quot;]
+):
+    return {&quot;item_id&quot;: item_id, &quot;q&quot;: q, &quot;page&quot;: page, &quot;tags&quot;: tags}
+
+class Product(BaseModel):
+    name: str = Field(min_length=1, max_length=100, examples=[&quot;Laptop&quot;])
+    price: float = Field(gt=0, description=&quot;Price in USD&quot;)
+    code: str = Field(pattern=r&quot;^[A-Z]{3}-\d{3}$&quot;)   # like &quot;ABC-123&quot;
+    tags: list[str] = []
+
+@app.post(&quot;/products&quot;)
+def add_product(product: Product, importance: Annotated[int, Body(ge=1, le=5)]):
+    return {&quot;product&quot;: product, &quot;importance&quot;: importance}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+<details><summary>Show the full source of 06_extra_validation/models.py (19 lines)</summary><pre>from pydantic import BaseModel, field_validator, model_validator
+
+class SignUp(BaseModel):
+    username: str
+    password: str
+    confirm: str
+
+    @field_validator(&quot;username&quot;)
+    @classmethod
+    def no_spaces(cls, v: str) -&gt; str:
+        if &quot; &quot; in v:
+            raise ValueError(&quot;username cannot contain spaces&quot;)
+        return v.lower()                  # you can also clean the value
+
+    @model_validator(mode=&quot;after&quot;)
+    def passwords_match(self):
+        if self.password != self.confirm:
+            raise ValueError(&quot;passwords do not match&quot;)
+        return self
+</pre></details>
+</section>
+<section class="card" id="p7">
+<h3>7. 07 Response models</h3>
+<div class="path">07_response_models/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Controlling what the client gets back, for example never sending the password.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\07_response_models
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>UserIn</code> (what the client sends) has a password. <code>UserOut</code> (what it gets back) does not.</li>
+<li><code>response_model=UserOut</code> filters the returned object, so the password is dropped automatically.</li>
+<li>Writing the return type <code>-&gt; UserOut</code> does the same job in the modern style.</li>
+<li><code>response_model_exclude_unset=True</code> sends only the fields that were actually set.</li>
+</ol>
+<details><summary>Show the full source of 07_response_models/main.py (35 lines)</summary><pre>from fastapi import FastAPI
+from pydantic import BaseModel, EmailStr
+
+app = FastAPI()
+
+class UserIn(BaseModel):          # what the client SENDS
+    username: str
+    email: EmailStr
+    password: str
+
+class UserOut(BaseModel):         # what the client GETS
+    username: str
+    email: EmailStr
+
+@app.post(&quot;/users&quot;, response_model=UserOut, status_code=201)
+def create_user(user: UserIn):
+    # save to DB here...
+    return user                   # password is stripped automatically!
+
+# Modern style: the return type hint does the same job
+@app.get(&quot;/users/{username}&quot;)
+def get_user(username: str) -&gt; UserOut:
+    return UserOut(username=username, email=f&quot;{username}@example.com&quot;)
+
+# Useful options
+@app.get(&quot;/items/{id}&quot;, response_model=UserOut, response_model_exclude_unset=True)
+def item(id: int):
+    ...                           # only send fields that were actually set
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p8">
+<h3>8. 08 Status codes and errors</h3>
+<div class="path">08_status_codes_errors/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Returning the right HTTP code, with friendly error messages.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\08_status_codes_errors
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>raise HTTPException(status_code=404, detail=..., headers=...)</code> stops the function and sends that error.</li>
+<li><code>@app.post(..., status_code=201)</code> changes the code used for success.</li>
+<li><code>class OutOfStock(Exception)</code> is a custom error, and <code>@app.exception_handler(OutOfStock)</code> turns it into a 409 JSON answer wherever it is raised.</li>
+</ol>
+<details><summary>Show the full source of 08_status_codes_errors/main.py (40 lines)</summary><pre>from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+
+app = FastAPI()
+items = {&quot;apple&quot;: 1.5}
+
+@app.get(&quot;/items/{name}&quot;)
+def get_item(name: str):
+    if name not in items:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,     # same as 404, but readable
+            detail=f&quot;Item &#x27;{name}&#x27; not found&quot;,
+            headers={&quot;X-Error&quot;: &quot;missing-item&quot;},       # optional
+        )
+    return {&quot;name&quot;: name, &quot;price&quot;: items[name]}
+
+@app.post(&quot;/items&quot;, status_code=status.HTTP_201_CREATED)   # change the success code
+def create_item(name: str, price: float):
+    items[name] = price
+    return {&quot;name&quot;: name}
+
+# Your own exception + a global handler for it
+class OutOfStock(Exception):
+    def __init__(self, name: str):
+        self.name = name
+
+@app.exception_handler(OutOfStock)
+async def out_of_stock_handler(request: Request, exc: OutOfStock):
+    return JSONResponse(status_code=409, content={&quot;error&quot;: f&quot;{exc.name} is out of stock&quot;})
+
+@app.get(&quot;/buy/{name}&quot;)
+def buy(name: str):
+    raise OutOfStock(name)                              # -&gt; 409 + friendly JSON
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p9">
+<h3>9. 09 Headers, cookies, forms, files</h3>
+<div class="path">09_headers_cookies_forms_files/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Reading data that isn&#x27;t JSON.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\09_headers_cookies_forms_files
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>Header()</code> reads request headers. The parameter <code>user_agent</code> maps to the <code>User-Agent</code> header (<code>_</code> becomes <code>-</code>).</li>
+<li><code>Cookie()</code> reads a cookie, and <code>response.set_cookie(...)</code> sets one (<code>httponly=True</code> hides it from JavaScript).</li>
+<li><code>Form()</code> reads HTML form fields instead of JSON.</li>
+<li><code>UploadFile</code> receives a file. <code>await file.read()</code> gives its bytes, and <code>list[UploadFile]</code> accepts several files.</li>
+</ol>
+<details><summary>Show the full source of 09_headers_cookies_forms_files/main.py (43 lines)</summary><pre>from typing import Annotated
+from fastapi import FastAPI, Header, Cookie, Form, File, UploadFile, Response
+
+app = FastAPI()
+
+# HEADERS: user_agent reads the &quot;User-Agent&quot; header (_ becomes -)
+@app.get(&quot;/whoami&quot;)
+def whoami(user_agent: Annotated[str | None, Header()] = None,
+           x_token: Annotated[str | None, Header()] = None):
+    return {&quot;browser&quot;: user_agent, &quot;token&quot;: x_token}
+
+# COOKIES: read one...
+@app.get(&quot;/cart&quot;)
+def cart(session_id: Annotated[str | None, Cookie()] = None):
+    return {&quot;session&quot;: session_id}
+
+# ...and set one
+@app.post(&quot;/login-cookie&quot;)
+def set_cookie(response: Response):
+    response.set_cookie(key=&quot;session_id&quot;, value=&quot;abc123&quot;, httponly=True)
+    return {&quot;ok&quot;: True}
+
+# HTML FORMS (needs python-multipart, included in fastapi[standard])
+@app.post(&quot;/login&quot;)
+def login(username: Annotated[str, Form()], password: Annotated[str, Form()]):
+    return {&quot;username&quot;: username}
+
+# FILE UPLOADS
+@app.post(&quot;/upload&quot;)
+async def upload(file: UploadFile):
+    data = await file.read()
+    return {&quot;filename&quot;: file.filename, &quot;type&quot;: file.content_type, &quot;size&quot;: len(data)}
+
+@app.post(&quot;/upload-many&quot;)
+async def upload_many(files: list[UploadFile], note: Annotated[str, Form()] = &quot;&quot;):
+    return {&quot;names&quot;: [f.filename for f in files], &quot;note&quot;: note}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p10">
+<h3>10. 10 Interactive docs</h3>
+<div class="path">10_interactive_docs/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Customising the automatic <code>/docs</code> and <code>/redoc</code> pages.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\10_interactive_docs
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>The <code>FastAPI(title=..., description=..., version=...)</code> arguments fill the top of the docs page.</li>
+<li><code>tags=[...]</code> groups routes, <code>summary</code> and <code>description</code> describe them, and <code>deprecated=True</code> shows a route as crossed out.</li>
+</ol>
+<details><summary>Show the full source of 10_interactive_docs/main.py (31 lines)</summary><pre>from fastapi import FastAPI
+
+app = FastAPI(
+    title=&quot;Todo API&quot;,
+    description=&quot;Manage your todos. **Markdown** works here!&quot;,
+    version=&quot;1.0.0&quot;,
+    docs_url=&quot;/docs&quot;,          # set to None to hide Swagger UI
+    redoc_url=&quot;/redoc&quot;,
+)
+
+@app.get(
+    &quot;/todos&quot;,
+    tags=[&quot;todos&quot;],                         # groups endpoints in the UI
+    summary=&quot;List all todos&quot;,
+    description=&quot;Returns every todo, newest last.&quot;,
+    response_description=&quot;A list of todos&quot;,
+)
+def list_todos():
+    &quot;&quot;&quot;You can also write the description as a docstring.&quot;&quot;&quot;
+    return []
+
+@app.get(&quot;/old-endpoint&quot;, deprecated=True, tags=[&quot;legacy&quot;])
+def old():
+    return {}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p11">
+<h3>11. 11 async and await</h3>
+<div class="path">11_async_await/main.py</div>
+<div class="label">What it does</div>
+<p class="what">When to use <code>async def</code>, and the one mistake to avoid.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\11_async_await
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>async def</code> with <code>await asyncio.sleep(2)</code>: while this request waits, the server keeps serving others.</li>
+<li><code>httpx.AsyncClient</code> calls another API without blocking the server.</li>
+<li>A plain <code>def</code> with <code>time.sleep(2)</code> is also fine, because FastAPI runs plain functions in a thread pool.</li>
+<li>The mistake: <code>time.sleep</code> inside an <code>async def</code> freezes the whole server for 2 seconds. Never block inside <code>async def</code>.</li>
+</ol>
+<details><summary>Show the full source of 11_async_await/main.py (34 lines)</summary><pre>import asyncio
+import time
+import httpx
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get(&quot;/async-wait&quot;)
+async def good():
+    await asyncio.sleep(2)              # non-blocking: others run meanwhile
+    return {&quot;done&quot;: True}
+
+@app.get(&quot;/call-other-api&quot;)
+async def call_other():
+    async with httpx.AsyncClient() as client:
+        r = await client.get(&quot;https://api.github.com&quot;)
+    return {&quot;status&quot;: r.status_code}
+
+@app.get(&quot;/sync-wait&quot;)
+def also_fine():
+    time.sleep(2)                       # blocking, but FastAPI runs plain `def`
+    return {&quot;done&quot;: True}               # in a thread pool, so it&#x27;s still OK
+
+@app.get(&quot;/BAD&quot;)
+async def bad():
+    time.sleep(2)                       # ❌ blocking call inside async def
+    return {&quot;oops&quot;: &quot;froze the whole server for 2s&quot;}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p12">
+<h3>12. 12 Dependency injection</h3>
+<div class="path">12_dependency_injection/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Reusable pieces that FastAPI runs before your route.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\12_dependency_injection
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>Depends(pagination)</code> runs <code>pagination(skip, limit)</code> and passes its result into the route.</li>
+<li><code>get_db()</code> uses <code>yield</code>: the code before <code>yield</code> runs before the route, and the code after it runs after the response, which is where you close the connection.</li>
+<li>Dependencies can use other dependencies: <code>get_current_user</code> needs <code>get_db</code> and <code>get_token</code>, and <code>get_token</code> raises 401 if there is no header.</li>
+<li><code>CurrentUser = Annotated[dict, Depends(get_current_user)]</code> is a short alias you can reuse.</li>
+<li><code>dependencies=[Depends(verify_key)]</code> runs a check just for its side effect: a wrong key gives 403.</li>
+</ol>
+<details><summary>Show the full source of 12_dependency_injection/main.py (55 lines)</summary><pre>from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, Header
+
+app = FastAPI()
+
+# 1) Simple dependency: shared query parameters
+def pagination(skip: int = 0, limit: int = 10):
+    return {&quot;skip&quot;: skip, &quot;limit&quot;: limit}
+
+@app.get(&quot;/items&quot;)
+def list_items(page: Annotated[dict, Depends(pagination)]):
+    return page                                   # /items?skip=20&amp;limit=5
+
+# 2) Dependency with cleanup: `yield`
+def get_db():
+    db = {&quot;connected&quot;: True}                      # e.g. SessionLocal()
+    try:
+        yield db                                  # given to the endpoint
+    finally:
+        db[&quot;connected&quot;] = False                   # runs AFTER the response: close it
+
+# 3) Dependencies that use other dependencies
+def get_token(authorization: Annotated[str | None, Header()] = None):
+    if not authorization:
+        raise HTTPException(401, &quot;Missing token&quot;)
+    return authorization.removeprefix(&quot;Bearer &quot;)
+
+def get_current_user(db: Annotated[dict, Depends(get_db)],
+                     token: Annotated[str, Depends(get_token)]):
+    return {&quot;name&quot;: &quot;asha&quot;, &quot;token&quot;: token}
+
+# Tip: make a short alias and reuse it everywhere
+CurrentUser = Annotated[dict, Depends(get_current_user)]
+
+@app.get(&quot;/profile&quot;)
+def read_profile(user: CurrentUser):
+    return user
+
+# 4) Run a dependency for its side effect only (no return value needed)
+def verify_key(x_key: Annotated[str, Header()]):
+    if x_key != &quot;secret&quot;:
+        raise HTTPException(403, &quot;Bad key&quot;)
+
+@app.get(&quot;/admin&quot;, dependencies=[Depends(verify_key)])
+def admin():
+    return {&quot;welcome&quot;: &quot;admin&quot;}
+
+# 5) For the WHOLE app: FastAPI(dependencies=[Depends(verify_key)])
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p13">
+<h3>13. 13 Security: OAuth2 and JWT</h3>
+<div class="path">13_security_oauth2_jwt/auth_app.py</div>
+<div class="label">What it does</div>
+<p class="what">A real login: check the password, give out a token, then require that token.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\13_security_oauth2_jwt
+python auth_app.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Passwords are stored only as hashes, made with <code>password_hash.hash(&quot;secret&quot;)</code>.</li>
+<li><code>POST /token</code> reads the username and password form, checks it with <code>password_hash.verify(...)</code>, and returns a JWT made by <code>create_token</code>. The token holds the username (<code>sub</code>) and an expiry time 30 minutes ahead.</li>
+<li><code>OAuth2PasswordBearer(tokenUrl=&quot;token&quot;)</code> reads <code>Authorization: Bearer &lt;token&gt;</code> (and adds an Authorize button to /docs).</li>
+<li><code>get_current_user</code> decodes the token with the secret key. An invalid or expired token, or an unknown user, gets 401.</li>
+<li><code>GET /users/me</code> depends on <code>get_current_user</code>, so only a logged-in user can reach it.</li>
+</ol>
+<details><summary>Show the full source of 13_security_oauth2_jwt/auth_app.py (50 lines)</summary><pre>from datetime import datetime, timedelta, timezone
+from typing import Annotated
+
+import jwt
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pwdlib import PasswordHash
+
+SECRET_KEY = &quot;change-me&quot;          # real apps: long random value from an env variable
+ALGORITHM = &quot;HS256&quot;
+password_hash = PasswordHash.recommended()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=&quot;token&quot;)   # adds the Authorize button in /docs
+
+# never store plain passwords, only hashes
+fake_users = {&quot;asha&quot;: {&quot;username&quot;: &quot;asha&quot;, &quot;hashed_password&quot;: password_hash.hash(&quot;secret&quot;)}}
+
+app = FastAPI()
+
+def create_token(username: str) -&gt; str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+    return jwt.encode({&quot;sub&quot;: username, &quot;exp&quot;: expire}, SECRET_KEY, algorithm=ALGORITHM)
+
+@app.post(&quot;/token&quot;)
+def login(form: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    user = fake_users.get(form.username)
+    if not user or not password_hash.verify(form.password, user[&quot;hashed_password&quot;]):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, &quot;Wrong username or password&quot;)
+    return {&quot;access_token&quot;: create_token(user[&quot;username&quot;]), &quot;token_type&quot;: &quot;bearer&quot;}
+
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.InvalidTokenError:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, &quot;Invalid or expired token&quot;,
+                            headers={&quot;WWW-Authenticate&quot;: &quot;Bearer&quot;})
+    user = fake_users.get(payload.get(&quot;sub&quot;))
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, &quot;User not found&quot;)
+    return user
+
+@app.get(&quot;/users/me&quot;)
+def read_me(user: Annotated[dict, Depends(get_current_user)]):
+    return {&quot;username&quot;: user[&quot;username&quot;]}
+
+
+# Run this file directly:  python auth_app.py
+# (same as: fastapi dev / uvicorn auth_app:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;auth_app:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p14">
+<h3>14. 14 Middleware and CORS</h3>
+<div class="path">14_middleware_cors/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Code that wraps every request, and permission for other websites to call the API.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\14_middleware_cors
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>@app.middleware(&quot;http&quot;)</code> runs around every request. It starts a timer, calls <code>await call_next(request)</code>, then adds an <code>X-Process-Time</code> header to the response.</li>
+<li><code>CORSMiddleware</code> with <code>allow_origins=[...]</code> lets a frontend on another address (such as a React app on port 3000) call this API from the browser.</li>
+</ol>
+<details><summary>Show the full source of 14_middleware_cors/main.py (29 lines)</summary><pre>import time
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Custom middleware: measure how long each request takes
+@app.middleware(&quot;http&quot;)
+async def add_process_time(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)             # go deeper into the onion
+    response.headers[&quot;X-Process-Time&quot;] = f&quot;{time.perf_counter() - start:.4f}&quot;
+    return response                                  # coming back out
+
+# CORS: allow a website on another domain (e.g. your React app) to call this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[&quot;http://localhost:3000&quot;, &quot;https://myfrontend.com&quot;],
+    allow_credentials=True,
+    allow_methods=[&quot;*&quot;],
+    allow_headers=[&quot;*&quot;],
+)
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p15">
+<h3>15. 15 Background tasks</h3>
+<div class="path">15_background_tasks/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Answer the user right away, and do the slow work afterwards.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\15_background_tasks
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>background_tasks.add_task(send_welcome_email, email, name)</code> schedules the function.</li>
+<li>The route returns its reply immediately. FastAPI runs the email function after the response has been sent (here it just writes to <code>emails.log</code>).</li>
+</ol>
+<details><summary>Show the full source of 15_background_tasks/main.py (20 lines)</summary><pre>from fastapi import BackgroundTasks, FastAPI
+
+app = FastAPI()
+
+def send_welcome_email(email: str, name: str):
+    # slow work: SMTP, writing logs, resizing an image...
+    with open(&quot;emails.log&quot;, &quot;a&quot;) as f:
+        f.write(f&quot;Welcome {name} -&gt; {email}\n&quot;)
+
+@app.post(&quot;/signup&quot;)
+def signup(email: str, name: str, background_tasks: BackgroundTasks):
+    background_tasks.add_task(send_welcome_email, email, name)
+    return {&quot;message&quot;: &quot;Signed up! Check your inbox soon.&quot;}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p16">
+<h3>16. 16 APIRouter project structure</h3>
+<div class="path">16_apirouter_structure/myapi/app/main.py · 16_apirouter_structure/myapi/app/routers/users.py · 16_apirouter_structure/myapi/app/routers/items.py</div>
+<div class="label">What it does</div>
+<p class="what">Splitting a big API into one file per area.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\16_apirouter_structure\myapi
+python -m app.main</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Each file in <code>routers/</code> creates <code>router = APIRouter(prefix=&quot;/users&quot;, tags=[&quot;users&quot;])</code> and adds routes to it.</li>
+<li><code>app.include_router(users.router)</code> plugs it into the main app, and <code>prefix=&quot;/v1&quot;</code> puts all the items routes under <code>/v1/items</code>.</li>
+</ol>
+<details><summary>Show the full source of 16_apirouter_structure/myapi/app/main.py (13 lines)</summary><pre>from fastapi import FastAPI
+from app.routers import users, items
+
+app = FastAPI(title=&quot;My API&quot;)
+app.include_router(users.router)
+app.include_router(items.router, prefix=&quot;/v1&quot;)   # extra prefix
+
+
+# Run this file directly:  python -m app.main   (run from the myapi folder)
+# (same as: fastapi dev / uvicorn app.main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;app.main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+<details><summary>Show the full source of 16_apirouter_structure/myapi/app/routers/users.py (11 lines)</summary><pre>from fastapi import APIRouter
+
+router = APIRouter(prefix=&quot;/users&quot;, tags=[&quot;users&quot;])
+
+@router.get(&quot;/&quot;)                  # -&gt; GET /users/
+def list_users():
+    return [{&quot;username&quot;: &quot;asha&quot;}]
+
+@router.get(&quot;/{username}&quot;)        # -&gt; GET /users/asha
+def get_user(username: str):
+    return {&quot;username&quot;: username}
+</pre></details>
+<details><summary>Show the full source of 16_apirouter_structure/myapi/app/routers/items.py (12 lines)</summary><pre># Not shown in the HTML (only users.py is) - a small router so app/main.py can include it.
+from fastapi import APIRouter
+
+router = APIRouter(prefix=&quot;/items&quot;, tags=[&quot;items&quot;])
+
+@router.get(&quot;/&quot;)                  # -&gt; GET /v1/items/
+def list_items():
+    return [{&quot;name&quot;: &quot;laptop&quot;}]
+
+@router.get(&quot;/{item_id}&quot;)         # -&gt; GET /v1/items/1
+def get_item(item_id: int):
+    return {&quot;item_id&quot;: item_id}
+</pre></details>
+</section>
+<section class="card" id="p17">
+<h3>17. 17 Database with SQLModel</h3>
+<div class="path">17_databases_sqlmodel/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Saving data in SQLite with SQLModel (one class is both the table and the validation model).</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\17_databases_sqlmodel
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>class Hero(SQLModel, table=True)</code> defines the <code>hero</code> table and its columns.</li>
+<li><code>create_engine(&quot;sqlite:///heroes.db&quot;)</code> connects to the database file.</li>
+<li><code>get_session()</code> yields one database session per request. <code>SessionDep</code> is the alias the routes use.</li>
+<li><code>lifespan</code> runs <code>create_all</code> once at start-up to create the tables.</li>
+<li>Create: <code>session.add</code> → <code>commit</code> → <code>refresh</code> (to get the new id). List: <code>select(Hero).offset().limit()</code>. Get or delete: <code>session.get(Hero, id)</code>, with 404 if it&#x27;s missing.</li>
+</ol>
+<details><summary>Show the full source of 17_databases_sqlmodel/main.py (59 lines)</summary><pre>from contextlib import asynccontextmanager
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException
+from sqlmodel import Field, Session, SQLModel, create_engine, select
+
+class Hero(SQLModel, table=True):           # a TABLE and a Pydantic model
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    age: int | None = None
+
+engine = create_engine(&quot;sqlite:///heroes.db&quot;, connect_args={&quot;check_same_thread&quot;: False})
+
+def get_session():
+    with Session(engine) as session:        # one session per request
+        yield session
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    SQLModel.metadata.create_all(engine)    # create tables at startup
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
+@app.post(&quot;/heroes&quot;)
+def create_hero(hero: Hero, session: SessionDep) -&gt; Hero:
+    session.add(hero)
+    session.commit()
+    session.refresh(hero)                   # get the new id from the DB
+    return hero
+
+@app.get(&quot;/heroes&quot;)
+def list_heroes(session: SessionDep, offset: int = 0, limit: int = 100) -&gt; list[Hero]:
+    return session.exec(select(Hero).offset(offset).limit(limit)).all()
+
+@app.get(&quot;/heroes/{hero_id}&quot;)
+def get_hero(hero_id: int, session: SessionDep) -&gt; Hero:
+    hero = session.get(Hero, hero_id)
+    if not hero:
+        raise HTTPException(404, &quot;Hero not found&quot;)
+    return hero
+
+@app.delete(&quot;/heroes/{hero_id}&quot;)
+def delete_hero(hero_id: int, session: SessionDep):
+    hero = session.get(Hero, hero_id)
+    if not hero:
+        raise HTTPException(404, &quot;Hero not found&quot;)
+    session.delete(hero)
+    session.commit()
+    return {&quot;ok&quot;: True}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p18">
+<h3>18. 18 Lifespan and settings</h3>
+<div class="path">18_lifespan_settings/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Running code at start-up and shutdown, and reading settings from <code>.env</code>.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\18_lifespan_settings
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>class Settings(BaseSettings)</code> reads <code>app_name</code>, <code>secret_key</code> and so on from environment variables or <code>.env</code>. <code>secret_key</code> has no default, so it is required.</li>
+<li><code>@lru_cache</code> makes <code>get_settings()</code> read the file only once.</li>
+<li>In <code>lifespan</code>, the code before <code>yield</code> loads a fake &quot;model&quot; when the app starts, and the code after <code>yield</code> cleans up when it stops.</li>
+<li><code>/predict</code> uses that loaded model, and <code>/info</code> gets the settings through <code>Depends(get_settings)</code>.</li>
+</ol>
+<details><summary>Show the full source of 18_lifespan_settings/main.py (44 lines)</summary><pre>from contextlib import asynccontextmanager
+from functools import lru_cache
+from typing import Annotated
+
+from fastapi import Depends, FastAPI
+from pydantic_settings import BaseSettings, SettingsConfigDict   # pip install pydantic-settings
+
+class Settings(BaseSettings):
+    app_name: str = &quot;My API&quot;
+    database_url: str = &quot;sqlite:///app.db&quot;
+    secret_key: str                       # REQUIRED: must be in env or .env
+    debug: bool = False
+    model_config = SettingsConfigDict(env_file=&quot;.env&quot;)
+
+@lru_cache                                # read the file only once
+def get_settings() -&gt; Settings:
+    return Settings()
+
+ml_models = {}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print(&quot;🚀 starting: loading model...&quot;)
+    ml_models[&quot;sentiment&quot;] = lambda text: &quot;positive&quot; if &quot;good&quot; in text else &quot;negative&quot;
+    yield                                 # ---- app is running here ----
+    print(&quot;🛑 shutting down: cleaning up&quot;)
+    ml_models.clear()
+
+app = FastAPI(lifespan=lifespan)
+
+@app.get(&quot;/predict&quot;)
+def predict(text: str):
+    return {&quot;label&quot;: ml_models[&quot;sentiment&quot;](text)}
+
+@app.get(&quot;/info&quot;)
+def info(settings: Annotated[Settings, Depends(get_settings)]):
+    return {&quot;app&quot;: settings.app_name, &quot;debug&quot;: settings.debug}
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p19">
+<h3>19. 19 WebSockets chat</h3>
+<div class="path">19_websockets_chat/main.py · 19_websockets_chat/test_in_browser.js</div>
+<div class="label">What it does</div>
+<p class="what">A live chat room: the connection stays open and messages flow both ways.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\19_websockets_chat
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>@app.websocket(&quot;/ws/{name}&quot;)</code>, then <code>await websocket.accept()</code> opens the connection, and the socket is added to <code>clients</code>.</li>
+<li>A <code>while True</code> loop waits with <code>receive_text()</code> and sends every message to all connected clients (a broadcast).</li>
+<li>When someone disconnects, <code>WebSocketDisconnect</code> is raised and that client is removed.</li>
+<li>test_in_browser.js: paste it into the browser console to connect and send &quot;hello everyone&quot;.</li>
+</ol>
+<details><summary>Show the full source of 19_websockets_chat/main.py (23 lines)</summary><pre>from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+
+app = FastAPI()
+clients: list[WebSocket] = []
+
+@app.websocket(&quot;/ws/{name}&quot;)
+async def chat(websocket: WebSocket, name: str):
+    await websocket.accept()
+    clients.append(websocket)
+    try:
+        while True:
+            text = await websocket.receive_text()
+            for c in clients:              # broadcast to everyone
+                await c.send_text(f&quot;{name}: {text}&quot;)
+    except WebSocketDisconnect:
+        clients.remove(websocket)
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+<details><summary>Show the full source of 19_websockets_chat/test_in_browser.js (3 lines)</summary><pre>const ws = new WebSocket(&quot;ws://127.0.0.1:8000/ws/asha&quot;);
+ws.onmessage = (e) =&gt; console.log(e.data);
+ws.onopen = () =&gt; ws.send(&quot;hello everyone&quot;);
+</pre></details>
+</section>
+<section class="card" id="p20">
+<h3>20. 20 Responses, static files, templates</h3>
+<div class="path">20_responses_static_templates/main.py</div>
+<div class="label">What it does</div>
+<p class="what">Returning things other than JSON.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\20_responses_static_templates
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>HTMLResponse</code> returns HTML, <code>PlainTextResponse</code> returns text, <code>FileResponse</code> sends a file download, and <code>RedirectResponse</code> sends the browser to another URL.</li>
+<li><code>StreamingResponse(words())</code> sends one word every 0.3 seconds, the way ChatGPT types its answer.</li>
+<li><code>app.mount(&quot;/static&quot;, StaticFiles(...))</code> serves files from a folder, and <code>Jinja2Templates</code> fills an HTML template with <code>{name}</code>.</li>
+</ol>
+<details><summary>Show the full source of 20_responses_static_templates/main.py (45 lines)</summary><pre>import asyncio
+from fastapi import FastAPI, Request
+from fastapi.responses import (HTMLResponse, FileResponse, RedirectResponse,
+                               StreamingResponse, PlainTextResponse)
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+app = FastAPI()
+app.mount(&quot;/static&quot;, StaticFiles(directory=&quot;static&quot;), name=&quot;static&quot;)  # /static/logo.png
+templates = Jinja2Templates(directory=&quot;templates&quot;)
+
+@app.get(&quot;/hello&quot;, response_class=HTMLResponse)
+def hello():
+    return &quot;&lt;h1&gt;Hello from FastAPI&lt;/h1&gt;&quot;
+
+@app.get(&quot;/report&quot;)
+def report():
+    return FileResponse(&quot;report.pdf&quot;, filename=&quot;report.pdf&quot;)   # download
+
+@app.get(&quot;/old&quot;)
+def old():
+    return RedirectResponse(url=&quot;/hello&quot;)
+
+@app.get(&quot;/ping&quot;, response_class=PlainTextResponse)
+def ping():
+    return &quot;pong&quot;
+
+@app.get(&quot;/stream&quot;)
+async def stream():
+    async def words():
+        for w in [&quot;Fast&quot;, &quot;API &quot;, &quot;streams &quot;, &quot;like &quot;, &quot;ChatGPT&quot;]:
+            yield w + &quot; &quot;
+            await asyncio.sleep(0.3)
+    return StreamingResponse(words(), media_type=&quot;text/plain&quot;)
+
+@app.get(&quot;/page/{name}&quot;, response_class=HTMLResponse)
+def page(request: Request, name: str):
+    return templates.TemplateResponse(request, &quot;page.html&quot;, {&quot;name&quot;: name})
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+</section>
+<section class="card" id="p21">
+<h3>21. 21 Todo API mini project</h3>
+<div class="path">21_todo_api_mini_project/main.py · 21_todo_api_mini_project/test_main.py</div>
+<div class="label">What it does</div>
+<p class="what">Everything combined: a complete Todo API with tests.</p>
+<div class="label">How to run</div>
+<div class="run">cd day8_fastapi\fastapi_examples\21_todo_api_mini_project
+python main.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Three models: <code>TodoCreate</code> (input), <code>TodoUpdate</code> (every field optional, for PATCH) and <code>Todo</code> (adds the id).</li>
+<li><code>get_todo_or_404</code> is a dependency. Any route that takes <code>todo: TodoDep</code> gets the todo, or a 404 automatically.</li>
+<li><code>GET /todos</code> can filter by <code>done</code> and limits the result (<code>Query(ge=1, le=100)</code>).</li>
+<li>PUT replaces the whole todo. PATCH uses <code>model_dump(exclude_unset=True)</code> to change only the fields that were sent.</li>
+<li>DELETE answers 204 (no content).</li>
+<li>test_main.py uses <code>TestClient(app)</code> to call the API in memory. It checks 200, 201, 422 (missing title) and 404.</li>
+</ol>
+<details><summary>Show the full source of 21_todo_api_mini_project/main.py (76 lines)</summary><pre>from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, Query, status
+from pydantic import BaseModel, Field
+
+app = FastAPI(title=&quot;Todo API&quot;, version=&quot;1.0.0&quot;)
+
+# ---------- schemas ----------
+class TodoCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=100)
+    done: bool = False
+
+class TodoUpdate(BaseModel):          # every field optional, for PATCH
+    title: str | None = Field(default=None, min_length=1, max_length=100)
+    done: bool | None = None
+
+class Todo(TodoCreate):
+    id: int
+
+# ---------- &quot;database&quot; ----------
+db: dict[int, Todo] = {}
+counter = {&quot;next&quot;: 1}
+
+def get_todo_or_404(todo_id: int) -&gt; Todo:          # reusable dependency
+    if todo_id not in db:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, &quot;Todo not found&quot;)
+    return db[todo_id]
+
+TodoDep = Annotated[Todo, Depends(get_todo_or_404)]
+
+# ---------- routes ----------
+@app.get(&quot;/&quot;)
+def root():
+    return {&quot;message&quot;: &quot;Hello World&quot;}
+
+@app.get(&quot;/todos&quot;, tags=[&quot;todos&quot;])
+def list_todos(done: bool | None = None,
+               limit: Annotated[int, Query(ge=1, le=100)] = 20) -&gt; list[Todo]:
+    todos = list(db.values())
+    if done is not None:
+        todos = [t for t in todos if t.done == done]
+    return todos[:limit]
+
+@app.post(&quot;/todos&quot;, status_code=status.HTTP_201_CREATED, tags=[&quot;todos&quot;])
+def create_todo(data: TodoCreate) -&gt; Todo:
+    todo = Todo(id=counter[&quot;next&quot;], **data.model_dump())
+    db[todo.id] = todo
+    counter[&quot;next&quot;] += 1
+    return todo
+
+@app.get(&quot;/todos/{todo_id}&quot;, tags=[&quot;todos&quot;])
+def read_todo(todo: TodoDep) -&gt; Todo:
+    return todo
+
+@app.put(&quot;/todos/{todo_id}&quot;, tags=[&quot;todos&quot;])
+def replace_todo(todo: TodoDep, data: TodoCreate) -&gt; Todo:
+    new = Todo(id=todo.id, **data.model_dump())
+    db[todo.id] = new
+    return new
+
+@app.patch(&quot;/todos/{todo_id}&quot;, tags=[&quot;todos&quot;])
+def update_todo(todo: TodoDep, data: TodoUpdate) -&gt; Todo:
+    changes = data.model_dump(exclude_unset=True)    # only fields the client sent
+    updated = todo.model_copy(update=changes)
+    db[todo.id] = updated
+    return updated
+
+@app.delete(&quot;/todos/{todo_id}&quot;, status_code=status.HTTP_204_NO_CONTENT, tags=[&quot;todos&quot;])
+def delete_todo(todo: TodoDep):
+    del db[todo.id]
+
+
+# Run this file directly:  python main.py
+# (same as: fastapi dev / uvicorn main:app --reload)
+if __name__ == &quot;__main__&quot;:
+    import uvicorn
+    uvicorn.run(&quot;main:app&quot;, host=&quot;127.0.0.1&quot;, port=8000, reload=True)
+</pre></details>
+<details><summary>Show the full source of 21_todo_api_mini_project/test_main.py (28 lines)</summary><pre>from fastapi.testclient import TestClient
+from main import app   # HTML has: from main import app, get_db (this Todo app has no get_db)
+
+client = TestClient(app)
+
+def test_root():
+    r = client.get(&quot;/&quot;)
+    assert r.status_code == 200
+    assert r.json() == {&quot;message&quot;: &quot;Hello World&quot;}
+
+def test_create_todo():
+    r = client.post(&quot;/todos&quot;, json={&quot;title&quot;: &quot;Write tests&quot;})
+    assert r.status_code == 201
+    assert r.json()[&quot;title&quot;] == &quot;Write tests&quot;
+
+def test_validation_error():
+    r = client.post(&quot;/todos&quot;, json={})          # title missing
+    assert r.status_code == 422
+
+def test_not_found():
+    assert client.get(&quot;/todos/9999&quot;).status_code == 404
+
+# Swap a real dependency for a fake one during tests
+# (pattern from the HTML; uncomment when your app has a get_db dependency)
+# def fake_db():
+#     yield {&quot;fake&quot;: True}
+#
+# app.dependency_overrides[get_db] = fake_db
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

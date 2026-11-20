@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 5: ChatGPT question and answer web page</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 5</div>
+<h1>Day 5: ChatGPT question and answer web page</h1>
+<p class="lead">A web page made of <code>index.html</code>, <code>style.css</code> and <code>app.js</code>. There is no Python and no server: the browser itself calls the OpenAI API.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">app.js: the page&#x27;s logic</a></li></ol></nav>
+<section class="card" id="p1">
+<h3>1. app.js: the page&#x27;s logic</h3>
+<div class="path">app.js</div>
+<div class="label">What it does</div>
+<p class="what">You type a question and press Submit. The page sends it to ChatGPT and shows the answer, along with how long it took.</p>
+<div class="label">How to run</div>
+<div class="run">Double-click index.html (or: python -m http.server 3000, then open http://localhost:3000)</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li>Everything starts in <code>document.addEventListener(&#x27;DOMContentLoaded&#x27;, ...)</code>, so the code runs only after the page has loaded.</li>
+<li>The API key you type is saved in the browser with <code>localStorage.setItem(...)</code>, so you don&#x27;t have to type it again. <code>updateKeyBadge</code> shows whether a key is set.</li>
+<li>Clicking Submit (or pressing Ctrl+Enter) runs <code>handleSubmit()</code>, which checks that the question and the key are not empty.</li>
+<li><code>callChatGPTAPI(apiKey, model, question)</code> builds the request body: the model, a <code>system</code> message (&quot;be concise and helpful&quot;) plus a <code>user</code> message with your question, and <code>temperature: 0.7</code>.</li>
+<li>It POSTs that body with <code>fetch(&#x27;https://api.openai.com/v1/chat/completions&#x27;, ...)</code>, sending the key in the <code>Authorization: Bearer ...</code> header.</li>
+<li>An <code>AbortController</code> cancels the request if it takes longer than 60 seconds.</li>
+<li>If <code>response.ok</code> is false, it reads OpenAI&#x27;s error message and shows it in a toast (a small pop-up).</li>
+<li>Otherwise it puts <code>data.choices[0].message.content</code> into the answer box and shows the response time, character count and model name.</li>
+<li>The Copy button copies the answer to the clipboard.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>you type ──▶ handleSubmit() ──▶ callChatGPTAPI() ──fetch POST──▶ api.openai.com
+                                                   ◀── JSON {choices:[{message:{content}}]}
+answer box ◀── choices[0].message.content</pre>
+<div class="note"><b>Watch out:</b> The key lives in the browser. That&#x27;s fine for learning on your own PC, but a real website must keep the key on a server (Day 6 onwards).</div>
+<details><summary>Show the full source of app.js (353 lines)</summary><pre>/**
+ * ChatGPT Q&amp;A Assistant
+ * Implementation of Task 1, Task 2, and Task 3
+ */
+
+document.addEventListener(&#x27;DOMContentLoaded&#x27;, () =&gt; {
+  // =========================================================================
+  // DOM Elements
+  // =========================================================================
+  // Config elements
+  const configToggleBtn = document.getElementById(&#x27;config-toggle-btn&#x27;);
+  const configContent = document.getElementById(&#x27;config-content&#x27;);
+  const configChevron = document.getElementById(&#x27;config-chevron&#x27;);
+  const apiKeyInput = document.getElementById(&#x27;api-key-input&#x27;);
+  const toggleKeyVisibilityBtn = document.getElementById(&#x27;toggle-key-visibility-btn&#x27;);
+  const apiStatusBadge = document.getElementById(&#x27;api-status-badge&#x27;);
+  const modelSelect = document.getElementById(&#x27;model-select&#x27;);
+
+  // Task 1: Question Elements &amp; Submit Button
+  const questionTextbox = document.getElementById(&#x27;question-textbox&#x27;);
+  const questionCharCount = document.getElementById(&#x27;question-char-count&#x27;);
+  const clearQuestionBtn = document.getElementById(&#x27;clear-question-btn&#x27;);
+  const submitBtn = document.getElementById(&#x27;submit-btn&#x27;);
+  const networkStatus = document.getElementById(&#x27;network-status&#x27;);
+  const networkStatusText = document.getElementById(&#x27;network-status-text&#x27;);
+
+  // Task 3: Answer Elements
+  const answerTextbox = document.getElementById(&#x27;answer-textbox&#x27;);
+  const answerCharCount = document.getElementById(&#x27;answer-char-count&#x27;);
+  const responseTimeBadge = document.getElementById(&#x27;response-time-badge&#x27;);
+  const copyBtn = document.getElementById(&#x27;copy-btn&#x27;);
+  const copyText = document.getElementById(&#x27;copy-text&#x27;);
+  const modelUsedTag = document.getElementById(&#x27;model-used-tag&#x27;);
+  const timestampTag = document.getElementById(&#x27;timestamp-tag&#x27;);
+
+  // Suggestions &amp; Toasts
+  const chipButtons = document.querySelectorAll(&#x27;.chip-btn&#x27;);
+  const toastContainer = document.getElementById(&#x27;toast-container&#x27;);
+
+  // =========================================================================
+  // State Management
+  // =========================================================================
+  const STORAGE_KEY = &#x27;chatgpt_qa_api_key&#x27;;
+  let isRequestPending = false;
+
+  // Initialize stored API key if available
+  const savedKey = localStorage.getItem(STORAGE_KEY);
+  if (savedKey) {
+    apiKeyInput.value = savedKey;
+    updateKeyBadge(true);
+  } else {
+    updateKeyBadge(false);
+  }
+
+  // =========================================================================
+  // UI Helpers &amp; Notifications
+  // =========================================================================
+  function showToast(message, type = &#x27;info&#x27;, duration = 4000) {
+    const toast = document.createElement(&#x27;div&#x27;);
+    toast.className = `toast toast-${type}`;
+    
+    // Choose icon
+    let iconSvg = &#x27;&#x27;;
+    if (type === &#x27;error&#x27;) {
+      iconSvg = `&lt;svg width=&quot;18&quot; height=&quot;18&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;10&quot;&gt;&lt;/circle&gt;&lt;line x1=&quot;12&quot; y1=&quot;8&quot; x2=&quot;12&quot; y2=&quot;12&quot;&gt;&lt;/line&gt;&lt;line x1=&quot;12&quot; y1=&quot;16&quot; x2=&quot;12.01&quot; y2=&quot;16&quot;&gt;&lt;/line&gt;&lt;/svg&gt;`;
+    } else if (type === &#x27;success&#x27;) {
+      iconSvg = `&lt;svg width=&quot;18&quot; height=&quot;18&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;path d=&quot;M22 11.08V12a10 10 0 1 1-5.93-9.14&quot;&gt;&lt;/path&gt;&lt;polyline points=&quot;22 4 12 14.01 9 11.01&quot;&gt;&lt;/polyline&gt;&lt;/svg&gt;`;
+    } else {
+      iconSvg = `&lt;svg width=&quot;18&quot; height=&quot;18&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot;&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;10&quot;&gt;&lt;/circle&gt;&lt;line x1=&quot;12&quot; y1=&quot;16&quot; x2=&quot;12&quot; y2=&quot;12&quot;&gt;&lt;/line&gt;&lt;line x1=&quot;12&quot; y1=&quot;8&quot; x2=&quot;12.01&quot; y2=&quot;8&quot;&gt;&lt;/line&gt;&lt;/svg&gt;`;
+    }
+
+    toast.innerHTML = `
+      &lt;div style=&quot;display: flex; align-items: center; gap: 0.6rem;&quot;&gt;
+        ${iconSvg}
+        &lt;span&gt;${message}&lt;/span&gt;
+      &lt;/div&gt;
+    `;
+
+    toastContainer.appendChild(toast);
+
+    setTimeout(() =&gt; {
+      toast.style.opacity = &#x27;0&#x27;;
+      toast.style.transform = &#x27;translateY(10px) scale(0.95)&#x27;;
+      setTimeout(() =&gt; toast.remove(), 250);
+    }, duration);
+  }
+
+  function updateKeyBadge(hasKey) {
+    if (hasKey) {
+      apiStatusBadge.textContent = &#x27;API Key Configured&#x27;;
+      apiStatusBadge.classList.add(&#x27;active&#x27;);
+    } else {
+      apiStatusBadge.textContent = &#x27;API Key Needed&#x27;;
+      apiStatusBadge.classList.remove(&#x27;active&#x27;);
+    }
+  }
+
+  function setStatus(state, message) {
+    const dot = networkStatus.querySelector(&#x27;.indicator-dot&#x27;);
+    dot.className = `indicator-dot ${state}`;
+    networkStatusText.textContent = message;
+  }
+
+  // =========================================================================
+  // Config &amp; API Key Handling
+  // =========================================================================
+  configToggleBtn.addEventListener(&#x27;click&#x27;, () =&gt; {
+    configContent.classList.toggle(&#x27;collapsed&#x27;);
+    configChevron.classList.toggle(&#x27;rotated&#x27;);
+  });
+
+  apiKeyInput.addEventListener(&#x27;input&#x27;, (e) =&gt; {
+    const key = e.target.value.trim();
+    if (key.length &gt; 0) {
+      localStorage.setItem(STORAGE_KEY, key);
+      updateKeyBadge(true);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+      updateKeyBadge(false);
+    }
+  });
+
+  toggleKeyVisibilityBtn.addEventListener(&#x27;click&#x27;, () =&gt; {
+    if (apiKeyInput.type === &#x27;password&#x27;) {
+      apiKeyInput.type = &#x27;text&#x27;;
+      toggleKeyVisibilityBtn.innerHTML = `
+        &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; width=&quot;16&quot; height=&quot;16&quot;&gt;
+          &lt;path d=&quot;M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24&quot;&gt;&lt;/path&gt;
+          &lt;line x1=&quot;1&quot; y1=&quot;1&quot; x2=&quot;23&quot; y2=&quot;23&quot;&gt;&lt;/line&gt;
+        &lt;/svg&gt;
+      `;
+    } else {
+      apiKeyInput.type = &#x27;password&#x27;;
+      toggleKeyVisibilityBtn.innerHTML = `
+        &lt;svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; width=&quot;16&quot; height=&quot;16&quot;&gt;
+          &lt;path d=&quot;M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z&quot;&gt;&lt;/path&gt;
+          &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;3&quot;&gt;&lt;/circle&gt;
+        &lt;/svg&gt;
+      `;
+    }
+  });
+
+  // =========================================================================
+  // TASK 1: Question Textbox &amp; UI Event Handlers
+  // =========================================================================
+  // Character count updates
+  questionTextbox.addEventListener(&#x27;input&#x27;, () =&gt; {
+    const len = questionTextbox.value.length;
+    questionCharCount.textContent = `${len.toLocaleString()} character${len === 1 ? &#x27;&#x27; : &#x27;s&#x27;}`;
+  });
+
+  // Clear button
+  clearQuestionBtn.addEventListener(&#x27;click&#x27;, () =&gt; {
+    questionTextbox.value = &#x27;&#x27;;
+    questionCharCount.textContent = &#x27;0 characters&#x27;;
+    questionTextbox.focus();
+  });
+
+  // Shortcut: Ctrl + Enter to submit
+  questionTextbox.addEventListener(&#x27;keydown&#x27;, (e) =&gt; {
+    if ((e.ctrlKey || e.metaKey) &amp;&amp; e.key === &#x27;Enter&#x27;) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  });
+
+  // Sample prompt chips
+  chipButtons.forEach((btn) =&gt; {
+    btn.addEventListener(&#x27;click&#x27;, () =&gt; {
+      const prompt = btn.getAttribute(&#x27;data-prompt&#x27;);
+      questionTextbox.value = prompt;
+      questionCharCount.textContent = `${prompt.length} characters`;
+      questionTextbox.focus();
+      showToast(&#x27;Sample question loaded!&#x27;, &#x27;info&#x27;, 2000);
+    });
+  });
+
+  // Submit button click handler
+  submitBtn.addEventListener(&#x27;click&#x27;, handleSubmit);
+
+  // =========================================================================
+  // TASK 2: Calling the ChatGPT API
+  // =========================================================================
+  async function callChatGPTAPI(apiKey, model, question) {
+    const endpoint = &#x27;https://api.openai.com/v1/chat/completions&#x27;;
+
+    const payload = {
+      model: model,
+      messages: [
+        {
+          role: &#x27;system&#x27;,
+          content: &#x27;You are a knowledgeable, concise, and helpful AI assistant. Provide direct, structured, and insightful answers.&#x27;
+        },
+        {
+          role: &#x27;user&#x27;,
+          content: question
+        }
+      ],
+      temperature: 0.7
+    };
+
+    // Controller for request timeout (60 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() =&gt; controller.abort(), 60000);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: &#x27;POST&#x27;,
+        headers: {
+          &#x27;Content-Type&#x27;: &#x27;application/json&#x27;,
+          &#x27;Authorization&#x27;: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Detailed error messages based on OpenAI error schema
+        const errorMsg = data?.error?.message || `Server returned error status ${response.status}`;
+        throw new Error(errorMsg);
+      }
+
+      // Return the assistant&#x27;s reply text
+      if (data.choices &amp;&amp; data.choices.length &gt; 0 &amp;&amp; data.choices[0].message) {
+        return {
+          content: data.choices[0].message.content,
+          model: data.model || model,
+          usage: data.usage
+        };
+      } else {
+        throw new Error(&#x27;No answer choice was returned by ChatGPT API.&#x27;);
+      }
+    } catch (error) {
+      if (error.name === &#x27;AbortError&#x27;) {
+        throw new Error(&#x27;Request timed out after 60 seconds. Please check your connection.&#x27;);
+      }
+      throw error;
+    }
+  }
+
+  // =========================================================================
+  // TASK 3: Main Submission Flow &amp; Populating Answer Textbox
+  // =========================================================================
+  async function handleSubmit() {
+    if (isRequestPending) return;
+
+    const question = questionTextbox.value.trim();
+    if (!question) {
+      showToast(&#x27;Please enter a question before submitting.&#x27;, &#x27;error&#x27;);
+      questionTextbox.focus();
+      return;
+    }
+
+    const apiKey = (apiKeyInput.value || &#x27;&#x27;).trim();
+    if (!apiKey) {
+      showToast(&#x27;Please provide your OpenAI API key in the configuration bar.&#x27;, &#x27;error&#x27;);
+      // Automatically expand configuration accordion so user sees where to enter key
+      configContent.classList.remove(&#x27;collapsed&#x27;);
+      configChevron.classList.add(&#x27;rotated&#x27;);
+      apiKeyInput.focus();
+      return;
+    }
+
+    const selectedModel = modelSelect.value;
+
+    // Set UI to loading state
+    isRequestPending = true;
+    submitBtn.classList.add(&#x27;loading&#x27;);
+    submitBtn.disabled = true;
+    questionTextbox.disabled = true;
+    setStatus(&#x27;loading&#x27;, `Contacting ChatGPT (${selectedModel})...`);
+
+    // Prepare answer box for incoming content
+    answerTextbox.value = &#x27;Waiting for response from ChatGPT...&#x27;;
+    answerCharCount.textContent = &#x27;Generating...&#x27;;
+    responseTimeBadge.style.display = &#x27;none&#x27;;
+
+    const startTime = performance.now();
+
+    try {
+      // Task 2: Execute the API Call
+      const result = await callChatGPTAPI(apiKey, selectedModel, question);
+      const elapsedSeconds = ((performance.now() - startTime) / 1000).toFixed(2);
+
+      // Task 3: Put the response in the Answer textbox
+      answerTextbox.value = result.content;
+      
+      // Update metadata &amp; char counter
+      const charLength = result.content.length;
+      answerCharCount.textContent = `${charLength.toLocaleString()} character${charLength === 1 ? &#x27;&#x27; : &#x27;s&#x27;}`;
+      
+      responseTimeBadge.textContent = `${elapsedSeconds}s`;
+      responseTimeBadge.style.display = &#x27;inline-block&#x27;;
+
+      modelUsedTag.textContent = `Model: ${result.model}`;
+      const now = new Date();
+      timestampTag.textContent = `Time: ${now.toLocaleTimeString([], { hour: &#x27;2-digit&#x27;, minute: &#x27;2-digit&#x27;, second: &#x27;2-digit&#x27; })}`;
+
+      setStatus(&#x27;ready&#x27;, &#x27;Response received successfully&#x27;);
+      showToast(&#x27;Answer received successfully!&#x27;, &#x27;success&#x27;, 2500);
+
+    } catch (err) {
+      console.error(&#x27;ChatGPT API Error:&#x27;, err);
+      // Display clear failure state in answer textbox
+      answerTextbox.value = `[Error occurred while fetching response]\n\n${err.message}\n\nPlease verify that your OpenAI API key is valid and has active quota.`;
+      answerCharCount.textContent = &#x27;Error&#x27;;
+      setStatus(&#x27;error&#x27;, &#x27;Request failed&#x27;);
+      showToast(`Error: ${err.message}`, &#x27;error&#x27;, 6000);
+
+    } finally {
+      // Reset UI state
+      isRequestPending = false;
+      submitBtn.classList.remove(&#x27;loading&#x27;);
+      submitBtn.disabled = false;
+      questionTextbox.disabled = false;
+      questionTextbox.focus();
+    }
+  }
+
+  // =========================================================================
+  // Clipboard Copy Handling
+  // =========================================================================
+  copyBtn.addEventListener(&#x27;click&#x27;, async () =&gt; {
+    const textToCopy = answerTextbox.value.trim();
+    if (!textToCopy || textToCopy.startsWith(&#x27;Waiting for response&#x27;) || textToCopy.startsWith(&#x27;[Error&#x27;)) {
+      showToast(&#x27;No valid answer to copy yet.&#x27;, &#x27;info&#x27;, 2000);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      copyText.textContent = &#x27;Copied!&#x27;;
+      copyBtn.style.borderColor = &#x27;var(--accent-emerald)&#x27;;
+      copyBtn.style.color = &#x27;var(--accent-emerald)&#x27;;
+      showToast(&#x27;Answer copied to clipboard!&#x27;, &#x27;success&#x27;, 2000);
+
+      setTimeout(() =&gt; {
+        copyText.textContent = &#x27;Copy&#x27;;
+        copyBtn.style.borderColor = &#x27;&#x27;;
+        copyBtn.style.color = &#x27;&#x27;;
+      }, 2000);
+    } catch (e) {
+      // Fallback for older browsers
+      answerTextbox.select();
+      document.execCommand(&#x27;copy&#x27;);
+      showToast(&#x27;Answer copied to clipboard!&#x27;, &#x27;success&#x27;, 2000);
+    }
+  });
+});
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>

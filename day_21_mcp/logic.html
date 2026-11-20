@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 21: MCP servers and an MCP agent</title><style>
+:root{--bg:#f6f7fb;--panel:#fff;--panel2:#eef1f8;--line:#d9deea;--text:#152033;--muted:#5b6680;
+--acc:#2563eb;--acc2:#7c3aed;--ok:#047857;--warn:#b45309;--code:#0f172a;--codetext:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;
+--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}}
+:root[data-theme="dark"]{--bg:#0b1020;--panel:#121a2e;--panel2:#0e1526;--line:#25304a;--text:#e6ebf7;--muted:#9aa6c2;
+--acc:#60a5fa;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--code:#070b16;--codetext:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 16px 80px}
+.kick{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:var(--acc)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:6px 0 10px}
+h2{font-size:24px;margin:44px 0 6px;padding-top:8px;border-top:2px solid var(--line)}
+h3{font-size:19px;margin:0 0 4px}
+p{margin:8px 0}
+.lead{color:var(--muted);font-size:17px}
+a{color:var(--acc)}
+code,.mono{font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.92em}
+p code,li code,td code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px}
+@media (max-width:700px){nav.toc ol{columns:1}}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:14px;padding:18px 20px;margin:18px 0}
+.path{font:13px ui-monospace,Consolas,monospace;color:var(--muted);margin-bottom:10px;word-break:break-all}
+.label{font:800 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;color:var(--acc2);text-transform:uppercase;margin:14px 0 4px}
+.what{font-size:17px}
+ol.steps{margin:4px 0;padding-left:24px}
+ol.steps li{margin:6px 0}
+pre{background:var(--code);color:var(--codetext);border-radius:10px;padding:12px 14px;overflow-x:auto;font:13px/1.5 ui-monospace,"JetBrains Mono",Consolas,monospace;margin:6px 0}
+.run{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:13px ui-monospace,Consolas,monospace;overflow-x:auto;white-space:pre}
+.note{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+.idea{border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);padding:8px 12px;border-radius:8px;margin-top:12px}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--acc);font-weight:600}
+details pre{max-height:520px}
+.group{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tw{overflow-x:auto}
+.top{position:fixed;right:16px;bottom:16px;background:var(--acc);color:#fff;border-radius:999px;padding:8px 14px;text-decoration:none;font-weight:700;font-size:14px}
+</style></head>
+<body><div class="wrap" id="top">
+<div class="kick">DAY 21</div>
+<h1>Day 21: MCP servers and an MCP agent</h1>
+<p class="lead">MCP (Model Context Protocol) is a standard way to give an AI tools. A server offers the tools, and a client connects to it, lists the tools and calls them. Here you build both sides.</p>
+<nav class="toc"><b>Programs on this page</b><ol><li><a href="#p1">servers/math_server.py: your first MCP server</a></li><li><a href="#p2">servers/weather_server.py: wrapping a real API</a></li><li><a href="#p3">servers/notes_server.py: an HTTP server</a></li><li><a href="#p4">raw_client.py: MCP with no AI</a></li><li><a href="#p5">agent/agent_graph.py: a LangGraph agent with 6 MCP servers</a></li><li><a href="#p6">agent/agent_prebuilt.py: the same idea in about 25 lines</a></li></ol></nav>
+<h2>The servers (they offer tools)</h2>
+<section class="card" id="p1">
+<h3>1. servers/math_server.py: your first MCP server</h3>
+<div class="path">servers/math_server.py</div>
+<div class="label">What it does</div>
+<p class="what">Offers maths tools (add, multiply, div, power), a resource (constants) and a prompt template, over stdio.</p>
+<div class="label">How to run</div>
+<div class="run">npx @modelcontextprotocol/inspector .venv\Scripts\python.exe servers/math_server.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>mcp = FastMCP(&quot;Math&quot;)</code> creates the server. &quot;Math&quot; is the name clients see.</li>
+<li><code>@mcp.tool()</code> on a normal function turns it into a tool. The type hints become the input schema, and the docstring becomes the description the AI reads.</li>
+<li><code>@mcp.resource(&quot;math://constants&quot;)</code> is read-only data that a client can fetch by its address.</li>
+<li><code>@mcp.prompt()</code> is a reusable prompt template (&quot;solve step by step&quot;).</li>
+<li><code>mcp.run(transport=&quot;stdio&quot;)</code>: the client starts this file as a child process and they exchange JSON-RPC messages over stdin/stdout.</li>
+</ol>
+<div class="note"><b>Watch out:</b> Never use <code>print()</code> in a stdio server. stdout is the message channel, so a print garbles the protocol. Log to stderr instead.</div>
+<details><summary>Show the full source of servers/math_server.py (46 lines)</summary><pre>&quot;&quot;&quot;
+math_server.py  -  Your FIRST MCP server (stdio transport)
+Try it:  mcp dev servers/math_server.py     (opens the MCP Inspector)
+&quot;&quot;&quot;
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP(&quot;Math&quot;)              # the name clients will see
+
+
+@mcp.tool()
+def add(a: float, b: float) -&gt; float:
+    &quot;&quot;&quot;Add two numbers and return the sum.&quot;&quot;&quot;
+    return a + b
+
+
+@mcp.tool()
+def multiply(a: float, b: float) -&gt; float:
+    &quot;&quot;&quot;Multiply two numbers and return the product.&quot;&quot;&quot;
+    return a * b
+
+
+@mcp.tool()
+def div(a: float, b: float) -&gt; float:
+    &quot;&quot;&quot;div of two numbers&quot;&quot;&quot;
+    return a / b
+
+@mcp.tool()
+def power(base: float, exponent: float) -&gt; float:
+    &quot;&quot;&quot;Raise base to the power of exponent.&quot;&quot;&quot;
+    return base ** exponent
+
+@mcp.resource(&quot;math://constants&quot;)
+def constants() -&gt; str:
+    &quot;&quot;&quot;Useful math constants (read-only data).&quot;&quot;&quot;
+    return &quot;pi = 3.14159\ne = 2.71828\ngolden_ratio = 1.61803&quot;
+
+
+@mcp.prompt()
+def explain_step_by_step(problem: str) -&gt; str:
+    &quot;&quot;&quot;Template: solve a math problem step by step.&quot;&quot;&quot;
+    return f&quot;Solve step by step. Use the math tools for EVERY calculation:\n{problem}&quot;
+
+
+if __name__ == &quot;__main__&quot;:
+    # stdio: talk JSON-RPC over stdin/stdout. NEVER print() in a stdio server!
+    mcp.run(transport=&quot;stdio&quot;)
+</pre></details>
+</section>
+<section class="card" id="p2">
+<h3>2. servers/weather_server.py: wrapping a real API</h3>
+<div class="path">servers/weather_server.py</div>
+<div class="label">What it does</div>
+<p class="what">Live weather as MCP tools: <code>get_current_weather(city)</code> and <code>get_forecast(city, days)</code>, built on the free Open-Meteo API.</p>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>_locate()</code> geocodes the city name to latitude and longitude (raising an error if it isn&#x27;t found).</li>
+<li><code>get_current_weather</code> asks for the current temperature, humidity, wind and weather code, and maps the code to words using <code>CODES</code>.</li>
+<li><code>get_forecast</code> limits <code>days</code> to 1-7 and returns one dictionary per day (min, max, rain chance).</li>
+<li>The tools are <code>async</code> and use <code>httpx.AsyncClient</code>, so the server doesn&#x27;t freeze while it waits.</li>
+</ol>
+<div class="idea"><b>Key idea:</b> This is the most common real-world MCP pattern: LLM → MCP tool → your server → an existing REST API.</div>
+<details><summary>Show the full source of servers/weather_server.py (69 lines)</summary><pre>&quot;&quot;&quot;
+weather_server.py  -  REAL-TIME data: wraps the free Open-Meteo REST API as MCP tools.
+No API key needed.  Try it:  mcp dev servers/weather_server.py
+
+This is the most common real-world MCP pattern:
+    LLM  -&gt;  MCP tool  -&gt;  your server  -&gt;  existing REST API  -&gt;  live data
+&quot;&quot;&quot;
+import logging
+
+import httpx
+from mcp.server.fastmcp import FastMCP
+
+logging.getLogger(&quot;httpx&quot;).setLevel(logging.WARNING)   # keep the console quiet
+
+mcp = FastMCP(&quot;Weather&quot;)
+
+GEO_URL = &quot;https://geocoding-api.open-meteo.com/v1/search&quot;
+WX_URL = &quot;https://api.open-meteo.com/v1/forecast&quot;
+CODES = {0: &quot;clear sky&quot;, 1: &quot;mainly clear&quot;, 2: &quot;partly cloudy&quot;, 3: &quot;overcast&quot;, 45: &quot;fog&quot;, 48: &quot;fog&quot;,
+         51: &quot;light drizzle&quot;, 53: &quot;drizzle&quot;, 55: &quot;heavy drizzle&quot;, 61: &quot;light rain&quot;, 63: &quot;rain&quot;,
+         65: &quot;heavy rain&quot;, 71: &quot;light snow&quot;, 73: &quot;snow&quot;, 75: &quot;heavy snow&quot;, 80: &quot;rain showers&quot;,
+         81: &quot;rain showers&quot;, 82: &quot;violent rain showers&quot;, 95: &quot;thunderstorm&quot;, 96: &quot;thunderstorm with hail&quot;,
+         99: &quot;thunderstorm with hail&quot;}
+
+
+async def _locate(client: httpx.AsyncClient, city: str) -&gt; dict:
+    r = await client.get(GEO_URL, params={&quot;name&quot;: city, &quot;count&quot;: 1})
+    r.raise_for_status()
+    hits = r.json().get(&quot;results&quot;)
+    if not hits:
+        raise ValueError(f&quot;City &#x27;{city}&#x27; not found&quot;)
+    return hits[0]
+
+
+@mcp.tool()
+async def get_current_weather(city: str) -&gt; dict:
+    &quot;&quot;&quot;Get the LIVE current weather for a city (temperature in Celsius, wind, conditions).&quot;&quot;&quot;
+    async with httpx.AsyncClient(timeout=15) as client:
+        place = await _locate(client, city)
+        r = await client.get(WX_URL, params={
+            &quot;latitude&quot;: place[&quot;latitude&quot;], &quot;longitude&quot;: place[&quot;longitude&quot;],
+            &quot;current&quot;: &quot;temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&quot;,
+            &quot;timezone&quot;: &quot;auto&quot;})
+        r.raise_for_status()
+        cur = r.json()[&quot;current&quot;]
+    return {&quot;city&quot;: place[&quot;name&quot;], &quot;country&quot;: place.get(&quot;country&quot;), &quot;time&quot;: cur[&quot;time&quot;],
+            &quot;temperature_c&quot;: cur[&quot;temperature_2m&quot;], &quot;humidity_pct&quot;: cur[&quot;relative_humidity_2m&quot;],
+            &quot;wind_kmh&quot;: cur[&quot;wind_speed_10m&quot;], &quot;conditions&quot;: CODES.get(cur[&quot;weather_code&quot;], &quot;unknown&quot;)}
+
+
+@mcp.tool()
+async def get_forecast(city: str, days: int = 3) -&gt; list[dict]:
+    &quot;&quot;&quot;Get a daily forecast (min/max Celsius, rain chance) for the next 1-7 days.&quot;&quot;&quot;
+    days = max(1, min(days, 7))
+    async with httpx.AsyncClient(timeout=15) as client:
+        place = await _locate(client, city)
+        r = await client.get(WX_URL, params={
+            &quot;latitude&quot;: place[&quot;latitude&quot;], &quot;longitude&quot;: place[&quot;longitude&quot;], &quot;forecast_days&quot;: days,
+            &quot;daily&quot;: &quot;temperature_2m_min,temperature_2m_max,precipitation_probability_max,weather_code&quot;,
+            &quot;timezone&quot;: &quot;auto&quot;})
+        r.raise_for_status()
+        d = r.json()[&quot;daily&quot;]
+    return [{&quot;date&quot;: d[&quot;time&quot;][i], &quot;min_c&quot;: d[&quot;temperature_2m_min&quot;][i], &quot;max_c&quot;: d[&quot;temperature_2m_max&quot;][i],
+             &quot;rain_chance_pct&quot;: d[&quot;precipitation_probability_max&quot;][i],
+             &quot;conditions&quot;: CODES.get(d[&quot;weather_code&quot;][i], &quot;unknown&quot;)} for i in range(len(d[&quot;time&quot;]))]
+
+
+if __name__ == &quot;__main__&quot;:
+    mcp.run(transport=&quot;stdio&quot;)
+</pre></details>
+</section>
+<section class="card" id="p3">
+<h3>3. servers/notes_server.py: an HTTP server</h3>
+<div class="path">servers/notes_server.py</div>
+<div class="label">What it does</div>
+<p class="what">A notes service (add, list, search) that runs as a small web server instead of a child process.</p>
+<div class="label">How to run</div>
+<div class="run">python servers/notes_server.py      # http://127.0.0.1:8000/mcp</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>NOTES</code> is a list in memory, and each note gets an id and a creation time.</li>
+<li><code>search_notes</code> does a case-insensitive match on the title or body.</li>
+<li><code>mcp.run(transport=&quot;streamable-http&quot;)</code> serves MCP at <code>/mcp</code>. It must be started before any client connects.</li>
+<li>With HTTP, <code>print()</code> is fine, because stdout isn&#x27;t the protocol channel.</li>
+</ol>
+<details><summary>Show the full source of servers/notes_server.py (44 lines)</summary><pre>&quot;&quot;&quot;
+notes_server.py  -  An MCP server over Streamable HTTP (a tiny web service)
+Run:  python servers/notes_server.py      -&gt;  http://127.0.0.1:8000/mcp
+&quot;&quot;&quot;
+from datetime import datetime
+
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP(&quot;Notes&quot;, host=&quot;127.0.0.1&quot;, port=8000)
+NOTES: list[dict] = []          # in-memory &quot;database&quot;
+
+
+@mcp.tool()
+def add_note(title: str, body: str) -&gt; str:
+    &quot;&quot;&quot;Save a note with a title and a body. Returns a confirmation.&quot;&quot;&quot;
+    note = {&quot;id&quot;: len(NOTES) + 1, &quot;title&quot;: title, &quot;body&quot;: body,
+            &quot;created&quot;: datetime.now().isoformat(timespec=&quot;seconds&quot;)}
+    NOTES.append(note)
+    return f&quot;Saved note #{note[&#x27;id&#x27;]}: {title}&quot;
+
+
+@mcp.tool()
+def list_notes() -&gt; list[dict]:
+    &quot;&quot;&quot;Return every saved note.&quot;&quot;&quot;
+    return NOTES
+
+
+@mcp.tool()
+def search_notes(keyword: str) -&gt; list[dict]:
+    &quot;&quot;&quot;Find notes whose title or body contains the keyword (case-insensitive).&quot;&quot;&quot;
+    k = keyword.lower()
+    return [n for n in NOTES if k in n[&quot;title&quot;].lower() or k in n[&quot;body&quot;].lower()]
+
+
+@mcp.resource(&quot;notes://all&quot;)
+def all_notes() -&gt; str:
+    &quot;&quot;&quot;All notes as plain text.&quot;&quot;&quot;
+    return &quot;\n&quot;.join(f&quot;#{n[&#x27;id&#x27;]} {n[&#x27;title&#x27;]}: {n[&#x27;body&#x27;]}&quot; for n in NOTES) or &quot;(no notes yet)&quot;
+
+
+if __name__ == &quot;__main__&quot;:
+    # HTTP transport: printing is fine here (stdout is not the protocol channel)
+    print(&quot;Notes MCP server -&gt; http://127.0.0.1:8000/mcp&quot;)
+    mcp.run(transport=&quot;streamable-http&quot;)
+</pre></details>
+</section>
+<h2>The clients (they use tools)</h2>
+<section class="card" id="p4">
+<h3>4. raw_client.py: MCP with no AI</h3>
+<div class="path">raw_client.py</div>
+<div class="label">What it does</div>
+<p class="what">Connects to the math server and runs every MCP action by hand: initialize, list tools, call a tool, read a resource, get a prompt.</p>
+<div class="label">How to run</div>
+<div class="run">python raw_client.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>StdioServerParameters(command=python, args=[math_server.py])</code> describes how to start the server.</li>
+<li><code>stdio_client(SERVER)</code> starts it as a child process and gives back the read and write streams. <code>ClientSession</code> speaks MCP over them.</li>
+<li><code>session.initialize()</code> is the handshake (protocol version, capabilities).</li>
+<li><code>list_tools()</code> lists the tools. <code>call_tool(&quot;multiply&quot;, {&quot;a&quot;: 6, &quot;b&quot;: 7})</code> returns 42.0.</li>
+<li><code>read_resource(&quot;math://constants&quot;)</code> and <code>get_prompt(...)</code> show the two other kinds of MCP features.</li>
+</ol>
+<details><summary>Show the full source of raw_client.py (36 lines)</summary><pre>&quot;&quot;&quot;
+raw_client.py  -  Talk to an MCP server directly, no LLM involved.
+Run:  python raw_client.py
+&quot;&quot;&quot;
+import asyncio
+import sys
+from pathlib import Path
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+SERVER = StdioServerParameters(command=sys.executable, args=[str(Path(__file__).parent / &quot;servers&quot; / &quot;math_server.py&quot;)])
+
+
+async def main():
+    async with stdio_client(SERVER) as (read, write):
+        async with ClientSession(read, write) as session:
+            init = await session.initialize()
+            print(f&quot;Connected to &#x27;{init.serverInfo.name}&#x27; (protocol {init.protocolVersion})&quot;)
+
+            tools = await session.list_tools()
+            for t in tools.tools:
+                print(f&quot;  tool: {t.name:10} - {t.description}&quot;)
+
+            result = await session.call_tool(&quot;multiply&quot;, {&quot;a&quot;: 6, &quot;b&quot;: 7})
+            print(&quot;multiply(6, 7) =&quot;, result.content[0].text)
+
+            res = await session.read_resource(&quot;math://constants&quot;)
+            print(&quot;resource math://constants -&gt;&quot;, res.contents[0].text.replace(&quot;\n&quot;, &quot; | &quot;))
+
+            prompt = await session.get_prompt(&quot;explain_step_by_step&quot;, {&quot;problem&quot;: &quot;2^10 + 5&quot;})
+            print(&quot;prompt -&gt;&quot;, prompt.messages[0].content.text)
+            print(&quot;Done. (that is exactly what LangGraph&#x27;s adapter does for you)&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())
+</pre></details>
+</section>
+<section class="card" id="p5">
+<h3>5. agent/agent_graph.py: a LangGraph agent with 6 MCP servers</h3>
+<div class="path">agent/agent_graph.py</div>
+<div class="label">What it does</div>
+<p class="what">A chat agent (Ollama llama3.2) whose tools come from 6 MCP servers: math, weather and notes (yours), fetch and time (official), and DeepWiki (public, online).</p>
+<div class="label">How to run</div>
+<div class="run">python agent/agent_graph.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>SERVERS</code> lists each server and how to reach it: <code>stdio</code> with a command, or <code>streamable_http</code> with a URL.</li>
+<li><code>load_mcp_tools()</code> uses <code>MultiServerMCPClient</code> and asks each server for its tools. A server that is missing or offline is skipped with <code>[skip]</code>, so the agent still works.</li>
+<li><code>ChatOllama(...).bind_tools(tools)</code> tells the model about every MCP tool.</li>
+<li>The graph: the <code>agent</code> node calls the LLM with the <code>SYSTEM</code> prompt (which says which tool to use for what). <code>tools_condition</code> sends the flow to <code>ToolNode</code> when the reply has tool calls, and to END otherwise.</li>
+<li><code>ToolNode</code> runs the MCP <code>tools/call</code> for each request. The edge <code>tools → agent</code> loops back so the model can read the results.</li>
+<li><code>MemorySaver</code> plus <code>thread_id</code> remembers the conversation between questions.</li>
+<li><code>astream(..., stream_mode=&quot;updates&quot;)</code> prints every tool call and result as it happens.</li>
+</ol>
+<div class="label">Flow</div>
+<pre>START → agent (LLM) ── tool_calls? ──yes──▶ tools (MCP tools/call) ──▶ agent …
+                       └──no──▶ END</pre>
+<details><summary>Show the full source of agent/agent_graph.py (114 lines)</summary><pre>&quot;&quot;&quot;
+agent_graph.py  -  A LangGraph ReAct agent whose tools come from MCP servers.
+
+    START -&gt; agent (LLM) --tool_calls?--&gt; tools (MCP) -&gt; agent ... -&gt; END
+
+MCP servers used (each one is optional - missing ones are skipped):
+  math   : our own stdio server                (servers/math_server.py)
+  weather: our own LIVE weather server         (servers/weather_server.py -&gt; Open-Meteo API)
+  notes  : our own HTTP server                 (run servers/notes_server.py first)
+  fetch  : OFFICIAL real-time web fetcher      (pip install mcp-server-fetch)
+  time   : OFFICIAL current time / time zones  (pip install mcp-server-time)
+  deepwiki: PUBLIC remote server for GitHub repo docs (internet, no key)
+&quot;&quot;&quot;
+import asyncio
+import sys
+from pathlib import Path
+from typing import Annotated, TypedDict
+
+from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_ollama import ChatOllama
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
+
+ROOT = Path(__file__).resolve().parent.parent
+PY = sys.executable
+OLLAMA_MODEL = &quot;llama3.2&quot;     # must support tool calling: llama3.2, llama3.1, qwen2.5:7b (smarter), mistral-nemo
+
+# 1) Which MCP servers to connect to ------------------------------------------
+SERVERS = {
+    &quot;math&quot;:     {&quot;transport&quot;: &quot;stdio&quot;, &quot;command&quot;: PY, &quot;args&quot;: [str(ROOT / &quot;servers&quot; / &quot;math_server.py&quot;)]},
+    &quot;weather&quot;:  {&quot;transport&quot;: &quot;stdio&quot;, &quot;command&quot;: PY, &quot;args&quot;: [str(ROOT / &quot;servers&quot; / &quot;weather_server.py&quot;)]},
+    &quot;notes&quot;:    {&quot;transport&quot;: &quot;streamable_http&quot;, &quot;url&quot;: &quot;http://127.0.0.1:8000/mcp&quot;},
+    &quot;fetch&quot;:    {&quot;transport&quot;: &quot;stdio&quot;, &quot;command&quot;: PY, &quot;args&quot;: [&quot;-m&quot;, &quot;mcp_server_fetch&quot;]},
+    &quot;time&quot;:     {&quot;transport&quot;: &quot;stdio&quot;, &quot;command&quot;: PY, &quot;args&quot;: [&quot;-m&quot;, &quot;mcp_server_time&quot;]},
+    &quot;deepwiki&quot;: {&quot;transport&quot;: &quot;streamable_http&quot;, &quot;url&quot;: &quot;https://mcp.deepwiki.com/mcp&quot;},
+}
+
+SYSTEM = &quot;&quot;&quot;You are a helpful assistant connected to MCP tools.
+- For ANY arithmetic, use the math tools (never calculate in your head).
+- For the CURRENT time in a city, call get_current_time with an IANA timezone (e.g. &quot;Asia/Tokyo&quot;).
+  Use convert_time only when the user gives a specific time to convert.
+- For live weather use get_current_weather / get_forecast.
+- To read a web page (docs, Wikipedia, news) use the fetch tool.
+- For questions about a GitHub repository use the deepwiki tools (repoName like &quot;langchain-ai/langgraph&quot;).
+- Use the notes tools to save or look up notes.
+Answer briefly and say which tool gave you the data.&quot;&quot;&quot;
+
+
+# 2) Graph state: just a list of chat messages ---------------------------------
+class State(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
+
+
+async def load_mcp_tools():
+    &quot;&quot;&quot;Connect to every server; skip the ones that are not available.&quot;&quot;&quot;
+    client = MultiServerMCPClient(SERVERS)
+    tools = []
+    for name in SERVERS:
+        try:
+            server_tools = await client.get_tools(server_name=name)
+            tools += server_tools
+            print(f&quot;  [ok]   {name:9} -&gt; {&#x27;, &#x27;.join(t.name for t in server_tools)}&quot;)
+        except Exception as e:  # server not installed / not running / offline
+            print(f&quot;  [skip] {name:9} -&gt; {type(e).__name__}&quot;)
+    return tools
+
+
+async def build_graph():
+    tools = await load_mcp_tools()
+    llm = ChatOllama(model=OLLAMA_MODEL, temperature=0).bind_tools(tools)
+
+    async def agent(state: State):
+        reply = await llm.ainvoke([SystemMessage(SYSTEM)] + state[&quot;messages&quot;])
+        return {&quot;messages&quot;: [reply]}
+
+    g = StateGraph(State)
+    g.add_node(&quot;agent&quot;, agent)
+    g.add_node(&quot;tools&quot;, ToolNode(tools))         # runs MCP tools/call for us
+    g.add_edge(START, &quot;agent&quot;)
+    g.add_conditional_edges(&quot;agent&quot;, tools_condition)   # tool_calls? -&gt; &quot;tools&quot; else END
+    g.add_edge(&quot;tools&quot;, &quot;agent&quot;)
+    return g.compile(checkpointer=MemorySaver())  # memory across turns
+
+
+async def main():
+    print(&quot;Connecting to MCP servers...&quot;)
+    graph = await build_graph()
+    config = {&quot;configurable&quot;: {&quot;thread_id&quot;: &quot;day21&quot;}}
+    print(&quot;\nAsk me anything (live weather, time, math, web pages, GitHub repos, notes). &#x27;quit&#x27; to exit.&quot;)
+
+    while True:
+        q = input(&quot;\nYou: &quot;).strip()
+        if q.lower() in {&quot;quit&quot;, &quot;exit&quot;, &quot;q&quot;}:
+            break
+        if not q:
+            continue
+        async for update in graph.astream({&quot;messages&quot;: [HumanMessage(q)]}, config, stream_mode=&quot;updates&quot;):
+            for node, data in update.items():
+                msg = data[&quot;messages&quot;][-1]
+                if node == &quot;agent&quot; and getattr(msg, &quot;tool_calls&quot;, None):
+                    for tc in msg.tool_calls:
+                        print(f&quot;  -&gt; [agent] calls {tc[&#x27;name&#x27;]}({tc[&#x27;args&#x27;]})&quot;)
+                elif node == &quot;tools&quot;:
+                    for m in data[&quot;messages&quot;]:
+                        print(f&quot;  &lt;- [tool:{m.name}] {str(m.content)[:160]}&quot;)
+                else:
+                    print(f&quot;\nAgent: {msg.content}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())
+</pre></details>
+</section>
+<section class="card" id="p6">
+<h3>6. agent/agent_prebuilt.py: the same idea in about 25 lines</h3>
+<div class="path">agent/agent_prebuilt.py</div>
+<div class="label">What it does</div>
+<p class="what">Asks one fixed question (Tokyo time plus Hyderabad weather) using a prebuilt ReAct agent.</p>
+<div class="label">How to run</div>
+<div class="run">python agent/agent_prebuilt.py</div>
+<div class="label">The logic, step by step</div><ol class="steps">
+<li><code>MultiServerMCPClient({...})</code> connects to 4 servers, and <code>get_tools()</code> turns their MCP tools into LangChain tools.</li>
+<li><code>create_agent</code> (or the older <code>create_react_agent</code>, chosen by the try/except import) builds the whole tool loop for you.</li>
+<li><code>agent.ainvoke(...)</code> runs it, and the program prints the last message.</li>
+</ol>
+<details><summary>Show the full source of agent/agent_prebuilt.py (42 lines)</summary><pre>&quot;&quot;&quot;
+agent_prebuilt.py  -  Same agent in ~25 lines using a prebuilt ReAct agent.
+&quot;&quot;&quot;
+import asyncio
+import sys
+from pathlib import Path
+
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_ollama import ChatOllama
+
+try:                                    # LangChain &gt;= 1.0
+    from langchain.agents import create_agent
+
+    def make_agent(llm, tools, prompt):
+        return create_agent(llm, tools, system_prompt=prompt)
+except ImportError:                     # older LangGraph
+    from langgraph.prebuilt import create_react_agent
+
+    def make_agent(llm, tools, prompt):
+        return create_react_agent(llm, tools, prompt=prompt)
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+async def main():
+    client = MultiServerMCPClient({
+        &quot;weather&quot;:  {&quot;transport&quot;: &quot;stdio&quot;, &quot;command&quot;: sys.executable, &quot;args&quot;: [str(ROOT / &quot;servers&quot; / &quot;weather_server.py&quot;)]},
+        &quot;time&quot;:     {&quot;transport&quot;: &quot;stdio&quot;, &quot;command&quot;: sys.executable, &quot;args&quot;: [&quot;-m&quot;, &quot;mcp_server_time&quot;]},
+        &quot;fetch&quot;:    {&quot;transport&quot;: &quot;stdio&quot;, &quot;command&quot;: sys.executable, &quot;args&quot;: [&quot;-m&quot;, &quot;mcp_server_fetch&quot;]},
+        &quot;deepwiki&quot;: {&quot;transport&quot;: &quot;streamable_http&quot;, &quot;url&quot;: &quot;https://mcp.deepwiki.com/mcp&quot;},
+    })
+    tools = await client.get_tools()                 # MCP tools -&gt; LangChain tools
+    agent = make_agent(ChatOllama(model=&quot;llama3.2&quot;, temperature=0), tools,
+                       &quot;Always use tools for live data (time, weather, web pages, GitHub repos).&quot;)
+
+    question = &quot;What time is it in Tokyo right now, and what&#x27;s the weather in Hyderabad?&quot;
+    result = await agent.ainvoke({&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: question}]})
+    print(result[&quot;messages&quot;][-1].content)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())
+</pre></details>
+</section>
+</div><a class="top" href="#top">↑ Top</a></body></html>
